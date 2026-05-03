@@ -54,10 +54,9 @@ export const profileSchema = z.object({
   display_name: z.string().min(1, 'Display name is required').max(50),
   location: z.string().optional().nullable(),
   fb_username: z.string()
-    .regex(/^[a-zA-Z0-9.]*$/, 'Username can only contain letters, numbers, and dots')
-    .max(50)
-    .optional()
-    .nullable(),
+    .min(1, 'Facebook username is required')
+    .regex(/^[a-zA-Z0-9.]+$/, 'Username can only contain letters, numbers, and dots')
+    .max(50),
 });
 
 export type ListingFormData = z.infer<typeof listingSchema>;

@@ -171,7 +171,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             {shoe.listing_type === 'donate' && (
               <div className="rounded-lg bg-green-950 border border-green-800 p-4">
                 <p className="text-sm font-semibold text-green-400">Free Donation</p>
-                <p className="text-xs text-green-600 mt-0.5">Send a request to arrange pickup with the donor</p>
+                <p className="text-xs text-green-600 mt-0.5">Send a request to arrange pickup or shipping with the donor</p>
               </div>
             )}
           </div>
@@ -285,7 +285,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   <Link href={`/profile/${purchaseContext.request.buyer_id}`} className="underline hover:text-teal-200">
                     {purchaseContext.request.profiles?.display_name ?? 'the buyer'}
                   </Link>
-                  . Meet up to complete the sale, then mark it sold below.
+                  . Meet up to complete the sale or complete the transaction online and process the shipping, then mark it sold below.
                 </p>
               </div>
               <CompleteSaleButtons requestId={purchaseContext.request.id} />

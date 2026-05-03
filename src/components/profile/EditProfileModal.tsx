@@ -39,7 +39,7 @@ export function EditProfileModal({ profile, onClose, onUpdated }: EditProfileMod
         .update({
           display_name: data.display_name,
           location: data.location,
-          fb_username: data.fb_username?.trim() || null,
+          fb_username: data.fb_username.trim(),
         })
         .eq('id', profile.id)
         .select()
@@ -76,8 +76,9 @@ export function EditProfileModal({ profile, onClose, onUpdated }: EditProfileMod
           <div>
             <Input
               label="Facebook Messenger username"
+              required
               placeholder="e.g. john.doe.1"
-              hint="Optional — lets buyers contact you via Messenger"
+              hint="Required — buyers will use this to contact you via Messenger"
               error={errors.fb_username?.message}
               {...register('fb_username')}
             />

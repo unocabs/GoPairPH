@@ -86,12 +86,28 @@ export function PurchaseRequestCard({ request, listingName, listingPrice, listin
       {request.message && (
         <p className="text-sm text-gray-400 italic border-l-2 border-gray-700 pl-3">&quot;{request.message}&quot;</p>
       )}
-      <p className="text-xs text-gray-500">
-        From{' '}
+      <div className="flex items-center gap-1.5 flex-wrap text-xs text-gray-500">
+        <span>From</span>
         <Link href={`/profile/${request.buyer_id}`} className="text-teal-400 hover:text-teal-300">
           {request.profiles?.display_name ?? 'Unknown'}
         </Link>
-      </p>
+        {request.profiles?.fb_username && (
+          <>
+            <span className="text-gray-700">·</span>
+            <a
+              href={`https://m.me/${request.profiles.fb_username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.652V24l4.088-2.242c1.092.3 2.246.464 3.443.464 6.627 0 12-4.975 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8l3.131 3.259L19.752 8l-6.561 6.963z"/>
+              </svg>
+              Messenger
+            </a>
+          </>
+        )}
+      </div>
 
       {status === 'pending' && (
         <div className="flex gap-2 pt-1">
@@ -119,6 +135,7 @@ export function PurchaseRequestCard({ request, listingName, listingPrice, listin
             <Link href={`/profile/${request.buyer_id}`} className="underline hover:text-teal-200">
               {request.profiles?.display_name ?? 'the buyer'}
             </Link>
+            {' '}or complete the transaction online, and process the shipping.
           </div>
           <div className="flex gap-2">
             <button

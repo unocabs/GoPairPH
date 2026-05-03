@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/contact' },
 };
 
-const SUPPORT_EMAIL = 'support@nextpairph.com';
+const SUPPORT_EMAIL = 'rgiancabrera@gmail.com';
 
 export default function ContactPage() {
   return (
