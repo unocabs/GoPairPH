@@ -7,8 +7,8 @@ import { SessionProvider } from '@/components/auth/SessionProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://soleswapph.com';
-const SITE_NAME = 'SoleSwapPH';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nextpairph.vercel.app';
+const SITE_NAME = 'Next Pair PH';
 const SITE_DESCRIPTION =
   'A community marketplace for runners in Pampanga, Philippines. Buy, sell, and donate pre-loved running shoes with fellow Pampanguenos.';
 
@@ -34,7 +34,8 @@ export const metadata: Metadata = {
     'san fernando pampanga',
     'buy running shoes pampanga',
     'sell running shoes pampanga',
-    'soleswapph',
+    'nextpairph',
+    'next pair ph',
   ],
   creator: SITE_NAME,
   publisher: SITE_NAME,
@@ -73,7 +74,7 @@ export const metadata: Metadata = {
       'max-video-preview': -1,
     },
   },
-  icons: { icon: '/favicon.ico' },
+  icons: { icon: '/icon.svg' },
   category: 'marketplace',
 };
 

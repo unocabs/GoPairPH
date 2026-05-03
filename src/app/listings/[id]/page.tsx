@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       : 'Free Donation';
 
   const title = `${shoe.brand} ${shoe.model} — ${priceLabel}`;
-  const description = `${CONDITIONS[shoe.condition]} ${shoe.brand} ${shoe.model} in ${shoe.color}, size ${formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}${shoe.mileage_km != null ? `, ${shoe.mileage_km}km` : ''}. Listed on SoleSwapPH.`;
+  const description = `${CONDITIONS[shoe.condition]} ${shoe.brand} ${shoe.model} in ${shoe.color}, size ${formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}${shoe.mileage_km != null ? `, ${shoe.mileage_km}km` : ''}. Listed on Next Pair PH.`;
 
   return {
     title,

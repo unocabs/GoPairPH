@@ -5,24 +5,17 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
-    'How SoleSwapPH collects, uses, and protects your personal information when you use our running shoe marketplace.',
+    'How Next Pair PH collects, uses, and protects your personal information when you use our running shoe marketplace.',
   alternates: { canonical: '/privacy' },
 };
 
 export default function PrivacyPage() {
   return (
     <InfoPage title="Privacy Policy" lastUpdated="May 2026">
-      <div className="rounded-lg border border-amber-800 bg-amber-950/40 p-3 text-xs text-amber-300">
-        This is a plain-language template covering how the site currently handles user data.
-        It is <strong>not legal advice</strong>. Have it reviewed by a lawyer in your
-        jurisdiction (Republic Act No. 10173 — the Data Privacy Act of the Philippines, plus
-        any other applicable law) before relying on it commercially.
-      </div>
-
       <section>
         <h2 className="text-xl font-semibold text-gray-100">1. Who we are</h2>
         <p>
-          SoleSwapPH (&quot;we&quot;, &quot;us&quot;) operates a community marketplace for
+          Next Pair PH (&quot;we&quot;, &quot;us&quot;) operates a community marketplace for
           pre-loved running shoes in Pampanga, Philippines. This Privacy Policy explains what
           information we collect from users (&quot;you&quot;) and how we use it.
         </p>
@@ -107,7 +100,7 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">9. Children</h2>
         <p>
-          SoleSwapPH is not directed at users under 18. If you believe a minor has created
+          Next Pair PH is not directed at users under 18. If you believe a minor has created
           an account, please contact us so we can remove it.
         </p>
       </section>

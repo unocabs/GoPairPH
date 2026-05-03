@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
+import { Logo } from './Logo';
 
 export function Navbar() {
   const { user, profile, loading } = useSession();
@@ -27,11 +28,8 @@ export function Navbar() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <span className="text-2xl">👟</span>
-            <span className="font-bold text-teal-400 text-lg tracking-tight group-hover:text-teal-300 transition-colors">
-              SoleSwapPH
-            </span>
+          <Link href="/" className="hover:opacity-80 transition-opacity">
+            <Logo size="md" />
           </Link>
 
           {/* Desktop nav */}

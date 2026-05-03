@@ -5,11 +5,11 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Contact',
   description:
-    'Reach the SoleSwapPH team for support, feedback, partnership inquiries, or to report a listing.',
+    'Reach the Next Pair PH team for support, feedback, partnership inquiries, or to report a listing.',
   alternates: { canonical: '/contact' },
 };
 
-const SUPPORT_EMAIL = 'support@soleswapph.com';
+const SUPPORT_EMAIL = 'support@nextpairph.com';
 
 export default function ContactPage() {
   return (
