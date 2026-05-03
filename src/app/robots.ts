@@ -11,7 +11,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/api/', '/profile', '/listings/new', '/listings/*/edit', '/wishlist/new'],
       },
     ],
-    sitemap: `${SITE_URL}/sitemap.xml`,
+    sitemap: `${SITE_URL}/sitemap.xml`, 
     host: SITE_URL,
   };
 }
