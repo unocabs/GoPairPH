@@ -4,7 +4,7 @@ import { InfoPage } from '@/components/layout/InfoPage';
 export const metadata: Metadata = {
   title: 'Safety Guide',
   description:
-    'Practical safety tips for buying, selling, and meeting up with other runners on Next Pair PH.',
+    'Practical safety tips for buying, selling, and meeting up with other runners on Go Pair PH.',
   alternates: { canonical: '/safety' },
 };
 
@@ -67,7 +67,7 @@ export default function SafetyPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">Remember</h2>
         <p>
-          Next Pair PH is a listing platform — we don&apos;t handle payments or shipping. The
+          Go Pair PH is a listing platform — we don&apos;t handle payments or shipping. The
           best way to stay safe is to use common sense, keep records of every transaction,
           and never feel pressured to complete a deal you&apos;re not comfortable with.
         </p>

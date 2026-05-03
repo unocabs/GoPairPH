@@ -46,28 +46,40 @@ export default async function HomePage() {
       <section className="relative overflow-hidden bg-gray-900 border-b border-gray-800">
         <div className="absolute inset-0 bg-gradient-to-br from-teal-900/30 via-transparent to-transparent pointer-events-none" />
         <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-4xl">👟</span>
-              <span className="bg-teal-500/10 text-teal-400 text-xs font-semibold px-3 py-1 rounded-full border border-teal-500/20">
-                Pampanga Only
-              </span>
+          <div className="flex items-center justify-between">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-2 mb-4">
+                <svg width="40" height="40" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <rect width="32" height="32" rx="8" fill="#0d9488" fillOpacity="0.3"/>
+                  <path d="M14 6 C5 6 4 11 4 16 C4 21 5 26 14 26 V18 H8" stroke="#2dd4bf" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M17 26 V6 H21 C29 6 29 22 21 22 H17" stroke="#2dd4bf" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="bg-teal-500/10 text-teal-400 text-xs font-semibold px-3 py-1 rounded-full border border-teal-500/20">
+                  Pampanga Only
+                </span>
+              </div>
+              <h1 className="text-4xl font-extrabold tracking-tight text-gray-100 sm:text-5xl">
+                Pre-Loved Soles,<br />
+                <span className="text-teal-400">Fuel Your Runs</span>
+              </h1>
+              <p className="mt-4 text-lg text-gray-400 max-w-lg">
+                Buy, sell, and donate running shoes with fellow runners in Pampanga.
+                Every pair has miles left to give.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link href="/browse">
+                  <Button size="lg" variant="secondary">Browse Listings</Button>
+                </Link>
+                <Link href="/listings/new">
+                  <Button size="lg">List Your Shoes</Button>
+                </Link>
+              </div>
             </div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-gray-100 sm:text-5xl">
-              Pre-Loved Soles,<br />
-              <span className="text-teal-400">Fuel Your Runs</span>
-            </h1>
-            <p className="mt-4 text-lg text-gray-400 max-w-lg">
-              Buy, sell, and donate running shoes with fellow runners in Pampanga.
-              Every pair has miles left to give.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/browse">
-                <Button size="lg" variant="secondary">Browse Listings</Button>
-              </Link>
-              <Link href="/listings/new">
-                <Button size="lg">List Your Shoes</Button>
-              </Link>
+            <div className="hidden lg:flex flex-1 justify-center items-center ml-8 opacity-[0.08]" aria-hidden="true">
+              <svg width="220" height="220" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 6 C5 6 4 11 4 16 C4 21 5 26 14 26 V18 H8" stroke="#2dd4bf" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M17 26 V6 H21 C29 6 29 22 21 22 H17" stroke="#2dd4bf" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </div>
           </div>
         </div>

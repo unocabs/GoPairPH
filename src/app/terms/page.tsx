@@ -5,7 +5,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Terms of Service',
   description:
-    'The terms and conditions for using Next Pair PH, a community marketplace for pre-loved running shoes in Pampanga.',
+    'The terms and conditions for using Go Pair PH, a community marketplace for pre-loved running shoes in Pampanga.',
   alternates: { canonical: '/terms' },
 };
 
@@ -15,7 +15,7 @@ export default function TermsPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">1. Acceptance of terms</h2>
         <p>
-          By accessing or using Next Pair PH (&quot;the site&quot;, &quot;we&quot;,
+          By accessing or using Go Pair PH (&quot;the site&quot;, &quot;we&quot;,
           &quot;us&quot;), you agree to these Terms of Service. If you do not agree, please
           do not use the site.
         </p>
@@ -30,9 +30,9 @@ export default function TermsPage() {
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold text-gray-100">3. What Next Pair PH is (and isn&apos;t)</h2>
+        <h2 className="text-xl font-semibold text-gray-100">3. What Go Pair PH is (and isn&apos;t)</h2>
         <p>
-          Next Pair PH is a <strong>listing platform</strong>. We connect buyers and sellers,
+          Go Pair PH is a <strong>listing platform</strong>. We connect buyers and sellers,
           but we do not handle payments, hold inventory, ship items, verify the authenticity
           of shoes, or guarantee the conduct of any user. All transactions are conducted
           directly between users.
@@ -72,7 +72,7 @@ export default function TermsPage() {
         <p>
           Once a seller accepts a purchase request, the buyer and seller arrange the
           transaction directly — by meetup, online payment, shipping, or any combination.
-          Next Pair PH is not a party to these transactions and is not responsible for
+          Go Pair PH is not a party to these transactions and is not responsible for
           payment, delivery, condition disputes, or loss. We strongly encourage following
           our{' '}
           <Link href="/safety" className="text-teal-400 hover:text-teal-300">
@@ -86,7 +86,7 @@ export default function TermsPage() {
         <h2 className="text-xl font-semibold text-gray-100">7. Content you post</h2>
         <p>
           You retain ownership of the photos and text you upload. By posting, you grant
-          Next Pair PH a non-exclusive, royalty-free license to display, reproduce, and
+          Go Pair PH a non-exclusive, royalty-free license to display, reproduce, and
           distribute that content as needed to operate the site (e.g., on browse and
           listing pages, in search results).
         </p>
@@ -104,7 +104,7 @@ export default function TermsPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">9. Limitation of liability</h2>
         <p>
-          To the fullest extent permitted by law, Next Pair PH and its operators are not
+          To the fullest extent permitted by law, Go Pair PH and its operators are not
           liable for any direct, indirect, incidental, or consequential damages arising
           from your use of the site or any transaction conducted through it.
         </p>

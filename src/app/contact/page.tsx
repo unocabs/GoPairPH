@@ -5,7 +5,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Contact',
   description:
-    'Reach the Next Pair PH team for support, feedback, partnership inquiries, or to report a listing.',
+    'Reach the Go Pair PH team for support, feedback, partnership inquiries, or to report a listing.',
   alternates: { canonical: '/contact' },
 };
 

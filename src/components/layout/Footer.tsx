@@ -66,7 +66,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-8 pt-6 border-t border-gray-800 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
           <p className="text-xs text-gray-600">
-            © {new Date().getFullYear()} Next Pair PH. For Pampanguenos, by Pampanguenos.
+            © {new Date().getFullYear()} Go Pair PH. For Pampanguenos, by Pampanguenos.
           </p>
           <p className="text-xs text-gray-600">
             <Link href="/privacy" className="hover:text-teal-400 transition-colors">Privacy</Link>

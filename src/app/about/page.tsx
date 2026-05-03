@@ -5,20 +5,20 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'Next Pair PH is a community-built running shoe marketplace for runners in Pampanga, Philippines. Learn what we do and why we built it.',
+    'Go Pair PH is a community-built running shoe marketplace for runners in Pampanga, Philippines. Learn what we do and why we built it.',
   alternates: { canonical: '/about' },
 };
 
 export default function AboutPage() {
   return (
     <InfoPage
-      title="About Next Pair PH"
+      title="About Go Pair PH"
       subtitle="A community marketplace for Pampanga runners."
     >
       <section>
         <h2 className="text-xl font-semibold text-gray-100">What we do</h2>
         <p>
-          Next Pair PH connects runners in Pampanga who want to buy, sell, or donate pre-loved
+          Go Pair PH connects runners in Pampanga who want to buy, sell, or donate pre-loved
           running shoes. Every pair has miles left to give — and someone in your area is
           looking for exactly the model in your closet.
         </p>
@@ -51,7 +51,7 @@ export default function AboutPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">Our community</h2>
         <p>
-          Next Pair PH is intentionally local — listings are aimed at people who can meet up
+          Go Pair PH is intentionally local — listings are aimed at people who can meet up
           or ship within Pampanga. This keeps the community trustworthy and shipping costs
           low, and helps runners build relationships with people they&apos;ll actually run
           into at races.
