@@ -149,6 +149,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
           priceFormatted={formatPrice(shoe.price_php)}
           pricePhp={shoe.price_php}
           isNegotiable={shoe.is_negotiable}
+          seller={shoe.profiles}
           onClose={() => setBuyOpen(false)}
           onSubmitted={() => { setBuyOpen(false); setSubmitted(true); }}
         />,

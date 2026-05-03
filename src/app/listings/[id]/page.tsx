@@ -315,6 +315,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               priceFormatted={formatPrice(shoe.price_php)}
               pricePhp={shoe.price_php}
               isNegotiable={shoe.is_negotiable}
+              seller={seller ?? undefined}
             />
           )}
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && !currentProfileId && (

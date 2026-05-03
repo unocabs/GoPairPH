@@ -1,10 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
+import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
+import { ContactSellerButtons } from '@/components/listings/ContactSellerButtons';
+import type { Profile } from '@/types';
 
 interface BuyModalProps {
   listingId: string;
@@ -13,11 +18,12 @@ interface BuyModalProps {
   priceFormatted: string;
   pricePhp: number;
   isNegotiable: boolean;
+  seller?: Profile;
   onClose: () => void;
   onSubmitted: () => void;
 }
 
-export function BuyModal({ listingId, listingName, buyerId, priceFormatted, pricePhp, isNegotiable, onClose, onSubmitted }: BuyModalProps) {
+export function BuyModal({ listingId, listingName, buyerId, priceFormatted, pricePhp, isNegotiable, seller, onClose, onSubmitted }: BuyModalProps) {
   const [message, setMessage] = useState('');
   const [bestOffer, setBestOffer] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -77,6 +83,34 @@ export function BuyModal({ listingId, listingName, buyerId, priceFormatted, pric
               </p>
             </div>
           </div>
+
+          {/* Seller card */}
+          {seller && (
+            <div className="rounded-lg border border-gray-700 bg-gray-800 p-3">
+              <p className="text-xs text-gray-500 mb-2">Seller</p>
+              <div className="flex items-center gap-3">
+                <Link href={`/profile/${seller.id}`} className="shrink-0" onClick={onClose}>
+                  {seller.avatar_url ? (
+                    <Image src={seller.avatar_url} alt={seller.display_name} width={40} height={40} className="rounded-full border border-gray-600" />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-sm">
+                      {seller.display_name[0]?.toUpperCase() ?? 'U'}
+                    </div>
+                  )}
+                </Link>
+                <div className="flex-1 min-w-0">
+                  <Link href={`/profile/${seller.id}`} onClick={onClose} className="inline-flex items-center gap-1.5 font-semibold text-sm text-gray-200 hover:text-teal-400 transition-colors">
+                    {seller.display_name}
+                    {seller.is_verified && <VerifiedBadge size="sm" />}
+                  </Link>
+                  {seller.location && <p className="text-xs text-gray-500">{seller.location}</p>}
+                </div>
+              </div>
+              {seller.fb_username && (
+                <ContactSellerButtons fbUsername={seller.fb_username} listingId={listingId} />
+              )}
+            </div>
+          )}
 
           {/* Best offer (only when negotiable) */}
           {isNegotiable && (
