@@ -1,101 +1,123 @@
-import Image from "next/image";
+export const dynamic = 'force-dynamic';
 
-export default function Home() {
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
+import { ListingGrid } from '@/components/listings/ListingGrid';
+import { Button } from '@/components/ui/Button';
+import type { Shoe } from '@/types';
+
+async function getRecentListings(): Promise<Shoe[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from('shoes')
+    .select('*, profiles(*), shoe_images(*)')
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(8);
+  return (data as Shoe[]) ?? [];
+}
+
+async function getCurrentProfileAndRequests(): Promise<{ profileId: string; requestListingIds: Set<string> } | null> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: profile } = await supabase.from('profiles').select('id').eq('user_id', user.id).single();
+  if (!profile) return null;
+
+  const { data: requests } = await supabase
+    .from('purchase_requests')
+    .select('listing_id')
+    .eq('buyer_id', profile.id)
+    .in('status', ['pending', 'accepted']);
+
+  const requestListingIds = new Set((requests ?? []).map((r: { listing_id: string }) => r.listing_id));
+  return { profileId: profile.id, requestListingIds };
+}
+
+export default async function HomePage() {
+  const [recentShoes, userContext] = await Promise.all([
+    getRecentListings(),
+    getCurrentProfileAndRequests(),
+  ]);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div>
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-gray-900 border-b border-gray-800">
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-900/30 via-transparent to-transparent pointer-events-none" />
+        <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <div className="max-w-2xl">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-4xl">👟</span>
+              <span className="bg-teal-500/10 text-teal-400 text-xs font-semibold px-3 py-1 rounded-full border border-teal-500/20">
+                Pampanga Only
+              </span>
+            </div>
+            <h1 className="text-4xl font-extrabold tracking-tight text-gray-100 sm:text-5xl">
+              Pre-Loved Soles,<br />
+              <span className="text-teal-400">Fuel Your Runs</span>
+            </h1>
+            <p className="mt-4 text-lg text-gray-400 max-w-lg">
+              Buy, sell, and donate running shoes with fellow runners in Pampanga.
+              Every pair has miles left to give.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/browse">
+                <Button size="lg" variant="secondary">Browse Listings</Button>
+              </Link>
+              <Link href="/listings/new">
+                <Button size="lg">List Your Shoes</Button>
+              </Link>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </section>
+
+      {/* Features */}
+      <section className="border-b border-gray-800 bg-gray-950">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            {[
+              { icon: '💰', label: 'For Sale', desc: 'Find a deal on gently-used running shoes' },
+              { icon: '🎁', label: 'Donate', desc: 'Give your shoes a second life for free' },
+              { icon: '📍', label: 'Local Only', desc: 'Pampanguenos buying from Pampanguenos' },
+            ].map(f => (
+              <div key={f.label} className="text-center p-4">
+                <div className="text-3xl mb-2">{f.icon}</div>
+                <p className="font-semibold text-gray-200 text-sm">{f.label}</p>
+                <p className="text-xs text-gray-500 mt-1">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Recent Listings */}
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-100">Recent Listings</h2>
+          <Link href="/browse" className="text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors">
+            View all →
+          </Link>
+        </div>
+        <ListingGrid
+          shoes={recentShoes}
+          currentProfileId={userContext?.profileId}
+          myRequestListingIds={userContext?.requestListingIds}
+          emptyMessage="No listings yet. Be the first to list your shoes!"
+        />
+      </section>
+
+      {/* CTA banner */}
+      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+        <div className="rounded-2xl bg-teal-500/5 border border-teal-500/20 p-8 text-center">
+          <h3 className="text-xl font-bold text-gray-100">Can&apos;t find the right pair?</h3>
+          <p className="text-gray-400 mt-1 text-sm">Post a wishlist item and let other runners know what you&apos;re looking for.</p>
+          <Link href="/wishlist/new" className="mt-4 inline-block">
+            <Button>Post a Wishlist Item</Button>
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }
