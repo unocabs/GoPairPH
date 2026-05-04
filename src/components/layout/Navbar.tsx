@@ -89,9 +89,6 @@ export function Navbar() {
                       <Link href="/profile" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-gray-100">
                         My Profile
                       </Link>
-                      <Link href="/listings/new" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-gray-100">
-                        List a Shoe
-                      </Link>
                       {profile?.is_admin && (
                         <Link href="/admin" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-amber-400 hover:bg-gray-800">
                           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,18 +149,8 @@ export function Navbar() {
             <Link href="/wishlist" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Wishlist</Link>
             {user && (
               <>
-                <Link href="/profile" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">My Profile</Link>
                 <Link href="/listings/new" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-teal-400 hover:bg-gray-800">+ List a Shoe</Link>
-                {profile?.is_admin && (
-                  <Link href="/admin" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-amber-400 hover:bg-gray-800">Admin Dashboard</Link>
-                )}
-                <button onClick={handleSignOut} className="rounded-lg px-3 py-2 text-left text-sm font-medium text-red-400 hover:bg-gray-800">Sign Out</button>
               </>
-            )}
-            {!user && !loading && (
-              <div className="px-3 py-2">
-                <GoogleSignInButton />
-              </div>
             )}
           </div>
         )}
