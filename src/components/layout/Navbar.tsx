@@ -2,20 +2,55 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from '@/hooks/useSession';
 import { createClient } from '@/lib/supabase/client';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { Button } from '@/components/ui/Button';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Logo } from '@/components/brand/Logo';
 
 export function Navbar() {
   const { user, profile, loading } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [pendingRequestCount, setPendingRequestCount] = useState(0);
   const supabase = createClient();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Fetch pending purchase-request count for the signed-in seller.
+  // Re-runs on session change and on route change (so accepting/declining a
+  // request on /profile updates the badge after the page navigates).
+  useEffect(() => {
+    let active = true;
+    if (!profile?.id) {
+      setPendingRequestCount(0);
+      return;
+    }
+    (async () => {
+      // Count pending requests on listings where I'm the seller.
+      // Two-step query keeps it simple and avoids RPC dependencies.
+      const { data: myShoes } = await supabase
+        .from('shoes')
+        .select('id')
+        .eq('seller_id', profile.id);
+      if (!active) return;
+      const ids = (myShoes ?? []).map((s: { id: string }) => s.id);
+      if (ids.length === 0) {
+        setPendingRequestCount(0);
+        return;
+      }
+      const { count } = await supabase
+        .from('purchase_requests')
+        .select('id', { count: 'exact', head: true })
+        .in('listing_id', ids)
+        .eq('status', 'pending');
+      if (active) setPendingRequestCount(count ?? 0);
+    })();
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id, pathname]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -63,7 +98,7 @@ export function Navbar() {
               <div className="relative">
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
-                  className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-gray-950"
+                  className="relative flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-gray-950"
                 >
                   {user.user_metadata?.avatar_url ? (
                     <Image
@@ -78,17 +113,46 @@ export function Navbar() {
                       {(user.user_metadata?.full_name ?? user.email ?? 'U')[0].toUpperCase()}
                     </div>
                   )}
+                  {/* Avatar dot — signals pending requests at a glance */}
+                  {pendingRequestCount > 0 && (
+                    <span
+                      aria-label={`${pendingRequestCount} pending purchase requests`}
+                      className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-sky-500 border-2 border-gray-950"
+                    />
+                  )}
                 </button>
                 {menuOpen && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                    <div className="absolute right-0 z-20 mt-2 w-52 rounded-xl border border-gray-700 bg-gray-900 py-1 shadow-xl shadow-black/50">
+                    <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-gray-700 bg-gray-900 py-1 shadow-xl shadow-black/50">
                       <div className="px-4 py-2 border-b border-gray-800 mb-1">
                         <p className="text-xs text-gray-500 truncate">{user.email}</p>
                       </div>
-                      <Link href="/profile" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-gray-100">
+                      <Link
+                        href="/profile"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-gray-100"
+                      >
                         My Profile
                       </Link>
+                      {/* Purchase Requests — only when there are pending ones */}
+                      {pendingRequestCount > 0 && (
+                        <Link
+                          href="/profile?tab=purchases"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center justify-between gap-2 px-4 py-2 text-sm text-gray-200 hover:bg-gray-800"
+                        >
+                          <span className="flex items-center gap-2">
+                            <svg className="h-3.5 w-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            Purchase Requests
+                          </span>
+                          <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold leading-none tabular-nums bg-sky-500 text-white">
+                            {pendingRequestCount}
+                          </span>
+                        </Link>
+                      )}
                       {profile?.is_admin && (
                         <Link href="/admin" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-amber-400 hover:bg-gray-800">
                           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

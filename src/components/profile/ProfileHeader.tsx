@@ -13,14 +13,15 @@ interface ProfileHeaderProps {
 
 export function ProfileHeader({ profile, listingCount, wishlistCount }: ProfileHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+    // Center on mobile, left-align from sm+
+    <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left gap-5">
       {profile.avatar_url ? (
         <Image
           src={profile.avatar_url}
           alt={profile.display_name}
           width={80}
           height={80}
-          className="rounded-full border-4 border-gray-800"
+          className="rounded-full border-4 border-gray-800 shrink-0"
         />
       ) : (
         <div className="h-20 w-20 rounded-full bg-teal-600 flex items-center justify-center text-white text-3xl font-bold shrink-0">
@@ -28,7 +29,7 @@ export function ProfileHeader({ profile, listingCount, wishlistCount }: ProfileH
         </div>
       )}
 
-      <div className="text-center sm:text-left">
+      <div className="w-full sm:w-auto">
         <h1 className="text-2xl font-bold text-gray-100 inline-flex items-center gap-2 flex-wrap justify-center sm:justify-start">
           {profile.display_name}
           {profile.is_verified && <VerifiedBadge size="lg" />}

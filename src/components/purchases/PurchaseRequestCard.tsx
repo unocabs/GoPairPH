@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { formatRelativeDate, formatPrice } from '@/lib/utils';
-import type { PurchaseRequest, PurchaseRequestStatus } from '@/types';
+import { formatRelativeDate, formatPrice, getPublicUrl } from '@/lib/utils';
+import type { PurchaseRequest, PurchaseRequestStatus, Shoe } from '@/types';
 
 interface PurchaseRequestCardProps {
   request: PurchaseRequest;
@@ -12,23 +13,40 @@ interface PurchaseRequestCardProps {
   listingPrice: string;
   listingId: string;
   listingStatus?: string;
+  /** Optional listing — used to render a thumbnail. Pulled from req.listing if omitted. */
+  listing?: Shoe;
   onChanged: (id: string) => void;
 }
 
-export function PurchaseRequestCard({ request, listingName, listingPrice, listingId, listingStatus, onChanged }: PurchaseRequestCardProps) {
+export function PurchaseRequestCard({
+  request,
+  listingName,
+  listingPrice,
+  listingId,
+  listingStatus,
+  listing,
+  onChanged,
+}: PurchaseRequestCardProps) {
   const [status, setStatus] = useState<PurchaseRequestStatus>(request.status);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Resolve a thumbnail from whichever listing reference we have.
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const resolvedListing = listing ?? (request.listing as Shoe | undefined);
+  const topImg =
+    resolvedListing?.shoe_images?.find(i => i.view_type === 'top') ??
+    resolvedListing?.shoe_images?.[0];
+  const thumbUrl = topImg && supabaseUrl ? getPublicUrl(supabaseUrl, topImg.storage_path) : null;
+
   async function handleAccept() {
-    if (!confirm(`Accept this purchase request? Your listing will be reserved for this buyer until you mark it sold.`)) return;
+    if (!confirm('Accept this purchase request? Your listing will be reserved for this buyer until you mark it sold.')) return;
     setLoading(true);
     setError(null);
     const { error: err } = await createClient().rpc('accept_purchase_request', { p_request_id: request.id });
     if (err) { setError(err.message); setLoading(false); return; }
     setStatus('accepted');
     setLoading(false);
-    // Do NOT call onChanged here — card stays visible until Complete Sale
   }
 
   async function handleDecline() {
@@ -64,12 +82,33 @@ export function PurchaseRequestCard({ request, listingName, listingPrice, listin
 
   return (
     <div className="rounded-xl border border-gray-800 bg-gray-900 p-4 space-y-3">
-      <p className="text-xs text-gray-500">
-        Purchase request for:{' '}
-        <Link href={`/listings/${listingId}`} className="font-medium text-gray-300 hover:text-teal-400">
-          {listingName}
-        </Link>
-      </p>
+      {/* Top: thumbnail + listing name */}
+      <Link href={`/listings/${listingId}`} className="flex items-center gap-3 group">
+        <div className="relative h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-gray-800 border border-gray-700">
+          {thumbUrl ? (
+            <Image
+              src={thumbUrl}
+              alt={listingName}
+              fill
+              sizes="56px"
+              className="object-cover"
+            />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center text-gray-600">
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] uppercase tracking-wide text-gray-500">Purchase request</p>
+          <p className="text-sm font-semibold text-gray-100 group-hover:text-teal-400 transition-colors line-clamp-2 leading-tight">
+            {listingName}
+          </p>
+        </div>
+      </Link>
+
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
           <p className="text-xs text-gray-500">Listed</p>
@@ -83,9 +122,11 @@ export function PurchaseRequestCard({ request, listingName, listingPrice, listin
         )}
         <span className="text-xs text-gray-500 self-end">{formatRelativeDate(request.created_at)}</span>
       </div>
+
       {request.message && (
         <p className="text-sm text-gray-400 italic border-l-2 border-gray-700 pl-3">&quot;{request.message}&quot;</p>
       )}
+
       <div className="flex items-center gap-1.5 flex-wrap text-xs text-gray-500">
         <span>From</span>
         <Link href={`/profile/${request.buyer_id}`} className="text-teal-400 hover:text-teal-300">

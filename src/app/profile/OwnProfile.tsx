@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/Button';
 import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest } from '@/types';
 import Link from 'next/link';
 
-type ProfileTab = 'listings' | 'purchases' | 'sales' | 'wishlist';
+type ProfileTab = 'listings' | 'purchases' | 'wishlist' | 'sales';
 
 interface OwnProfileProps {
   profile: Profile;
@@ -48,12 +48,22 @@ export function OwnProfile({
     setPurchaseRequests(prev => prev.filter(r => r.id !== id));
   }
 
+  // Tabs config — Wishlist now sits before Purchase History.
+  // Each tab gets a uniform numeric badge instead of inline parens.
+  const tabs: ReadonlyArray<{ key: ProfileTab; label: string; count: number; badgeTone?: 'default' | 'attention' }> = [
+    { key: 'listings', label: 'My Listings', count: shoes.length },
+    { key: 'purchases', label: 'Purchase Requests', count: purchaseRequests.length, badgeTone: 'attention' },
+    { key: 'wishlist', label: 'Wishlist', count: wishlist.length },
+    { key: 'sales', label: 'Purchase History', count: purchaseHistory.length },
+  ];
+
   return (
     <div>
-      <div className="flex flex-col sm:flex-row items-start gap-6 mb-8">
-        <div className="flex-1">
+      {/* Profile header — stacks centered on mobile, row on sm+ */}
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 mb-8">
+        <div className="flex-1 w-full">
           <ProfileHeader profile={profile} listingCount={shoes.length} wishlistCount={wishlist.length} />
-          <div className="mt-3">
+          <div className="mt-3 flex justify-center sm:justify-start">
             <RequestVerificationButton
               profileId={profile.id}
               isVerified={profile.is_verified}
@@ -61,34 +71,42 @@ export function OwnProfile({
             />
           </div>
         </div>
-        <Button variant="outline" onClick={() => setEditOpen(true)}>Edit Profile</Button>
+        {/* Edit Profile sits below the centered block on mobile, to the right on sm+ */}
+        <div className="w-full sm:w-auto flex justify-center sm:block">
+          <Button variant="outline" onClick={() => setEditOpen(true)}>Edit Profile</Button>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-800 mb-6">
-        {(
-          [
-            { key: 'listings', label: `My Listings (${shoes.length})`, count: undefined as number | undefined },
-            { key: 'purchases', label: `Purchase Requests`, count: purchaseRequests.length as number | undefined },
-            { key: 'sales', label: `Purchase History (${purchaseHistory.length})`, count: undefined as number | undefined },
-            { key: 'wishlist', label: `Wishlist (${wishlist.length})`, count: undefined as number | undefined },
-          ] as const
-        ).map(({ key, label, count }) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              tab === key ? 'border-teal-500 text-teal-400' : 'border-transparent text-gray-500 hover:text-gray-300'
-            }`}
-          >
-            {label}
-            {count != null && count > 0 && (
-              <span className="rounded-full bg-sky-500 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">
-                {count}
-              </span>
-            )}
-          </button>
-        ))}
+      {/* Tabs — horizontal scroll on mobile so 4 fit comfortably */}
+      <div className="-mx-4 sm:mx-0 overflow-x-auto border-b border-gray-800 mb-6">
+        <div className="flex gap-1 px-4 sm:px-0 min-w-max sm:min-w-0">
+          {tabs.map(({ key, label, count, badgeTone }) => {
+            const active = tab === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={`flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  active ? 'border-teal-500 text-teal-400' : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                <span>{label}</span>
+                <span
+                  className={[
+                    'inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold leading-none tabular-nums',
+                    badgeTone === 'attention' && count > 0
+                      ? 'bg-sky-500 text-white'
+                      : active
+                        ? 'bg-teal-500/15 text-teal-300'
+                        : 'bg-gray-800 text-gray-400',
+                  ].join(' ')}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {tab === 'listings' && (
@@ -114,37 +132,21 @@ export function OwnProfile({
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {purchaseRequests.map(req => {
-                const listing = shoes.find(s => s.id === req.listing_id);
+                const listing = shoes.find(s => s.id === req.listing_id) ?? (req.listing as Shoe | undefined);
+                const listingName = listing ? `${listing.brand} ${listing.model}` : 'Your listing';
                 return (
                   <PurchaseRequestCard
                     key={req.id}
                     request={req}
+                    listing={listing}
                     listingId={req.listing_id}
-                    listingName={listing ? `${listing.brand} ${listing.model}` : req.listing ? `${(req.listing as { brand: string; model: string }).brand} ${(req.listing as { brand: string; model: string }).model}` : 'Your listing'}
-                    listingPrice={listing?.price_php ? formatPrice(listing.price_php) : req.listing?.price_php ? formatPrice(req.listing.price_php) : ''}
+                    listingName={listingName}
+                    listingPrice={listing?.price_php ? formatPrice(listing.price_php) : ''}
                     listingStatus={req.listing?.status}
                     onChanged={handlePurchaseRequestChanged}
                   />
                 );
               })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === 'sales' && (
-        <div>
-          <p className="text-sm text-gray-500 mb-4">Items you&apos;ve bought or sold</p>
-          {purchaseHistory.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
-              <span className="text-4xl opacity-50">💰</span>
-              <p className="mt-3 text-gray-500">No completed purchases yet.</p>
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {purchaseHistory.map(req => (
-                <PurchaseHistoryCard key={req.id} request={req} currentProfileId={profile.id} />
-              ))}
             </div>
           )}
         </div>
@@ -164,6 +166,24 @@ export function OwnProfile({
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {wishlist.map(item => (
                 <WishlistCard key={item.id} item={item} isOwner currentProfileId={profile.id} onDeleted={handleWishlistDeleted} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'sales' && (
+        <div>
+          <p className="text-sm text-gray-500 mb-4">Items you&apos;ve bought or sold</p>
+          {purchaseHistory.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
+              <span className="text-4xl opacity-50">💰</span>
+              <p className="mt-3 text-gray-500">No completed purchases yet.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {purchaseHistory.map(req => (
+                <PurchaseHistoryCard key={req.id} request={req} currentProfileId={profile.id} />
               ))}
             </div>
           )}
