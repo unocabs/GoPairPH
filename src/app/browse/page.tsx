@@ -1,5 +1,7 @@
 export const dynamic = 'force-dynamic';
 
+import Link from 'next/link';
+import { Button } from '@/components/ui/Button';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
@@ -88,32 +90,60 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-bold text-gray-100 mb-6">Browse Listings</h1>
+      <h1 className="mb-6 text-2xl font-bold text-gray-100">
+        Browse Listings
+      </h1>
 
       <SearchBar defaultValue={searchParams.q} />
 
-      <div className="flex flex-col gap-6 lg:flex-row">
-  {/* Listings first on mobile, right side on desktop */}
-  <div className="order-1 lg:order-2 flex-1 min-w-0">
-    <p className="text-sm text-gray-500 mb-4">
-      {shoes.length} listing{shoes.length !== 1 ? 's' : ''} found
-    </p>
+      <div className="flex flex-col gap-6">
+        {/* Filter + Listings row */}
+        <div className="flex flex-col gap-6 lg:flex-row">
+          {/* Listings — first on mobile, right side on desktop */}
+          <div className="order-1 lg:order-2 flex-1 min-w-0">
+            <p className="mb-4 text-sm text-gray-500">
+              {shoes.length} listing{shoes.length !== 1 ? "s" : ""} found
+            </p>
 
-    <ListingGrid
-      shoes={shoes}
-      currentProfileId={userContext?.profileId}
-      myRequestListingIds={userContext?.requestListingIds}
-      emptyMessage="No listings match your filters. Try adjusting them."
-    />
-  </div>
+            <ListingGrid
+              shoes={shoes}
+              currentProfileId={userContext?.profileId}
+              myRequestListingIds={userContext?.requestListingIds}
+              emptyMessage="No listings match your filters. Try adjusting them."
+            />
+          </div>
 
-  {/* Filter below on mobile, left side on desktop */}
-  <div className="order-2 lg:order-1">
-    <Suspense>
-      <FilterPanel />
-    </Suspense>
-  </div>
-</div>
+          {/* Filter Panel — second on mobile, left sidebar on desktop */}
+          <div className="order-2 lg:order-1 lg:w-80">
+            <Suspense>
+              <FilterPanel />
+            </Suspense>
+          </div>
+        </div>
+
+        {/* Wishlist CTA — full width below on desktop, last on mobile */}
+        <section className="w-full">
+          <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-6 text-center">
+            <h3 className="text-lg font-bold text-gray-100">
+              Can&apos;t find the right pair?
+            </h3>
+
+            <p className="mt-2 text-sm text-gray-400">
+              Post a wishlist item and let other runners know what
+              you&apos;re looking for.
+            </p>
+
+            <Link
+              href="/wishlist/new"
+              className="mt-4 inline-block w-full"
+            >
+              <Button className="w-full sm:w-auto">
+                Post a Wishlist Item
+              </Button>
+            </Link>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
