@@ -39,6 +39,7 @@ export default function AboutPage() {
         <h2 className="text-xl font-semibold text-gray-100">How it works</h2>
         <ul className="list-disc list-inside space-y-1.5 text-gray-300">
           <li>Sign in with your Google account.</li>
+          <li>Go to your Profile and add your Facebook username.</li>
           <li>List a pair (with photos, size, mileage, and condition) for sale or donation.</li>
           <li>
             Browse listings from other runners in Pampanga, send a purchase request, and

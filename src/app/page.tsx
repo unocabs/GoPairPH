@@ -92,7 +92,7 @@ export default async function HomePage() {
             {[
               { icon: '💰', label: 'For Sale', desc: 'Find a deal on gently-used running shoes' },
               { icon: '🎁', label: 'Donate', desc: 'Give your shoes a second life for free' },
-              { icon: '📍', label: 'Local Only', desc: 'Pampanguenos buying from Pampanguenos' },
+              { icon: '📍', label: 'Local Only', desc: 'Kapampangan buying from Kapampangan' },
             ].map(f => (
               <div key={f.label} className="text-center p-4">
                 <div className="text-3xl mb-2">{f.icon}</div>
