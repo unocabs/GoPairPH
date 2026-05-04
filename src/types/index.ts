@@ -59,6 +59,7 @@ export interface Shoe {
   updated_at: string;
   profiles?: Profile;
   shoe_images?: ShoeImage[];
+  is_featured: false
 }
 
 export type PurchaseRequestStatus = 'pending' | 'accepted' | 'declined' | 'completed';

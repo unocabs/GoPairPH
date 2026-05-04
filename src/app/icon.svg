@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="8" fill="#0d9488"/>
-  <path d="M14 6 C5 6 4 11 4 16 C4 21 5 26 14 26 V18 H8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M17 26 V6 H21 C29 6 29 22 21 22 H17" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <path d="M 6 8 H 46 L 60 32 L 46 56 H 6 L 20 32 Z" fill="#0d9488"></path>
+  <path d="M 12 14 H 40" stroke="#2dd4bf" stroke-width="1.5" opacity="0.6"></path>
+  <text x="30" y="42" text-anchor="middle" font-family="Helvetica Neue, Arial Black, sans-serif" font-weight="900" font-style="italic" font-size="24" fill="#ffffff" letter-spacing="-1">GP</text>
 </svg>

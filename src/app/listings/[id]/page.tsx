@@ -15,6 +15,7 @@ import Image from 'next/image';
 import { StatusButton } from './StatusButton';
 import { DeleteListingButton } from './DeleteListingButton';
 import { CompleteSaleButtons } from './CompleteSaleButtons';
+import { FeatureToggleButton } from './FeatureToggleButton';
 import { BuyButton } from '@/components/purchases/BuyButton';
 import { DonateRequestButton } from '@/components/purchases/DonateRequestButton';
 import { ContactSellerButtons } from '@/components/listings/ContactSellerButtons';
@@ -66,12 +67,17 @@ async function getShoe(id: string): Promise<Shoe | null> {
   return data as Shoe | null;
 }
 
-async function getCurrentProfileId(): Promise<string | null> {
+async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data } = await supabase.from('profiles').select('id').eq('user_id', user.id).single();
-  return data?.id ?? null;
+  const { data } = await supabase
+    .from('profiles')
+    .select('id, is_admin')
+    .eq('user_id', user.id)
+    .single();
+  if (!data) return null;
+  return { id: data.id, isAdmin: !!data.is_admin };
 }
 
 type PurchaseContext =
@@ -118,13 +124,15 @@ async function getPurchaseContext(shoeId: string, profileId: string | null, isOw
 }
 
 export default async function ListingDetailPage({ params }: { params: { id: string } }) {
-  const [shoe, currentProfileId] = await Promise.all([
+  const [shoe, currentProfile] = await Promise.all([
     getShoe(params.id),
-    getCurrentProfileId(),
+    getCurrentProfile(),
   ]);
 
   if (!shoe) notFound();
 
+  const currentProfileId = currentProfile?.id ?? null;
+  const isAdmin = currentProfile?.isAdmin ?? false;
   const isOwner = currentProfileId === shoe.seller_id;
   const seller = shoe.profiles;
   const purchaseContext = await getPurchaseContext(shoe.id, currentProfileId, isOwner, shoe.status);
@@ -150,6 +158,11 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             </Badge>
             {shoe.status !== 'active' && (
               <Badge className="bg-gray-800 text-gray-400 border border-gray-700 capitalize">{shoe.status}</Badge>
+            )}
+            {shoe.is_featured && (
+              <Badge className="bg-teal-500/15 text-teal-300 border border-teal-500/40">
+                ★ Featured
+              </Badge>
             )}
           </div>
 
@@ -346,6 +359,23 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               {/* StatusButton returns null for reserved (handled by CompleteSaleButtons above) */}
               <StatusButton shoeId={shoe.id} currentStatus={shoe.status} listingType={shoe.listing_type} />
               <DeleteListingButton shoeId={shoe.id} />
+            </div>
+          )}
+
+          {/* Admin-only: feature toggle */}
+          {isAdmin && (
+            <div className="mt-6 rounded-xl border border-dashed border-teal-500/30 bg-teal-500/[0.03] p-4">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-teal-400 font-semibold mb-2">
+                Admin controls
+              </p>
+              <FeatureToggleButton
+                shoeId={shoe.id}
+                isFeatured={!!shoe.is_featured}
+                status={shoe.status}
+              />
+              <p className="mt-2 text-[11px] text-gray-500">
+                Only one listing can be featured at a time. Featuring this one will replace the current pick.
+              </p>
             </div>
           )}
         </div>

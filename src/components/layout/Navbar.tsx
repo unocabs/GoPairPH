@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
-import { Logo } from './Logo';
+import { Logo } from '@/components/brand/Logo';
 
 export function Navbar() {
   const { user, profile, loading } = useSession();
