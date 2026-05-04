@@ -77,6 +77,9 @@ export const metadata: Metadata = {
   },
   icons: { icon: '/icon.svg' },
   category: 'marketplace',
+  verification: {
+    google: 'QHkPELcZgx22-fYojuvxkycrjlQo4VyCDPPKfqY19ZU',
+  },
 };
 
 export const viewport: Viewport = {
