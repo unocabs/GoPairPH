@@ -93,21 +93,27 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
       <SearchBar defaultValue={searchParams.q} />
 
       <div className="flex flex-col gap-6 lg:flex-row">
-        <Suspense>
-          <FilterPanel />
-        </Suspense>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-gray-500 mb-4">
-            {shoes.length} listing{shoes.length !== 1 ? 's' : ''} found
-          </p>
-          <ListingGrid
-            shoes={shoes}
-            currentProfileId={userContext?.profileId}
-            myRequestListingIds={userContext?.requestListingIds}
-            emptyMessage="No listings match your filters. Try adjusting them."
-          />
-        </div>
-      </div>
+  {/* Listings first on mobile, right side on desktop */}
+  <div className="order-1 lg:order-2 flex-1 min-w-0">
+    <p className="text-sm text-gray-500 mb-4">
+      {shoes.length} listing{shoes.length !== 1 ? 's' : ''} found
+    </p>
+
+    <ListingGrid
+      shoes={shoes}
+      currentProfileId={userContext?.profileId}
+      myRequestListingIds={userContext?.requestListingIds}
+      emptyMessage="No listings match your filters. Try adjusting them."
+    />
+  </div>
+
+  {/* Filter below on mobile, left side on desktop */}
+  <div className="order-2 lg:order-1">
+    <Suspense>
+      <FilterPanel />
+    </Suspense>
+  </div>
+</div>
     </div>
   );
 }
