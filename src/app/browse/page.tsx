@@ -114,7 +114,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
           </div>
 
           {/* Filter Panel — second on mobile, left sidebar on desktop */}
-          <div className="order-2 lg:order-1 lg:w-80">
+          <div className="order-2 lg:order-1 lg:shrink-0 lg:w-fit">
             <Suspense>
               <FilterPanel />
             </Suspense>
