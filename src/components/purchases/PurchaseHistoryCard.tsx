@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { getPublicUrl, formatPrice, formatRelativeDate, formatSize } from '@/lib/utils';
+import { getPublicUrl, formatPrice, formatRelativeDate, formatSize, formatListingName } from '@/lib/utils';
 import type { PurchaseRequest } from '@/types';
 
 interface PurchaseHistoryCardProps {
@@ -52,7 +52,7 @@ export function PurchaseHistoryCard({ request, currentProfileId }: PurchaseHisto
           {shoe ? (
             <Link href={`/listings/${shoe.id}`}>
               <p className="text-sm font-semibold text-gray-200 truncate hover:text-teal-400 transition-colors">
-                {shoe.brand} {shoe.model}
+                {formatListingName(shoe.brand, shoe.model)}
               </p>
               <p className="text-xs text-gray-500">{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}</p>
             </Link>

@@ -4,11 +4,12 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
+import { getOfferCount } from '@/lib/offers';
 import { PhotoGallery } from '@/components/listings/PhotoGallery';
 import { ListingTypeBadge } from '@/components/listings/ListingTypeBadge';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
-import { formatPrice, formatSize, formatRelativeDate, getPublicUrl } from '@/lib/utils';
+import { formatPrice, formatSize, formatRelativeDate, getPublicUrl, formatListingName } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import type { Shoe, PurchaseRequest } from '@/types';
 import Image from 'next/image';
@@ -34,8 +35,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       ? formatPrice(shoe.price_php) + (shoe.is_negotiable ? ' (Negotiable)' : '')
       : 'Free Donation';
 
-  const title = `${shoe.brand} ${shoe.model} — ${priceLabel}`;
-  const description = `${CONDITIONS[shoe.condition]} ${shoe.brand} ${shoe.model} in ${shoe.color}, size ${formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}${shoe.mileage_km != null ? `, ${shoe.mileage_km}km` : ''}. Listed on Next Pair PH.`;
+  const listingName = formatListingName(shoe.brand, shoe.model);
+  const title = `${listingName} — ${priceLabel}`;
+  const description = `${CONDITIONS[shoe.condition]} ${listingName} in ${shoe.color}, size ${formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}${shoe.mileage_km != null ? `, ${shoe.mileage_km}km` : ''}. Listed on Next Pair PH.`;
 
   return {
     title,
@@ -46,7 +48,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       title,
       description,
       url: `/listings/${shoe.id}`,
-      images: [{ url: imageUrl, alt: `${shoe.brand} ${shoe.model}` }],
+      images: [{ url: imageUrl, alt: formatListingName(shoe.brand, shoe.model) }],
     },
     twitter: {
       card: 'summary_large_image',
@@ -129,6 +131,8 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
     getCurrentProfile(),
   ]);
 
+  const offerCount = await getOfferCount(params.id);
+
   if (!shoe) notFound();
 
   const currentProfileId = currentProfile?.id ?? null;
@@ -166,7 +170,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             )}
           </div>
 
-          <h1 className="text-3xl font-bold text-gray-100">{shoe.brand} {shoe.model}</h1>
+          <h1 className="text-3xl font-bold text-gray-100">{formatListingName(shoe.brand, shoe.model)}</h1>
           <p className="text-gray-500 mt-1">{shoe.color}</p>
 
           {/* Price / Donate */}
@@ -189,24 +193,12 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             )}
           </div>
 
-          {/* Mileage warning */}
-          {shoe.mileage_km == null && (
-            <div className="mt-4 flex gap-2.5 rounded-lg border border-yellow-800 bg-yellow-950 px-4 py-3">
-              <svg className="h-4 w-4 shrink-0 text-yellow-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-              </svg>
-              <p className="text-xs text-yellow-400">
-                <strong className="font-semibold">Mileage not provided.</strong> Ask the seller how many kilometers have been run on these shoes before buying.
-              </p>
-            </div>
-          )}
-
           {/* Specs */}
           <dl className="mt-6 grid grid-cols-2 gap-3 rounded-xl border border-gray-800 bg-gray-900 p-4">
             {[
               { label: 'Size', value: formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm) },
               { label: 'Mileage', value: shoe.mileage_km != null ? `${shoe.mileage_km.toLocaleString()} km` : 'Not provided' },
-              { label: 'Brand', value: shoe.brand },
+              { label: 'Brand', value: shoe.brand === 'Other' ? shoe.model : shoe.brand },
               { label: 'Model', value: shoe.model },
               { label: 'Color', value: shoe.color },
               { label: 'Listed', value: formatRelativeDate(shoe.created_at) },
@@ -323,12 +315,13 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && (
             <BuyButton
               listingId={shoe.id}
-              listingName={`${shoe.brand} ${shoe.model}`}
+              listingName={formatListingName(shoe.brand, shoe.model)}
               buyerId={currentProfileId}
               priceFormatted={formatPrice(shoe.price_php)}
               pricePhp={shoe.price_php}
               isNegotiable={shoe.is_negotiable}
               seller={seller ?? undefined}
+              offerCount={offerCount}
             />
           )}
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && !currentProfileId && (
@@ -338,7 +331,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
           {shoe.listing_type === 'donate' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && (
             <DonateRequestButton
               listingId={shoe.id}
-              listingName={`${shoe.brand} ${shoe.model}`}
+              listingName={formatListingName(shoe.brand, shoe.model)}
               requesterId={currentProfileId}
             />
           )}

@@ -45,6 +45,8 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
   });
 
   const listingType = watch('listing_type');
+  const condition = watch('condition');
+  const isNew = condition === 'new';
 
   function handleSizeEuChange(val: string) {
     const num = parseFloat(val);
@@ -75,7 +77,7 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
         .from('shoes')
         .update({
           brand: data.brand, model: data.model, color: data.color,
-          condition: data.condition, mileage_km: data.mileage_km,
+          condition: data.condition, mileage_km: data.condition === 'new' ? 0 : (data.mileage_km ?? null),
           listing_type: data.listing_type,
           price_php: data.listing_type === 'for_sale' ? data.price_php : null,
           is_negotiable: data.listing_type === 'for_sale' ? !!data.is_negotiable : false,
@@ -106,7 +108,14 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
         <Input label="Color" required error={errors.color?.message} {...register('color')} />
         <Select label="Condition" required options={CONDITION_OPTIONS} error={errors.condition?.message} {...register('condition')} />
       </div>
-      <Input label="Mileage (km)" type="number" min={0} placeholder="e.g. 350" error={errors.mileage_km?.message} {...register('mileage_km')} />
+      {isNew ? (
+        <div className="rounded-lg border border-gray-800 bg-gray-800/50 px-4 py-3">
+          <p className="text-sm font-medium text-gray-400">Mileage (km)</p>
+          <p className="text-sm text-gray-500 mt-0.5">Automatically set to <span className="text-gray-300 font-medium">0 km</span> for new shoes.</p>
+        </div>
+      ) : (
+        <Input label="Mileage (km)" type="number" min={0} placeholder="e.g. 350" hint="Optional — leave blank if unknown." error={errors.mileage_km?.message} {...register('mileage_km')} />
+      )}
       <div className="grid grid-cols-3 gap-3">
         <Input label="EU" type="number" step={0.5} error={errors.size_eu?.message}
           {...register('size_eu', { onChange: e => handleSizeEuChange(e.target.value) })} />

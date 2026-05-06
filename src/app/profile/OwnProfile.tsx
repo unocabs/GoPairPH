@@ -8,7 +8,7 @@ import { WishlistCard } from '@/components/wishlist/WishlistCard';
 import { PurchaseRequestCard } from '@/components/purchases/PurchaseRequestCard';
 import { PurchaseHistoryCard } from '@/components/purchases/PurchaseHistoryCard';
 import { RequestVerificationButton } from '@/components/profile/RequestVerificationButton';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, formatListingName } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest } from '@/types';
 import Link from 'next/link';
@@ -62,12 +62,13 @@ export function OwnProfile({
       {/* Profile header — stacks centered on mobile, row on sm+ */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 mb-8">
         <div className="flex-1 w-full">
-          <ProfileHeader profile={profile} listingCount={shoes.length} wishlistCount={wishlist.length} />
+          <ProfileHeader profile={profile} listingCount={shoes.length} wishlistCount={wishlist.length} isOwnProfile />
           <div className="mt-3 flex justify-center sm:justify-start">
             <RequestVerificationButton
               profileId={profile.id}
               isVerified={profile.is_verified}
               existingRequest={latestVerification}
+              hasFbUsername={!!profile.fb_username}
             />
           </div>
         </div>
@@ -133,7 +134,7 @@ export function OwnProfile({
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {purchaseRequests.map(req => {
                 const listing = shoes.find(s => s.id === req.listing_id) ?? (req.listing as Shoe | undefined);
-                const listingName = listing ? `${listing.brand} ${listing.model}` : 'Your listing';
+                const listingName = listing ? formatListingName(listing.brand, listing.model) : 'Your listing';
                 return (
                   <PurchaseRequestCard
                     key={req.id}

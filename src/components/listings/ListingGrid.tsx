@@ -6,9 +6,10 @@ interface ListingGridProps {
   emptyMessage?: string;
   currentProfileId?: string;
   myRequestListingIds?: Set<string>;
+  offerCounts?: Record<string, number>;
 }
 
-export function ListingGrid({ shoes, emptyMessage = 'No listings found.', currentProfileId, myRequestListingIds }: ListingGridProps) {
+export function ListingGrid({ shoes, emptyMessage = 'No listings found.', currentProfileId, myRequestListingIds, offerCounts }: ListingGridProps) {
   if (shoes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
@@ -26,6 +27,7 @@ export function ListingGrid({ shoes, emptyMessage = 'No listings found.', curren
           shoe={shoe}
           currentProfileId={currentProfileId}
           hasExistingRequest={myRequestListingIds?.has(shoe.id) ?? false}
+          offerCount={offerCounts?.[shoe.id] ?? 0}
         />
       ))}
     </div>

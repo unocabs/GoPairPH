@@ -35,6 +35,10 @@ export function getPublicUrl(supabaseUrl: string, storagePath: string): string {
   return `${supabaseUrl}/storage/v1/object/public/shoe-images/${storagePath}`;
 }
 
+export function formatListingName(brand: string, model: string): string {
+  return brand === 'Other' ? model : `${brand} ${model}`;
+}
+
 export function formatRelativeDate(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();

@@ -12,9 +12,10 @@ interface BuyButtonProps {
   pricePhp: number;
   isNegotiable: boolean;
   seller?: Profile;
+  offerCount?: number;
 }
 
-export function BuyButton({ listingId, listingName, buyerId, priceFormatted, pricePhp, isNegotiable, seller }: BuyButtonProps) {
+export function BuyButton({ listingId, listingName, buyerId, priceFormatted, pricePhp, isNegotiable, seller, offerCount = 0 }: BuyButtonProps) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -34,6 +35,16 @@ export function BuyButton({ listingId, listingName, buyerId, priceFormatted, pri
       >
         Request to Buy
       </button>
+      <p className="mt-2 text-xs text-center">
+        {offerCount === 0 ? (
+          <span></span>
+        ) : (
+          <>
+            <span className="text-teal-400 font-semibold">{offerCount}</span>
+            <span className="text-gray-500"> offer{offerCount === 1 ? '' : 's'} so far{offerCount >= 10 ? ' 🔥' : ''}</span>
+          </>
+        )}
+      </p>
       {open && (
         <BuyModal
           listingId={listingId}

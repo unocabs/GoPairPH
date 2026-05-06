@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
+import { getOfferCounts } from '@/lib/offers';
 import { ListingGrid } from '@/components/listings/ListingGrid';
 import { FilterPanel } from '@/components/listings/FilterPanel';
 import type { Shoe } from '@/types';
@@ -87,6 +88,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
     getListings(searchParams),
     getCurrentProfileAndRequests(),
   ]);
+  const offerCounts = await getOfferCounts(shoes.map(s => s.id));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -109,6 +111,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
               shoes={shoes}
               currentProfileId={userContext?.profileId}
               myRequestListingIds={userContext?.requestListingIds}
+              offerCounts={offerCounts}
               emptyMessage="No listings match your filters. Try adjusting them."
             />
           </div>

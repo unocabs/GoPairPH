@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Shoe } from '@/types';
 import { CONDITIONS } from '@/lib/constants';
-import { formatPrice, formatSize, getPublicUrl } from '@/lib/utils';
+import { formatPrice, formatSize, getPublicUrl, formatListingName } from '@/lib/utils';
 
 interface FeaturedListingProps {
   shoe: Shoe;
@@ -25,7 +25,7 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
         {imageUrl ? (
           <Image
             src={imageUrl}
-            alt={`${shoe.brand} ${shoe.model}`}
+            alt={formatListingName(shoe.brand, shoe.model)}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-105"
             sizes="500px"
@@ -88,9 +88,11 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
           Featured Listing
         </div>
         <h2 className="text-5xl font-black text-white leading-[0.95] tracking-tight drop-shadow-2xl">
-          {shoe.brand}
-          <br />
-          <span className="text-teal-300">{shoe.model}</span>
+          {shoe.brand === 'Other' ? (
+            <span className="text-teal-300">{shoe.model}</span>
+          ) : (
+            <>{shoe.brand}<br /><span className="text-teal-300">{shoe.model}</span></>
+          )}
         </h2>
       </div>
 

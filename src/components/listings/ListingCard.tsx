@@ -8,7 +8,7 @@ import { type Shoe } from '@/types';
 import { ListingTypeBadge } from './ListingTypeBadge';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
-import { formatPrice, formatSize, getPublicUrl, formatRelativeDate } from '@/lib/utils';
+import { formatPrice, formatSize, getPublicUrl, formatRelativeDate, formatListingName } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { BuyModal } from '@/components/purchases/BuyModal';
 import { DonateRequestModal } from '@/components/purchases/DonateRequestModal';
@@ -17,9 +17,10 @@ interface ListingCardProps {
   shoe: Shoe;
   currentProfileId?: string;
   hasExistingRequest?: boolean;
+  offerCount?: number;
 }
 
-export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false }: ListingCardProps) {
+export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false, offerCount = 0 }: ListingCardProps) {
   const [buyOpen, setBuyOpen] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -45,7 +46,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
           {imageUrl ? (
             <Image
               src={imageUrl}
-              alt={`${shoe.brand} ${shoe.model}`}
+              alt={formatListingName(shoe.brand, shoe.model)}
               fill
               className="object-cover transition-transform group-hover:scale-105"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -70,6 +71,17 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
               </span>
             </div>
           )}
+          {offerCount > 0 && shoe.status === 'active' && (
+            <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 px-2.5 py-1">
+              <span className="relative flex h-1.5 w-1.5 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-teal-400" />
+              </span>
+              <span className="text-[10px] font-medium text-white leading-none">
+                {offerCount === 1 ? '1 offer' : `${offerCount} offers`}{offerCount >= 10 ? ' 🔥' : ''}
+              </span>
+            </div>
+          )}
           {shoe.status !== 'active' && (
             <div className={`absolute inset-0 flex items-center justify-center ${
               shoe.status === 'reserved' ? 'bg-orange-500/30' : 'bg-gray-900/30'
@@ -88,7 +100,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
 
         {/* Details */}
         <div className="p-3">
-          <h3 className="font-semibold text-gray-100 truncate text-sm">{shoe.brand} {shoe.model}</h3>
+          <h3 className="font-semibold text-gray-100 truncate text-sm">{formatListingName(shoe.brand, shoe.model)}</h3>
           <p className="text-xs text-gray-500 mt-0.5">{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}</p>
 
           <div className="mt-2 flex items-center justify-between">
@@ -97,18 +109,28 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
             </Badge>
             {shoe.mileage_km != null
               ? <span className="text-xs text-gray-600">{shoe.mileage_km.toLocaleString()} km</span>
-              : <span className="text-xs text-yellow-600">No mileage</span>
+              : <span className="text-xs text-gray-600">Not provided</span>
             }
           </div>
 
           {shoe.listing_type === 'for_sale' && shoe.price_php && (
-            <p className="mt-2 font-bold text-teal-400">{formatPrice(shoe.price_php)}</p>
+            <div className="mt-2 flex items-baseline justify-between gap-2">
+              <p className="font-bold text-teal-400 shrink-0">{formatPrice(shoe.price_php)}</p>
+              {offerCount === 0 ? (
+                <span></span>
+              ) : (
+                <span className="text-[10px] text-right">
+                  <span className="text-teal-400 font-semibold">{offerCount}</span>
+                  <span className="text-gray-500"> offer{offerCount === 1 ? '' : 's'} so far</span>
+                </span>
+              )}
+            </div>
           )}
           {shoe.listing_type === 'donate' && (
             <p className="mt-2 text-xs text-green-400 font-medium">Free Donation</p>
           )}
 
-          <p className="mt-2 text-xs text-gray-600">{formatRelativeDate(shoe.created_at)}</p>
+          <p className="mt-1.5 text-xs text-gray-600">{formatRelativeDate(shoe.created_at)}</p>
         </div>
       </Link>
 
@@ -144,7 +166,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
       {buyOpen && currentProfileId && shoe.price_php && createPortal(
         <BuyModal
           listingId={shoe.id}
-          listingName={`${shoe.brand} ${shoe.model}`}
+          listingName={formatListingName(shoe.brand, shoe.model)}
           buyerId={currentProfileId}
           priceFormatted={formatPrice(shoe.price_php)}
           pricePhp={shoe.price_php}
@@ -158,7 +180,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
       {donateOpen && currentProfileId && createPortal(
         <DonateRequestModal
           listingId={shoe.id}
-          listingName={`${shoe.brand} ${shoe.model}`}
+          listingName={formatListingName(shoe.brand, shoe.model)}
           requesterId={currentProfileId}
           onClose={() => setDonateOpen(false)}
           onSubmitted={() => { setDonateOpen(false); setSubmitted(true); }}

@@ -10,9 +10,10 @@ interface RequestVerificationButtonProps {
   profileId: string;
   isVerified: boolean;
   existingRequest: VerificationRequest | null;
+  hasFbUsername: boolean;
 }
 
-export function RequestVerificationButton({ profileId, isVerified, existingRequest }: RequestVerificationButtonProps) {
+export function RequestVerificationButton({ profileId, isVerified, existingRequest, hasFbUsername }: RequestVerificationButtonProps) {
   const [open, setOpen] = useState(false);
   const [proof, setProof] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -90,6 +91,12 @@ export function RequestVerificationButton({ profileId, isVerified, existingReque
               </button>
             </div>
             <div className="overflow-y-auto p-5 space-y-4">
+              {!hasFbUsername && (
+                <p className="text-xs text-gray-500">
+                  Add your Facebook username in{' '}
+                  <span className="text-gray-400">Edit Profile</span> before requesting verification.
+                </p>
+              )}
               <p className="text-sm text-gray-400">
                 Verified users get a badge that helps buyers and sellers trust them faster. To get verified,
                 share a <strong className="text-gray-300">public link or personal identifier</strong> that
@@ -118,7 +125,7 @@ export function RequestVerificationButton({ profileId, isVerified, existingReque
             </div>
             <div className="flex gap-3 px-5 py-4 border-t border-gray-800 shrink-0">
               <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">Cancel</Button>
-              <Button type="button" onClick={handleSubmit} loading={submitting} className="flex-1">Submit Request</Button>
+              <Button type="button" onClick={handleSubmit} loading={submitting} disabled={!hasFbUsername} className="flex-1">Submit Request</Button>
             </div>
           </div>
         </div>

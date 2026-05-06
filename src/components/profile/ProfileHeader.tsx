@@ -9,9 +9,10 @@ interface ProfileHeaderProps {
   profile: Profile;
   listingCount: number;
   wishlistCount: number;
+  isOwnProfile?: boolean;
 }
 
-export function ProfileHeader({ profile, listingCount, wishlistCount }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, listingCount, wishlistCount, isOwnProfile }: ProfileHeaderProps) {
   return (
     // Center on mobile, left-align from sm+
     <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left gap-5">
@@ -43,7 +44,7 @@ export function ProfileHeader({ profile, listingCount, wishlistCount }: ProfileH
             {profile.location}
           </p>
         )}
-        {profile.fb_username && (
+        {profile.fb_username ? (
           <a
             href={`https://www.facebook.com/${profile.fb_username}`}
             target="_blank"
@@ -55,7 +56,12 @@ export function ProfileHeader({ profile, listingCount, wishlistCount }: ProfileH
             </svg>
             {profile.fb_username}
           </a>
-        )}
+        ) : isOwnProfile ? (
+          <p className="mt-1 text-xs text-gray-500">
+            Add your Facebook username in{' '}
+            <span className="text-gray-400">Edit Profile</span> so interested buyers can easily reach out to you.
+          </p>
+        ) : null}
         <p className="text-xs text-gray-500 mt-1">Member since {formatRelativeDate(profile.created_at)}</p>
         <div className="flex gap-4 mt-3 justify-center sm:justify-start text-sm">
           <span><strong className="text-gray-100">{listingCount}</strong> <span className="text-gray-500">listings</span></span>

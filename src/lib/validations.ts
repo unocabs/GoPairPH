@@ -5,7 +5,10 @@ export const listingSchema = z.object({
   model: z.string().min(1, 'Model is required'),
   color: z.string().min(1, 'Color is required'),
   condition: z.enum(['new', 'like_new', 'good', 'fair']),
-  mileage_km: z.coerce.number().min(0, 'Mileage cannot be negative').int('Mileage must be a whole number').optional().nullable(),
+  mileage_km: z.preprocess(
+    val => (val === '' || val == null ? null : Number(val)),
+    z.number().min(0, 'Mileage cannot be negative').int('Mileage must be a whole number').nullable().optional()
+  ),
   listing_type: z.enum(['for_sale', 'donate']),
   price_php: z.coerce.number().min(0).optional().nullable(),
   is_negotiable: z.coerce.boolean().optional().default(false),

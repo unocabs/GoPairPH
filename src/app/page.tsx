@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { getOfferCounts } from '@/lib/offers';
 import { ListingGrid } from '@/components/listings/ListingGrid';
 import { Button } from '@/components/ui/Button';
 import { HeroFallback } from '@/components/home/HeroFallback';
@@ -60,6 +61,7 @@ export default async function HomePage() {
     getCurrentProfileAndRequests(),
     getFeaturedListing(),
   ]);
+  const offerCounts = await getOfferCounts(recentShoes.map(s => s.id));
 
   return (
     <div>
@@ -135,6 +137,7 @@ export default async function HomePage() {
           shoes={recentShoes}
           currentProfileId={userContext?.profileId}
           myRequestListingIds={userContext?.requestListingIds}
+          offerCounts={offerCounts}
           emptyMessage="No listings yet. Be the first to list your shoes!"
         />
       </section>
