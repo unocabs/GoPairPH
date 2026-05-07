@@ -24,11 +24,30 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
   const [buyOpen, setBuyOpen] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImage = shoe.shoe_images?.find(img => img.view_type === 'top') ?? shoe.shoe_images?.[0];
   const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path) : null;
   const isOwner = !!currentProfileId && shoe.seller_id === currentProfileId;
+
+  async function handleCopy(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = `${window.location.origin}/listings/${shoe.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   const canAct = !isOwner && !!currentProfileId && shoe.status === 'active';
   const showBuy = canAct && shoe.listing_type === 'for_sale' && !!shoe.price_php;
@@ -36,7 +55,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
 
   return (
     <div className={cn(
-      'overflow-hidden rounded-xl border bg-gray-900 transition-all hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5',
+      'relative overflow-hidden rounded-xl border bg-gray-900 transition-all hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5',
       isOwner ? 'border-teal-600 hover:border-teal-500' : 'border-gray-800 hover:border-gray-700'
     )}>
       {/* Clickable area navigates to listing */}
@@ -133,6 +152,27 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
           <p className="mt-1.5 text-xs text-gray-600">{formatRelativeDate(shoe.created_at)}</p>
         </div>
       </Link>
+
+      {/* Copy-link overlay — owner only, positioned over the bottom-right of the image */}
+      {isOwner && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square">
+          <button
+            onClick={handleCopy}
+            aria-label="Copy listing link"
+            className="pointer-events-auto absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 backdrop-blur-sm border border-white/15 text-white hover:bg-black/80 transition-colors"
+          >
+            {copied ? (
+              <svg className="h-4 w-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+              </svg>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Action buttons — outside Link to avoid nested interactive elements */}
       {(showBuy || showDonate) && (
