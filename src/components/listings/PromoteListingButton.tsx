@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { PromoteListingModal, UnverifiedNotice } from './PromoteListingModal';
+import { PromoteAcknowledgmentModal } from './PromoteAcknowledgmentModal';
 
 interface PromoteListingButtonProps {
   listingId: string;
@@ -23,6 +24,7 @@ export function PromoteListingButton({
   ownListingAlreadySponsored,
   ownSponsoredUntil,
 }: PromoteListingButtonProps) {
+  const [showAcknowledgment, setShowAcknowledgment] = useState(false);
   const [open, setOpen] = useState(false);
   const [showUnverified, setShowUnverified] = useState(false);
 
@@ -31,6 +33,12 @@ export function PromoteListingButton({
       setShowUnverified(true);
       return;
     }
+    // Always show the acknowledgment first — payment is involved, refresher each time.
+    setShowAcknowledgment(true);
+  }
+
+  function handleProceed() {
+    setShowAcknowledgment(false);
     setOpen(true);
   }
 
@@ -62,6 +70,13 @@ export function PromoteListingButton({
         >
           {button}
         </Tooltip>
+      )}
+
+      {showAcknowledgment && (
+        <PromoteAcknowledgmentModal
+          onClose={() => setShowAcknowledgment(false)}
+          onProceed={handleProceed}
+        />
       )}
 
       {open && (

@@ -34,6 +34,7 @@ export async function getSponsoredSlotInfo(): Promise<SponsoredSlotInfo> {
     supabase
       .from('shoes')
       .select('sponsored_until')
+      .eq('status', 'active')
       .gt('sponsored_until', new Date().toISOString())
       .order('sponsored_until', { ascending: true }),
   ]);
