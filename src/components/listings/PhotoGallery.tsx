@@ -25,7 +25,7 @@ export function PhotoGallery({ images }: PhotoGalleryProps) {
       byViewType.set(img.view_type, img);
     }
   }
-  const sorted = [...byViewType.values()].sort((a: ShoeImage, b: ShoeImage) => {
+  const sorted = Array.from(byViewType.values()).sort((a: ShoeImage, b: ShoeImage) => {
     const order = ['top', 'sole', 'front', 'left', 'right', 'back'];
     return order.indexOf(a.view_type) - order.indexOf(b.view_type);
   });
