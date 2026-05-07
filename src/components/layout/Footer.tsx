@@ -11,18 +11,20 @@ const FOOTER_GROUPS = [
     ],
   },
   {
+    heading: 'Help Center',
+    links: [
+      { href: '/help/how-to-buy', label: 'How to Buy' },
+      { href: '/help/how-to-sell', label: 'How to Sell' },
+      { href: '/help/wishlist', label: 'How Wishlist Works' },
+      { href: '/help/verification', label: 'Verification Process' },
+    ],
+  },
+  {
     heading: 'About',
     links: [
       { href: '/about', label: 'About Us' },
       { href: '/contact', label: 'Contact' },
       { href: '/safety', label: 'Safety Guide' },
-    ],
-  },
-  {
-    heading: 'Legal',
-    links: [
-      { href: '/privacy', label: 'Privacy Policy' },
-      { href: '/terms', label: 'Terms of Service' },
     ],
   },
 ];
@@ -66,7 +68,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-8 pt-6 border-t border-gray-800 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
           <p className="text-xs text-gray-600">
-            © {new Date().getFullYear()} Go Pair PH. For Kapampangan, by Kapampangan.
+            © {new Date().getFullYear()} Go Pair PH. Built for Pampanga runners. To God be the glory.
           </p>
           <p className="text-xs text-gray-600">
             <Link href="/privacy" className="hover:text-teal-400 transition-colors">Privacy</Link>

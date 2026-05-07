@@ -1,21 +1,34 @@
 interface VerifiedBadgeProps {
   size?: 'sm' | 'md' | 'lg';
-  showLabel?: boolean;
+  /** When true, force icon-only rendering. Default renders the full pill. */
+  iconOnly?: boolean;
 }
 
-export function VerifiedBadge({ size = 'md', showLabel = false }: VerifiedBadgeProps) {
-  const dim = size === 'sm' ? 'h-3.5 w-3.5' : size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
-  const text = size === 'sm' ? 'text-[10px]' : size === 'lg' ? 'text-sm' : 'text-xs';
+export function VerifiedBadge({ size = 'md', iconOnly = false }: VerifiedBadgeProps) {
+  const dim = size === 'sm' ? 'h-3 w-3' : size === 'lg' ? 'h-4 w-4' : 'h-3.5 w-3.5';
+  const text = size === 'sm' ? 'text-[9px]' : size === 'lg' ? 'text-xs' : 'text-[10px]';
+  const padding = size === 'sm' ? 'px-1.5 py-0.5' : size === 'lg' ? 'px-2.5 py-1' : 'px-2 py-0.5';
+  const iconDim = size === 'sm' ? 'h-3.5 w-3.5' : size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
+
+  if (iconOnly) {
+    return (
+      <span className="inline-flex items-center align-middle" title="Verified user">
+        <svg className={`${iconDim} text-teal-400`} fill="currentColor" viewBox="0 0 20 20" aria-label="Verified">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        </svg>
+      </span>
+    );
+  }
 
   return (
     <span
-      className={`inline-flex items-center gap-1 align-middle ${showLabel ? `rounded-full bg-sky-500/10 border border-sky-500/30 px-2 py-0.5 ${text} font-semibold text-sky-400` : ''}`}
+      className={`inline-flex items-center gap-1 align-middle rounded-full bg-teal-500/10 border border-teal-500/40 ${padding} ${text} font-bold uppercase tracking-wider text-teal-400`}
       title="Verified user"
     >
-      <svg className={`${dim} text-sky-400`} fill="currentColor" viewBox="0 0 24 24" aria-label="Verified">
-        <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      <svg className={dim} fill="currentColor" viewBox="0 0 20 20" aria-label="Verified">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
       </svg>
-      {showLabel && <span>Verified</span>}
+      Verified
     </span>
   );
 }
