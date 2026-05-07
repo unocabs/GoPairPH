@@ -15,6 +15,7 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [pendingRequestCount, setPendingRequestCount] = useState(0);
+  const [sentOffersCount, setSentOffersCount] = useState(0);
   const supabase = createClient();
   const router = useRouter();
   const pathname = usePathname();
@@ -26,11 +27,11 @@ export function Navbar() {
     let active = true;
     if (!profile?.id) {
       setPendingRequestCount(0);
+      setSentOffersCount(0);
       return;
     }
     (async () => {
       // Count pending requests on listings where I'm the seller.
-      // Two-step query keeps it simple and avoids RPC dependencies.
       const { data: myShoes } = await supabase
         .from('shoes')
         .select('id')
@@ -39,14 +40,22 @@ export function Navbar() {
       const ids = (myShoes ?? []).map((s: { id: string }) => s.id);
       if (ids.length === 0) {
         setPendingRequestCount(0);
-        return;
+      } else {
+        const { count } = await supabase
+          .from('purchase_requests')
+          .select('id', { count: 'exact', head: true })
+          .in('listing_id', ids)
+          .eq('status', 'pending');
+        if (active) setPendingRequestCount(count ?? 0);
       }
-      const { count } = await supabase
+
+      // Count my outgoing offers (pending) + reservations (accepted).
+      const { count: outgoingCount } = await supabase
         .from('purchase_requests')
         .select('id', { count: 'exact', head: true })
-        .in('listing_id', ids)
-        .eq('status', 'pending');
-      if (active) setPendingRequestCount(count ?? 0);
+        .eq('buyer_id', profile.id)
+        .in('status', ['pending', 'accepted']);
+      if (active) setSentOffersCount(outgoingCount ?? 0);
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -113,10 +122,10 @@ export function Navbar() {
                       {(user.user_metadata?.full_name ?? user.email ?? 'U')[0].toUpperCase()}
                     </div>
                   )}
-                  {/* Avatar dot — signals pending requests at a glance */}
-                  {pendingRequestCount > 0 && (
+                  {/* Avatar dot — signals pending requests or active sent offers */}
+                  {(pendingRequestCount + sentOffersCount) > 0 && (
                     <span
-                      aria-label={`${pendingRequestCount} pending purchase requests`}
+                      aria-label={`${pendingRequestCount + sentOffersCount} items need attention`}
                       className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-sky-500 border-2 border-gray-950"
                     />
                   )}
@@ -150,6 +159,24 @@ export function Navbar() {
                           </span>
                           <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold leading-none tabular-nums bg-sky-500 text-white">
                             {pendingRequestCount}
+                          </span>
+                        </Link>
+                      )}
+                      {/* Sent Offers — only when there are pending or reserved ones */}
+                      {sentOffersCount > 0 && (
+                        <Link
+                          href="/profile?tab=offers"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center justify-between gap-2 px-4 py-2 text-sm text-gray-200 hover:bg-gray-800"
+                        >
+                          <span className="flex items-center gap-2">
+                            <svg className="h-3.5 w-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            Sent Offers
+                          </span>
+                          <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold leading-none tabular-nums bg-sky-500 text-white">
+                            {sentOffersCount}
                           </span>
                         </Link>
                       )}

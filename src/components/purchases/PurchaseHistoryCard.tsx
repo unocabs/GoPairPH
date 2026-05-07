@@ -20,19 +20,8 @@ export function PurchaseHistoryCard({ request, currentProfileId }: PurchaseHisto
   const otherProfile = iWasBuyer ? shoe?.profiles : request.profiles;
   const otherProfileId = iWasBuyer ? shoe?.seller_id : request.buyer_id;
 
-  const isReserved = request.status === 'accepted';
-
   return (
-    <div className={`rounded-xl border bg-gray-900 p-4 space-y-3 ${
-      isReserved ? 'border-orange-800' : 'border-gray-800'
-    }`}>
-      {isReserved && (
-        <div className="flex items-center gap-1.5 rounded-lg bg-orange-950 border border-orange-800 px-3 py-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-orange-400 animate-pulse shrink-0" />
-          <p className="text-xs font-semibold text-orange-300">Reserved for you — awaiting seller to mark as sold</p>
-        </div>
-      )}
-
+    <div className="rounded-xl border border-gray-800 bg-gray-900 p-4 space-y-3">
       <div className="flex items-center gap-3">
         <div className="relative h-14 w-14 rounded-lg overflow-hidden bg-gray-800 shrink-0">
           {imgUrl ? (
@@ -47,7 +36,7 @@ export function PurchaseHistoryCard({ request, currentProfileId }: PurchaseHisto
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-            {isReserved ? 'Reserved for you' : iWasBuyer ? 'You bought' : 'You sold'}
+            {iWasBuyer ? 'You bought' : 'You sold'}
           </p>
           {shoe ? (
             <Link href={`/listings/${shoe.id}`}>

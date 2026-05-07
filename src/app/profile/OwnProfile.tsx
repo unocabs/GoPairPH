@@ -7,19 +7,21 @@ import { ListingGrid } from '@/components/listings/ListingGrid';
 import { WishlistCard } from '@/components/wishlist/WishlistCard';
 import { PurchaseRequestCard } from '@/components/purchases/PurchaseRequestCard';
 import { PurchaseHistoryCard } from '@/components/purchases/PurchaseHistoryCard';
+import { SentOfferCard } from '@/components/purchases/SentOfferCard';
 import { RequestVerificationButton } from '@/components/profile/RequestVerificationButton';
 import { formatPrice, formatListingName } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest } from '@/types';
 import Link from 'next/link';
 
-type ProfileTab = 'listings' | 'purchases' | 'wishlist' | 'sales';
+type ProfileTab = 'listings' | 'purchases' | 'offers' | 'wishlist' | 'sales';
 
 interface OwnProfileProps {
   profile: Profile;
   shoes: Shoe[];
   wishlist: WishlistItem[];
   purchaseRequests: PurchaseRequest[];
+  sentOffers: PurchaseRequest[];
   purchaseHistory: PurchaseRequest[];
   latestVerification: VerificationRequest | null;
   initialTab?: ProfileTab;
@@ -30,6 +32,7 @@ export function OwnProfile({
   shoes,
   wishlist: initialWishlist,
   purchaseRequests: initialPurchaseRequests,
+  sentOffers: initialSentOffers,
   purchaseHistory,
   latestVerification,
   initialTab,
@@ -37,6 +40,7 @@ export function OwnProfile({
   const [profile, setProfile] = useState(initialProfile);
   const [wishlist, setWishlist] = useState(initialWishlist);
   const [purchaseRequests, setPurchaseRequests] = useState(initialPurchaseRequests);
+  const [sentOffers, setSentOffers] = useState(initialSentOffers);
   const [editOpen, setEditOpen] = useState(false);
   const [tab, setTab] = useState<ProfileTab>(initialTab ?? 'listings');
 
@@ -48,11 +52,14 @@ export function OwnProfile({
     setPurchaseRequests(prev => prev.filter(r => r.id !== id));
   }
 
-  // Tabs config — Wishlist now sits before Purchase History.
-  // Each tab gets a uniform numeric badge instead of inline parens.
+  function handleSentOfferChanged(id: string) {
+    setSentOffers(prev => prev.filter(r => r.id !== id));
+  }
+
   const tabs: ReadonlyArray<{ key: ProfileTab; label: string; count: number; badgeTone?: 'default' | 'attention' }> = [
     { key: 'listings', label: 'My Listings', count: shoes.length },
     { key: 'purchases', label: 'Purchase Requests', count: purchaseRequests.length, badgeTone: 'attention' },
+    { key: 'offers', label: 'Sent Offers', count: sentOffers.length, badgeTone: 'attention' },
     { key: 'wishlist', label: 'Wishlist', count: wishlist.length },
     { key: 'sales', label: 'Purchase History', count: purchaseHistory.length },
   ];
@@ -148,6 +155,24 @@ export function OwnProfile({
                   />
                 );
               })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'offers' && (
+        <div>
+          <p className="text-sm text-gray-500 mb-4">Offers you&apos;ve sent and items reserved for you</p>
+          {sentOffers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
+              <span className="text-4xl opacity-50">📨</span>
+              <p className="mt-3 text-gray-500">You haven&apos;t sent any offers yet.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {sentOffers.map(req => (
+                <SentOfferCard key={req.id} request={req} onChanged={handleSentOfferChanged} />
+              ))}
             </div>
           )}
         </div>

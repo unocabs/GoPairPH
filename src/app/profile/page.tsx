@@ -35,20 +35,25 @@ async function getOwnProfileData() {
     purchaseRequests = (prData as PurchaseRequest[]) ?? [];
   }
 
-  // Purchase history: completed (as buyer or seller) + accepted (reserved for me as buyer)
+  // Purchase history: only completed transactions (reserved/accepted live in the Sent Offers tab)
   const purchaseSelect = '*, profiles(*), listing:shoes!listing_id(*, shoe_images(*), profiles(*))';
-  const [boughtRes, soldRes, reservedRes] = await Promise.all([
+  const [boughtRes, soldRes, sentOffersRes] = await Promise.all([
     supabase.from('purchase_requests').select(purchaseSelect).eq('buyer_id', profile.id).eq('status', 'completed'),
     shoeIds.length > 0
       ? supabase.from('purchase_requests').select(purchaseSelect).in('listing_id', shoeIds).eq('status', 'completed')
       : Promise.resolve({ data: [] as unknown[] }),
-    supabase.from('purchase_requests').select(purchaseSelect).eq('buyer_id', profile.id).eq('status', 'accepted'),
+    supabase
+      .from('purchase_requests')
+      .select(purchaseSelect)
+      .eq('buyer_id', profile.id)
+      .in('status', ['pending', 'accepted'])
+      .order('created_at', { ascending: false }),
   ]);
   const purchaseHistory = [
-    ...((reservedRes.data as PurchaseRequest[]) ?? []),
     ...((boughtRes.data as PurchaseRequest[]) ?? []),
     ...((soldRes.data as PurchaseRequest[]) ?? []),
   ].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const sentOffers = (sentOffersRes.data as PurchaseRequest[]) ?? [];
 
   // Most recent verification request (if any)
   const { data: verificationData } = await supabase
@@ -65,13 +70,14 @@ async function getOwnProfileData() {
     shoes,
     wishlist: (wishlistRes.data as WishlistItem[]) ?? [],
     purchaseRequests,
+    sentOffers,
     purchaseHistory,
     latestVerification,
   };
 }
 
-type ProfileTab = 'listings' | 'purchases' | 'sales' | 'wishlist';
-const VALID_TABS: ProfileTab[] = ['listings', 'purchases', 'sales', 'wishlist'];
+type ProfileTab = 'listings' | 'purchases' | 'offers' | 'sales' | 'wishlist';
+const VALID_TABS: ProfileTab[] = ['listings', 'purchases', 'offers', 'sales', 'wishlist'];
 
 export default async function ProfilePage({ searchParams }: { searchParams: { tab?: string } }) {
   const data = await getOwnProfileData();
