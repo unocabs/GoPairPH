@@ -80,6 +80,9 @@ export const metadata: Metadata = {
   category: 'marketplace',
   verification: {
     google: 'QHkPELcZgx22-fYojuvxkycrjlQo4VyCDPPKfqY19ZU',
+    other: {
+    'facebook-domain-verification': 'mm74xngm7nr8e9v1wfudew9na0dtbf',
+    },
   },
 };
 
