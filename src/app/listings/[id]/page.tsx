@@ -328,7 +328,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             <BuyButton
               listingId={shoe.id}
               listingName={formatListingName(shoe.brand, shoe.model)}
-              buyerId={currentProfileId}
               priceFormatted={formatPrice(shoe.price_php)}
               pricePhp={shoe.price_php}
               isNegotiable={shoe.is_negotiable}

@@ -209,7 +209,6 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
         <BuyModal
           listingId={shoe.id}
           listingName={formatListingName(shoe.brand, shoe.model)}
-          buyerId={currentProfileId}
           priceFormatted={formatPrice(shoe.price_php)}
           pricePhp={shoe.price_php}
           isNegotiable={shoe.is_negotiable}

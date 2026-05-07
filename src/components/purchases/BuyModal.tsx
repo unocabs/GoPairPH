@@ -13,7 +13,6 @@ import type { Profile } from '@/types';
 interface BuyModalProps {
   listingId: string;
   listingName: string;
-  buyerId: string;
   priceFormatted: string;
   pricePhp: number;
   isNegotiable: boolean;
@@ -22,7 +21,7 @@ interface BuyModalProps {
   onSubmitted: () => void;
 }
 
-export function BuyModal({ listingId, listingName, buyerId, priceFormatted, pricePhp, isNegotiable, seller, onClose, onSubmitted }: BuyModalProps) {
+export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isNegotiable, seller, onClose, onSubmitted }: BuyModalProps) {
   const [message, setMessage] = useState('');
   const [bestOffer, setBestOffer] = useState('');
   const [submitting, setSubmitting] = useState(false);

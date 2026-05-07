@@ -7,7 +7,6 @@ import type { Profile } from '@/types';
 interface BuyButtonProps {
   listingId: string;
   listingName: string;
-  buyerId: string;
   priceFormatted: string;
   pricePhp: number;
   isNegotiable: boolean;
@@ -15,7 +14,7 @@ interface BuyButtonProps {
   offerCount?: number;
 }
 
-export function BuyButton({ listingId, listingName, buyerId, priceFormatted, pricePhp, isNegotiable, seller, offerCount = 0 }: BuyButtonProps) {
+export function BuyButton({ listingId, listingName, priceFormatted, pricePhp, isNegotiable, seller, offerCount = 0 }: BuyButtonProps) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -49,7 +48,6 @@ export function BuyButton({ listingId, listingName, buyerId, priceFormatted, pri
         <BuyModal
           listingId={listingId}
           listingName={listingName}
-          buyerId={buyerId}
           priceFormatted={priceFormatted}
           pricePhp={pricePhp}
           isNegotiable={isNegotiable}
