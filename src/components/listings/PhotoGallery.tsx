@@ -13,7 +13,7 @@ interface PhotoGalleryProps {
 
 export function PhotoGallery({ images }: PhotoGalleryProps) {
   const [open, setOpen] = useState(false);
-  const [index, setIndex] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
   // Dedupe by view_type — the DB lacks a UNIQUE(shoe_id, view_type) constraint,
@@ -44,12 +44,13 @@ export function PhotoGallery({ images }: PhotoGalleryProps) {
     );
   }
 
-  const main = sorted[0];
+  const safeIndex = Math.min(selectedIndex, sorted.length - 1);
+  const main = sorted[safeIndex];
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 min-w-0">
       <button
-        onClick={() => { setIndex(0); setOpen(true); }}
+        onClick={() => setOpen(true)}
         className="relative w-full h-[40vh] sm:h-[45vh] lg:h-auto lg:aspect-square overflow-hidden rounded-xl bg-gray-900 block"
       >
         <Image
@@ -64,24 +65,29 @@ export function PhotoGallery({ images }: PhotoGalleryProps) {
 
       {sorted.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {sorted.map((img, i) => (
-            <button
-              key={img.id}
-              onClick={() => { setIndex(i); setOpen(true); }}
-              className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 border-gray-800 hover:border-teal-500 transition-colors"
-            >
-              <Image
-                src={getPublicUrl(supabaseUrl, img.storage_path)}
-                alt={img.view_type}
-                fill
-                className="object-cover"
-                sizes="64px"
-              />
-              <div className="absolute inset-0 flex items-end justify-center pb-0.5">
-                <span className="rounded bg-black/50 px-1 text-[10px] text-white capitalize">{img.view_type}</span>
-              </div>
-            </button>
-          ))}
+          {sorted.map((img, i) => {
+            const isActive = i === safeIndex;
+            return (
+              <button
+                key={img.id}
+                onClick={() => setSelectedIndex(i)}
+                className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-colors ${
+                  isActive ? 'border-teal-500' : 'border-gray-800 hover:border-teal-500'
+                }`}
+              >
+                <Image
+                  src={getPublicUrl(supabaseUrl, img.storage_path)}
+                  alt={img.view_type}
+                  fill
+                  className="object-cover"
+                  sizes="64px"
+                />
+                <div className="absolute inset-0 flex items-end justify-center pb-0.5">
+                  <span className="rounded bg-black/50 px-1 text-[10px] text-white capitalize">{img.view_type}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -89,7 +95,8 @@ export function PhotoGallery({ images }: PhotoGalleryProps) {
         open={open}
         close={() => setOpen(false)}
         slides={slides}
-        index={index}
+        index={safeIndex}
+        on={{ view: ({ index }) => setSelectedIndex(index) }}
       />
     </div>
   );
