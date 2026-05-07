@@ -16,6 +16,7 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [pendingRequestCount, setPendingRequestCount] = useState(0);
   const [sentOffersCount, setSentOffersCount] = useState(0);
+  const [adminPendingCount, setAdminPendingCount] = useState(0);
   const supabase = createClient();
   const router = useRouter();
   const pathname = usePathname();
@@ -28,6 +29,7 @@ export function Navbar() {
     if (!profile?.id) {
       setPendingRequestCount(0);
       setSentOffersCount(0);
+      setAdminPendingCount(0);
       return;
     }
     (async () => {
@@ -56,6 +58,17 @@ export function Navbar() {
         .eq('buyer_id', profile.id)
         .in('status', ['pending', 'accepted']);
       if (active) setSentOffersCount(outgoingCount ?? 0);
+
+      // Admin-only: count pending verification requests waiting for review.
+      if (profile.is_admin) {
+        const { count: adminCount } = await supabase
+          .from('verification_requests')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'pending');
+        if (active) setAdminPendingCount(adminCount ?? 0);
+      } else if (active) {
+        setAdminPendingCount(0);
+      }
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -115,10 +128,18 @@ export function Navbar() {
                       alt="Avatar"
                       width={36}
                       height={36}
-                      className="rounded-full border-2 border-gray-700 hover:border-teal-500 transition-colors"
+                      className={`rounded-full border-2 transition-colors ${
+                        adminPendingCount > 0
+                          ? 'border-amber-400 ring-2 ring-amber-400/40 ring-offset-2 ring-offset-gray-950 hover:border-amber-300'
+                          : 'border-gray-700 hover:border-teal-500'
+                      }`}
                     />
                   ) : (
-                    <div className="h-9 w-9 rounded-full bg-teal-600 flex items-center justify-center text-white font-semibold text-sm">
+                    <div
+                      className={`h-9 w-9 rounded-full bg-teal-600 flex items-center justify-center text-white font-semibold text-sm ${
+                        adminPendingCount > 0 ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-gray-950' : ''
+                      }`}
+                    >
                       {(user.user_metadata?.full_name ?? user.email ?? 'U')[0].toUpperCase()}
                     </div>
                   )}
@@ -181,11 +202,22 @@ export function Navbar() {
                         </Link>
                       )}
                       {profile?.is_admin && (
-                        <Link href="/admin" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-amber-400 hover:bg-gray-800">
-                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                          </svg>
-                          Admin Dashboard
+                        <Link
+                          href="/admin"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center justify-between gap-2 px-4 py-2 text-sm text-amber-400 hover:bg-gray-800"
+                        >
+                          <span className="flex items-center gap-2">
+                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            Admin Dashboard
+                          </span>
+                          {adminPendingCount > 0 && (
+                            <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold leading-none tabular-nums bg-amber-500 text-gray-950">
+                              {adminPendingCount}
+                            </span>
+                          )}
                         </Link>
                       )}
                       <hr className="my-1 border-gray-800" />
