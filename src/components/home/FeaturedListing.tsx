@@ -19,7 +19,7 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
   return (
     <Link
       href={`/listings/${shoe.id}`}
-      className="group relative block w-full max-w-[500px] aspect-[5/4.2] sm:h-[420px] sm:aspect-auto rounded-3xl overflow-hidden shadow-2xl shadow-black/60 transition-transform hover:scale-[1.01]"
+      className="group relative block w-full max-w-[500px] aspect-[4/5] sm:h-[420px] sm:aspect-auto rounded-3xl overflow-hidden shadow-2xl shadow-black/60 transition-transform hover:scale-[1.01]"
     >
       {/* Background image (full bleed) */}
       <div className="absolute inset-0 bg-stone-900">
@@ -71,11 +71,11 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
       </div>
 
       {/* MIDDLE: huge brand + model */}
-      <div className="absolute left-6 right-6 bottom-[140px]">
+      <div className="absolute left-6 right-6 bottom-[160px] sm:bottom-[140px]">
         <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-teal-300 mb-2">
           Featured Listing
         </div>
-        <h2 className="text-5xl font-black text-white leading-[0.95] tracking-tight drop-shadow-2xl">
+        <h2 className="text-3xl sm:text-5xl font-black text-white leading-[0.95] tracking-tight drop-shadow-2xl">
           {shoe.brand === 'Other' ? (
             <span className="text-teal-300">{shoe.model}</span>
           ) : (

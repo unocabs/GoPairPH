@@ -125,14 +125,13 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
           <h3 className="font-semibold text-gray-100 truncate text-sm">{formatListingName(shoe.brand, shoe.model)}</h3>
           <p className="text-xs text-gray-500 mt-0.5">{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}</p>
 
-          <div className="mt-2 flex items-center justify-between">
-            <Badge className={cn('text-xs', CONDITION_COLORS[shoe.condition])}>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <Badge className={cn('text-xs whitespace-nowrap', CONDITION_COLORS[shoe.condition])}>
               {CONDITIONS[shoe.condition]}
             </Badge>
-            {shoe.mileage_km != null
-              ? <span className="text-xs text-gray-600">{shoe.mileage_km.toLocaleString()} km</span>
-              : <span className="text-xs text-gray-600">Not provided</span>
-            }
+            <span className="text-xs text-gray-600 whitespace-nowrap" title={shoe.mileage_km != null ? `${shoe.mileage_km.toLocaleString()} km` : 'Mileage not provided'}>
+              {shoe.mileage_km != null ? `${shoe.mileage_km.toLocaleString()} km` : '—'}
+            </span>
           </div>
 
           {shoe.listing_type === 'for_sale' && shoe.price_php && (

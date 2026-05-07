@@ -22,7 +22,7 @@ export function FeaturedPill({ featuredUntil, compact }: FeaturedPillProps) {
           <svg width="11" height="11" viewBox="0 0 24 24" fill="#facc15" aria-hidden>
             <path d="M12 2l2.39 7.36H22l-6.18 4.49L18.18 21 12 16.27 5.82 21l2.36-7.15L2 9.36h7.61z" />
           </svg>
-          <span className="text-[10px] font-bold text-white uppercase tracking-widest">Pick of the Week</span>
+          <span className="text-[10px] font-bold text-white uppercase tracking-widest">Pair of the Week</span>
         </span>
       </Tooltip>
     );
