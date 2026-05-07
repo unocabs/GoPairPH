@@ -74,7 +74,7 @@ export default async function HomePage() {
               <div className="flex items-center gap-2 mb-4">
                 <LogoMark size={40} />
                 <span className="bg-teal-500/10 text-teal-400 text-xs font-semibold px-3 py-1 rounded-full border border-teal-500/20">
-                  Pampanga Only
+                  For Pampanga Runners
                 </span>
               </div>
               <h1 className="text-4xl font-extrabold tracking-tight text-gray-100 sm:text-5xl">
