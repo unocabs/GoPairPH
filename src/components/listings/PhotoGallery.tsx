@@ -16,7 +16,16 @@ export function PhotoGallery({ images }: PhotoGalleryProps) {
   const [index, setIndex] = useState(0);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
-  const sorted = [...images].sort((a: ShoeImage, b: ShoeImage) => {
+  // Dedupe by view_type — the DB lacks a UNIQUE(shoe_id, view_type) constraint,
+  // so historical duplicates exist. Keep the highest `order` (most recently added).
+  const byViewType = new Map<string, ShoeImage>();
+  for (const img of images) {
+    const existing = byViewType.get(img.view_type);
+    if (!existing || (img.order ?? 0) > (existing.order ?? 0)) {
+      byViewType.set(img.view_type, img);
+    }
+  }
+  const sorted = [...byViewType.values()].sort((a: ShoeImage, b: ShoeImage) => {
     const order = ['top', 'sole', 'front', 'left', 'right', 'back'];
     return order.indexOf(a.view_type) - order.indexOf(b.view_type);
   });
@@ -27,7 +36,7 @@ export function PhotoGallery({ images }: PhotoGalleryProps) {
 
   if (sorted.length === 0) {
     return (
-      <div className="aspect-square w-full rounded-xl bg-gray-900 flex items-center justify-center text-gray-700">
+      <div className="w-full h-[40vh] sm:h-[45vh] lg:h-auto lg:aspect-square rounded-xl bg-gray-900 flex items-center justify-center text-gray-700">
         <svg className="h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
@@ -41,14 +50,14 @@ export function PhotoGallery({ images }: PhotoGalleryProps) {
     <div className="space-y-3">
       <button
         onClick={() => { setIndex(0); setOpen(true); }}
-        className="relative aspect-square w-full overflow-hidden rounded-xl bg-gray-900 block"
+        className="relative w-full h-[40vh] sm:h-[45vh] lg:h-auto lg:aspect-square overflow-hidden rounded-xl bg-gray-900 block"
       >
         <Image
           src={getPublicUrl(supabaseUrl, main.storage_path)}
           alt="Main shoe photo"
           fill
           className="object-cover hover:scale-105 transition-transform"
-          sizes="(max-width: 640px) 100vw, 50vw"
+          sizes="(min-width: 1024px) 50vw, 100vw"
           priority
         />
       </button>
