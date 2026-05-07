@@ -59,7 +59,10 @@ export interface Shoe {
   updated_at: string;
   profiles?: Profile;
   shoe_images?: ShoeImage[];
-  is_featured: false
+  is_featured: boolean;
+  featured_until: string | null;
+  sponsored_until: string | null;
+  sponsored_started_at: string | null;
 }
 
 export type PurchaseRequestStatus = 'pending' | 'accepted' | 'declined' | 'completed';

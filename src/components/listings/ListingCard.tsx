@@ -12,6 +12,7 @@ import { formatPrice, formatSize, getPublicUrl, formatRelativeDate, formatListin
 import { cn } from '@/lib/utils';
 import { BuyModal } from '@/components/purchases/BuyModal';
 import { DonateRequestModal } from '@/components/purchases/DonateRequestModal';
+import { SponsoredPill } from './SponsoredPill';
 
 interface ListingCardProps {
   shoe: Shoe;
@@ -30,6 +31,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
   const topImage = shoe.shoe_images?.find(img => img.view_type === 'top') ?? shoe.shoe_images?.[0];
   const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path) : null;
   const isOwner = !!currentProfileId && shoe.seller_id === currentProfileId;
+  const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > new Date();
 
   async function handleCopy(e: React.MouseEvent) {
     e.preventDefault();
@@ -77,8 +79,9 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
               </svg>
             </div>
           )}
-          <div className="absolute top-2 left-2">
+          <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
             <ListingTypeBadge type={shoe.listing_type} />
+            {isSponsored && <SponsoredPill size="sm" />}
           </div>
           {isOwner && (
             <div className="absolute top-2 right-2">

@@ -23,8 +23,9 @@ async function getRecentListings(): Promise<Shoe[]> {
 
 /**
  * Returns the currently-featured active listing, or null.
- * Requires migration 008_featured_listing.sql (adds shoes.is_featured).
- * The partial unique index guarantees at most one row matches.
+ * Requires migration 012_sponsored_and_featured_until.sql (replaces is_featured
+ * with featured_until). Picks the row with the latest featured_until in case
+ * an admin accidentally features more than one.
  */
 async function getFeaturedListing(): Promise<Shoe | null> {
   const supabase = createClient();
@@ -32,7 +33,8 @@ async function getFeaturedListing(): Promise<Shoe | null> {
     .from('shoes')
     .select('*, profiles(*), shoe_images(*)')
     .eq('status', 'active')
-    .eq('is_featured', true)
+    .gt('featured_until', new Date().toISOString())
+    .order('featured_until', { ascending: false })
     .limit(1)
     .maybeSingle();
   return (data as Shoe) ?? null;

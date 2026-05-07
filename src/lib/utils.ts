@@ -52,3 +52,12 @@ export function formatRelativeDate(dateString: string): string {
   if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
   return `${Math.floor(diffDays / 365)} years ago`;
 }
+
+export function formatShortDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('en-PH', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+

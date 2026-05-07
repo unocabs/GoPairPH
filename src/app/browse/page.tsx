@@ -32,8 +32,7 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
   let query = supabase
     .from('shoes')
     .select('*, profiles(*), shoe_images(*)')
-    .eq('status', 'active')
-    .order('created_at', { ascending: false });
+    .eq('status', 'active');
 
   if (searchParams.type) query = query.eq('listing_type', searchParams.type);
   if (searchParams.brand) query = query.ilike('brand', searchParams.brand);
@@ -42,7 +41,26 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
   if (searchParams.q) query = query.or(`brand.ilike.%${searchParams.q}%,model.ilike.%${searchParams.q}%`);
 
   const { data } = await query.limit(60);
-  return (data as Shoe[]) ?? [];
+  const all = (data as Shoe[]) ?? [];
+
+  // Sort: active sponsored first (most-recently-started among them rises),
+  // then everyone else by created_at DESC. Done in app code so we don't pay
+  // for a complex multi-key ORDER BY in PostgREST.
+  const now = Date.now();
+  const isActiveSponsored = (s: Shoe) =>
+    s.sponsored_until != null && new Date(s.sponsored_until).getTime() > now;
+
+  return all.sort((a, b) => {
+    const aSp = isActiveSponsored(a);
+    const bSp = isActiveSponsored(b);
+    if (aSp !== bSp) return aSp ? -1 : 1;
+    if (aSp && bSp) {
+      const aStart = new Date(a.sponsored_started_at ?? a.created_at).getTime();
+      const bStart = new Date(b.sponsored_started_at ?? b.created_at).getTime();
+      return bStart - aStart;
+    }
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
 }
 
 function SearchBar({ defaultValue }: { defaultValue?: string }) {

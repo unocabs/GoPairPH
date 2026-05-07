@@ -75,7 +75,7 @@ export function OwnProfile({
               profileId={profile.id}
               isVerified={profile.is_verified}
               existingRequest={latestVerification}
-              hasFbUsername={!!profile.fb_username}
+              fbUsername={profile.fb_username}
             />
           </div>
         </div>

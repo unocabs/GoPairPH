@@ -3,6 +3,7 @@ import Image from 'next/image';
 import type { Shoe } from '@/types';
 import { CONDITIONS } from '@/lib/constants';
 import { formatPrice, formatSize, getPublicUrl, formatListingName } from '@/lib/utils';
+import { FeaturedPill } from '@/components/listings/FeaturedPill';
 
 interface FeaturedListingProps {
   shoe: Shoe;
@@ -66,20 +67,7 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
 
       {/* TOP-RIGHT: pick-of-the-week badge */}
       <div className="absolute top-16 right-5">
-        <div className="inline-flex items-center gap-1.5 backdrop-blur-md bg-white/10 border border-white/20 rounded-full px-3 py-1.5">
-          <svg
-            width="11"
-            height="11"
-            viewBox="0 0 24 24"
-            fill="#facc15"
-            aria-hidden="true"
-          >
-            <path d="M12 2l2.39 7.36H22l-6.18 4.49L18.18 21 12 16.27 5.82 21l2.36-7.15L2 9.36h7.61z" />
-          </svg>
-          <span className="text-[10px] font-bold text-white uppercase tracking-widest">
-            Pick of the Week
-          </span>
-        </div>
+        <FeaturedPill compact featuredUntil={shoe.featured_until} />
       </div>
 
       {/* MIDDLE: huge brand + model */}

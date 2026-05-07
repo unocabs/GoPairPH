@@ -17,10 +17,15 @@ import { StatusButton } from './StatusButton';
 import { DeleteListingButton } from './DeleteListingButton';
 import { CompleteSaleButtons } from './CompleteSaleButtons';
 import { FeatureToggleButton } from './FeatureToggleButton';
+import { SponsoredAdminToggle } from './SponsoredAdminToggle';
 import { BuyButton } from '@/components/purchases/BuyButton';
 import { DonateRequestButton } from '@/components/purchases/DonateRequestButton';
 import { ContactSellerButtons } from '@/components/listings/ContactSellerButtons';
+import { PromoteListingButton } from '@/components/listings/PromoteListingButton';
+import { SponsoredPill } from '@/components/listings/SponsoredPill';
+import { FeaturedPill } from '@/components/listings/FeaturedPill';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
+import { getSponsoredSlotInfo } from '@/lib/sponsored';
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const shoe = await getShoe(params.id);
@@ -69,17 +74,17 @@ async function getShoe(id: string): Promise<Shoe | null> {
   return data as Shoe | null;
 }
 
-async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean } | null> {
+async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean; isVerified: boolean } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   const { data } = await supabase
     .from('profiles')
-    .select('id, is_admin')
+    .select('id, is_admin, is_verified')
     .eq('user_id', user.id)
     .single();
   if (!data) return null;
-  return { id: data.id, isAdmin: !!data.is_admin };
+  return { id: data.id, isAdmin: !!data.is_admin, isVerified: !!data.is_verified };
 }
 
 type PurchaseContext =
@@ -137,9 +142,15 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
   const currentProfileId = currentProfile?.id ?? null;
   const isAdmin = currentProfile?.isAdmin ?? false;
+  const isVerified = currentProfile?.isVerified ?? false;
   const isOwner = currentProfileId === shoe.seller_id;
   const seller = shoe.profiles;
   const purchaseContext = await getPurchaseContext(shoe.id, currentProfileId, isOwner, shoe.status);
+
+  const now = new Date();
+  const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > now;
+  const isFeatured = !!shoe.featured_until && new Date(shoe.featured_until) > now;
+  const slotInfo = isOwner ? await getSponsoredSlotInfo() : null;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -163,11 +174,10 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             {shoe.status !== 'active' && (
               <Badge className="bg-gray-800 text-gray-400 border border-gray-700 capitalize">{shoe.status}</Badge>
             )}
-            {shoe.is_featured && (
-              <Badge className="bg-teal-500/15 text-teal-300 border border-teal-500/40">
-                ★ Featured
-              </Badge>
+            {isFeatured && (
+              <FeaturedPill featuredUntil={shoe.featured_until} />
             )}
+            {isSponsored && <SponsoredPill />}
           </div>
 
           <h1 className="text-3xl font-bold text-gray-100">{formatListingName(shoe.brand, shoe.model)}</h1>
@@ -351,26 +361,50 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   </button>
                 </Link>
               )}
+              {shoe.status === 'active' && slotInfo && (
+                <PromoteListingButton
+                  listingId={shoe.id}
+                  listingName={formatListingName(shoe.brand, shoe.model)}
+                  isVerified={isVerified}
+                  slotsAvailable={slotInfo.slotsAvailable || isSponsored}
+                  nextSlotOpensAt={slotInfo.nextSlotOpensAt}
+                  ownListingAlreadySponsored={isSponsored}
+                  ownSponsoredUntil={shoe.sponsored_until}
+                />
+              )}
               {/* StatusButton returns null for reserved (handled by CompleteSaleButtons above) */}
               <StatusButton shoeId={shoe.id} currentStatus={shoe.status} listingType={shoe.listing_type} />
               <DeleteListingButton shoeId={shoe.id} />
             </div>
           )}
 
-          {/* Admin-only: feature toggle */}
+          {/* Admin-only: feature + sponsor toggles */}
           {isAdmin && (
-            <div className="mt-6 rounded-xl border border-dashed border-teal-500/30 bg-teal-500/[0.03] p-4">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-teal-400 font-semibold mb-2">
+            <div className="mt-6 rounded-xl border border-dashed border-teal-500/30 bg-teal-500/[0.03] p-4 space-y-4">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-teal-400 font-semibold">
                 Admin controls
               </p>
-              <FeatureToggleButton
-                shoeId={shoe.id}
-                isFeatured={!!shoe.is_featured}
-                status={shoe.status}
-              />
-              <p className="mt-2 text-[11px] text-gray-500">
-                Only one listing can be featured at a time. Featuring this one will replace the current pick.
-              </p>
+              <div>
+                <FeatureToggleButton
+                  shoeId={shoe.id}
+                  isFeatured={isFeatured}
+                  featuredUntil={shoe.featured_until}
+                  status={shoe.status}
+                />
+                <p className="mt-2 text-[11px] text-gray-500">
+                  Only one listing can be featured at a time. Featuring this one will replace the current pick.
+                </p>
+              </div>
+              <div className="border-t border-gray-800 pt-4">
+                <SponsoredAdminToggle
+                  shoeId={shoe.id}
+                  sponsoredUntil={shoe.sponsored_until}
+                  status={shoe.status}
+                />
+                <p className="mt-2 text-[11px] text-gray-500">
+                  Activate after the seller pays. The 15% slot cap is enforced when sellers try to buy a slot.
+                </p>
+              </div>
             </div>
           )}
         </div>
