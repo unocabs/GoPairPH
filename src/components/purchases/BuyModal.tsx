@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
@@ -29,8 +28,6 @@ export function BuyModal({ listingId, listingName, buyerId, priceFormatted, pric
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
-
   async function handleSubmit() {
     setSubmitting(true);
     setError(null);
@@ -43,13 +40,19 @@ export function BuyModal({ listingId, listingName, buyerId, priceFormatted, pric
     }
 
     try {
-      const { error: err } = await supabase.from('purchase_requests').insert({
-        listing_id: listingId,
-        buyer_id: buyerId,
-        message: message.trim() || null,
-        offer_price_php: isNegotiable ? offerNum : null,
+      const res = await fetch('/api/offers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listing_id: listingId,
+          message: message.trim() || null,
+          offer_price_php: isNegotiable ? offerNum : null,
+        }),
       });
-      if (err) throw err;
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? 'Failed to send request');
+      }
       onSubmitted();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send request');

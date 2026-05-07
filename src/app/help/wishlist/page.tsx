@@ -15,30 +15,6 @@ export default function HowWishlistWorksPage() {
       subtitle="Tell the community what you're looking for, and let sellers come to you."
     >
       <section>
-        <h2 className="text-xl font-semibold text-gray-100">Watch the walkthrough</h2>
-        <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-gray-800 bg-gray-900">
-          <iframe
-            src="https://www.youtube.com/embed/kUzKTKVJ6G0"
-            title="How Wishlist Works"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            className="absolute inset-0 h-full w-full"
-          />
-        </div>
-        <p className="text-xs text-gray-500">
-          Or watch on{' '}
-          <a
-            href="https://www.youtube.com/watch?v=kUzKTKVJ6G0"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-teal-400 hover:text-teal-300"
-          >
-            YouTube
-          </a>.
-        </p>
-      </section>
-
-      <section>
         <h2 className="text-xl font-semibold text-gray-100">What is a wishlist item?</h2>
         <p>
           A wishlist item is a public post that says <em>&quot;I&apos;m looking for this pair.&quot;</em>{' '}
