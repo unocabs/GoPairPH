@@ -242,9 +242,11 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   View Profile
                 </Link>
               </div>
-              {seller.fb_username && !isOwner && (
-                <ContactSellerButtons fbUsername={seller.fb_username} listingId={shoe.id} />
-              )}
+              <ContactSellerButtons
+                fbUsername={!isOwner ? seller.fb_username : null}
+                listingId={shoe.id}
+                isOwner={isOwner}
+              />
             </div>
           )}
 

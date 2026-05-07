@@ -119,10 +119,15 @@ export function OwnProfile({
 
       {tab === 'listings' && (
         <div>
-          <div className="flex justify-between items-center mb-4">
-            <p className="text-sm text-gray-500">All your listings including sold and donated ones</p>
-            <Link href="/listings/new">
-              <Button size="sm">+ List a Shoe</Button>
+          <div className="mb-4 rounded-xl border border-teal-500/20 bg-teal-500/[0.04] p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-3">
+              <span className="text-xl leading-none mt-0.5" aria-hidden>👟</span>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Keep all your running shoe listings in one place — active, sold, or donated. Share your Go Pair PH listing on Facebook Marketplace, groups, or anywhere else while easily managing everything here.
+              </p>
+            </div>
+            <Link href="/listings/new" className="sm:shrink-0">
+              <Button size="sm" className="w-full sm:w-auto">+ List a Shoe</Button>
             </Link>
           </div>
           <ListingGrid shoes={shoes} currentProfileId={profile.id} emptyMessage="You haven't listed any shoes yet." />
