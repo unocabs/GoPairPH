@@ -18,12 +18,27 @@ interface SharePostModalProps {
 const CARD_W = 1200;
 const CARD_H = 675;
 
+async function urlToDataUrl(url: string): Promise<string> {
+  const res = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+  if (!res.ok) throw new Error(`Failed to fetch image (${res.status})`);
+  const blob = await res.blob();
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error('FileReader failed'));
+    reader.readAsDataURL(blob);
+  });
+}
+
 export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const previewWrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const [downloading, setDownloading] = useState(false);
-  const [done, setDone] = useState(false);
+  const [heroSrc, setHeroSrc] = useState<string | null>(null);
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
+  const [imagesReady, setImagesReady] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -35,7 +50,7 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
   const isFeatured = !!shoe.featured_until && new Date(shoe.featured_until).getTime() > now;
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until).getTime() > now;
 
-  // Fit the 1200x675 card inside the modal viewport.
+  // Fit the card inside the modal viewport.
   useEffect(() => {
     function fit() {
       if (!previewWrapRef.current) return;
@@ -56,31 +71,88 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  async function handleDownload() {
-    if (!cardRef.current || downloading) return;
-    setDownloading(true);
+  // Prefetch hero + avatar as data URLs so html-to-image can read them
+  // without canvas tainting (especially on Safari iOS).
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const [hero, avatar] = await Promise.all([
+          heroUrl ? urlToDataUrl(heroUrl).catch(() => heroUrl) : Promise.resolve(null),
+          avatarUrl ? urlToDataUrl(avatarUrl).catch(() => avatarUrl) : Promise.resolve(null),
+        ]);
+        if (cancelled) return;
+        setHeroSrc(hero);
+        setAvatarSrc(avatar);
+        setImagesReady(true);
+      } catch {
+        if (cancelled) return;
+        setHeroSrc(heroUrl);
+        setAvatarSrc(avatarUrl);
+        setImagesReady(true);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [heroUrl, avatarUrl]);
+
+  function buildFilename(): string {
+    return `${shoe.brand}-${shoe.model}-gopairph.png`
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, '-')
+      .replace(/-+/g, '-');
+  }
+
+  async function handleSave() {
+    if (!cardRef.current || busy || !imagesReady) return;
+    setBusy(true);
     setError(null);
-    setDone(false);
+    setDone(null);
     try {
-      const dataUrl = await htmlToImage.toPng(cardRef.current, {
+      const blob = await htmlToImage.toBlob(cardRef.current, {
         cacheBust: true,
         pixelRatio: 1,
         width: CARD_W,
         height: CARD_H,
       });
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = `${shoe.brand}-${shoe.model}-gopairph.png`
-        .toLowerCase()
-        .replace(/[^a-z0-9-]+/g, '-')
-        .replace(/-+/g, '-');
-      a.click();
-      setDone(true);
-      setTimeout(() => setDone(false), 3000);
+      if (!blob) throw new Error('Failed to render image');
+      const filename = buildFilename();
+      const file = new File([blob], filename, { type: 'image/png' });
+
+      const canShareFiles =
+        typeof navigator !== 'undefined' &&
+        typeof navigator.canShare === 'function' &&
+        navigator.canShare({ files: [file] });
+
+      if (canShareFiles) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'Go Pair PH',
+            text: formatListingName(shoe.brand, shoe.model),
+          });
+          setDone('Shared! Pick "Save Image" to add it to your Photos.');
+        } catch (err) {
+          if ((err as Error)?.name !== 'AbortError') throw err;
+        }
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setDone('Saved to your downloads.');
+      }
+      setTimeout(() => setDone(null), 3500);
     } catch (err) {
-      setError((err as Error)?.message ?? 'Failed to generate image');
+      setError((err as Error)?.message ?? 'Failed to save image');
     } finally {
-      setDownloading(false);
+      setBusy(false);
     }
   }
 
@@ -98,13 +170,13 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
           <h2 className="text-sm font-semibold text-gray-100">Share Post</h2>
           <div className="flex items-center gap-1">
             <button
-              onClick={handleDownload}
-              disabled={downloading}
-              aria-label="Download share image"
-              title="Download as PNG"
+              onClick={handleSave}
+              disabled={busy || !imagesReady}
+              aria-label="Save image"
+              title="Save image"
               className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-teal-400 transition-colors disabled:opacity-50"
             >
-              {downloading ? (
+              {busy || !imagesReady ? (
                 <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z" />
@@ -151,8 +223,8 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
                   ref={cardRef}
                   shoe={shoe}
                   seller={seller}
-                  heroUrl={heroUrl}
-                  avatarUrl={avatarUrl}
+                  heroSrc={heroSrc}
+                  avatarSrc={avatarSrc}
                   isFeatured={isFeatured}
                   isSponsored={isSponsored}
                 />
@@ -161,12 +233,12 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
           </div>
 
           <p className="mt-3 text-xs text-gray-500">
-            Tip: download the image, then attach it to your Facebook post or Marketplace listing.
+            Tip: tap the save icon, then choose <strong className="text-gray-300">Save Image</strong> from the share sheet to add it to your Photos.
           </p>
 
           {done && (
             <p className="mt-3 rounded-lg bg-green-950 border border-green-800 px-3 py-2 text-xs text-green-300">
-              ✅ Saved to your downloads.
+              ✅ {done}
             </p>
           )}
           {error && (
@@ -183,284 +255,284 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
 interface ShareCardProps {
   shoe: Shoe;
   seller: Profile | null;
-  heroUrl: string | null;
-  avatarUrl: string | null;
+  heroSrc: string | null;
+  avatarSrc: string | null;
   isFeatured: boolean;
   isSponsored: boolean;
 }
 
 const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
-  { shoe, seller, heroUrl, avatarUrl, isFeatured, isSponsored },
+  { shoe, seller, heroSrc, avatarSrc, isFeatured, isSponsored },
   ref,
 ) {
   return (
+    <div
+      ref={ref}
+      style={{
+        width: CARD_W,
+        height: CARD_H,
+        display: 'flex',
+        background: '#020617',
+        fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        color: '#f3f4f6',
+      }}
+    >
+      {/* Left panel */}
       <div
-        ref={ref}
         style={{
-          width: CARD_W,
-          height: CARD_H,
+          width: '46%',
+          padding: 48,
           display: 'flex',
-          background: '#020617',
-          fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-          color: '#f3f4f6',
+          flexDirection: 'column',
+          gap: 20,
+          background: 'linear-gradient(135deg, #020617 0%, #0b1220 50%, #042f2e 100%)',
+          borderRight: '1px solid rgba(20, 184, 166, 0.25)',
         }}
       >
-        {/* Left panel */}
-        <div
-          style={{
-            width: '46%',
-            padding: 48,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 20,
-            background: 'linear-gradient(135deg, #020617 0%, #0b1220 50%, #042f2e 100%)',
-            borderRight: '1px solid rgba(20, 184, 166, 0.25)',
-          }}
-        >
-          {/* Brand */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <LogoMark size={56} />
-            <span style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1 }}>
-              <span style={{ color: '#f3f4f6' }}>GoPair</span>
-              <span style={{ color: '#2dd4bf' }}>PH</span>
-              <span style={{ color: '#f3f4f6' }}>.com</span>
+        {/* Brand */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <LogoMark size={56} />
+          <span style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1 }}>
+            <span style={{ color: '#f3f4f6' }}>GoPair</span>
+            <span style={{ color: '#2dd4bf' }}>PH</span>
+            <span style={{ color: '#f3f4f6' }}>.com</span>
+          </span>
+        </div>
+
+        {/* Badges */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <ListingTypeBadge type={shoe.listing_type} />
+          <Badge className={CONDITION_COLORS[shoe.condition]}>{CONDITIONS[shoe.condition]}</Badge>
+          {isFeatured && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                borderRadius: 9999,
+                background: 'rgba(20, 184, 166, 0.15)',
+                border: '1px solid rgba(20, 184, 166, 0.4)',
+                color: '#5eead4',
+                padding: '4px 12px',
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              ★ Featured
             </span>
-          </div>
+          )}
+          {isSponsored && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                borderRadius: 9999,
+                background: 'rgba(245, 158, 11, 0.15)',
+                border: '1px solid rgba(245, 158, 11, 0.4)',
+                color: '#fcd34d',
+                padding: '4px 12px',
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              ✦ Sponsored
+            </span>
+          )}
+        </div>
 
-          {/* Badges */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            <ListingTypeBadge type={shoe.listing_type} />
-            <Badge className={CONDITION_COLORS[shoe.condition]}>{CONDITIONS[shoe.condition]}</Badge>
-            {isFeatured && (
+        {/* Title */}
+        <div>
+          <h1
+            style={{
+              fontSize: 52,
+              lineHeight: 1.05,
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              color: '#f9fafb',
+              margin: 0,
+            }}
+          >
+            {formatListingName(shoe.brand, shoe.model)}
+          </h1>
+          <p style={{ marginTop: 10, fontSize: 18, color: '#9ca3af', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span>{shoe.color}</span>
+            <span style={{ color: '#374151' }}>•</span>
+            <span style={{ color: '#d1d5db', fontWeight: 600 }}>{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}</span>
+          </p>
+        </div>
+
+        {/* Price */}
+        {shoe.listing_type === 'for_sale' && shoe.price_php != null && (
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+            <span style={{ fontSize: 40, fontWeight: 800, color: '#2dd4bf', letterSpacing: '-0.02em' }}>
+              {formatPrice(shoe.price_php)}
+            </span>
+            {shoe.is_negotiable && (
               <span
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  borderRadius: 9999,
-                  background: 'rgba(20, 184, 166, 0.15)',
-                  border: '1px solid rgba(20, 184, 166, 0.4)',
-                  color: '#5eead4',
-                  padding: '4px 12px',
-                  fontSize: 13,
-                  fontWeight: 600,
-                }}
-              >
-                ★ Featured
-              </span>
-            )}
-            {isSponsored && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  borderRadius: 9999,
-                  background: 'rgba(245, 158, 11, 0.15)',
-                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
                   color: '#fcd34d',
-                  padding: '4px 12px',
-                  fontSize: 13,
-                  fontWeight: 600,
+                  background: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  borderRadius: 9999,
+                  padding: '3px 10px',
                 }}
               >
-                ✦ Sponsored
+                Negotiable
               </span>
             )}
           </div>
-
-          {/* Title */}
-          <div>
-            <h1
-              style={{
-                fontSize: 52,
-                lineHeight: 1.05,
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
-                color: '#f9fafb',
-                margin: 0,
-              }}
-            >
-              {formatListingName(shoe.brand, shoe.model)}
-            </h1>
-            <p style={{ marginTop: 10, fontSize: 18, color: '#9ca3af', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <span>{shoe.color}</span>
-              <span style={{ color: '#374151' }}>•</span>
-              <span style={{ color: '#d1d5db', fontWeight: 600 }}>{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}</span>
-            </p>
+        )}
+        {shoe.listing_type === 'donate' && (
+          <div
+            style={{
+              background: 'rgba(34, 197, 94, 0.1)',
+              border: '1px solid rgba(34, 197, 94, 0.4)',
+              borderRadius: 12,
+              padding: '10px 14px',
+              fontSize: 16,
+              fontWeight: 700,
+              color: '#86efac',
+              width: 'fit-content',
+            }}
+          >
+            Free Donation
           </div>
+        )}
 
-          {/* Price */}
-          {shoe.listing_type === 'for_sale' && shoe.price_php != null && (
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-              <span style={{ fontSize: 40, fontWeight: 800, color: '#2dd4bf', letterSpacing: '-0.02em' }}>
-                {formatPrice(shoe.price_php)}
-              </span>
-              {shoe.is_negotiable && (
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: '#fcd34d',
-                    background: 'rgba(245, 158, 11, 0.12)',
-                    border: '1px solid rgba(245, 158, 11, 0.4)',
-                    borderRadius: 9999,
-                    padding: '3px 10px',
-                  }}
-                >
-                  Negotiable
-                </span>
-              )}
+        {/* Description */}
+        {shoe.description && (
+          <div
+            style={{
+              borderRadius: 12,
+              border: '1px solid #1f2937',
+              background: 'rgba(17, 24, 39, 0.6)',
+              padding: 14,
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+              Description
             </div>
-          )}
-          {shoe.listing_type === 'donate' && (
             <div
               style={{
-                background: 'rgba(34, 197, 94, 0.1)',
-                border: '1px solid rgba(34, 197, 94, 0.4)',
-                borderRadius: 12,
-                padding: '10px 14px',
-                fontSize: 16,
-                fontWeight: 700,
-                color: '#86efac',
-                width: 'fit-content',
+                fontSize: 14,
+                lineHeight: 1.5,
+                color: '#d1d5db',
+                whiteSpace: 'pre-wrap',
+                display: '-webkit-box',
+                WebkitLineClamp: 4,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
               }}
             >
-              Free Donation
+              {shoe.description}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Description */}
-          {shoe.description && (
-            <div
-              style={{
-                borderRadius: 12,
-                border: '1px solid #1f2937',
-                background: 'rgba(17, 24, 39, 0.6)',
-                padding: 14,
-              }}
-            >
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
-                Description
-              </div>
+        {/* Seller — pinned to bottom */}
+        {seller && (
+          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 12, borderRadius: 12, border: '1px solid #1f2937', background: 'rgba(17, 24, 39, 0.6)', padding: 12 }}>
+            {avatarSrc ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={avatarSrc}
+                alt={seller.display_name}
+                width={48}
+                height={48}
+                crossOrigin="anonymous"
+                style={{ width: 48, height: 48, borderRadius: 9999, objectFit: 'cover', border: '1px solid #374151' }}
+              />
+            ) : (
               <div
                 style={{
-                  fontSize: 14,
-                  lineHeight: 1.5,
-                  color: '#d1d5db',
-                  whiteSpace: 'pre-wrap',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 4,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
+                  width: 48,
+                  height: 48,
+                  borderRadius: 9999,
+                  background: '#0d9488',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: 20,
                 }}
               >
-                {shoe.description}
+                {seller.display_name?.[0]?.toUpperCase() ?? 'U'}
               </div>
-            </div>
-          )}
-
-          {/* Seller — pushed to the bottom */}
-          {seller && (
-            <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 12, borderRadius: 12, border: '1px solid #1f2937', background: 'rgba(17, 24, 39, 0.6)', padding: 12 }}>
-              {avatarUrl ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={avatarUrl}
-                  alt={seller.display_name}
-                  width={48}
-                  height={48}
-                  crossOrigin="anonymous"
-                  style={{ width: 48, height: 48, borderRadius: 9999, objectFit: 'cover', border: '1px solid #374151' }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 9999,
-                    background: '#0d9488',
-                    color: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 800,
-                    fontSize: 20,
-                  }}
-                >
-                  {seller.display_name?.[0]?.toUpperCase() ?? 'U'}
-                </div>
-              )}
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Seller</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 18, fontWeight: 700, color: '#f3f4f6' }}>
-                  <span>{seller.display_name}</span>
-                  {seller.is_verified && (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        borderRadius: 9999,
-                        background: 'rgba(20, 184, 166, 0.1)',
-                        border: '1px solid rgba(20, 184, 166, 0.4)',
-                        color: '#2dd4bf',
-                        padding: '2px 8px',
-                        fontSize: 10,
-                        fontWeight: 800,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                      }}
-                    >
-                      <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      Verified
-                    </span>
-                  )}
-                </div>
-                {seller.location && (
-                  <div style={{ fontSize: 13, color: '#9ca3af', marginTop: 2 }}>{seller.location}</div>
+            )}
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Seller</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 18, fontWeight: 700, color: '#f3f4f6' }}>
+                <span>{seller.display_name}</span>
+                {seller.is_verified && (
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      borderRadius: 9999,
+                      background: 'rgba(20, 184, 166, 0.1)',
+                      border: '1px solid rgba(20, 184, 166, 0.4)',
+                      color: '#2dd4bf',
+                      padding: '2px 8px',
+                      fontSize: 10,
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                    }}
+                  >
+                    <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Verified
+                  </span>
                 )}
               </div>
+              {seller.location && (
+                <div style={{ fontSize: 13, color: '#9ca3af', marginTop: 2 }}>{seller.location}</div>
+              )}
             </div>
-          )}
-        </div>
-
-        {/* Right panel — hero photo */}
-        <div style={{ width: '54%', position: 'relative', background: '#020617' }}>
-          {heroUrl ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={heroUrl}
-              alt={formatListingName(shoe.brand, shoe.model)}
-              crossOrigin="anonymous"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
-          ) : (
-            <div
-              style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 10,
-                background: 'linear-gradient(135deg, #0b1220 0%, #042f2e 100%)',
-              }}
-            >
-              <div style={{ opacity: 0.3 }}>
-                <LogoMark size={120} />
-              </div>
-              <span style={{ fontSize: 14, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 600 }}>
-                No photo
-              </span>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
+
+      {/* Right panel — hero photo */}
+      <div style={{ width: '54%', position: 'relative', background: '#020617' }}>
+        {heroSrc ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={heroSrc}
+            alt={formatListingName(shoe.brand, shoe.model)}
+            crossOrigin="anonymous"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+        ) : (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 10,
+              background: 'linear-gradient(135deg, #0b1220 0%, #042f2e 100%)',
+            }}
+          >
+            <div style={{ opacity: 0.3 }}>
+              <LogoMark size={120} />
+            </div>
+            <span style={{ fontSize: 14, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 600 }}>
+              No photo
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
   );
 });
