@@ -38,6 +38,8 @@ export const metadata: Metadata = {
     'sell running shoes pampanga',
     'gopairph',
     'go pair ph',
+    'go pair',
+    'gopair',
   ],
   creator: SITE_NAME,
   publisher: SITE_NAME,
