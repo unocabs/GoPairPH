@@ -19,7 +19,7 @@ const CARD_W = 1200;
 const CARD_H = 675;
 
 async function urlToDataUrl(url: string): Promise<string> {
-  const res = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+  const res = await fetch(url, { mode: 'cors' });
   if (!res.ok) throw new Error(`Failed to fetch image (${res.status})`);
   const blob = await res.blob();
   return await new Promise<string>((resolve, reject) => {
@@ -72,27 +72,20 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
   }, [onClose]);
 
   // Prefetch hero + avatar as data URLs so html-to-image can read them
-  // without canvas tainting (especially on Safari iOS).
+  // without canvas tainting. If a prefetch fails (e.g. Google avatar 429,
+  // CORS issue), drop to the visual fallback rather than keeping a broken
+  // URL — otherwise the <img> error event derails html-to-image.
   useEffect(() => {
     let cancelled = false;
-    async function load() {
-      try {
-        const [hero, avatar] = await Promise.all([
-          heroUrl ? urlToDataUrl(heroUrl).catch(() => heroUrl) : Promise.resolve(null),
-          avatarUrl ? urlToDataUrl(avatarUrl).catch(() => avatarUrl) : Promise.resolve(null),
-        ]);
-        if (cancelled) return;
-        setHeroSrc(hero);
-        setAvatarSrc(avatar);
-        setImagesReady(true);
-      } catch {
-        if (cancelled) return;
-        setHeroSrc(heroUrl);
-        setAvatarSrc(avatarUrl);
-        setImagesReady(true);
-      }
-    }
-    load();
+    Promise.all([
+      heroUrl ? urlToDataUrl(heroUrl).catch(() => null) : Promise.resolve(null),
+      avatarUrl ? urlToDataUrl(avatarUrl).catch(() => null) : Promise.resolve(null),
+    ]).then(([hero, avatar]) => {
+      if (cancelled) return;
+      setHeroSrc(hero);
+      setAvatarSrc(avatar);
+      setImagesReady(true);
+    });
     return () => {
       cancelled = true;
     };
@@ -111,46 +104,53 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
     setError(null);
     setDone(null);
     try {
-      const blob = await htmlToImage.toBlob(cardRef.current, {
-        cacheBust: true,
+      const dataUrl = await htmlToImage.toPng(cardRef.current, {
         pixelRatio: 1,
         width: CARD_W,
         height: CARD_H,
       });
-      if (!blob) throw new Error('Failed to render image');
-      const filename = buildFilename();
-      const file = new File([blob], filename, { type: 'image/png' });
-
-      const canShareFiles =
-        typeof navigator !== 'undefined' &&
-        typeof navigator.canShare === 'function' &&
-        navigator.canShare({ files: [file] });
-
-      if (canShareFiles) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: 'Go Pair PH',
-            text: formatListingName(shoe.brand, shoe.model),
-          });
-          setDone('Shared! Pick "Save Image" to add it to your Photos.');
-        } catch (err) {
-          if ((err as Error)?.name !== 'AbortError') throw err;
-        }
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        setDone('Saved to your downloads.');
+      if (!dataUrl || !dataUrl.startsWith('data:image')) {
+        throw new Error('Image render returned empty data');
       }
+      const filename = buildFilename();
+
+      // iOS/Android: try file share so users land in Photos via "Save Image".
+      // Wrapped so any failure here falls through to the direct download below.
+      if (typeof navigator !== 'undefined' && typeof navigator.canShare === 'function') {
+        try {
+          const blob = await (await fetch(dataUrl)).blob();
+          const file = new File([blob], filename, { type: 'image/png' });
+          if (navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({ files: [file] });
+              setDone('Choose "Save Image" to add it to your Photos.');
+              setTimeout(() => setDone(null), 3500);
+              return;
+            } catch (e) {
+              if ((e as Error)?.name === 'AbortError') return;
+              throw e;
+            }
+          }
+        } catch (e) {
+          // Share path failed — fall through to direct download.
+          console.warn('SharePost: share path failed, falling back to download', e);
+        }
+      }
+
+      // Desktop / fallback: download dataUrl directly.
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setDone('Saved to your downloads.');
       setTimeout(() => setDone(null), 3500);
     } catch (err) {
-      setError((err as Error)?.message ?? 'Failed to save image');
+      console.error('SharePost: save failed', err);
+      const e = err as Error;
+      const msg = e?.message || e?.name || (typeof err === 'string' ? err : 'Failed to save image');
+      setError(msg);
     } finally {
       setBusy(false);
     }
