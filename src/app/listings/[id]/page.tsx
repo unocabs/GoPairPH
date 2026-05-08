@@ -256,6 +256,8 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                 fbUsername={!isOwner ? seller.fb_username : null}
                 listingId={shoe.id}
                 isOwner={isOwner}
+                shoe={shoe}
+                seller={seller}
               />
             </div>
           )}
