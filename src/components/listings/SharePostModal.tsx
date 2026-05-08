@@ -191,7 +191,7 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
           </div>
 
           <p className="mt-3 text-xs text-gray-500">
-            <strong className="text-gray-300">Tip:</strong> Share it to your Facebook post or Marketplace listing. On mobile, <strong className="text-gray-300">long-press the image</strong> to save it to your Photos.
+            <strong className="text-gray-300">Tip:</strong> Share it to your Facebook post or Marketplace listing. On mobile, <strong className="text-gray-300">long-press the image</strong> to save it. If the image did not load properly, please close the pop-up and open it again.
           </p>
 
           {/* Hidden source for html-to-image — rendered offscreen at native size. */}
