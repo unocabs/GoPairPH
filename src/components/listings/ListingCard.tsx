@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { type Shoe } from '@/types';
+import { LogoMark } from '@/components/brand/Logo';
 import { ListingTypeBadge } from './ListingTypeBadge';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
@@ -73,10 +74,13 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-gray-700">
-              <svg className="h-14 w-14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+            <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-gray-900 via-gray-900 to-teal-950/40">
+              <div className="opacity-30">
+                <LogoMark size={64} />
+              </div>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-gray-600">
+                No photo
+              </span>
             </div>
           )}
           <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
