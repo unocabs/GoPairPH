@@ -32,13 +32,10 @@ async function urlToDataUrl(url: string): Promise<string> {
 
 export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const previewWrapRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
   const [heroSrc, setHeroSrc] = useState<string | null>(null);
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
   const [imagesReady, setImagesReady] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState<string | null>(null);
+  const [pngDataUrl, setPngDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -49,18 +46,6 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
   const now = Date.now();
   const isFeatured = !!shoe.featured_until && new Date(shoe.featured_until).getTime() > now;
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until).getTime() > now;
-
-  // Fit the card inside the modal viewport.
-  useEffect(() => {
-    function fit() {
-      if (!previewWrapRef.current) return;
-      const w = previewWrapRef.current.clientWidth;
-      setScale(Math.min(1, w / CARD_W));
-    }
-    fit();
-    window.addEventListener('resize', fit);
-    return () => window.removeEventListener('resize', fit);
-  }, []);
 
   // Esc to close.
   useEffect(() => {
@@ -73,8 +58,8 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
 
   // Prefetch hero + avatar as data URLs so html-to-image can read them
   // without canvas tainting. If a prefetch fails (e.g. Google avatar 429,
-  // CORS issue), drop to the visual fallback rather than keeping a broken
-  // URL — otherwise the <img> error event derails html-to-image.
+  // CORS issue), fall back to null so the visual placeholder renders
+  // instead of a broken <img>.
   useEffect(() => {
     let cancelled = false;
     Promise.all([
@@ -91,6 +76,31 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
     };
   }, [heroUrl, avatarUrl]);
 
+  // Render the card to PNG once images are ready.
+  useEffect(() => {
+    if (!imagesReady || !cardRef.current) return;
+    let cancelled = false;
+    htmlToImage
+      .toPng(cardRef.current, { pixelRatio: 1, width: CARD_W, height: CARD_H })
+      .then(url => {
+        if (cancelled) return;
+        if (!url || !url.startsWith('data:image')) {
+          setError('Could not generate share image');
+          return;
+        }
+        setPngDataUrl(url);
+      })
+      .catch(err => {
+        console.error('SharePost: render failed', err);
+        if (cancelled) return;
+        const e = err as Error;
+        setError(e?.message || e?.name || 'Could not generate share image');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [imagesReady]);
+
   function buildFilename(): string {
     return `${shoe.brand}-${shoe.model}-gopairph.png`
       .toLowerCase()
@@ -98,62 +108,14 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
       .replace(/-+/g, '-');
   }
 
-  async function handleSave() {
-    if (!cardRef.current || busy || !imagesReady) return;
-    setBusy(true);
-    setError(null);
-    setDone(null);
-    try {
-      const dataUrl = await htmlToImage.toPng(cardRef.current, {
-        pixelRatio: 1,
-        width: CARD_W,
-        height: CARD_H,
-      });
-      if (!dataUrl || !dataUrl.startsWith('data:image')) {
-        throw new Error('Image render returned empty data');
-      }
-      const filename = buildFilename();
-
-      // iOS/Android: try file share so users land in Photos via "Save Image".
-      // Wrapped so any failure here falls through to the direct download below.
-      if (typeof navigator !== 'undefined' && typeof navigator.canShare === 'function') {
-        try {
-          const blob = await (await fetch(dataUrl)).blob();
-          const file = new File([blob], filename, { type: 'image/png' });
-          if (navigator.canShare({ files: [file] })) {
-            try {
-              await navigator.share({ files: [file] });
-              setDone('Choose "Save Image" to add it to your Photos.');
-              setTimeout(() => setDone(null), 3500);
-              return;
-            } catch (e) {
-              if ((e as Error)?.name === 'AbortError') return;
-              throw e;
-            }
-          }
-        } catch (e) {
-          // Share path failed — fall through to direct download.
-          console.warn('SharePost: share path failed, falling back to download', e);
-        }
-      }
-
-      // Desktop / fallback: download dataUrl directly.
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setDone('Saved to your downloads.');
-      setTimeout(() => setDone(null), 3500);
-    } catch (err) {
-      console.error('SharePost: save failed', err);
-      const e = err as Error;
-      const msg = e?.message || e?.name || (typeof err === 'string' ? err : 'Failed to save image');
-      setError(msg);
-    } finally {
-      setBusy(false);
-    }
+  function handleDownload() {
+    if (!pngDataUrl) return;
+    const a = document.createElement('a');
+    a.href = pngDataUrl;
+    a.download = buildFilename();
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   return (
@@ -169,23 +131,17 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-800">
           <h2 className="text-sm font-semibold text-gray-100">Share Post</h2>
           <div className="flex items-center gap-1">
+            {/* Download button — desktop only. Mobile users long-press the image. */}
             <button
-              onClick={handleSave}
-              disabled={busy || !imagesReady}
-              aria-label="Save image"
-              title="Save image"
-              className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-teal-400 transition-colors disabled:opacity-50"
+              onClick={handleDownload}
+              disabled={!pngDataUrl}
+              aria-label="Download image"
+              title="Download image"
+              className="hidden sm:inline-flex items-center justify-center h-9 w-9 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-teal-400 transition-colors disabled:opacity-50"
             >
-              {busy || !imagesReady ? (
-                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z" />
-                </svg>
-              ) : (
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
-                </svg>
-              )}
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+              </svg>
             </button>
             <button
               onClick={onClose}
@@ -199,49 +155,63 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
           </div>
         </div>
 
-        {/* Body — preview */}
+        {/* Body */}
         <div className="overflow-y-auto p-5">
-          <div ref={previewWrapRef} className="w-full">
-            <div
-              style={{
-                width: '100%',
-                aspectRatio: `${CARD_W} / ${CARD_H}`,
-                position: 'relative',
-                overflow: 'hidden',
-                borderRadius: 12,
-              }}
-            >
-              <div
-                style={{
-                  width: CARD_W,
-                  height: CARD_H,
-                  transform: `scale(${scale})`,
-                  transformOrigin: 'top left',
-                }}
-              >
-                <ShareCard
-                  ref={cardRef}
-                  shoe={shoe}
-                  seller={seller}
-                  heroSrc={heroSrc}
-                  avatarSrc={avatarSrc}
-                  isFeatured={isFeatured}
-                  isSponsored={isSponsored}
-                />
+          {/* Rendered PNG. Mobile: long-press to save. Desktop: use the download button. */}
+          <div
+            className="relative w-full overflow-hidden rounded-xl bg-gray-950"
+            style={{ aspectRatio: `${CARD_W} / ${CARD_H}` }}
+          >
+            {pngDataUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={pngDataUrl}
+                alt={`${formatListingName(shoe.brand, shoe.model)} — Go Pair PH share post`}
+                className="block w-full h-full object-cover select-none"
+                draggable
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                {error ? (
+                  <p className="px-4 text-center text-xs text-red-300">{error}</p>
+                ) : (
+                  <svg className="h-6 w-6 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z" />
+                  </svg>
+                )}
               </div>
-            </div>
+            )}
           </div>
 
           <p className="mt-3 text-xs text-gray-500">
-            Tip: tap the save icon, then choose <strong className="text-gray-300">Save Image</strong> from the share sheet to add it to your Photos.
+            <strong className="text-gray-300">Tip:</strong> Share it to your Facebook post or Marketplace listing. On mobile, <strong className="text-gray-300">long-press the image</strong> to save it to your Photos.
           </p>
 
-          {done && (
-            <p className="mt-3 rounded-lg bg-green-950 border border-green-800 px-3 py-2 text-xs text-green-300">
-              ✅ {done}
-            </p>
-          )}
-          {error && (
+          {/* Hidden source for html-to-image — rendered offscreen at native size. */}
+          <div
+            aria-hidden
+            style={{
+              position: 'fixed',
+              top: -100000,
+              left: 0,
+              width: CARD_W,
+              height: CARD_H,
+              pointerEvents: 'none',
+            }}
+          >
+            <ShareCard
+              ref={cardRef}
+              shoe={shoe}
+              seller={seller}
+              heroSrc={heroSrc}
+              avatarSrc={avatarSrc}
+              isFeatured={isFeatured}
+              isSponsored={isSponsored}
+            />
+          </div>
+
+          {error && pngDataUrl && (
             <p className="mt-3 rounded-lg bg-red-950 border border-red-800 px-3 py-2 text-xs text-red-300">
               {error}
             </p>
