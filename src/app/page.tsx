@@ -17,8 +17,17 @@ async function getRecentListings(): Promise<Shoe[]> {
     .select('*, profiles(*), shoe_images(*)')
     .eq('status', 'active')
     .order('created_at', { ascending: false })
-    .limit(8);
-  return (data as Shoe[]) ?? [];
+    .limit(16);
+  const all = (data as Shoe[]) ?? [];
+  const hasPhoto = (s: Shoe) => (s.shoe_images?.length ?? 0) > 0;
+  return all
+    .sort((a, b) => {
+      const aPhoto = hasPhoto(a);
+      const bPhoto = hasPhoto(b);
+      if (aPhoto !== bPhoto) return aPhoto ? -1 : 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    })
+    .slice(0, 8);
 }
 
 /**

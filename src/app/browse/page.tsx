@@ -43,14 +43,17 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
   const { data } = await query.limit(60);
   const all = (data as Shoe[]) ?? [];
 
-  // Sort: active sponsored first (most-recently-started among them rises),
-  // then everyone else by created_at DESC. Done in app code so we don't pay
-  // for a complex multi-key ORDER BY in PostgREST.
+  // Sort: photoless listings always last; within the photo group, active
+  // sponsored first (most-recently-started rises), then by created_at DESC.
   const now = Date.now();
   const isActiveSponsored = (s: Shoe) =>
     s.sponsored_until != null && new Date(s.sponsored_until).getTime() > now;
+  const hasPhoto = (s: Shoe) => (s.shoe_images?.length ?? 0) > 0;
 
   return all.sort((a, b) => {
+    const aPhoto = hasPhoto(a);
+    const bPhoto = hasPhoto(b);
+    if (aPhoto !== bPhoto) return aPhoto ? -1 : 1;
     const aSp = isActiveSponsored(a);
     const bSp = isActiveSponsored(b);
     if (aSp !== bSp) return aSp ? -1 : 1;
