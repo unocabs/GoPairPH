@@ -9,9 +9,10 @@ import { getPublicUrl } from '@/lib/utils';
 
 interface PhotoGalleryProps {
   images: ShoeImage[];
+  isOwner?: boolean;
 }
 
-export function PhotoGallery({ images }: PhotoGalleryProps) {
+export function PhotoGallery({ images, isOwner = false }: PhotoGalleryProps) {
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -36,10 +37,24 @@ export function PhotoGallery({ images }: PhotoGalleryProps) {
 
   if (sorted.length === 0) {
     return (
-      <div className="w-full h-[40vh] sm:h-[45vh] lg:h-auto lg:aspect-square rounded-xl bg-gray-900 flex items-center justify-center text-gray-700">
-        <svg className="h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
+      <div className="relative w-full h-[40vh] sm:h-[45vh] lg:h-auto lg:aspect-square overflow-hidden rounded-xl border border-gray-800 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-950 flex flex-col items-center justify-center px-6 text-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-800/60 ring-1 ring-gray-700">
+          <svg className="h-10 w-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7.5A1.5 1.5 0 014.5 6h2.379a1.5 1.5 0 001.06-.44l1.122-1.12A1.5 1.5 0 0110.121 4h3.758a1.5 1.5 0 011.06.44l1.122 1.12a1.5 1.5 0 001.06.44H19.5A1.5 1.5 0 0121 7.5v10.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18V7.5z" />
+            <circle cx="12" cy="13" r="3.5" strokeWidth={1.5} />
+          </svg>
+        </div>
+        <p className="mt-4 text-sm font-medium text-gray-400">No photos yet</p>
+        {isOwner && (
+          <div className="mt-3 max-w-xs space-y-2">
+            <p className="text-xs text-gray-500">
+              Buyers are much more likely to purchase listings with clear top and sole photos.
+            </p>
+            <p className="text-xs text-gray-500">
+              To add photos, please delete this listing and create a new one.
+            </p>
+          </div>
+        )}
       </div>
     );
   }

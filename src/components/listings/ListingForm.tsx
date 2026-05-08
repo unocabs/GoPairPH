@@ -27,6 +27,7 @@ interface ListingFormProps {
 export function ListingForm({ profileId }: ListingFormProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [shoeId, setShoeId] = useState<string | null>(null);
+  const [details, setDetails] = useState<ListingFormData | null>(null);
   const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,44 +64,15 @@ export function ListingForm({ profileId }: ListingFormProps) {
     if (match) { setValue('size_eu', match.eu); setValue('size_us', match.us); }
   }
 
-  async function onDetailsSubmit(data: ListingFormData) {
-    setSubmitting(true);
+  function onDetailsSubmit(data: ListingFormData) {
     setError(null);
-    try {
-      const { data: shoe, error: insertError } = await supabase
-        .from('shoes')
-        .insert({
-          seller_id: profileId,
-          brand: data.brand,
-          model: data.model,
-          color: data.color,
-          condition: data.condition,
-          mileage_km: data.condition === 'new' ? 0 : (data.mileage_km ?? null),
-          listing_type: data.listing_type,
-          price_php: data.listing_type === 'for_sale' ? data.price_php : null,
-          is_negotiable: data.listing_type === 'for_sale' ? !!data.is_negotiable : false,
-          description: data.description,
-          size_eu: data.size_eu,
-          size_us: data.size_us,
-          size_cm: data.size_cm,
-          status: 'active',
-        })
-        .select('id')
-        .single();
-
-      if (insertError) throw insertError;
-      setShoeId(shoe.id);
-      setStep(2);
-    } catch (err) {
-      const msg = (err as { message?: string })?.message ?? 'Failed to save listing';
-      setError(msg);
-    } finally {
-      setSubmitting(false);
-    }
+    setDetails(data);
+    if (!shoeId) setShoeId(crypto.randomUUID());
+    setStep(2);
   }
 
   async function onPhotosSubmit() {
-    if (!shoeId) return;
+    if (!shoeId || !details) return;
     const hasTop = photos.some(p => p.viewType === 'top');
     const hasSole = photos.some(p => p.viewType === 'sole');
     if (!hasTop || !hasSole) {
@@ -110,6 +82,27 @@ export function ListingForm({ profileId }: ListingFormProps) {
     setSubmitting(true);
     setError(null);
     try {
+      const { error: insertError } = await supabase
+        .from('shoes')
+        .insert({
+          id: shoeId,
+          seller_id: profileId,
+          brand: details.brand,
+          model: details.model,
+          color: details.color,
+          condition: details.condition,
+          mileage_km: details.condition === 'new' ? 0 : (details.mileage_km ?? null),
+          listing_type: details.listing_type,
+          price_php: details.listing_type === 'for_sale' ? details.price_php : null,
+          is_negotiable: details.listing_type === 'for_sale' ? !!details.is_negotiable : false,
+          description: details.description,
+          size_eu: details.size_eu,
+          size_us: details.size_us,
+          size_cm: details.size_cm,
+          status: 'active',
+        });
+      if (insertError) throw insertError;
+
       const imageRows = photos.map((p, i) => ({
         shoe_id: shoeId,
         storage_path: p.storagePath,
@@ -120,7 +113,7 @@ export function ListingForm({ profileId }: ListingFormProps) {
       if (imgError) throw imgError;
       router.push(`/listings/${shoeId}`);
     } catch (err) {
-      const msg = (err as { message?: string })?.message ?? 'Failed to save photos';
+      const msg = (err as { message?: string })?.message ?? 'Failed to publish listing';
       setError(msg);
     } finally {
       setSubmitting(false);

@@ -161,7 +161,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Gallery */}
         <div className="min-w-0">
-          <PhotoGallery images={shoe.shoe_images ?? []} />
+          <PhotoGallery images={shoe.shoe_images ?? []} isOwner={isOwner} />
         </div>
 
         {/* Details */}
