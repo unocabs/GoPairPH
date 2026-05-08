@@ -76,34 +76,28 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
     };
   }, [heroUrl, avatarUrl]);
 
-  // Render the card to PNG once images are ready. A short delay lets the
-  // browser decode the just-mounted data-URL <img>s and apply computed
-  // styles — without it, the first capture often misses the hero photo.
+  // Render the card to PNG once images are ready.
   useEffect(() => {
-    if (!imagesReady) return;
+    if (!imagesReady || !cardRef.current) return;
     let cancelled = false;
-    const timer = setTimeout(() => {
-      if (cancelled || !cardRef.current) return;
-      htmlToImage
-        .toPng(cardRef.current, { pixelRatio: 1, width: CARD_W, height: CARD_H })
-        .then(url => {
-          if (cancelled) return;
-          if (!url || !url.startsWith('data:image')) {
-            setError('Could not generate share image');
-            return;
-          }
-          setPngDataUrl(url);
-        })
-        .catch(err => {
-          console.error('SharePost: render failed', err);
-          if (cancelled) return;
-          const e = err as Error;
-          setError(e?.message || e?.name || 'Could not generate share image');
-        });
-    }, 700);
+    htmlToImage
+      .toPng(cardRef.current, { pixelRatio: 1, width: CARD_W, height: CARD_H })
+      .then(url => {
+        if (cancelled) return;
+        if (!url || !url.startsWith('data:image')) {
+          setError('Could not generate share image');
+          return;
+        }
+        setPngDataUrl(url);
+      })
+      .catch(err => {
+        console.error('SharePost: render failed', err);
+        if (cancelled) return;
+        const e = err as Error;
+        setError(e?.message || e?.name || 'Could not generate share image');
+      });
     return () => {
       cancelled = true;
-      clearTimeout(timer);
     };
   }, [imagesReady]);
 
