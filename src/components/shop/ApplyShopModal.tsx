@@ -7,18 +7,6 @@ interface ApplyShopModalProps {
 }
 
 const ADMIN_EMAIL = 'rgiancabrera@gmail.com';
-const SUBJECT = 'Shop application — Go Pair PH';
-const BODY = `Hi Gian,
-
-I'd like to open a shop on Go Pair PH. Here are the details:
-
-• Shop name:
-• Facebook page or business proof:
-• Location in Pampanga:
-• Preferred URL slug (a–z, 0–9, hyphens):
-• Logo file (attached, square preferred, ≤500KB):
-
-Thanks!`;
 
 const PITCH = [
   { title: 'Free storefront, no tech setup', body: 'Logo, listings page, and a vanity URL — ready in a day.' },
