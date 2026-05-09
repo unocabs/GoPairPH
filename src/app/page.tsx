@@ -14,8 +14,9 @@ async function getRecentListings(): Promise<Shoe[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from('shoes')
-    .select('*, profiles(*), shoe_images(*)')
+    .select('*, profiles(*), shoe_images(*), shops(*), shoe_variants(*)')
     .eq('status', 'active')
+    .eq('has_stock', true)
     .order('created_at', { ascending: false })
     .limit(16);
   const all = (data as Shoe[]) ?? [];
@@ -40,8 +41,9 @@ async function getFeaturedListing(): Promise<Shoe | null> {
   const supabase = createClient();
   const { data } = await supabase
     .from('shoes')
-    .select('*, profiles(*), shoe_images(*)')
+    .select('*, profiles(*), shoe_images(*), shops(*), shoe_variants(*)')
     .eq('status', 'active')
+    .eq('has_stock', true)
     .gt('featured_until', new Date().toISOString())
     .order('featured_until', { ascending: false })
     .limit(1)

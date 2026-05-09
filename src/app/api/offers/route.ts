@@ -9,6 +9,7 @@ const bodySchema = z.object({
   listing_id: z.string().uuid(),
   message: z.string().trim().max(2000).optional().nullable(),
   offer_price_php: z.number().positive().finite().optional().nullable(),
+  variant_id: z.string().uuid().optional().nullable(),
 });
 
 function formatPesos(amount: number | null): string {
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
-  const { listing_id, message, offer_price_php } = parsed;
+  const { listing_id, message, offer_price_php, variant_id } = parsed;
 
   const { data: buyerProfileRow, error: buyerProfileErr } = await supabase
     .from('profiles')
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
       buyer_id: buyerProfileRow.id,
       message: message?.trim() || null,
       offer_price_php: offer_price_php ?? null,
+      variant_id: variant_id ?? null,
     })
     .select('id')
     .single();

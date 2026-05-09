@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { BuyModal } from './BuyModal';
-import type { Profile } from '@/types';
+import type { Profile, ShoeVariant } from '@/types';
 
 interface BuyButtonProps {
   listingId: string;
@@ -12,9 +12,14 @@ interface BuyButtonProps {
   isNegotiable: boolean;
   seller?: Profile;
   offerCount?: number;
+  variants?: ShoeVariant[];
+  initialVariantId?: string | null;
+  /** Override the default "Request to Buy" label (used by per-size buttons). */
+  label?: string;
+  className?: string;
 }
 
-export function BuyButton({ listingId, listingName, priceFormatted, pricePhp, isNegotiable, seller, offerCount = 0 }: BuyButtonProps) {
+export function BuyButton({ listingId, listingName, priceFormatted, pricePhp, isNegotiable, seller, offerCount = 0, variants, initialVariantId, label, className }: BuyButtonProps) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -30,20 +35,22 @@ export function BuyButton({ listingId, listingName, priceFormatted, pricePhp, is
     <>
       <button
         onClick={() => setOpen(true)}
-        className="mt-4 w-full rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-400 transition-colors"
+        className={className ?? "mt-4 w-full rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-400 transition-colors"}
       >
-        Request to Buy
+        {label ?? 'Request to Buy'}
       </button>
-      <p className="mt-2 text-xs text-center">
-        {offerCount === 0 ? (
-          <span></span>
-        ) : (
-          <>
-            <span className="text-teal-400 font-semibold">{offerCount}</span>
-            <span className="text-gray-500"> offer{offerCount === 1 ? '' : 's'} so far{offerCount >= 10 ? ' 🔥' : ''}</span>
-          </>
-        )}
-      </p>
+      {!label && (
+        <p className="mt-2 text-xs text-center">
+          {offerCount === 0 ? (
+            <span></span>
+          ) : (
+            <>
+              <span className="text-teal-400 font-semibold">{offerCount}</span>
+              <span className="text-gray-500"> offer{offerCount === 1 ? '' : 's'} so far{offerCount >= 10 ? ' 🔥' : ''}</span>
+            </>
+          )}
+        </p>
+      )}
       {open && (
         <BuyModal
           listingId={listingId}
@@ -52,6 +59,8 @@ export function BuyButton({ listingId, listingName, priceFormatted, pricePhp, is
           pricePhp={pricePhp}
           isNegotiable={isNegotiable}
           seller={seller}
+          variants={variants}
+          initialVariantId={initialVariantId}
           onClose={() => setOpen(false)}
           onSubmitted={() => { setOpen(false); setSubmitted(true); }}
         />

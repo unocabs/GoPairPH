@@ -6,6 +6,8 @@ import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { getOfferCount } from '@/lib/offers';
 import { PhotoGallery } from '@/components/listings/PhotoGallery';
+import { ShopLogoOverlay } from '@/components/shop/ShopLogoOverlay';
+import { ShopBadge } from '@/components/shop/ShopBadge';
 import { ListingTypeBadge } from '@/components/listings/ListingTypeBadge';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
@@ -68,7 +70,7 @@ async function getShoe(id: string): Promise<Shoe | null> {
   const supabase = createClient();
   const { data } = await supabase
     .from('shoes')
-    .select('*, profiles(*), shoe_images(*)')
+    .select('*, profiles(*), shoe_images(*), shops(*), shoe_variants(*)')
     .eq('id', id)
     .single();
   return data as Shoe | null;
@@ -161,7 +163,11 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Gallery */}
         <div className="min-w-0">
-          <PhotoGallery images={shoe.shoe_images ?? []} isOwner={isOwner} />
+          <PhotoGallery
+            images={shoe.shoe_images ?? []}
+            isOwner={isOwner}
+            overlay={shoe.shops && shoe.shops.status === 'active' ? <ShopLogoOverlay shop={shoe.shops} size="lg" /> : null}
+          />
         </div>
 
         {/* Details */}
@@ -182,6 +188,11 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
           <h1 className="text-3xl font-bold text-gray-100">{formatListingName(shoe.brand, shoe.model)}</h1>
           <p className="text-gray-500 mt-1">{shoe.color}</p>
+          {shoe.shops && shoe.shops.status === 'active' && (
+            <div className="mt-2">
+              <ShopBadge shop={shoe.shops} variant="sold-by" />
+            </div>
+          )}
 
           {/* Price / Donate */}
           <div className="mt-4">
@@ -203,11 +214,59 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             )}
           </div>
 
+          {/* Available sizes — shop variant listings only */}
+          {shoe.shop_id && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
+            <div className="mt-5 rounded-xl border border-gray-800 bg-gray-900">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+                <h3 className="text-sm font-semibold text-gray-100">Available sizes</h3>
+                {!shoe.has_stock && (
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-300 bg-red-950 border border-red-800 px-2 py-0.5 rounded-full">
+                    Out of stock
+                  </span>
+                )}
+              </div>
+              <ul className="divide-y divide-gray-800">
+                {shoe.shoe_variants
+                  .filter(v => isOwner || v.quantity > 0)
+                  .sort((a, b) => a.size_eu - b.size_eu)
+                  .map(v => {
+                    const inStock = v.quantity > 0;
+                    return (
+                      <li key={v.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-200">
+                            {formatSize(v.size_eu, v.size_us, v.size_cm)}
+                          </p>
+                          <p className={`text-xs ${inStock ? 'text-gray-500' : 'text-red-400'}`}>
+                            {inStock ? `${v.quantity} left` : 'Out of stock'}
+                          </p>
+                        </div>
+                        {!isOwner && currentProfileId && inStock && shoe.price_php && shoe.status === 'active' && !purchaseContext && (
+                          <BuyButton
+                            listingId={shoe.id}
+                            listingName={formatListingName(shoe.brand, shoe.model)}
+                            priceFormatted={formatPrice(shoe.price_php)}
+                            pricePhp={shoe.price_php}
+                            isNegotiable={shoe.is_negotiable}
+                            seller={seller ?? undefined}
+                            variants={shoe.shoe_variants}
+                            initialVariantId={v.id}
+                            label="Buy this size"
+                            className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-500 transition-colors"
+                          />
+                        )}
+                      </li>
+                    );
+                  })}
+              </ul>
+            </div>
+          )}
+
           {/* Specs */}
           <dl className="mt-6 grid grid-cols-2 gap-3 rounded-xl border border-gray-800 bg-gray-900 p-4">
             {[
-              { label: 'Size', value: formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm) },
-              { label: 'Mileage', value: shoe.mileage_km != null ? `${shoe.mileage_km.toLocaleString()} km` : 'Not provided' },
+              ...(shoe.shop_id ? [] : [{ label: 'Size', value: formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm) }]),
+              ...(shoe.shop_id ? [] : [{ label: 'Mileage', value: shoe.mileage_km != null ? `${shoe.mileage_km.toLocaleString()} km` : 'Not provided' }]),
               { label: 'Brand', value: shoe.brand === 'Other' ? shoe.model : shoe.brand },
               { label: 'Model', value: shoe.model },
               { label: 'Color', value: shoe.color },
@@ -325,8 +384,10 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             </div>
           )}
 
-          {/* Buy button — for_sale, active, non-owners only, no existing request */}
-          {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && (
+          {/* Buy button — for_sale, active, non-owners only, no existing request.
+              Hidden for shop variant listings — they use per-size buttons in the
+              Available sizes table above. */}
+          {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && !shoe.shop_id && (
             <BuyButton
               listingId={shoe.id}
               listingName={formatListingName(shoe.brand, shoe.model)}

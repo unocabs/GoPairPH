@@ -39,6 +39,33 @@ export interface ShoeImage {
   created_at: string;
 }
 
+export type ShopStatus = 'active' | 'suspended';
+
+export interface Shop {
+  id: string;
+  slug: string;
+  name: string;
+  owner_profile_id: string;
+  logo_storage_path: string | null;
+  about: string | null;
+  location: string | null;
+  fb_page_url: string | null;
+  status: ShopStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ShoeVariant {
+  id: string;
+  shoe_id: string;
+  size_eu: number;
+  size_us: number | null;
+  size_cm: number | null;
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Shoe {
   id: string;
   seller_id: string;
@@ -63,6 +90,12 @@ export interface Shoe {
   featured_until: string | null;
   sponsored_until: string | null;
   sponsored_started_at: string | null;
+  shop_id: string | null;
+  quantity: number;
+  listed_in_main_feed: boolean;
+  has_stock: boolean;
+  shops?: Shop | null;
+  shoe_variants?: ShoeVariant[];
 }
 
 export type PurchaseRequestStatus = 'pending' | 'accepted' | 'declined' | 'completed';
@@ -75,8 +108,10 @@ export interface PurchaseRequest {
   offer_price_php: number | null;
   status: PurchaseRequestStatus;
   created_at: string;
+  variant_id: string | null;
   profiles?: Profile; // buyer
   listing?: Shoe;
+  shoe_variants?: ShoeVariant | null;
 }
 
 export interface WishlistImage {

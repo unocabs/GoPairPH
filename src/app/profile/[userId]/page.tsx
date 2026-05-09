@@ -16,9 +16,10 @@ async function getPublicProfile(userId: string) {
   const [shoesRes, wishlistRes] = await Promise.all([
     supabase
       .from('shoes')
-      .select('*, shoe_images(*)')
+      .select('*, shoe_images(*), shops(*), shoe_variants(*)')
       .eq('seller_id', profile.id)
       .eq('status', 'active')
+      .eq('has_stock', true)
       .order('created_at', { ascending: false }),
     supabase
       .from('wishlist_items')

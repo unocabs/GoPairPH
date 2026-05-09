@@ -6,6 +6,8 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { type Shoe } from '@/types';
 import { LogoMark } from '@/components/brand/Logo';
+import { ShopLogoOverlay } from '@/components/shop/ShopLogoOverlay';
+import { OutOfStockBadge } from '@/components/shop/OutOfStockBadge';
 import { ListingTypeBadge } from './ListingTypeBadge';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
@@ -53,7 +55,8 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
   }
 
   const canAct = !isOwner && !!currentProfileId && shoe.status === 'active';
-  const showBuy = canAct && shoe.listing_type === 'for_sale' && !!shoe.price_php;
+  // Shop variant listings need size selection — done on the detail page, not the card.
+  const showBuy = canAct && shoe.listing_type === 'for_sale' && !!shoe.price_php && !shoe.shop_id;
   const showDonate = canAct && shoe.listing_type === 'donate';
 
   return (
@@ -83,7 +86,10 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
               </span>
             </div>
           )}
-          <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
+          {shoe.shops && (
+            <ShopLogoOverlay shop={shoe.shops} size="sm" asDiv />
+          )}
+          <div className={`absolute ${shoe.shops?.logo_storage_path ? 'top-2 left-12' : 'top-2 left-2'} flex flex-col items-start gap-1`}>
             <ListingTypeBadge type={shoe.listing_type} />
             {isSponsored && <SponsoredPill size="sm" />}
           </div>
@@ -122,20 +128,41 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
               </span>
             </div>
           )}
+          {/* Shop listing, every variant out of stock — overlay for owner view */}
+          {shoe.shop_id && shoe.status === 'active' && !shoe.has_stock && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+              <OutOfStockBadge />
+            </div>
+          )}
         </div>
 
         {/* Details */}
         <div className="p-3">
           <h3 className="font-semibold text-gray-100 truncate text-sm">{formatListingName(shoe.brand, shoe.model)}</h3>
-          <p className="text-xs text-gray-500 mt-0.5">{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}</p>
+          {shoe.shop_id ? (
+            (() => {
+              const inStock = (shoe.shoe_variants ?? []).filter(v => v.quantity > 0);
+              return (
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {inStock.length > 0
+                    ? `${inStock.length} size${inStock.length === 1 ? '' : 's'} available`
+                    : 'Out of stock'}
+                </p>
+              );
+            })()
+          ) : (
+            <p className="text-xs text-gray-500 mt-0.5">{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}</p>
+          )}
 
           <div className="mt-2 flex items-center justify-between gap-2">
             <Badge className={cn('text-xs whitespace-nowrap', CONDITION_COLORS[shoe.condition])}>
               {CONDITIONS[shoe.condition]}
             </Badge>
-            <span className="text-xs text-gray-600 whitespace-nowrap" title={shoe.mileage_km != null ? `${shoe.mileage_km.toLocaleString()} km` : 'Mileage not provided'}>
-              {shoe.mileage_km != null ? `${shoe.mileage_km.toLocaleString()} km` : '—'}
-            </span>
+            {!shoe.shop_id && (
+              <span className="text-xs text-gray-600 whitespace-nowrap" title={shoe.mileage_km != null ? `${shoe.mileage_km.toLocaleString()} km` : 'Mileage not provided'}>
+                {shoe.mileage_km != null ? `${shoe.mileage_km.toLocaleString()} km` : '—'}
+              </span>
+            )}
           </div>
 
           {shoe.listing_type === 'for_sale' && shoe.price_php && (
@@ -158,6 +185,15 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
           <p className="mt-1.5 text-xs text-gray-600">{formatRelativeDate(shoe.created_at)}</p>
         </div>
       </Link>
+
+      {isOwner && shoe.shop_id && shoe.status === 'active' && !shoe.has_stock && (
+        <Link
+          href={`/listings/${shoe.id}/edit#variants`}
+          className="block px-3 pb-3 -mt-1 text-center text-xs font-semibold text-teal-400 hover:text-teal-300 transition-colors"
+        >
+          Restock →
+        </Link>
+      )}
 
       {/* Copy-link overlay — owner only, positioned over the bottom-right of the image */}
       {isOwner && (

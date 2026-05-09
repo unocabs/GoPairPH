@@ -31,8 +31,10 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
   const supabase = createClient();
   let query = supabase
     .from('shoes')
-    .select('*, profiles(*), shoe_images(*)')
-    .eq('status', 'active');
+    .select('*, profiles(*), shoe_images(*), shops(*), shoe_variants(*)')
+    .eq('status', 'active')
+    .eq('listed_in_main_feed', true)
+    .eq('has_stock', true);
 
   if (searchParams.type) query = query.eq('listing_type', searchParams.type);
   if (searchParams.brand) query = query.ilike('brand', searchParams.brand);

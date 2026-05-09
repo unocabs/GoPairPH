@@ -13,7 +13,12 @@ async function getShoeForEdit(id: string): Promise<{ shoe: Shoe; profileId: stri
   const { data: profile } = await supabase.from('profiles').select('id').eq('user_id', user.id).single();
   if (!profile) return null;
 
-  const { data: shoe } = await supabase.from('shoes').select('*').eq('id', id).eq('seller_id', profile.id).single();
+  const { data: shoe } = await supabase
+    .from('shoes')
+    .select('*, shoe_variants(*)')
+    .eq('id', id)
+    .eq('seller_id', profile.id)
+    .single();
   if (!shoe) return null;
 
   return { shoe: shoe as Shoe, profileId: profile.id };

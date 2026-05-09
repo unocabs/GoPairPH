@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { formatRelativeDate, formatPrice, getPublicUrl } from '@/lib/utils';
+import { formatRelativeDate, formatPrice, formatSize, getPublicUrl } from '@/lib/utils';
 import type { PurchaseRequest, PurchaseRequestStatus, Shoe } from '@/types';
 
 interface PurchaseRequestCardProps {
@@ -106,6 +106,11 @@ export function PurchaseRequestCard({
           <p className="text-sm font-semibold text-gray-100 group-hover:text-teal-400 transition-colors line-clamp-2 leading-tight">
             {listingName}
           </p>
+          {request.shoe_variants && (
+            <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-teal-500/10 border border-teal-500/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-300">
+              Size {formatSize(request.shoe_variants.size_eu, request.shoe_variants.size_us, request.shoe_variants.size_cm)}
+            </p>
+          )}
         </div>
       </Link>
 

@@ -14,7 +14,7 @@ async function getOwnProfileData() {
   if (!profile) return null;
 
   const [shoesRes, wishlistRes] = await Promise.all([
-    supabase.from('shoes').select('*, shoe_images(*)').eq('seller_id', profile.id).order('created_at', { ascending: false }),
+    supabase.from('shoes').select('*, shoe_images(*), shops(*), shoe_variants(*)').eq('seller_id', profile.id).order('created_at', { ascending: false }),
     supabase.from('wishlist_items').select('*, wishlist_images(*), wishlist_suggestions(count)').eq('user_id', profile.id).order('created_at', { ascending: false }),
   ]);
 
@@ -28,7 +28,7 @@ async function getOwnProfileData() {
   if (shoeIds.length > 0) {
     const { data: prData } = await supabase
       .from('purchase_requests')
-      .select('*, profiles(*), listing:shoes!listing_id(id, status, brand, model, price_php, listing_type)')
+      .select('*, profiles(*), shoe_variants(*), listing:shoes!listing_id(id, status, brand, model, price_php, listing_type)')
       .in('listing_id', shoeIds)
       .in('status', ['pending', 'accepted'])
       .order('created_at', { ascending: false });
@@ -36,7 +36,7 @@ async function getOwnProfileData() {
   }
 
   // Purchase history: only completed transactions (reserved/accepted live in the Sent Offers tab)
-  const purchaseSelect = '*, profiles(*), listing:shoes!listing_id(*, shoe_images(*), profiles(*))';
+  const purchaseSelect = '*, profiles(*), shoe_variants(*), listing:shoes!listing_id(*, shoe_images(*), profiles(*))';
   const [boughtRes, soldRes, sentOffersRes] = await Promise.all([
     supabase.from('purchase_requests').select(purchaseSelect).eq('buyer_id', profile.id).eq('status', 'completed'),
     shoeIds.length > 0

@@ -10,9 +10,11 @@ import { getPublicUrl } from '@/lib/utils';
 interface PhotoGalleryProps {
   images: ShoeImage[];
   isOwner?: boolean;
+  /** Optional overlay node (e.g. shop logo) rendered on top of the hero image. */
+  overlay?: React.ReactNode;
 }
 
-export function PhotoGallery({ images, isOwner = false }: PhotoGalleryProps) {
+export function PhotoGallery({ images, isOwner = false, overlay }: PhotoGalleryProps) {
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -55,6 +57,7 @@ export function PhotoGallery({ images, isOwner = false }: PhotoGalleryProps) {
             </p>
           </div>
         )}
+        {overlay}
       </div>
     );
   }
@@ -64,19 +67,22 @@ export function PhotoGallery({ images, isOwner = false }: PhotoGalleryProps) {
 
   return (
     <div className="space-y-3 min-w-0">
-      <button
-        onClick={() => setOpen(true)}
-        className="relative w-full h-[40vh] sm:h-[45vh] lg:h-auto lg:aspect-square overflow-hidden rounded-xl bg-gray-900 block"
-      >
-        <Image
-          src={getPublicUrl(supabaseUrl, main.storage_path)}
-          alt="Main shoe photo"
-          fill
-          className="object-cover hover:scale-105 transition-transform"
-          sizes="(min-width: 1024px) 50vw, 100vw"
-          priority
-        />
-      </button>
+      <div className="relative w-full h-[40vh] sm:h-[45vh] lg:h-auto lg:aspect-square">
+        <button
+          onClick={() => setOpen(true)}
+          className="relative w-full h-full overflow-hidden rounded-xl bg-gray-900 block"
+        >
+          <Image
+            src={getPublicUrl(supabaseUrl, main.storage_path)}
+            alt="Main shoe photo"
+            fill
+            className="object-cover hover:scale-105 transition-transform"
+            sizes="(min-width: 1024px) 50vw, 100vw"
+            priority
+          />
+        </button>
+        {overlay}
+      </div>
 
       {sorted.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-1">

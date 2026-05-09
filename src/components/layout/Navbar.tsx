@@ -9,6 +9,7 @@ import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { Button } from '@/components/ui/Button';
 import { useRouter, usePathname } from 'next/navigation';
 import { Logo } from '@/components/brand/Logo';
+import { ShopsDropdown } from '@/components/layout/ShopsDropdown';
 
 export function Navbar() {
   const { user, profile, loading } = useSession();
@@ -101,6 +102,7 @@ export function Navbar() {
             <Link href="/browse" className="rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors">
               Browse
             </Link>
+            <ShopsDropdown />
             <Link href="/wishlist" className="rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors">
               Wishlist
             </Link>
@@ -269,6 +271,7 @@ export function Navbar() {
         {mobileOpen && (
           <div className="md:hidden border-t border-gray-800 py-3 flex flex-col gap-1">
             <Link href="/browse" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Browse</Link>
+            <Link href="/shop" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Shops</Link>
             <Link href="/wishlist" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Wishlist</Link>
             {user && (
               <>

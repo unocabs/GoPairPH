@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import { ContactSellerButtons } from '@/components/listings/ContactSellerButtons';
-import type { Profile } from '@/types';
+import { VariantSelector } from '@/components/listings/VariantSelector';
+import type { Profile, ShoeVariant } from '@/types';
 
 interface BuyModalProps {
   listingId: string;
@@ -17,19 +18,31 @@ interface BuyModalProps {
   pricePhp: number;
   isNegotiable: boolean;
   seller?: Profile;
+  /** When provided, the buyer must pick a size before submitting. */
+  variants?: ShoeVariant[];
+  /** Pre-selected variant id (e.g. user clicked "Buy this size" on the detail page). */
+  initialVariantId?: string | null;
   onClose: () => void;
   onSubmitted: () => void;
 }
 
-export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isNegotiable, seller, onClose, onSubmitted }: BuyModalProps) {
+export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isNegotiable, seller, variants, initialVariantId, onClose, onSubmitted }: BuyModalProps) {
   const [message, setMessage] = useState('');
   const [bestOffer, setBestOffer] = useState('');
+  const [variantId, setVariantId] = useState<string | null>(initialVariantId ?? null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const showVariantSelector = !!variants && variants.length > 0;
 
   async function handleSubmit() {
     setSubmitting(true);
     setError(null);
+
+    if (showVariantSelector && !variantId) {
+      setError('Please pick a size.');
+      setSubmitting(false);
+      return;
+    }
 
     const offerNum = bestOffer.trim() ? parseFloat(bestOffer) : null;
     if (offerNum != null && (isNaN(offerNum) || offerNum <= 0)) {
@@ -46,6 +59,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
           listing_id: listingId,
           message: message.trim() || null,
           offer_price_php: isNegotiable ? offerNum : null,
+          variant_id: variantId,
         }),
       });
       if (!res.ok) {
@@ -111,6 +125,12 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
               {seller.fb_username && (
                 <ContactSellerButtons fbUsername={seller.fb_username} listingId={listingId} />
               )}
+            </div>
+          )}
+
+          {showVariantSelector && variants && (
+            <div className="rounded-lg border border-gray-700 bg-gray-800 p-3">
+              <VariantSelector variants={variants} selectedId={variantId} onSelect={setVariantId} />
             </div>
           )}
 
