@@ -31,8 +31,12 @@ export function formatSize(eu: number | null, us: number | null, cm: number | nu
   return parts.join(' / ');
 }
 
-export function getPublicUrl(supabaseUrl: string, storagePath: string): string {
-  return `${supabaseUrl}/storage/v1/object/public/shoe-images/${storagePath}`;
+export function getPublicUrl(
+  supabaseUrl: string,
+  storagePath: string,
+  bucket = 'shoe-images'
+): string {
+  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${storagePath}`;
 }
 
 export function formatListingName(brand: string, model: string): string {
@@ -60,4 +64,3 @@ export function formatShortDate(dateString: string): string {
     year: 'numeric',
   });
 }
-

@@ -55,6 +55,19 @@ async function getShopListingCount(shopId: string): Promise<number> {
   return count ?? 0;
 }
 
+async function getCurrentProfileId(): Promise<string | null> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  return data?.id ?? null;
+}
+
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const shop = await getShop(params.slug);
   if (!shop) return { title: 'Shop not found' };
@@ -69,15 +82,17 @@ export default async function ShopLandingPage({ params }: { params: { slug: stri
   const shop = await getShop(params.slug);
   if (!shop) notFound();
 
-  const [recent, count] = await Promise.all([
+  const [recent, count, profileId] = await Promise.all([
     getRecentShopListings(shop.id),
     getShopListingCount(shop.id),
+    getCurrentProfileId(),
   ]);
   const offerCounts = await getOfferCounts(recent.map(s => s.id));
+  const isOwner = profileId === shop.owner_profile_id;
 
   return (
     <div>
-      <ShopHeader shop={shop} listingCount={count} />
+      <ShopHeader shop={shop} listingCount={count} isOwner={isOwner} />
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">

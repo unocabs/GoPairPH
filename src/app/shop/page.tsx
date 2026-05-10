@@ -48,7 +48,7 @@ export default async function ShopsIndexPage() {
       ) : (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {shops.map(shop => {
-            const logoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path) : null;
+            const logoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
             return (
               <li key={shop.id}>
                 <Link

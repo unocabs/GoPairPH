@@ -11,7 +11,7 @@ interface ShopBadgeProps {
 
 export function ShopBadge({ shop, variant = 'sold-by' }: ShopBadgeProps) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const logoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path) : null;
+  const logoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
 
   return (
     <Link

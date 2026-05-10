@@ -1,15 +1,17 @@
 import Image from 'next/image';
 import { getPublicUrl } from '@/lib/utils';
+import { ShopLogoUploader } from '@/components/shop/ShopLogoUploader';
 import type { Shop } from '@/types';
 
 interface ShopHeaderProps {
   shop: Shop;
   listingCount: number;
+  isOwner?: boolean;
 }
 
-export function ShopHeader({ shop, listingCount }: ShopHeaderProps) {
+export function ShopHeader({ shop, listingCount, isOwner = false }: ShopHeaderProps) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const logoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path) : null;
+  const logoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
 
   return (
     <section className="relative overflow-hidden border-b border-gray-800 bg-gradient-to-br from-gray-900 via-gray-900 to-teal-950/30">
@@ -31,6 +33,7 @@ export function ShopHeader({ shop, listingCount }: ShopHeaderProps) {
                 {shop.name[0]?.toUpperCase() ?? 'S'}
               </div>
             )}
+            {isOwner && <ShopLogoUploader shopId={shop.id} currentLogoPath={shop.logo_storage_path} />}
           </div>
 
           {/* Info */}

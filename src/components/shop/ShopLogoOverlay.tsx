@@ -21,7 +21,7 @@ export function ShopLogoOverlay({ shop, size = 'lg', asDiv = false }: ShopLogoOv
   if (!shop.logo_storage_path) return null;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const url = getPublicUrl(supabaseUrl, shop.logo_storage_path);
+  const url = getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos');
   const dims = DIMS[size];
 
   const inner = (
@@ -45,7 +45,6 @@ export function ShopLogoOverlay({ shop, size = 'lg', asDiv = false }: ShopLogoOv
   return (
     <Link
       href={`/shop/${shop.slug}`}
-      onClick={e => e.stopPropagation()}
       aria-label={`Visit ${shop.name}`}
       className="contents"
     >

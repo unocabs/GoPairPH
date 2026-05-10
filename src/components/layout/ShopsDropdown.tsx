@@ -65,7 +65,7 @@ export function ShopsDropdown() {
             ) : (
               <ul className="max-h-80 overflow-y-auto">
                 {shops.map(shop => {
-                  const logoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path) : null;
+                  const logoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
                   return (
                     <li key={shop.id}>
                       <Link
