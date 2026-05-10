@@ -80,7 +80,15 @@ export function renderOfferEmail(data: OfferEmailData): string {
           .mobile-hide { display: none !important; }
           .h1-mobile { font-size: 24px !important; line-height: 32px !important; }
           .h2-mobile { font-size: 18px !important; line-height: 26px !important; }
-          .button-mobile { width: 100% !important; }
+          .button-mobile {
+            box-sizing: border-box !important;
+            display: block !important;
+            max-width: 280px !important;
+            width: auto !important;
+            margin: 0 auto !important;
+            padding-left: 20px !important;
+            padding-right: 20px !important;
+          }
       }
       .cta-button:hover { background-color: #0f766e !important; transform: translateY(-1px); }
     </style>
@@ -185,7 +193,7 @@ export function renderOfferEmail(data: OfferEmailData): string {
                 <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                   <tr>
                     <td align="center" style="border-radius: 8px; background-color: #0d9488;">
-                      <a href="${v.offer_link}" target="_blank" class="cta-button button-mobile" style="display: inline-block; padding: 16px 40px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 8px; background-color: #0d9488; transition: all 0.2s ease;">
+                      <a href="${v.offer_link}" target="_blank" class="cta-button button-mobile" style="box-sizing: border-box; display: inline-block; max-width: 280px; padding: 16px 32px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 16px; line-height: 20px; font-weight: 600; color: #ffffff; text-align: center; text-decoration: none; border-radius: 8px; background-color: #0d9488; transition: all 0.2s ease;">
                         View Offer & Respond →
                       </a>
                     </td>
@@ -294,7 +302,15 @@ export function renderShopOrderEmail(data: ShopOrderEmailData): string {
       body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
       @media screen and (max-width: 600px) {
         .mobile-padding { padding: 20px !important; }
-        .button-mobile { width: 100% !important; }
+        .button-mobile {
+          box-sizing: border-box !important;
+          display: block !important;
+          max-width: 260px !important;
+          width: auto !important;
+          margin: 0 auto !important;
+          padding-left: 20px !important;
+          padding-right: 20px !important;
+        }
         .h1-mobile { font-size: 24px !important; line-height: 32px !important; }
       }
     </style>
@@ -371,7 +387,7 @@ export function renderShopOrderEmail(data: ShopOrderEmailData): string {
             </tr>
             <tr>
               <td align="center" class="mobile-padding" style="padding: 10px 40px 34px 40px;">
-                <a href="${v.order_link}" target="_blank" class="button-mobile" style="display: inline-block; padding: 16px 40px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 8px; background-color: #0d9488;">
+                <a href="${v.order_link}" target="_blank" class="button-mobile" style="box-sizing: border-box; display: inline-block; max-width: 260px; padding: 16px 32px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 16px; line-height: 20px; font-weight: 600; color: #ffffff; text-align: center; text-decoration: none; border-radius: 8px; background-color: #0d9488;">
                   Review Order →
                 </a>
               </td>
