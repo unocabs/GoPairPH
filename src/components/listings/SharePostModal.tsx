@@ -218,7 +218,7 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
         {/* Body */}
         <div className="overflow-y-auto p-5">
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Orientation</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Format</span>
             <button
               type="button"
               onClick={() => setFormat('mobile')}
@@ -238,7 +238,7 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
               onClick={() => setRenderAttempt(attempt => attempt + 1)}
               className="ml-auto rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-100"
             >
-              Regenerate
+              Reload
             </button>
           </div>
 
@@ -270,7 +270,7 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
           </div>
 
           <p className="mt-3 text-xs text-gray-500">
-            <strong className="text-gray-300">Tip: Share it to your Facebook post or Marketplace listing.</strong> On mobile, long-press the image to save it. If the preview looks wrong, tap <strong className="text-gray-300">Regenerate</strong>.
+            <strong className="text-gray-300">Tip: Share it to your Facebook post or Marketplace listing.</strong> On mobile, long-press the image to save it. If the preview looks wrong, tap <strong className="text-gray-300">Reload</strong>.
           </p>
 
           {/* Hidden source for html-to-image — rendered offscreen at native size. */}
