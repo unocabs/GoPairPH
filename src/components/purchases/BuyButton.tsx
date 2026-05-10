@@ -27,7 +27,7 @@ export function BuyButton({ listingId, listingName, priceFormatted, pricePhp, is
   if (submitted) {
     return (
       <div className="mt-4 rounded-xl border border-teal-800 bg-teal-950 px-4 py-3 text-sm text-teal-400">
-        Purchase request sent! The seller will review and respond.
+        {shop ? 'Order placed! The shop will review and confirm availability.' : 'Purchase request sent! The seller will review and respond.'}
       </div>
     );
   }

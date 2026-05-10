@@ -42,6 +42,46 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Buyer profile not found' }, { status: 400 });
   }
 
+  const { data: listing, error: listingErr } = await supabase
+    .from('shoes')
+    .select('id, seller_id, shop_id, status, has_stock')
+    .eq('id', listing_id)
+    .single();
+
+  if (listingErr || !listing) {
+    return NextResponse.json({ error: 'Listing not found or unavailable' }, { status: 404 });
+  }
+
+  if (listing.status !== 'active') {
+    return NextResponse.json({ error: 'This listing is no longer available.' }, { status: 400 });
+  }
+
+  if (listing.seller_id === buyerProfileRow.id) {
+    return NextResponse.json({ error: 'You cannot place an order on your own listing.' }, { status: 400 });
+  }
+
+  if (listing.shop_id) {
+    if (!variant_id) {
+      return NextResponse.json({ error: 'Please choose a size before placing your order.' }, { status: 400 });
+    }
+
+    const { data: variant, error: variantErr } = await supabase
+      .from('shoe_variants')
+      .select('id, shoe_id, quantity')
+      .eq('id', variant_id)
+      .single();
+
+    if (variantErr || !variant || variant.shoe_id !== listing.id) {
+      return NextResponse.json({ error: 'The selected size is no longer available for this listing.' }, { status: 400 });
+    }
+
+    if (variant.quantity <= 0 || !listing.has_stock) {
+      return NextResponse.json({ error: 'The selected size is out of stock.' }, { status: 400 });
+    }
+  } else if (variant_id) {
+    return NextResponse.json({ error: 'Size selection is only available for shop listings.' }, { status: 400 });
+  }
+
   const { data: inserted, error: insertError } = await supabase
     .from('purchase_requests')
     .insert({

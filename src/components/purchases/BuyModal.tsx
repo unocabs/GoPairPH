@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Input } from '@/components/ui/Input';
@@ -36,15 +36,32 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const showVariantSelector = !!variants && variants.length > 0;
+  const availableVariants = useMemo(
+    () => (variants ?? []).filter(v => v.quantity > 0).sort((a, b) => a.size_eu - b.size_eu),
+    [variants],
+  );
   const isShopOrder = !!shop;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const shopLogoUrl = shop?.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
+  const submitDisabled = showVariantSelector && availableVariants.length === 0;
+
+  useEffect(() => {
+    if (!showVariantSelector) return;
+    if (variantId && availableVariants.some(v => v.id === variantId)) return;
+    setVariantId(availableVariants[0]?.id ?? null);
+  }, [availableVariants, showVariantSelector, variantId]);
 
   async function handleSubmit() {
     setSubmitting(true);
     setError(null);
 
-    if (showVariantSelector && !variantId) {
+    if (showVariantSelector && availableVariants.length === 0) {
+      setError('This listing is currently out of stock.');
+      setSubmitting(false);
+      return;
+    }
+
+    if (showVariantSelector && (!variantId || !availableVariants.some(v => v.id === variantId))) {
       setError('Please pick a size.');
       setSubmitting(false);
       return;
@@ -212,8 +229,8 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
         </div>
         <div className="flex gap-3 px-5 py-4 border-t border-gray-800 shrink-0">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
-          <Button type="button" onClick={handleSubmit} loading={submitting} className="flex-1">
-            {isShopOrder ? 'Place Order' : 'Send Purchase Request'}
+          <Button type="button" onClick={handleSubmit} loading={submitting} disabled={submitDisabled} className="flex-1">
+            {submitDisabled ? 'Out of Stock' : isShopOrder ? 'Place Order' : 'Send Purchase Request'}
           </Button>
         </div>
       </div>
