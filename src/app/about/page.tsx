@@ -5,7 +5,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'Go Pair PH is a community-built running shoe marketplace for runners in Pampanga, Philippines. Learn what we do and why we built it.',
+    'Go Pair PH is a community-built running shoe marketplace and shop storefront platform for runners and shoe resellers in Pampanga, Philippines.',
   alternates: { canonical: '/about' },
 };
 
@@ -13,7 +13,7 @@ export default function AboutPage() {
   return (
     <InfoPage
       title="About Go Pair PH"
-      subtitle="A community marketplace for Pampanga runners."
+      subtitle="A community marketplace and storefront home for Pampanga runners and local shoe resellers."
     >
       <section>
         <h2 className="text-xl font-semibold text-gray-100">What we do</h2>
@@ -21,6 +21,23 @@ export default function AboutPage() {
           Go Pair PH connects runners in Pampanga who want to buy, sell, or donate pre-loved
           running shoes. Every pair has miles left to give — and someone in your area is
           looking for exactly the model in your closet.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-gray-100">Shops on Go Pair PH</h2>
+        <p>
+          Go Pair PH also gives local shoe resellers a simple online storefront, especially
+          shops that sell through Facebook but do not have their own website yet. A shop can
+          have its own public page, logo, banner, colors, carousel, about section, location,
+          Facebook link, and listings, so it feels like their own place while still being part
+          of the Go Pair PH marketplace.
+        </p>
+        <p>
+          Shop owners can update their public shop details and design, while Go Pair PH keeps
+          important controls like shop creation, ownership, URL slugs, and shop status under
+          admin review. This helps shops present their brand professionally without making the
+          marketplace confusing or unsafe for buyers.
         </p>
       </section>
 
@@ -41,6 +58,7 @@ export default function AboutPage() {
           <li>Sign in with your Google account.</li>
           <li>Go to your Profile and add your Facebook username.</li>
           <li>List a pair (with photos, size, mileage, and condition) for sale or donation.</li>
+          <li>Browse shop storefronts and order directly from active shop listings.</li>
           <li>
             Browse listings from other runners in Pampanga, send a purchase request, and
             coordinate the deal directly with the seller.
@@ -56,6 +74,11 @@ export default function AboutPage() {
           or ship within Pampanga. This keeps the community trustworthy and shipping costs
           low, and helps runners build relationships with people they&apos;ll actually run
           into at races.
+        </p>
+        <p>
+          Our goal is to help individual runners and small local resellers share better,
+          cleaner listing links, build trust, and keep more good pairs moving inside the
+          running community.
         </p>
       </section>
 

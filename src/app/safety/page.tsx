@@ -36,6 +36,17 @@ export default function SafetyPage() {
       </section>
 
       <section>
+        <h2 className="text-xl font-semibold text-gray-100">Buying from shops</h2>
+        <ul className="list-disc list-inside space-y-1.5">
+          <li><strong>Go Pair PH does not own or operate the shops.</strong> Shop pages are hosted storefronts for independent sellers and resellers.</li>
+          <li><strong>Confirm order details directly with the shop</strong> before sending payment, including size, price, delivery method, meetup location, and availability.</li>
+          <li><strong>Only send payment after the shop confirms your order.</strong> Keep screenshots of the order, payment, and delivery conversation.</li>
+          <li><strong>Check the shop&apos;s Facebook page or contact channel</strong> when available so you know who you are transacting with.</li>
+          <li><strong>Report suspicious shop behavior</strong> to Go Pair PH so we can review the storefront, but payment and delivery arrangements remain between buyer and shop.</li>
+        </ul>
+      </section>
+
+      <section>
         <h2 className="text-xl font-semibold text-gray-100">Red flags to watch for</h2>
         <ul className="list-disc list-inside space-y-1.5">
           <li>The other party refuses to share photos of the actual item or pressures you to commit fast.</li>
@@ -67,9 +78,10 @@ export default function SafetyPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">Remember</h2>
         <p>
-          Go Pair PH is a listing platform — we don&apos;t handle payments or shipping. The
-          best way to stay safe is to use common sense, keep records of every transaction,
-          and never feel pressured to complete a deal you&apos;re not comfortable with.
+          Go Pair PH is a listing and storefront platform — we don&apos;t own the shops, sell the
+          items ourselves, or handle payments and shipping. The best way to stay safe is to
+          use common sense, keep records of every transaction, and never feel pressured to
+          complete a deal you&apos;re not comfortable with.
         </p>
       </section>
     </InfoPage>
