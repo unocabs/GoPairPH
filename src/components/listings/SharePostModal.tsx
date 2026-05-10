@@ -7,7 +7,7 @@ import { ListingTypeBadge } from './ListingTypeBadge';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
 import { formatListingName, formatPrice, formatSize, getPublicUrl } from '@/lib/utils';
-import type { Shoe, Profile } from '@/types';
+import type { Shoe, Profile, Shop } from '@/types';
 
 interface SharePostModalProps {
   shoe: Shoe;
@@ -17,6 +17,9 @@ interface SharePostModalProps {
 
 const CARD_W = 1200;
 const CARD_H = 675;
+const MOBILE_CARD_W = 1080;
+const MOBILE_CARD_H = 1350;
+type ShareFormat = 'mobile' | 'desktop';
 
 async function urlToDataUrl(url: string): Promise<string> {
   const res = await fetch(url, { mode: 'cors' });
@@ -33,15 +36,21 @@ async function urlToDataUrl(url: string): Promise<string> {
 export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [heroSrc, setHeroSrc] = useState<string | null>(null);
-  const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
+  const [identitySrc, setIdentitySrc] = useState<string | null>(null);
   const [imagesReady, setImagesReady] = useState(false);
   const [pngDataUrl, setPngDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [format, setFormat] = useState<ShareFormat>('mobile');
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImg = shoe.shoe_images?.find(i => i.view_type === 'top') ?? shoe.shoe_images?.[0];
   const heroUrl = topImg ? getPublicUrl(supabaseUrl, topImg.storage_path) : null;
-  const avatarUrl = seller?.avatar_url ?? null;
+  const shop = shoe.shops?.status === 'active' ? shoe.shops : null;
+  const identityImageUrl = shop?.logo_storage_path
+    ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos')
+    : seller?.avatar_url ?? null;
+  const cardW = format === 'mobile' ? MOBILE_CARD_W : CARD_W;
+  const cardH = format === 'mobile' ? MOBILE_CARD_H : CARD_H;
 
   const now = Date.now();
   const isFeatured = !!shoe.featured_until && new Date(shoe.featured_until).getTime() > now;
@@ -64,24 +73,26 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
     let cancelled = false;
     Promise.all([
       heroUrl ? urlToDataUrl(heroUrl).catch(() => null) : Promise.resolve(null),
-      avatarUrl ? urlToDataUrl(avatarUrl).catch(() => null) : Promise.resolve(null),
-    ]).then(([hero, avatar]) => {
+      identityImageUrl ? urlToDataUrl(identityImageUrl).catch(() => null) : Promise.resolve(null),
+    ]).then(([hero, identity]) => {
       if (cancelled) return;
       setHeroSrc(hero);
-      setAvatarSrc(avatar);
+      setIdentitySrc(identity);
       setImagesReady(true);
     });
     return () => {
       cancelled = true;
     };
-  }, [heroUrl, avatarUrl]);
+  }, [heroUrl, identityImageUrl]);
 
   // Render the card to PNG once images are ready.
   useEffect(() => {
     if (!imagesReady || !cardRef.current) return;
     let cancelled = false;
+    setPngDataUrl(null);
+    setError(null);
     htmlToImage
-      .toPng(cardRef.current, { pixelRatio: 1, width: CARD_W, height: CARD_H })
+      .toPng(cardRef.current, { pixelRatio: 1, width: cardW, height: cardH })
       .then(url => {
         if (cancelled) return;
         if (!url || !url.startsWith('data:image')) {
@@ -99,7 +110,7 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
     return () => {
       cancelled = true;
     };
-  }, [imagesReady]);
+  }, [cardH, cardW, format, imagesReady]);
 
   function buildFilename(): string {
     return `${shoe.brand}-${shoe.model}-gopairph.png`
@@ -157,10 +168,28 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
 
         {/* Body */}
         <div className="overflow-y-auto p-5">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Format</span>
+            <button
+              type="button"
+              onClick={() => setFormat('mobile')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${format === 'mobile' ? 'bg-teal-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+            >
+              Mobile story
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormat('desktop')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${format === 'desktop' ? 'bg-teal-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+            >
+              Desktop wide
+            </button>
+          </div>
+
           {/* Rendered PNG. Mobile: long-press to save. Desktop: use the download button. */}
           <div
             className="relative w-full overflow-hidden rounded-xl bg-gray-950"
-            style={{ aspectRatio: `${CARD_W} / ${CARD_H}` }}
+            style={{ aspectRatio: `${cardW} / ${cardH}` }}
           >
             {pngDataUrl ? (
               /* eslint-disable-next-line @next/next/no-img-element */
@@ -204,10 +233,12 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
               ref={cardRef}
               shoe={shoe}
               seller={seller}
+              shop={shop}
               heroSrc={heroSrc}
-              avatarSrc={avatarSrc}
+              identitySrc={identitySrc}
               isFeatured={isFeatured}
               isSponsored={isSponsored}
+              format={format}
             />
           </div>
 
@@ -225,16 +256,76 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
 interface ShareCardProps {
   shoe: Shoe;
   seller: Profile | null;
+  shop: Shop | null;
   heroSrc: string | null;
-  avatarSrc: string | null;
+  identitySrc: string | null;
   isFeatured: boolean;
   isSponsored: boolean;
+  format: ShareFormat;
+}
+
+function getShareSizeText(shoe: Shoe): string {
+  const inStock = (shoe.shoe_variants ?? []).filter(v => v.quantity > 0);
+  if (inStock.length === 1) {
+    return formatSize(inStock[0].size_eu, inStock[0].size_us, inStock[0].size_cm);
+  }
+  if (inStock.length > 1) return `${inStock.length} sizes available`;
+  return formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm);
 }
 
 const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
-  { shoe, seller, heroSrc, avatarSrc, isFeatured, isSponsored },
+  { shoe, seller, shop, heroSrc, identitySrc, isFeatured, isSponsored, format },
   ref,
 ) {
+  const isMobile = format === 'mobile';
+  const identityName = shop?.name ?? seller?.display_name ?? 'Go Pair PH seller';
+  const identityLocation = shop?.location ?? seller?.location ?? null;
+  const identityLabel = shop ? 'Shop' : 'Seller';
+  const shareSize = getShareSizeText(shoe);
+
+  if (isMobile) {
+    return (
+      <div
+        ref={ref}
+        style={{
+          width: MOBILE_CARD_W,
+          height: MOBILE_CARD_H,
+          display: 'flex',
+          flexDirection: 'column',
+          background: '#020617',
+          fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+          color: '#f3f4f6',
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{ height: 690, position: 'relative', background: '#020617' }}>
+          {heroSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={heroSrc} alt={formatListingName(shoe.brand, shoe.model)} crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: 'linear-gradient(135deg, #0b1220 0%, #042f2e 100%)' }}>
+              <div style={{ opacity: 0.3 }}><LogoMark size={150} /></div>
+              <span style={{ fontSize: 16, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 600 }}>No photo</span>
+            </div>
+          )}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(2,6,23,0.05) 35%, rgba(2,6,23,0.92) 100%)' }} />
+        </div>
+
+        <div style={{ flex: 1, padding: '36px 54px 42px', background: 'linear-gradient(180deg, #020617 0%, #07111f 55%, #042f2e 100%)', display: 'flex', flexDirection: 'column', gap: 22 }}>
+          <IdentityBlock identityName={identityName} identityLocation={identityLocation} identityLabel={identityLabel} identitySrc={identitySrc} seller={seller} compact={false} />
+          <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} />
+          <TitleBlock shoe={shoe} shareSize={shareSize} titleSize={58} metaSize={22} />
+          <PriceBlock shoe={shoe} priceSize={54} />
+          <DescriptionBlock description={shoe.description} maxLines={4} />
+          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 10, color: '#94a3b8', fontSize: 18, fontWeight: 700 }}>
+            <LogoMark size={32} />
+            <span>Listed on <span style={{ color: '#f8fafc' }}>GoPair</span><span style={{ color: '#2dd4bf' }}>PH</span><span style={{ color: '#f8fafc' }}>.com</span></span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={ref}
@@ -259,216 +350,15 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
           borderRight: '1px solid rgba(20, 184, 166, 0.25)',
         }}
       >
-        {/* Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <LogoMark size={56} />
-          <span style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1 }}>
-            <span style={{ color: '#f3f4f6' }}>GoPair</span>
-            <span style={{ color: '#2dd4bf' }}>PH</span>
-            <span style={{ color: '#f3f4f6' }}>.com</span>
-          </span>
+        <IdentityBlock identityName={identityName} identityLocation={identityLocation} identityLabel={identityLabel} identitySrc={identitySrc} seller={seller} compact />
+        <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} />
+        <TitleBlock shoe={shoe} shareSize={shareSize} titleSize={52} metaSize={18} />
+        <PriceBlock shoe={shoe} priceSize={40} />
+        <DescriptionBlock description={shoe.description} maxLines={5} />
+        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 9, color: '#94a3b8', fontSize: 13, fontWeight: 700 }}>
+          <LogoMark size={24} />
+          <span>Listed on <span style={{ color: '#f8fafc' }}>GoPair</span><span style={{ color: '#2dd4bf' }}>PH</span><span style={{ color: '#f8fafc' }}>.com</span></span>
         </div>
-
-        {/* Badges */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          <ListingTypeBadge type={shoe.listing_type} />
-          <Badge className={CONDITION_COLORS[shoe.condition]}>{CONDITIONS[shoe.condition]}</Badge>
-          {isFeatured && (
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                borderRadius: 9999,
-                background: 'rgba(20, 184, 166, 0.15)',
-                border: '1px solid rgba(20, 184, 166, 0.4)',
-                color: '#5eead4',
-                padding: '4px 12px',
-                fontSize: 13,
-                fontWeight: 600,
-              }}
-            >
-              ★ Featured
-            </span>
-          )}
-          {isSponsored && (
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                borderRadius: 9999,
-                background: 'rgba(245, 158, 11, 0.15)',
-                border: '1px solid rgba(245, 158, 11, 0.4)',
-                color: '#fcd34d',
-                padding: '4px 12px',
-                fontSize: 13,
-                fontWeight: 600,
-              }}
-            >
-              ✦ Sponsored
-            </span>
-          )}
-        </div>
-
-        {/* Title */}
-        <div>
-          <h1
-            style={{
-              fontSize: 52,
-              lineHeight: 1.05,
-              fontWeight: 800,
-              letterSpacing: '-0.02em',
-              color: '#f9fafb',
-              margin: 0,
-            }}
-          >
-            {formatListingName(shoe.brand, shoe.model)}
-          </h1>
-          <p style={{ marginTop: 10, fontSize: 18, color: '#9ca3af', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <span>{shoe.color}</span>
-            <span style={{ color: '#374151' }}>•</span>
-            <span style={{ color: '#d1d5db', fontWeight: 600 }}>{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}</span>
-          </p>
-        </div>
-
-        {/* Price */}
-        {shoe.listing_type === 'for_sale' && shoe.price_php != null && (
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-            <span style={{ fontSize: 40, fontWeight: 800, color: '#2dd4bf', letterSpacing: '-0.02em' }}>
-              {formatPrice(shoe.price_php)}
-            </span>
-            {shoe.is_negotiable && (
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  color: '#fcd34d',
-                  background: 'rgba(245, 158, 11, 0.12)',
-                  border: '1px solid rgba(245, 158, 11, 0.4)',
-                  borderRadius: 9999,
-                  padding: '3px 10px',
-                }}
-              >
-                Negotiable
-              </span>
-            )}
-          </div>
-        )}
-        {shoe.listing_type === 'donate' && (
-          <div
-            style={{
-              background: 'rgba(34, 197, 94, 0.1)',
-              border: '1px solid rgba(34, 197, 94, 0.4)',
-              borderRadius: 12,
-              padding: '10px 14px',
-              fontSize: 16,
-              fontWeight: 700,
-              color: '#86efac',
-              width: 'fit-content',
-            }}
-          >
-            Free Donation
-          </div>
-        )}
-
-        {/* Description */}
-        {shoe.description && (
-          <div
-            style={{
-              borderRadius: 12,
-              border: '1px solid #1f2937',
-              background: 'rgba(17, 24, 39, 0.6)',
-              padding: 14,
-            }}
-          >
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
-              Description
-            </div>
-            <div
-              style={{
-                fontSize: 14,
-                lineHeight: 1.5,
-                color: '#d1d5db',
-                whiteSpace: 'pre-wrap',
-                display: '-webkit-box',
-                WebkitLineClamp: 4,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-              }}
-            >
-              {shoe.description}
-            </div>
-          </div>
-        )}
-
-        {/* Seller — pinned to bottom */}
-        {seller && (
-          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 12, borderRadius: 12, border: '1px solid #1f2937', background: 'rgba(17, 24, 39, 0.6)', padding: 12 }}>
-            {avatarSrc ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={avatarSrc}
-                alt={seller.display_name}
-                width={48}
-                height={48}
-                crossOrigin="anonymous"
-                style={{ width: 48, height: 48, borderRadius: 9999, objectFit: 'cover', border: '1px solid #374151' }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 9999,
-                  background: '#0d9488',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: 20,
-                }}
-              >
-                {seller.display_name?.[0]?.toUpperCase() ?? 'U'}
-              </div>
-            )}
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Seller</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 18, fontWeight: 700, color: '#f3f4f6' }}>
-                <span>{seller.display_name}</span>
-                {seller.is_verified && (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      borderRadius: 9999,
-                      background: 'rgba(20, 184, 166, 0.1)',
-                      border: '1px solid rgba(20, 184, 166, 0.4)',
-                      color: '#2dd4bf',
-                      padding: '2px 8px',
-                      fontSize: 10,
-                      fontWeight: 800,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                    }}
-                  >
-                    <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Verified
-                  </span>
-                )}
-              </div>
-              {seller.location && (
-                <div style={{ fontSize: 13, color: '#9ca3af', marginTop: 2 }}>{seller.location}</div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Right panel — hero photo */}
@@ -506,3 +396,168 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
     </div>
   );
 });
+
+function IdentityBlock({
+  identityName,
+  identityLocation,
+  identityLabel,
+  identitySrc,
+  seller,
+  compact = false,
+}: {
+  identityName: string;
+  identityLocation: string | null;
+  identityLabel: string;
+  identitySrc: string | null;
+  seller: Profile | null;
+  compact?: boolean;
+}) {
+  const avatarSize = compact ? 52 : 74;
+  const nameSize = compact ? 24 : 36;
+  const hostSize = compact ? 13 : 18;
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: compact ? 12 : 18 }}>
+      {identitySrc ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={identitySrc}
+          alt={identityName}
+          width={avatarSize}
+          height={avatarSize}
+          crossOrigin="anonymous"
+          style={{ width: avatarSize, height: avatarSize, borderRadius: compact ? 14 : 20, objectFit: 'cover', border: '1px solid #374151', background: '#020617' }}
+        />
+      ) : (
+        <div
+          style={{
+            width: avatarSize,
+            height: avatarSize,
+            borderRadius: compact ? 14 : 20,
+            background: '#0d9488',
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 800,
+            fontSize: compact ? 22 : 30,
+          }}
+        >
+          {identityName[0]?.toUpperCase() ?? 'S'}
+        </div>
+      )}
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: compact ? 10 : 13, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 800 }}>{identityLabel}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: nameSize, fontWeight: 850, color: '#f8fafc', lineHeight: 1.05, letterSpacing: '-0.02em' }}>
+          <span>{identityName}</span>
+          {identityLabel === 'Seller' && seller?.is_verified && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                borderRadius: 9999,
+                background: 'rgba(20, 184, 166, 0.1)',
+                border: '1px solid rgba(20, 184, 166, 0.4)',
+                color: '#2dd4bf',
+                padding: compact ? '2px 8px' : '4px 10px',
+                fontSize: compact ? 10 : 12,
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+              }}
+            >
+              Verified
+            </span>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: compact ? 3 : 7, color: '#94a3b8', fontSize: hostSize, fontWeight: 700 }}>
+          <span>
+            on <span style={{ color: '#f8fafc' }}>GoPair</span><span style={{ color: '#2dd4bf' }}>PH</span><span style={{ color: '#f8fafc' }}>.com</span>
+          </span>
+          {identityLocation && (
+            <>
+              <span style={{ color: '#334155' }}>•</span>
+              <span>{identityLocation}</span>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BadgeRow({ shoe, isFeatured, isSponsored }: { shoe: Shoe; isFeatured: boolean; isSponsored: boolean }) {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      <ListingTypeBadge type={shoe.listing_type} />
+      <Badge className={CONDITION_COLORS[shoe.condition]}>{CONDITIONS[shoe.condition]}</Badge>
+      {isFeatured && (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 9999, background: 'rgba(20, 184, 166, 0.15)', border: '1px solid rgba(20, 184, 166, 0.4)', color: '#5eead4', padding: '4px 12px', fontSize: 13, fontWeight: 600 }}>
+          ★ Featured
+        </span>
+      )}
+      {isSponsored && (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 9999, background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#fcd34d', padding: '4px 12px', fontSize: 13, fontWeight: 600 }}>
+          ✦ Sponsored
+        </span>
+      )}
+    </div>
+  );
+}
+
+function TitleBlock({ shoe, shareSize, titleSize, metaSize }: { shoe: Shoe; shareSize: string; titleSize: number; metaSize: number }) {
+  return (
+    <div>
+      <h1 style={{ fontSize: titleSize, lineHeight: 1.05, fontWeight: 850, letterSpacing: '-0.03em', color: '#f9fafb', margin: 0 }}>
+        {formatListingName(shoe.brand, shoe.model)}
+      </h1>
+      <p style={{ marginTop: 12, fontSize: metaSize, color: '#9ca3af', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <span>{shoe.color}</span>
+        {shareSize && (
+          <>
+            <span style={{ color: '#374151' }}>•</span>
+            <span style={{ color: '#d1d5db', fontWeight: 700 }}>{shareSize}</span>
+          </>
+        )}
+      </p>
+    </div>
+  );
+}
+
+function PriceBlock({ shoe, priceSize }: { shoe: Shoe; priceSize: number }) {
+  if (shoe.listing_type === 'donate') {
+    return (
+      <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.4)', borderRadius: 12, padding: '10px 14px', fontSize: 16, fontWeight: 700, color: '#86efac', width: 'fit-content' }}>
+        Free Donation
+      </div>
+    );
+  }
+  if (shoe.price_php == null) return null;
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+      <span style={{ fontSize: priceSize, fontWeight: 850, color: '#2dd4bf', letterSpacing: '-0.03em' }}>
+        {formatPrice(shoe.price_php)}
+      </span>
+      {shoe.is_negotiable && (
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fcd34d', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: 9999, padding: '3px 10px' }}>
+          Negotiable
+        </span>
+      )}
+    </div>
+  );
+}
+
+function DescriptionBlock({ description, maxLines }: { description: string | null; maxLines: number }) {
+  if (!description) return null;
+  return (
+    <div style={{ borderRadius: 12, border: '1px solid #1f2937', background: 'rgba(17, 24, 39, 0.6)', padding: 14 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+        Description
+      </div>
+      <div style={{ fontSize: 14, lineHeight: 1.5, color: '#d1d5db', whiteSpace: 'pre-wrap', display: '-webkit-box', WebkitLineClamp: maxLines, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+        {description}
+      </div>
+    </div>
+  );
+}
