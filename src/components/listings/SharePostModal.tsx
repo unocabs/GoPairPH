@@ -21,6 +21,32 @@ const MOBILE_CARD_W = 1080;
 const MOBILE_CARD_H = 1350;
 type ShareFormat = 'mobile' | 'desktop';
 
+function waitForNextPaint(): Promise<void> {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+}
+
+async function waitForRenderedImages(root: HTMLElement): Promise<void> {
+  const images = Array.from(root.querySelectorAll('img'));
+  await Promise.all(
+    images.map(async image => {
+      if (!image.currentSrc && !image.src) return;
+      if (!image.complete) {
+        await new Promise<void>(resolve => {
+          image.addEventListener('load', () => resolve(), { once: true });
+          image.addEventListener('error', () => resolve(), { once: true });
+        });
+      }
+      if (typeof image.decode === 'function') {
+        await image.decode().catch(() => undefined);
+      }
+    }),
+  );
+}
+
 async function urlToDataUrl(url: string): Promise<string> {
   const res = await fetch(url, { mode: 'cors' });
   if (!res.ok) throw new Error(`Failed to fetch image (${res.status})`);
@@ -41,6 +67,7 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
   const [pngDataUrl, setPngDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [format, setFormat] = useState<ShareFormat>('mobile');
+  const [renderAttempt, setRenderAttempt] = useState(0);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImg = shoe.shoe_images?.find(i => i.view_type === 'top') ?? shoe.shoe_images?.[0];
@@ -71,6 +98,11 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
   // instead of a broken <img>.
   useEffect(() => {
     let cancelled = false;
+    setImagesReady(false);
+    setHeroSrc(null);
+    setIdentitySrc(null);
+    setPngDataUrl(null);
+    setError(null);
     Promise.all([
       heroUrl ? urlToDataUrl(heroUrl).catch(() => null) : Promise.resolve(null),
       identityImageUrl ? urlToDataUrl(identityImageUrl).catch(() => null) : Promise.resolve(null),
@@ -89,28 +121,45 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
   useEffect(() => {
     if (!imagesReady || !cardRef.current) return;
     let cancelled = false;
-    setPngDataUrl(null);
-    setError(null);
-    htmlToImage
-      .toPng(cardRef.current, { pixelRatio: 1, width: cardW, height: cardH })
-      .then(url => {
-        if (cancelled) return;
-        if (!url || !url.startsWith('data:image')) {
-          setError('Could not generate share image');
-          return;
-        }
-        setPngDataUrl(url);
-      })
-      .catch(err => {
-        console.error('SharePost: render failed', err);
-        if (cancelled) return;
-        const e = err as Error;
-        setError(e?.message || e?.name || 'Could not generate share image');
+    const node = cardRef.current;
+
+    async function renderShareImage() {
+      setPngDataUrl(null);
+      setError(null);
+
+      await waitForNextPaint();
+      if (cancelled) return;
+      await waitForRenderedImages(node);
+      if (cancelled) return;
+      await waitForNextPaint();
+      if (cancelled) return;
+
+      const url = await htmlToImage.toPng(node, {
+        pixelRatio: 1,
+        width: cardW,
+        height: cardH,
+        cacheBust: true,
       });
+
+      if (cancelled) return;
+      if (!url || !url.startsWith('data:image')) {
+        setError('Could not generate share image');
+        return;
+      }
+      setPngDataUrl(url);
+    }
+
+    renderShareImage().catch(err => {
+      console.error('SharePost: render failed', err);
+      if (cancelled) return;
+      const e = err as Error;
+      setError(e?.message || e?.name || 'Could not generate share image');
+    });
+
     return () => {
       cancelled = true;
     };
-  }, [cardH, cardW, format, imagesReady]);
+  }, [cardH, cardW, format, heroSrc, identitySrc, imagesReady, renderAttempt]);
 
   function buildFilename(): string {
     return `${shoe.brand}-${shoe.model}-gopairph.png`
@@ -169,20 +218,27 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
         {/* Body */}
         <div className="overflow-y-auto p-5">
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Format</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Orientation</span>
             <button
               type="button"
               onClick={() => setFormat('mobile')}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${format === 'mobile' ? 'bg-teal-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
             >
-              Mobile story
+              Vertical
             </button>
             <button
               type="button"
               onClick={() => setFormat('desktop')}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${format === 'desktop' ? 'bg-teal-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
             >
-              Desktop wide
+              Horizontal
+            </button>
+            <button
+              type="button"
+              onClick={() => setRenderAttempt(attempt => attempt + 1)}
+              className="ml-auto rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-100"
+            >
+              Regenerate
             </button>
           </div>
 
@@ -214,7 +270,7 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
           </div>
 
           <p className="mt-3 text-xs text-gray-500">
-            <strong className="text-gray-300">Tip: Share it to your Facebook post or Marketplace listing.</strong> On mobile, long-press the image to save it. If the image did not load properly, please <strong className="text-gray-300">close the pop-up and open it again.</strong>
+            <strong className="text-gray-300">Tip: Share it to your Facebook post or Marketplace listing.</strong> On mobile, long-press the image to save it. If the preview looks wrong, tap <strong className="text-gray-300">Regenerate</strong>.
           </p>
 
           {/* Hidden source for html-to-image — rendered offscreen at native size. */}
@@ -224,8 +280,8 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
               position: 'fixed',
               top: -100000,
               left: 0,
-              width: CARD_W,
-              height: CARD_H,
+              width: cardW,
+              height: cardH,
               pointerEvents: 'none',
             }}
           >
@@ -282,6 +338,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
   const identityLocation = shop?.location ?? seller?.location ?? null;
   const identityLabel = shop ? 'Shop' : 'Seller';
   const shareSize = getShareSizeText(shoe);
+  const hasDescription = !!shoe.description?.trim();
 
   if (isMobile) {
     return (
@@ -292,35 +349,35 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
           height: MOBILE_CARD_H,
           display: 'flex',
           flexDirection: 'column',
-          background: '#020617',
+          padding: '44px 54px 38px',
+          background: 'linear-gradient(180deg, #020617 0%, #07111f 58%, #042f2e 100%)',
           fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
           color: '#f3f4f6',
           overflow: 'hidden',
+          boxSizing: 'border-box',
         }}
       >
-        <div style={{ height: 690, position: 'relative', background: '#020617' }}>
-          {heroSrc ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={heroSrc} alt={formatListingName(shoe.brand, shoe.model)} crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-          ) : (
-            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: 'linear-gradient(135deg, #0b1220 0%, #042f2e 100%)' }}>
-              <div style={{ opacity: 0.3 }}><LogoMark size={150} /></div>
-              <span style={{ fontSize: 16, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 600 }}>No photo</span>
-            </div>
-          )}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(2,6,23,0.05) 35%, rgba(2,6,23,0.92) 100%)' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <IdentityBlock identityName={identityName} identityLocation={identityLocation} identityLabel={identityLabel} identitySrc={identitySrc} seller={seller} compact />
+          <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} />
+          <TitleBlock shoe={shoe} shareSize={shareSize} titleSize={56} metaSize={22} />
+          <PriceBlock shoe={shoe} priceSize={52} />
         </div>
 
-        <div style={{ flex: 1, padding: '36px 54px 42px', background: 'linear-gradient(180deg, #020617 0%, #07111f 55%, #042f2e 100%)', display: 'flex', flexDirection: 'column', gap: 22 }}>
-          <IdentityBlock identityName={identityName} identityLocation={identityLocation} identityLabel={identityLabel} identitySrc={identitySrc} seller={seller} compact={false} />
-          <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} />
-          <TitleBlock shoe={shoe} shareSize={shareSize} titleSize={58} metaSize={22} />
-          <PriceBlock shoe={shoe} priceSize={54} />
-          <DescriptionBlock description={shoe.description} maxLines={4} />
-          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 10, color: '#94a3b8', fontSize: 18, fontWeight: 700 }}>
-            <LogoMark size={32} />
-            <span>Listed on <span style={{ color: '#f8fafc' }}>GoPair</span><span style={{ color: '#2dd4bf' }}>PH</span><span style={{ color: '#f8fafc' }}>.com</span></span>
+        <ProductImageBlock shoe={shoe} heroSrc={heroSrc} size={hasDescription ? 690 : 760} />
+
+        {hasDescription && (
+          <div style={{ marginTop: 18 }}>
+            <DescriptionBlock description={shoe.description} maxLines={3} />
           </div>
+        )}
+
+        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18, color: '#94a3b8', fontSize: 18, fontWeight: 700 }}>
+          <span>{shoe.listing_type === 'donate' ? 'Available for donation' : 'Available on Go Pair PH'}</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <LogoMark size={32} />
+            <span><span style={{ color: '#f8fafc' }}>GoPair</span><span style={{ color: '#2dd4bf' }}>PH</span><span style={{ color: '#f8fafc' }}>.com</span></span>
+          </span>
         </div>
       </div>
     );
@@ -396,6 +453,48 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
     </div>
   );
 });
+
+function ProductImageBlock({
+  shoe,
+  heroSrc,
+  size,
+}: {
+  shoe: Shoe;
+  heroSrc: string | null;
+  size: number;
+}) {
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        margin: '26px auto 0',
+        position: 'relative',
+        overflow: 'hidden',
+        borderRadius: 34,
+        background: 'linear-gradient(135deg, #0b1220 0%, #042f2e 100%)',
+        border: '1px solid rgba(45, 212, 191, 0.26)',
+        boxShadow: '0 30px 80px rgba(0, 0, 0, 0.35)',
+      }}
+    >
+      {heroSrc ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={heroSrc}
+          alt={formatListingName(shoe.brand, shoe.model)}
+          crossOrigin="anonymous"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+      ) : (
+        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+          <div style={{ opacity: 0.3 }}><LogoMark size={150} /></div>
+          <span style={{ fontSize: 16, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 600 }}>No photo</span>
+        </div>
+      )}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(2,6,23,0) 60%, rgba(2,6,23,0.22) 100%)' }} />
+    </div>
+  );
+}
 
 function IdentityBlock({
   identityName,
