@@ -122,8 +122,8 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
           <div className="grid grid-cols-3 gap-2 sm:gap-6">
             {[
-              { icon: '💰', label: 'For Sale', desc: 'Gently-used running shoes' },
-              { icon: '🎁', label: 'Donate', desc: 'Give shoes a second life' },
+              { icon: '💰', label: 'For Sale', desc: 'Gently-used or New running shoes' },
+              { icon: '🎁', label: 'Donate', desc: 'Help other runners and give shoes a second life' },
               { icon: '📍', label: 'Pampanga', desc: 'Local marketplace for runners in Pampanga' },
             ].map(f => (
               <div key={f.label} className="flex items-center justify-center gap-2 sm:gap-3 py-1.5">
