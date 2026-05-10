@@ -241,20 +241,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                             {inStock ? `${v.quantity} left` : 'Out of stock'}
                           </p>
                         </div>
-                        {!isOwner && currentProfileId && inStock && shoe.price_php && shoe.status === 'active' && !purchaseContext && (
-                          <BuyButton
-                            listingId={shoe.id}
-                            listingName={formatListingName(shoe.brand, shoe.model)}
-                            priceFormatted={formatPrice(shoe.price_php)}
-                            pricePhp={shoe.price_php}
-                            isNegotiable={shoe.is_negotiable}
-                            seller={seller ?? undefined}
-                            variants={shoe.shoe_variants}
-                            initialVariantId={v.id}
-                            label="Buy this size"
-                            className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-500 transition-colors"
-                          />
-                        )}
                       </li>
                     );
                   })}
@@ -384,9 +370,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             </div>
           )}
 
-          {/* Buy button — for_sale, active, non-owners only, no existing request.
-              Hidden for shop variant listings — they use per-size buttons in the
-              Available sizes table above. */}
+          {/* Buy button — for_sale, active, non-owners only, no existing request. */}
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && !shoe.shop_id && (
             <BuyButton
               listingId={shoe.id}
@@ -396,6 +380,18 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               isNegotiable={shoe.is_negotiable}
               seller={seller ?? undefined}
               offerCount={offerCount}
+            />
+          )}
+          {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && shoe.shop_id && shoe.has_stock && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
+            <BuyButton
+              listingId={shoe.id}
+              listingName={formatListingName(shoe.brand, shoe.model)}
+              priceFormatted={formatPrice(shoe.price_php)}
+              pricePhp={shoe.price_php}
+              isNegotiable={shoe.is_negotiable}
+              seller={seller ?? undefined}
+              variants={shoe.shoe_variants}
+              label="Place Order"
             />
           )}
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && !currentProfileId && (
