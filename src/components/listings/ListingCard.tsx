@@ -58,6 +58,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
   // Shop variant listings need size selection — done on the detail page, not the card.
   const showBuy = canAct && shoe.listing_type === 'for_sale' && !!shoe.price_php && !shoe.shop_id;
   const showDonate = canAct && shoe.listing_type === 'donate';
+  const showPlaceOrder = canAct && shoe.listing_type === 'for_sale' && !!shoe.shop_id && shoe.has_stock;
 
   return (
     <div className={cn(
@@ -217,7 +218,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
       )}
 
       {/* Action buttons — outside Link to avoid nested interactive elements */}
-      {(showBuy || showDonate) && (
+      {(showBuy || showDonate || showPlaceOrder) && (
         <div className="px-3 pb-3">
           {submitted ? (
             <div className="rounded-lg border border-teal-800 bg-teal-950 px-3 py-2 text-xs text-teal-400 text-center">
@@ -234,6 +235,13 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
             >
               Send Offer
             </button>
+          ) : showPlaceOrder ? (
+            <Link
+              href={`/listings/${shoe.id}`}
+              className="block w-full rounded-lg bg-teal-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-teal-500 transition-colors"
+            >
+              Place Order
+            </Link>
           ) : (
             <button
               onClick={() => setDonateOpen(true)}

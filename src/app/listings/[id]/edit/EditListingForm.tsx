@@ -137,21 +137,35 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
       if (err) throw err;
 
       if (isShopListing) {
-        // Upsert variants. Existing rows have v.id; new rows have v.id === null.
-        // Per plan: never hard-delete; "removed" rows are quantity = 0 (handled
-        // in VariantsEditor with preserveRowsOnRemove).
-        const upserts = variants.map(v => ({
-          ...(v.id ? { id: v.id } : {}),
+        // Save variants in separate batches. A mixed bulk upsert can send
+        // id=null for new rows, which violates shoe_variants.id NOT NULL.
+        const existingRows = variants
+          .filter(v => v.id)
+          .map(v => ({
+            id: v.id as string,
+            shoe_id: shoe.id,
+            size_eu: v.size_eu as number,
+            size_us: typeof v.size_us === 'number' ? v.size_us : null,
+            size_cm: typeof v.size_cm === 'number' ? v.size_cm : null,
+            quantity: typeof v.quantity === 'number' ? v.quantity : 0,
+          }));
+        const newRows = variants.filter(v => !v.id).map(v => ({
           shoe_id: shoe.id,
           size_eu: v.size_eu as number,
           size_us: typeof v.size_us === 'number' ? v.size_us : null,
           size_cm: typeof v.size_cm === 'number' ? v.size_cm : null,
           quantity: typeof v.quantity === 'number' ? v.quantity : 0,
         }));
-        if (upserts.length > 0) {
-          const { error: varErr } = await supabase.from('shoe_variants').upsert(upserts, {
+
+        if (existingRows.length > 0) {
+          const { error: varErr } = await supabase.from('shoe_variants').upsert(existingRows, {
             onConflict: 'shoe_id,size_eu',
           });
+          if (varErr) throw varErr;
+        }
+
+        if (newRows.length > 0) {
+          const { error: varErr } = await supabase.from('shoe_variants').insert(newRows);
           if (varErr) throw varErr;
         }
       }
