@@ -47,12 +47,21 @@ export interface Shop {
   name: string;
   owner_profile_id: string;
   logo_storage_path: string | null;
+  header_image_storage_path: string | null;
   about: string | null;
   location: string | null;
   fb_page_url: string | null;
+  background_color: string;
+  accent_color: string;
+  carousel_items: ShopCarouselItem[];
   status: ShopStatus;
   created_at: string;
   updated_at: string;
+}
+
+export interface ShopCarouselItem {
+  image_storage_path: string;
+  listing_id: string | null;
 }
 
 export interface ShoeVariant {

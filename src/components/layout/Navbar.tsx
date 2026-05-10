@@ -18,6 +18,7 @@ export function Navbar() {
   const [pendingRequestCount, setPendingRequestCount] = useState(0);
   const [sentOffersCount, setSentOffersCount] = useState(0);
   const [adminPendingCount, setAdminPendingCount] = useState(0);
+  const [ownedShopSlug, setOwnedShopSlug] = useState<string | null>(null);
   const supabase = createClient();
   const router = useRouter();
   const pathname = usePathname();
@@ -31,6 +32,7 @@ export function Navbar() {
       setPendingRequestCount(0);
       setSentOffersCount(0);
       setAdminPendingCount(0);
+      setOwnedShopSlug(null);
       return;
     }
     (async () => {
@@ -70,6 +72,13 @@ export function Navbar() {
       } else if (active) {
         setAdminPendingCount(0);
       }
+
+      const { data: ownedShop } = await supabase
+        .from('shops')
+        .select('slug')
+        .eq('owner_profile_id', profile.id)
+        .maybeSingle();
+      if (active) setOwnedShopSlug(ownedShop?.slug ?? null);
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -167,6 +176,18 @@ export function Navbar() {
                       >
                         My Profile
                       </Link>
+                      {ownedShopSlug && (
+                        <Link
+                          href="/shop/dashboard"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-teal-300 hover:bg-gray-800 hover:text-teal-200"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M5 7l1 13h12l1-13M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
+                          </svg>
+                          Shop Dashboard
+                        </Link>
+                      )}
                       {/* Purchase Requests — only when there are pending ones */}
                       {pendingRequestCount > 0 && (
                         <Link
@@ -276,6 +297,9 @@ export function Navbar() {
             {user && (
               <>
                 <Link href="/listings/new" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-teal-400 hover:bg-gray-800">+ List a Shoe</Link>
+                {ownedShopSlug && (
+                  <Link href="/shop/dashboard" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-teal-300 hover:bg-gray-800">Shop Dashboard</Link>
+                )}
               </>
             )}
           </div>

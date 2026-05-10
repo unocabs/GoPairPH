@@ -16,15 +16,17 @@ import { cn } from '@/lib/utils';
 import { BuyModal } from '@/components/purchases/BuyModal';
 import { DonateRequestModal } from '@/components/purchases/DonateRequestModal';
 import { SponsoredPill } from './SponsoredPill';
+import { type ShopTheme } from '@/lib/shopTheme';
 
 interface ListingCardProps {
   shoe: Shoe;
   currentProfileId?: string;
   hasExistingRequest?: boolean;
   offerCount?: number;
+  theme?: ShopTheme;
 }
 
-export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false, offerCount = 0 }: ListingCardProps) {
+export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false, offerCount = 0, theme }: ListingCardProps) {
   const [buyOpen, setBuyOpen] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -35,6 +37,9 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
   const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path) : null;
   const isOwner = !!currentProfileId && shoe.seller_id === currentProfileId;
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > new Date();
+  const themedCardStyle = theme ? { backgroundColor: theme.surface, borderColor: isOwner ? theme.accent : theme.border } : undefined;
+  const themedMutedStyle = theme ? { color: theme.mutedText } : undefined;
+  const themedAccentStyle = theme ? { color: theme.accent } : undefined;
 
   async function handleCopy(e: React.MouseEvent) {
     e.preventDefault();
@@ -64,11 +69,11 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
     <div className={cn(
       'relative overflow-hidden rounded-xl border bg-gray-900 transition-all hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5',
       isOwner ? 'border-teal-600 hover:border-teal-500' : 'border-gray-800 hover:border-gray-700'
-    )}>
+    )} style={themedCardStyle}>
       {/* Clickable area navigates to listing */}
       <Link href={`/listings/${shoe.id}`} className="group block">
         {/* Image */}
-        <div className="relative aspect-square bg-gray-800">
+        <div className="relative aspect-square bg-gray-800" style={theme ? { backgroundColor: theme.surfaceStrong } : undefined}>
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -78,11 +83,11 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
           ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-gray-900 via-gray-900 to-teal-950/40">
+            <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-gray-900 via-gray-900 to-teal-950/40" style={theme ? { background: `linear-gradient(135deg, ${theme.surfaceStrong}, ${theme.background})` } : undefined}>
               <div className="opacity-30">
                 <LogoMark size={64} />
               </div>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-gray-600">
+              <span className="text-[10px] font-medium uppercase tracking-wider text-gray-600" style={themedMutedStyle}>
                 No photo
               </span>
             </div>
@@ -129,12 +134,12 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
 
         {/* Details */}
         <div className="p-3">
-          <h3 className="font-semibold text-gray-100 truncate text-sm">{formatListingName(shoe.brand, shoe.model)}</h3>
+          <h3 className="font-semibold text-gray-100 truncate text-sm" style={theme ? { color: theme.text } : undefined}>{formatListingName(shoe.brand, shoe.model)}</h3>
           {shoe.shop_id ? (
             (() => {
               const inStock = (shoe.shoe_variants ?? []).filter(v => v.quantity > 0);
               return (
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-gray-500 mt-0.5" style={themedMutedStyle}>
                   {inStock.length > 0
                     ? `${inStock.length} size${inStock.length === 1 ? '' : 's'} available`
                     : 'Out of stock'}
@@ -142,7 +147,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
               );
             })()
           ) : (
-            <p className="text-xs text-gray-500 mt-0.5">{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}</p>
+            <p className="text-xs text-gray-500 mt-0.5" style={themedMutedStyle}>{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}</p>
           )}
 
           <div className="mt-2 flex items-center justify-between gap-2">
@@ -158,13 +163,13 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
 
           {shoe.listing_type === 'for_sale' && shoe.price_php && (
             <div className="mt-2 flex items-baseline justify-between gap-2">
-              <p className="font-bold text-teal-400 shrink-0">{formatPrice(shoe.price_php)}</p>
+              <p className="font-bold text-teal-400 shrink-0" style={themedAccentStyle}>{formatPrice(shoe.price_php)}</p>
               {offerCount === 0 ? (
                 <span></span>
               ) : (
                 <span className="text-[10px] text-right">
-                  <span className="text-teal-400 font-semibold">{offerCount}</span>
-                  <span className="text-gray-500"> offer{offerCount === 1 ? '' : 's'} so far</span>
+                  <span className="text-teal-400 font-semibold" style={themedAccentStyle}>{offerCount}</span>
+                  <span className="text-gray-500" style={themedMutedStyle}> offer{offerCount === 1 ? '' : 's'} so far</span>
                 </span>
               )}
             </div>
@@ -173,7 +178,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
             <p className="mt-2 text-xs text-green-400 font-medium">Free Donation</p>
           )}
 
-          <p className="mt-1.5 text-xs text-gray-600">{formatRelativeDate(shoe.created_at)}</p>
+          <p className="mt-1.5 text-xs text-gray-600" style={themedMutedStyle}>{formatRelativeDate(shoe.created_at)}</p>
         </div>
       </Link>
 
@@ -181,6 +186,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
         <Link
           href={`/listings/${shoe.id}/edit#variants`}
           className="block px-3 pb-3 -mt-1 text-center text-xs font-semibold text-teal-400 hover:text-teal-300 transition-colors"
+          style={themedAccentStyle}
         >
           Restock →
         </Link>
@@ -211,14 +217,14 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
       {(isOwner || showBuy || showDonate || showPlaceOrder) && (
         <div className="px-3 pb-3">
           {isOwner ? (
-            <div className="flex w-full items-center justify-center gap-1 rounded-lg border border-teal-800 bg-teal-950/70 px-3 py-2 text-sm font-semibold text-teal-300">
+            <div className="flex w-full items-center justify-center gap-1 rounded-lg border border-teal-800 bg-teal-950/70 px-3 py-2 text-sm font-semibold text-teal-300" style={theme ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.accent } : undefined}>
               <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
               </svg>
               My Listing
             </div>
           ) : submitted ? (
-            <div className="rounded-lg border border-teal-800 bg-teal-950 px-3 py-2 text-xs text-teal-400 text-center">
+            <div className="rounded-lg border border-teal-800 bg-teal-950 px-3 py-2 text-xs text-teal-400 text-center" style={theme ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.accent } : undefined}>
               ✓ Request sent!
             </div>
           ) : hasExistingRequest ? (
@@ -229,6 +235,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
             <button
               onClick={() => setBuyOpen(true)}
               className="w-full rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-500 transition-colors"
+              style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
             >
               Send Offer
             </button>
@@ -236,6 +243,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
             <Link
               href={`/listings/${shoe.id}`}
               className="block w-full rounded-lg bg-teal-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-teal-500 transition-colors"
+              style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
             >
               Place Order
             </Link>
