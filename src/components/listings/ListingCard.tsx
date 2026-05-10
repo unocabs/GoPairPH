@@ -91,7 +91,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
             <ShopLogoOverlay shop={shoe.shops} size="sm" asDiv />
           )}
           <div className={`absolute ${shoe.shops?.logo_storage_path ? 'top-2 left-12' : 'top-2 left-2'} flex flex-col items-start gap-1`}>
-            <ListingTypeBadge type={shoe.listing_type} />
+            {shoe.listing_type === 'donate' && <ListingTypeBadge type={shoe.listing_type} />}
             {isSponsored && <SponsoredPill size="sm" />}
           </div>
           {offerCount > 0 && shoe.status === 'active' && (
