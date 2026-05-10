@@ -94,16 +94,6 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
             <ListingTypeBadge type={shoe.listing_type} />
             {isSponsored && <SponsoredPill size="sm" />}
           </div>
-          {isOwner && (
-            <div className="absolute top-2 right-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-teal-500/20 border border-teal-500/50 px-2 py-0.5 text-[10px] font-semibold text-teal-300 backdrop-blur-sm">
-                <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                </svg>
-                My Listing
-              </span>
-            </div>
-          )}
           {offerCount > 0 && shoe.status === 'active' && (
             <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 px-2.5 py-1">
               <span className="relative flex h-1.5 w-1.5 shrink-0">
@@ -218,9 +208,16 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
       )}
 
       {/* Action buttons — outside Link to avoid nested interactive elements */}
-      {(showBuy || showDonate || showPlaceOrder) && (
+      {(isOwner || showBuy || showDonate || showPlaceOrder) && (
         <div className="px-3 pb-3">
-          {submitted ? (
+          {isOwner ? (
+            <div className="flex w-full items-center justify-center gap-1 rounded-lg border border-teal-800 bg-teal-950/70 px-3 py-2 text-sm font-semibold text-teal-300">
+              <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              </svg>
+              My Listing
+            </div>
+          ) : submitted ? (
             <div className="rounded-lg border border-teal-800 bg-teal-950 px-3 py-2 text-xs text-teal-400 text-center">
               ✓ Request sent!
             </div>

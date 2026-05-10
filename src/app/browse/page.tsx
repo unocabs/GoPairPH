@@ -22,8 +22,38 @@ interface BrowsePageProps {
     type?: string;
     brand?: string;
     condition?: string;
+    size?: string;
+    size_unit?: string;
     size_eu?: string;
     q?: string;
+  };
+}
+
+type SizeUnit = 'eu' | 'us' | 'cm';
+
+function shuffleListings(listings: Shoe[]): Shoe[] {
+  const shuffled = [...listings];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+function getSizeFilter(searchParams: BrowsePageProps['searchParams']): { column: 'size_eu' | 'size_us' | 'size_cm'; value: number } | null {
+  const rawValue = searchParams.size ?? searchParams.size_eu;
+  if (!rawValue) return null;
+
+  const value = Number.parseFloat(rawValue);
+  if (!Number.isFinite(value)) return null;
+
+  const unit = ['eu', 'us', 'cm'].includes(searchParams.size_unit ?? '')
+    ? searchParams.size_unit as SizeUnit
+    : 'eu';
+
+  return {
+    column: unit === 'us' ? 'size_us' : unit === 'cm' ? 'size_cm' : 'size_eu',
+    value,
   };
 }
 
@@ -39,33 +69,44 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
   if (searchParams.type) query = query.eq('listing_type', searchParams.type);
   if (searchParams.brand) query = query.ilike('brand', searchParams.brand);
   if (searchParams.condition) query = query.eq('condition', searchParams.condition);
-  if (searchParams.size_eu) query = query.eq('size_eu', parseFloat(searchParams.size_eu));
+  const sizeFilter = getSizeFilter(searchParams);
+  if (sizeFilter) query = query.eq(sizeFilter.column, sizeFilter.value);
   if (searchParams.q) query = query.or(`brand.ilike.%${searchParams.q}%,model.ilike.%${searchParams.q}%`);
 
   const { data } = await query.limit(60);
   const all = (data as Shoe[]) ?? [];
 
-  // Sort: photoless listings always last; within the photo group, active
-  // sponsored first (most-recently-started rises), then by created_at DESC.
+  // Randomize on each refresh while preserving marketplace priorities:
+  // sponsored listings stay above regular listings, and photoless listings
+  // stay below listings with images.
   const now = Date.now();
   const isActiveSponsored = (s: Shoe) =>
     s.sponsored_until != null && new Date(s.sponsored_until).getTime() > now;
   const hasPhoto = (s: Shoe) => (s.shoe_images?.length ?? 0) > 0;
 
-  return all.sort((a, b) => {
-    const aPhoto = hasPhoto(a);
-    const bPhoto = hasPhoto(b);
-    if (aPhoto !== bPhoto) return aPhoto ? -1 : 1;
-    const aSp = isActiveSponsored(a);
-    const bSp = isActiveSponsored(b);
-    if (aSp !== bSp) return aSp ? -1 : 1;
-    if (aSp && bSp) {
-      const aStart = new Date(a.sponsored_started_at ?? a.created_at).getTime();
-      const bStart = new Date(b.sponsored_started_at ?? b.created_at).getTime();
-      return bStart - aStart;
+  const sponsoredWithPhoto: Shoe[] = [];
+  const regularWithPhoto: Shoe[] = [];
+  const sponsoredWithoutPhoto: Shoe[] = [];
+  const regularWithoutPhoto: Shoe[] = [];
+
+  all.forEach((shoe) => {
+    if (isActiveSponsored(shoe) && hasPhoto(shoe)) {
+      sponsoredWithPhoto.push(shoe);
+    } else if (hasPhoto(shoe)) {
+      regularWithPhoto.push(shoe);
+    } else if (isActiveSponsored(shoe)) {
+      sponsoredWithoutPhoto.push(shoe);
+    } else {
+      regularWithoutPhoto.push(shoe);
     }
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
+
+  return [
+    ...shuffleListings(sponsoredWithPhoto),
+    ...shuffleListings(regularWithPhoto),
+    ...shuffleListings(sponsoredWithoutPhoto),
+    ...shuffleListings(regularWithoutPhoto),
+  ];
 }
 
 function SearchBar({ defaultValue }: { defaultValue?: string }) {

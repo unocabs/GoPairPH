@@ -1,34 +1,105 @@
 'use client';
 
+import { useCallback, useEffect, useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BRANDS, CONDITIONS, LISTING_TYPE_LABELS } from '@/lib/constants';
+
+const SIZE_UNITS = [
+  { value: 'eu', label: 'EU', placeholder: '42', min: 35, max: 48 },
+  { value: 'us', label: 'US', placeholder: '10', min: 4, max: 14 },
+  { value: 'cm', label: 'CM', placeholder: '27', min: 22, max: 31 },
+];
 
 export function FilterPanel() {
   const router = useRouter();
   const params = useSearchParams();
+  const paramsString = params.toString();
+  const currentSize = params.get('size') ?? params.get('size_eu') ?? '';
+  const currentSizeUnit = SIZE_UNITS.some(unit => unit.value === params.get('size_unit'))
+    ? params.get('size_unit') ?? 'eu'
+    : 'eu';
+  const selectedSizeUnit = SIZE_UNITS.find(unit => unit.value === currentSizeUnit) ?? SIZE_UNITS[0];
+  const [isPending, startTransition] = useTransition();
+  const [size, setSize] = useState(currentSize);
 
-  function updateParam(key: string, value: string) {
-    const next = new URLSearchParams(params.toString());
-    if (value) {
-      next.set(key, value);
-    } else {
-      next.delete(key);
-    }
-    next.delete('page');
-    router.push(`/browse?${next.toString()}`);
-  }
+  const updateParam = useCallback((key: string, value: string) => {
+    startTransition(() => {
+      const next = new URLSearchParams(paramsString);
+      if (value) {
+        next.set(key, value);
+      } else {
+        next.delete(key);
+      }
+      next.delete('page');
+
+      const query = next.toString();
+      router.replace(query ? `/browse?${query}` : '/browse', { scroll: false });
+    });
+  }, [paramsString, router]);
 
   function clearAll() {
-    router.push('/browse');
+    setSize('');
+    startTransition(() => {
+      router.replace('/browse', { scroll: false });
+    });
   }
 
-  const hasFilters = params.has('type') || params.has('brand') || params.has('condition') || params.has('size_eu') || params.has('q');
+  function updateSizeUnit(unit: string) {
+    startTransition(() => {
+      const next = new URLSearchParams(paramsString);
+      next.set('size_unit', unit);
+      if (size.trim()) {
+        next.set('size', size.trim());
+      }
+      next.delete('size_eu');
+      next.delete('page');
+
+      const query = next.toString();
+      router.replace(query ? `/browse?${query}` : '/browse', { scroll: false });
+    });
+  }
+
+  useEffect(() => {
+    setSize(currentSize);
+  }, [currentSize]);
+
+  useEffect(() => {
+    const nextSize = size.trim();
+    if (nextSize === currentSize) return;
+
+    const timeout = window.setTimeout(() => {
+      startTransition(() => {
+        const next = new URLSearchParams(paramsString);
+        if (nextSize) {
+          next.set('size', nextSize);
+          next.set('size_unit', currentSizeUnit);
+        } else {
+          next.delete('size');
+          next.delete('size_unit');
+        }
+        next.delete('size_eu');
+        next.delete('page');
+
+        const query = next.toString();
+        router.replace(query ? `/browse?${query}` : '/browse', { scroll: false });
+      });
+    }, 350);
+
+    return () => window.clearTimeout(timeout);
+  }, [currentSize, currentSizeUnit, paramsString, router, size]);
+
+  const hasFilters = params.has('type') || params.has('brand') || params.has('condition') || params.has('size') || params.has('size_eu') || params.has('q');
 
   return (
     <aside className="w-full lg:w-56 shrink-0">
       <div className="sticky top-20 rounded-xl border border-gray-800 bg-gray-900 p-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-gray-200 text-sm">Filters</h2>
+          <div>
+            <h2 className="font-semibold text-gray-200 text-sm">Filters</h2>
+            {isPending && (
+              <p className="mt-0.5 text-[11px] text-teal-400">Updating...</p>
+            )}
+          </div>
           {hasFilters && (
             <button onClick={clearAll} className="text-xs text-teal-400 hover:text-teal-300 transition-colors">
               Clear all
@@ -83,19 +154,32 @@ export function FilterPanel() {
             </select>
           </div>
 
-          {/* Size EU */}
+          {/* Size */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Size (EU)</p>
-            <input
-              type="number"
-              placeholder="e.g. 42"
-              value={params.get('size_eu') ?? ''}
-              onChange={e => updateParam('size_eu', e.target.value)}
-              min={35}
-              max={48}
-              step={0.5}
-              className="w-full text-sm border border-gray-700 rounded-lg px-2 py-1.5 bg-gray-800 text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
-            />
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Size</p>
+            <div className="flex gap-2">
+              <select
+                value={currentSizeUnit}
+                onChange={e => updateSizeUnit(e.target.value)}
+                className="w-20 text-sm border border-gray-700 rounded-lg px-2 py-1.5 bg-gray-800 text-gray-200 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+              >
+                {SIZE_UNITS.map(unit => (
+                  <option key={unit.value} value={unit.value} className="bg-gray-800">
+                    {unit.label}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="number"
+                placeholder={`e.g. ${selectedSizeUnit.placeholder}`}
+                value={size}
+                onChange={e => setSize(e.target.value)}
+                min={selectedSizeUnit.min}
+                max={selectedSizeUnit.max}
+                step={0.5}
+                className="min-w-0 flex-1 text-sm border border-gray-700 rounded-lg px-2 py-1.5 bg-gray-800 text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
           </div>
         </div>
       </div>

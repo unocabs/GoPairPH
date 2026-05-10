@@ -28,7 +28,7 @@ async function getRecentListings(): Promise<Shoe[]> {
       if (aPhoto !== bPhoto) return aPhoto ? -1 : 1;
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     })
-    .slice(0, 8);
+    .slice(0, 4);
 }
 
 /**
@@ -140,11 +140,8 @@ export default async function HomePage() {
 
       {/* Recent Listings */}
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-100">Recent Listings</h2>
-          <Link href="/browse" className="text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors">
-            View all →
-          </Link>
         </div>
         <ListingGrid
           shoes={recentShoes}
@@ -153,6 +150,11 @@ export default async function HomePage() {
           offerCounts={offerCounts}
           emptyMessage="No listings yet. Be the first to list your shoes!"
         />
+        <div className="mt-8 text-center">
+          <Link href="/browse" className="inline-flex text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors">
+            View all →
+          </Link>
+        </div>
       </section>
 
       {/* CTA banner */}
