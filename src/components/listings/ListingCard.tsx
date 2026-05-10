@@ -266,6 +266,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
           pricePhp={shoe.price_php}
           isNegotiable={shoe.is_negotiable}
           seller={shoe.profiles}
+          shop={shoe.shops}
           onClose={() => setBuyOpen(false)}
           onSubmitted={() => { setBuyOpen(false); setSubmitted(true); }}
         />,

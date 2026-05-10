@@ -28,6 +28,7 @@ import { SponsoredPill } from '@/components/listings/SponsoredPill';
 import { FeaturedPill } from '@/components/listings/FeaturedPill';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import { getSponsoredSlotInfo } from '@/lib/sponsored';
+import { SafeShopImage } from '@/components/shop/SafeShopImage';
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const shoe = await getShoe(params.id);
@@ -147,6 +148,8 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
   const isVerified = currentProfile?.isVerified ?? false;
   const isOwner = currentProfileId === shoe.seller_id;
   const seller = shoe.profiles;
+  const shop = shoe.shops && shoe.shops.status === 'active' ? shoe.shops : null;
+  const shopLogoUrl = shop?.logo_storage_path ? getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, shop.logo_storage_path, 'shop-logos') : null;
   const purchaseContext = await getPurchaseContext(shoe.id, currentProfileId, isOwner, shoe.status);
 
   const now = new Date();
@@ -272,8 +275,48 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             </div>
           )}
 
-          {/* Seller Card */}
-          {seller && (
+          {/* Seller / Shop Card */}
+          {shop ? (
+            <div className="mt-6 rounded-xl border border-gray-800 bg-gray-900 p-4">
+              <div className="flex items-center gap-4">
+                <Link href={`/shop/${shop.slug}`} className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-gray-700 bg-gray-950">
+                  <SafeShopImage src={shopLogoUrl} alt={shop.name} className="h-full w-full object-cover" logoSize={32} />
+                </Link>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500">Shop</p>
+                  <Link href={`/shop/${shop.slug}`} className="font-semibold text-gray-200 hover:text-teal-400 transition-colors">
+                    {shop.name}
+                  </Link>
+                  {shop.location && <p className="text-xs text-gray-500 mt-0.5">{shop.location}</p>}
+                </div>
+                <Link href={`/shop/${shop.slug}`} className="text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors shrink-0">
+                  View Shop
+                </Link>
+              </div>
+              <div className="mt-3 space-y-2">
+                <ContactSellerButtons
+                  fbUsername={null}
+                  listingId={shoe.id}
+                  isOwner={isOwner}
+                  shoe={shoe}
+                  seller={seller ?? null}
+                />
+                {!isOwner && shop.fb_page_url && (
+                  <a
+                    href={shop.fb_page_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-500 transition-colors"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M22 12C22 6.48 17.52 2 12 2S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z" />
+                    </svg>
+                    Visit shop Facebook page
+                  </a>
+                )}
+              </div>
+            </div>
+          ) : seller && (
             <div className="mt-6 rounded-xl border border-gray-800 bg-gray-900 p-4">
               <div className="flex items-center gap-4">
                 <Link href={`/profile/${seller.id}`} className="shrink-0">
@@ -390,6 +433,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               pricePhp={shoe.price_php}
               isNegotiable={shoe.is_negotiable}
               seller={seller ?? undefined}
+              shop={shoe.shops}
               variants={shoe.shoe_variants}
               label="Place Order"
             />

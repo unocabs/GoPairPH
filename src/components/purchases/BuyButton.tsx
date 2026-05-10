@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { BuyModal } from './BuyModal';
-import type { Profile, ShoeVariant } from '@/types';
+import type { Profile, ShoeVariant, Shop } from '@/types';
 
 interface BuyButtonProps {
   listingId: string;
@@ -11,6 +11,7 @@ interface BuyButtonProps {
   pricePhp: number;
   isNegotiable: boolean;
   seller?: Profile;
+  shop?: Shop | null;
   offerCount?: number;
   variants?: ShoeVariant[];
   initialVariantId?: string | null;
@@ -19,7 +20,7 @@ interface BuyButtonProps {
   className?: string;
 }
 
-export function BuyButton({ listingId, listingName, priceFormatted, pricePhp, isNegotiable, seller, offerCount = 0, variants, initialVariantId, label, className }: BuyButtonProps) {
+export function BuyButton({ listingId, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, offerCount = 0, variants, initialVariantId, label, className }: BuyButtonProps) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -59,6 +60,7 @@ export function BuyButton({ listingId, listingName, priceFormatted, pricePhp, is
           pricePhp={pricePhp}
           isNegotiable={isNegotiable}
           seller={seller}
+          shop={shop}
           variants={variants}
           initialVariantId={initialVariantId}
           onClose={() => setOpen(false)}

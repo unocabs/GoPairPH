@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
-import { renderOfferEmail } from '@/lib/email/offerNotification';
+import { renderOfferEmail, renderShopOrderEmail } from '@/lib/email/offerNotification';
 import { sendOfferEmail } from '@/lib/email/resend';
 import { formatCondition, formatListingName, formatSize } from '@/lib/utils';
 
@@ -68,6 +68,7 @@ export async function POST(request: Request) {
       listingId: listing_id,
       message: message?.trim() || null,
       offerPricePhp: offer_price_php ?? null,
+      variantId: variant_id ?? null,
     });
   } catch (err) {
     console.error('[offers] notification email failed:', err);
@@ -81,14 +82,15 @@ interface NotificationArgs {
   listingId: string;
   message: string | null;
   offerPricePhp: number | null;
+  variantId: string | null;
 }
 
-async function sendNotification({ buyerId, listingId, message, offerPricePhp }: NotificationArgs) {
+async function sendNotification({ buyerId, listingId, message, offerPricePhp, variantId }: NotificationArgs) {
   const service = createServiceClient();
 
   const { data: listing, error: listingErr } = await service
     .from('shoes')
-    .select('id, brand, model, size_eu, size_us, size_cm, condition, mileage_km, price_php, seller_id')
+    .select('id, brand, model, size_eu, size_us, size_cm, condition, mileage_km, price_php, seller_id, shop_id, shops(name)')
     .eq('id', listingId)
     .single();
   if (listingErr || !listing) throw new Error(`listing fetch failed: ${listingErr?.message}`);
@@ -118,6 +120,36 @@ async function sendNotification({ buyerId, listingId, message, offerPricePhp }: 
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? '';
   const offerLink = `${siteUrl}/profile`;
+
+  if (listing.shop_id) {
+    let selectedSize = formatSize(listing.size_eu, listing.size_us, listing.size_cm) || 'Selected size';
+    if (variantId) {
+      const { data: variant } = await service
+        .from('shoe_variants')
+        .select('size_eu, size_us, size_cm')
+        .eq('id', variantId)
+        .maybeSingle();
+      if (variant) selectedSize = formatSize(variant.size_eu, variant.size_us, variant.size_cm) || selectedSize;
+    }
+
+    const shop = Array.isArray(listing.shops) ? listing.shops[0] : listing.shops;
+    const html = renderShopOrderEmail({
+      shop_name: shop?.name ?? sellerProfile.display_name,
+      listing_title: listingTitle,
+      selected_size: selectedSize,
+      listed_price: formatPesos(listedPrice),
+      buyer_name: buyerProfile?.display_name ?? 'A Go Pair PH buyer',
+      buyer_message: message,
+      order_link: offerLink,
+    });
+
+    await sendOfferEmail({
+      to: sellerEmail,
+      subject: `New shop order: ${listingTitle} — Go Pair PH`,
+      html,
+    });
+    return;
+  }
 
   const html = renderOfferEmail({
     seller_name: sellerProfile.display_name,

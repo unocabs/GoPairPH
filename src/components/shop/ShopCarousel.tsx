@@ -33,9 +33,9 @@ export function ShopCarousel({ items, accentColor, backgroundColor }: ShopCarous
   const goTo = (nextIndex: number) => setIndex((nextIndex + items.length) % items.length);
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+    <section className="mx-auto w-full max-w-7xl overflow-hidden px-4 pt-8 sm:px-6 lg:px-8">
       <div
-        className="relative aspect-[16/7] min-h-[220px] overflow-hidden rounded-xl border shadow-xl shadow-black/20"
+        className="relative h-[220px] w-full max-w-full overflow-hidden rounded-xl border shadow-xl shadow-black/20 sm:aspect-[16/7] sm:h-auto sm:min-h-[220px]"
         style={{ backgroundColor: theme.surface, borderColor: theme.border }}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
@@ -57,7 +57,7 @@ export function ShopCarousel({ items, accentColor, backgroundColor }: ShopCarous
             );
 
             return (
-              <div key={item.image_storage_path} className="h-full min-w-full">
+              <div key={item.image_storage_path} className="h-full w-full min-w-0 flex-[0_0_100%]">
                 {item.listing_id ? (
                   <Link href={`/listings/${item.listing_id}`} className="block h-full w-full">
                     {image}
