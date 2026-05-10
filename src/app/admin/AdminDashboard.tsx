@@ -1,37 +1,86 @@
 'use client';
 
-import { useState } from 'react';
+import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { formatRelativeDate } from '@/lib/utils';
+import { formatRelativeDate, getPublicUrl } from '@/lib/utils';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
-import type { VerificationRequest, Profile } from '@/types';
+import type { VerificationRequest, Profile, Shop, ShopStatus } from '@/types';
+
+type ShopWithOwner = Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location'> | null };
 
 interface AdminDashboardProps {
   pending: VerificationRequest[];
   recent: VerificationRequest[];
   verified: Profile[];
+  shops: ShopWithOwner[];
+  profiles: Profile[];
 }
 
-type Tab = 'pending' | 'recent' | 'verified';
+type Tab = 'pending' | 'recent' | 'verified' | 'shops';
+const ACCEPTED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
-export function AdminDashboard({ pending, recent, verified }: AdminDashboardProps) {
+async function convertLogoToWebP(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = document.createElement('img');
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxDim = 900;
+      let { width, height } = img;
+
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d')?.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        blob => {
+          URL.revokeObjectURL(url);
+          if (blob) resolve(blob);
+          else reject(new Error('Could not prepare this image.'));
+        },
+        'image/webp',
+        0.9
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('This image format is not supported by your browser.'));
+    };
+
+    img.src = url;
+  });
+}
+
+export function AdminDashboard({ pending, recent, verified, shops, profiles }: AdminDashboardProps) {
   const [tab, setTab] = useState<Tab>('pending');
 
   return (
     <div>
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-800 mb-6">
+      <div className="mb-6 flex gap-1 overflow-x-auto border-b border-gray-800">
         {([
           { key: 'pending', label: `Pending (${pending.length})` },
           { key: 'recent', label: `Recent reviews` },
           { key: 'verified', label: `Verified users (${verified.length})` },
+          { key: 'shops', label: `Shops (${shops.length})` },
         ] as const).map(({ key, label }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            className={`shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               tab === key ? 'border-teal-500 text-teal-400' : 'border-transparent text-gray-500 hover:text-gray-300'
             }`}
           >
@@ -43,6 +92,430 @@ export function AdminDashboard({ pending, recent, verified }: AdminDashboardProp
       {tab === 'pending' && <PendingList requests={pending} />}
       {tab === 'recent' && <RecentList requests={recent} />}
       {tab === 'verified' && <VerifiedList users={verified} />}
+      {tab === 'shops' && <ShopsPanel shops={shops} profiles={profiles} />}
+    </div>
+  );
+}
+
+interface ShopFormState {
+  slug: string;
+  name: string;
+  owner_profile_id: string;
+  logo_storage_path: string;
+  about: string;
+  location: string;
+  fb_page_url: string;
+  status: ShopStatus;
+}
+
+const emptyShopForm: ShopFormState = {
+  slug: '',
+  name: '',
+  owner_profile_id: '',
+  logo_storage_path: '',
+  about: '',
+  location: '',
+  fb_page_url: '',
+  status: 'active',
+};
+
+function shopToForm(shop: Shop): ShopFormState {
+  return {
+    slug: shop.slug,
+    name: shop.name,
+    owner_profile_id: shop.owner_profile_id,
+    logo_storage_path: shop.logo_storage_path ?? '',
+    about: shop.about ?? '',
+    location: shop.location ?? '',
+    fb_page_url: shop.fb_page_url ?? '',
+    status: shop.status,
+  };
+}
+
+function ShopsPanel({ shops, profiles }: { shops: ShopWithOwner[]; profiles: Profile[] }) {
+  const [form, setForm] = useState<ShopFormState>(emptyShopForm);
+  const [editing, setEditing] = useState<ShopWithOwner | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const router = useRouter();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+
+  const ownerOptions = profiles.filter(profile => profile.display_name.trim().length > 0);
+  const currentLogoUrl = form.logo_storage_path ? getPublicUrl(supabaseUrl, form.logo_storage_path, 'shop-logos') : null;
+
+  useEffect(() => {
+    return () => {
+      if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
+    };
+  }, [logoPreviewUrl]);
+
+  function updateField<K extends keyof ShopFormState>(key: K, value: ShopFormState[K]) {
+    setForm(current => ({ ...current, [key]: value }));
+  }
+
+  function clearSelectedLogo() {
+    if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
+    setLogoFile(null);
+    setLogoPreviewUrl(null);
+    setLogoError(null);
+  }
+
+  function resetForm() {
+    setEditing(null);
+    setForm(emptyShopForm);
+    clearSelectedLogo();
+  }
+
+  function startEdit(shop: ShopWithOwner) {
+    setEditing(shop);
+    setForm(shopToForm(shop));
+    clearSelectedLogo();
+  }
+
+  function handleLogoChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    if (!file.type.startsWith('image/') || (file.type && !ACCEPTED_LOGO_TYPES.includes(file.type))) {
+      setLogoError('Please choose a JPG, PNG, WebP, or HEIC image.');
+      return;
+    }
+
+    if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
+    setLogoFile(file);
+    setLogoPreviewUrl(URL.createObjectURL(file));
+    setLogoError(null);
+  }
+
+  async function uploadLogo(shopId: string, currentLogoPath: string | null): Promise<string> {
+    if (!logoFile) return currentLogoPath ?? '';
+
+    const supabase = createClient();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    const userId = userData.user?.id;
+    if (!userId) throw new Error('Please sign in before uploading a logo.');
+
+    const webpBlob = await convertLogoToWebP(logoFile);
+    const storagePath = `${userId}/${shopId}/logo-${Date.now()}.webp`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('shop-logos')
+      .upload(storagePath, webpBlob, { contentType: 'image/webp', upsert: true });
+    if (uploadError) throw uploadError;
+
+    if (currentLogoPath?.startsWith(`${userId}/`) && currentLogoPath !== storagePath) {
+      await supabase.storage.from('shop-logos').remove([currentLogoPath]);
+    }
+
+    return storagePath;
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const action = editing ? 'edit' : 'add';
+    const message = editing
+      ? `Save changes to ${editing.name}${logoFile ? ' and upload the selected logo' : ''}?`
+      : `Create shop ${form.name.trim()}${logoFile ? ' and upload the selected logo' : ''}?`;
+
+    if (!confirm(message)) return;
+
+    setSaving(true);
+    setLogoError(null);
+    const supabase = createClient();
+    const payload = {
+      p_slug: form.slug,
+      p_name: form.name,
+      p_owner_profile_id: form.owner_profile_id,
+      p_logo_storage_path: form.logo_storage_path || null,
+      p_about: form.about || null,
+      p_location: form.location || null,
+      p_fb_page_url: form.fb_page_url || null,
+      p_status: form.status,
+    };
+
+    let result;
+
+    try {
+      if (editing) {
+        const logoPath = await uploadLogo(editing.id, editing.logo_storage_path);
+        result = await supabase.rpc('admin_update_shop', {
+          p_shop_id: editing.id,
+          ...payload,
+          p_logo_storage_path: logoPath || null,
+        });
+      } else {
+        result = await supabase.rpc('admin_create_shop', { ...payload, p_logo_storage_path: null });
+        if (result.error) throw result.error;
+
+        const createdShopId = result.data as string | null;
+        if (!createdShopId) throw new Error('Shop was created, but no shop id was returned.');
+
+        if (logoFile) {
+          const logoPath = await uploadLogo(createdShopId, null);
+          result = await supabase.rpc('admin_update_shop', {
+            p_shop_id: createdShopId,
+            ...payload,
+            p_logo_storage_path: logoPath || null,
+          });
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : `Could not ${action} shop.`;
+      setLogoError(
+        message.toLowerCase().includes('bucket not found')
+          ? 'Logo storage is not set up yet. Apply the shop-logo Supabase migration first.'
+          : message
+      );
+      setSaving(false);
+      return;
+    }
+
+    if (result?.error) {
+      alert(`Could not ${action} shop: ${result.error.message}`);
+      setSaving(false);
+      return;
+    }
+
+    resetForm();
+    setSaving(false);
+    router.refresh();
+  }
+
+  async function handleDelete(shop: ShopWithOwner) {
+    if (!confirm(`Delete ${shop.name}? Existing listings will be detached from this shop.`)) return;
+
+    setDeleting(shop.id);
+    const { error } = await createClient().rpc('admin_delete_shop', { p_shop_id: shop.id });
+    if (error) {
+      alert('Could not delete shop: ' + error.message);
+      setDeleting(null);
+      return;
+    }
+
+    setDeleting(null);
+    if (editing?.id === shop.id) resetForm();
+    router.refresh();
+  }
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_1fr]">
+      <form onSubmit={handleSubmit} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+        <div className="mb-4">
+          <h2 className="text-base font-semibold text-gray-100">{editing ? 'Edit shop' : 'Add shop'}</h2>
+          <p className="mt-1 text-xs text-gray-500">Assign an owner profile so the shop can post listings.</p>
+        </div>
+
+        <div className="space-y-3">
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Shop name</span>
+            <input
+              required
+              value={form.name}
+              onChange={event => updateField('name', event.target.value)}
+              className="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              placeholder="Go Pair Shop"
+            />
+          </label>
+
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">URL slug</span>
+            <input
+              required
+              pattern="[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])?"
+              value={form.slug}
+              onChange={event => updateField('slug', event.target.value.toLowerCase())}
+              className="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              placeholder="go-pair-shop"
+            />
+          </label>
+
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Owner</span>
+            <select
+              required
+              value={form.owner_profile_id}
+              onChange={event => updateField('owner_profile_id', event.target.value)}
+              className="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            >
+              <option value="">Choose a profile</option>
+              {ownerOptions.map(profile => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.display_name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Status</span>
+              <select
+                value={form.status}
+                onChange={event => updateField('status', event.target.value as ShopStatus)}
+                className="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              >
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Location</span>
+              <input
+                value={form.location}
+                onChange={event => updateField('location', event.target.value)}
+                className="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                placeholder="Pampanga"
+              />
+            </label>
+          </div>
+
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Facebook page URL</span>
+            <input
+              type="url"
+              value={form.fb_page_url}
+              onChange={event => updateField('fb_page_url', event.target.value)}
+              className="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              placeholder="https://facebook.com/yourshop"
+            />
+          </label>
+
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Shop logo</span>
+            <div className="mt-1 flex items-center gap-3 rounded-lg border border-gray-700 bg-gray-800 p-3">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-700 bg-gray-900">
+                {logoPreviewUrl || currentLogoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={logoPreviewUrl ?? currentLogoUrl ?? ''}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xl font-bold text-gray-600">{form.name[0]?.toUpperCase() ?? 'S'}</span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <input
+                  id="admin-shop-logo"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,.heic,image/jpeg,image/png,image/webp,image/heic,image/heif"
+                  onChange={handleLogoChange}
+                  disabled={saving}
+                  className="block w-full text-xs text-gray-400 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-600 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-teal-500 disabled:opacity-50"
+                />
+                <p className="mt-1 truncate text-xs text-gray-500">
+                  {logoFile ? logoFile.name : currentLogoUrl ? 'Current logo shown' : 'JPG, PNG, WebP, or HEIC'}
+                </p>
+                {logoFile && (
+                  <button
+                    type="button"
+                    onClick={clearSelectedLogo}
+                    disabled={saving}
+                    className="mt-2 text-xs font-medium text-gray-400 hover:text-gray-200 disabled:opacity-50"
+                  >
+                    Remove selected image
+                  </button>
+                )}
+              </div>
+            </div>
+            {logoError && <p className="mt-1 text-xs leading-snug text-red-300">{logoError}</p>}
+          </div>
+
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">About</span>
+            <textarea
+              value={form.about}
+              onChange={event => updateField('about', event.target.value)}
+              rows={4}
+              className="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              placeholder="Short shop description"
+            />
+          </label>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-500 disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : editing ? 'Save changes' : 'Add shop'}
+          </button>
+          {editing && (
+            <button
+              type="button"
+              onClick={resetForm}
+              disabled={saving}
+              className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </form>
+
+      <div className="min-w-0">
+        {shops.length === 0 ? (
+          <div className="rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
+            <p className="text-gray-500">No shops yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {shops.map(shop => (
+              <div key={shop.id} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {shop.status === 'active' ? (
+                        <Link href={`/shop/${shop.slug}`} target="_blank" className="font-semibold text-gray-100 hover:text-teal-400">
+                          {shop.name}
+                        </Link>
+                      ) : (
+                        <span className="font-semibold text-gray-100">{shop.name}</span>
+                      )}
+                      <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${
+                        shop.status === 'active'
+                          ? 'border-green-800 bg-green-950 text-green-400'
+                          : 'border-gray-700 bg-gray-800 text-gray-400'
+                      }`}>
+                        {shop.status}
+                      </span>
+                    </div>
+                    <p className="mt-1 truncate text-xs text-gray-500">/shop/{shop.slug}</p>
+                    <p className="mt-2 text-sm text-gray-300">
+                      Owner: {shop.owner?.display_name ?? 'Unknown profile'}
+                    </p>
+                    {shop.location && <p className="text-xs text-gray-500">{shop.location}</p>}
+                  </div>
+
+                  <div className="flex shrink-0 gap-2">
+                    <button
+                      onClick={() => startEdit(shop)}
+                      className="rounded-lg border border-gray-700 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-800"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(shop)}
+                      disabled={deleting === shop.id}
+                      className="rounded-lg border border-red-900/70 px-3 py-2 text-xs font-medium text-red-400 transition-colors hover:bg-red-950 disabled:opacity-50"
+                    >
+                      {deleting === shop.id ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
