@@ -1,0 +1,31 @@
+<svg width="900" height="620" viewBox="0 0 900 620" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Pre-loved running shoe checklist illustration</title>
+  <desc id="desc">Original checklist-style illustration for inspecting pre-loved carbon-plated running shoes.</desc>
+  <rect width="900" height="620" rx="28" fill="#111827"/>
+  <rect x="70" y="76" width="350" height="468" rx="28" fill="#020617"/>
+  <rect x="116" y="128" width="204" height="18" rx="9" fill="#f8fafc"/>
+  <rect x="116" y="172" width="250" height="14" rx="7" fill="#64748b"/>
+  <rect x="116" y="210" width="222" height="14" rx="7" fill="#64748b"/>
+  <rect x="116" y="248" width="238" height="14" rx="7" fill="#64748b"/>
+  <rect x="116" y="286" width="194" height="14" rx="7" fill="#64748b"/>
+  <rect x="116" y="324" width="234" height="14" rx="7" fill="#64748b"/>
+  <path d="M91 177L101 187L123 159" stroke="#14b8a6" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M91 215L101 225L123 197" stroke="#14b8a6" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M91 253L101 263L123 235" stroke="#14b8a6" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M91 291L101 301L123 273" stroke="#f97316" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M91 329L101 339L123 311" stroke="#14b8a6" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <g transform="translate(445 160)">
+    <path d="M44 228C84 185 118 140 181 119C247 97 311 119 359 146C420 180 485 191 552 181C578 177 594 202 579 224C556 258 512 283 445 293C350 307 244 294 154 273C107 262 70 248 44 228Z" fill="#e5e7eb"/>
+    <path d="M104 241C181 266 285 280 424 271C496 266 542 249 574 220C552 258 510 282 445 292C351 306 244 292 155 272C135 267 118 262 104 241Z" fill="#cbd5e1"/>
+    <path d="M166 129C195 94 232 74 281 74H410C442 74 469 94 478 124C439 122 400 114 359 92C299 61 227 75 166 129Z" fill="#f8fafc"/>
+    <path d="M266 107C292 118 320 133 350 149C412 181 473 191 555 183" stroke="#0f172a" stroke-width="16" stroke-linecap="round"/>
+    <path d="M134 226C217 242 328 253 474 238" stroke="#14b8a6" stroke-width="13" stroke-linecap="round"/>
+    <path d="M173 263C263 278 370 286 472 272" stroke="#f97316" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="390" cy="214" r="13" fill="#0f172a"/>
+    <circle cx="439" cy="211" r="13" fill="#0f172a"/>
+  </g>
+  <circle cx="670" cy="124" r="42" fill="#14b8a6"/>
+  <path d="M650 125L666 141L693 104" stroke="#052e2b" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M527 446H781" stroke="#334155" stroke-width="12" stroke-linecap="round"/>
+  <path d="M527 486H714" stroke="#334155" stroke-width="12" stroke-linecap="round"/>
+</svg>

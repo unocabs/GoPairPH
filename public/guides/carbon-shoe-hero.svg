@@ -1,0 +1,40 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Carbon-plated running shoe guide illustration</title>
+  <desc id="desc">Original Go Pair PH illustration of a racing shoe with carbon plate details on a track-inspired background.</desc>
+  <rect width="1200" height="720" fill="#0b1120"/>
+  <path d="M0 550C210 490 347 611 529 548C714 484 776 352 951 355C1067 357 1145 424 1200 484V720H0V550Z" fill="#0f766e" opacity="0.22"/>
+  <path d="M0 610C154 548 311 673 500 624C696 573 783 451 960 470C1069 482 1147 557 1200 620V720H0V610Z" fill="#14b8a6" opacity="0.16"/>
+  <g opacity="0.22">
+    <path d="M62 130H1138" stroke="#94a3b8" stroke-width="2"/>
+    <path d="M62 235H1138" stroke="#94a3b8" stroke-width="2"/>
+    <path d="M62 340H1138" stroke="#94a3b8" stroke-width="2"/>
+    <path d="M62 445H1138" stroke="#94a3b8" stroke-width="2"/>
+  </g>
+  <g transform="translate(192 164)">
+    <path d="M86 282C144 225 194 167 281 140C374 112 459 143 527 179C610 223 701 238 792 225C827 220 849 253 829 281C797 326 738 360 644 374C511 393 363 376 238 348C171 333 121 312 86 282Z" fill="#e5e7eb"/>
+    <path d="M170 300C276 336 421 356 616 343C717 337 779 314 824 275C821 281 818 286 814 291C783 330 726 360 644 372C512 391 364 374 239 346C205 338 175 329 149 318C156 311 163 305 170 300Z" fill="#cbd5e1"/>
+    <path d="M256 154C296 106 347 78 415 78H596C640 78 677 106 690 148C635 145 580 134 527 106C442 61 342 81 256 154Z" fill="#f8fafc"/>
+    <path d="M388 124C423 139 462 160 504 182C590 227 675 241 790 230" stroke="#0f172a" stroke-width="22" stroke-linecap="round"/>
+    <path d="M215 280C331 303 485 319 690 297" stroke="#14b8a6" stroke-width="18" stroke-linecap="round"/>
+    <path d="M269 331C395 352 544 364 686 345" stroke="#f97316" stroke-width="8" stroke-linecap="round"/>
+    <path d="M356 118L306 182" stroke="#0f172a" stroke-width="10" stroke-linecap="round"/>
+    <path d="M432 121L383 190" stroke="#0f172a" stroke-width="10" stroke-linecap="round"/>
+    <path d="M509 139L464 203" stroke="#0f172a" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="571" cy="265" r="18" fill="#0f172a"/>
+    <circle cx="640" cy="261" r="18" fill="#0f172a"/>
+    <path d="M128 289C168 269 230 268 301 282" stroke="#f8fafc" stroke-width="12" stroke-linecap="round" opacity="0.7"/>
+  </g>
+  <g transform="translate(80 74)">
+    <rect width="298" height="86" rx="18" fill="#020617" opacity="0.76"/>
+    <path d="M34 44H204" stroke="#14b8a6" stroke-width="10" stroke-linecap="round"/>
+    <path d="M34 62H144" stroke="#f97316" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="245" cy="44" r="22" fill="#14b8a6"/>
+    <path d="M235 45L243 53L258 33" stroke="#0f172a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g transform="translate(806 524)">
+    <rect width="285" height="98" rx="22" fill="#020617" opacity="0.78"/>
+    <path d="M35 33H172" stroke="#e5e7eb" stroke-width="8" stroke-linecap="round"/>
+    <path d="M35 57H230" stroke="#64748b" stroke-width="7" stroke-linecap="round"/>
+    <path d="M35 78H140" stroke="#14b8a6" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>

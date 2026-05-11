@@ -18,6 +18,8 @@ const FOOTER_GROUPS = [
       { href: '/help/how-to-sell', label: 'How to Sell' },
       { href: '/help/wishlist', label: 'How Wishlist Works' },
       { href: '/help/verification', label: 'Verification Process' },
+      { href: '/guides', label: 'Running Shoe Guides' },
+      { href: '/carbon-plated-running-shoes-ph', label: 'Carbon-Plated Shoe Guide' },
     ],
   },
   {
