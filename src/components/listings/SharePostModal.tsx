@@ -3,11 +3,9 @@
 import { forwardRef, useEffect, useRef, useState } from 'react';
 import * as htmlToImage from 'html-to-image';
 import { LogoMark } from '@/components/brand/Logo';
-import { ListingTypeBadge } from './ListingTypeBadge';
-import { Badge } from '@/components/ui/Badge';
-import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
+import { CONDITIONS, LISTING_TYPE_LABELS } from '@/lib/constants';
 import { formatListingName, formatPrice, formatSize, getPublicUrl } from '@/lib/utils';
-import type { Shoe, Profile, Shop } from '@/types';
+import type { Condition, ListingType, Shoe, Profile, Shop } from '@/types';
 
 interface SharePostModalProps {
   shoe: Shoe;
@@ -180,15 +178,15 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-1.5 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-3xl rounded-2xl bg-gray-900 border border-gray-700 shadow-2xl flex flex-col max-h-[92vh]"
+        className="w-full max-w-3xl rounded-xl sm:rounded-2xl bg-gray-900 border border-gray-700 shadow-2xl flex flex-col max-h-[96vh] sm:max-h-[92vh]"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-800">
+        <div className="flex items-center justify-between px-3 py-2 sm:px-5 sm:py-3 border-b border-gray-800">
           <h2 className="text-sm font-semibold text-gray-100">Share Post</h2>
           <div className="flex items-center gap-1">
             {/* Download button — desktop only. Mobile users long-press the image. */}
@@ -216,27 +214,27 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto p-5">
-          <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="overflow-y-auto p-2 sm:p-5">
+          <div className="mb-2 flex flex-wrap items-center gap-1.5 sm:mb-3 sm:gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Format</span>
             <button
               type="button"
               onClick={() => setFormat('mobile')}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${format === 'mobile' ? 'bg-teal-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+              className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors sm:px-3 ${format === 'mobile' ? 'bg-teal-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
             >
               Vertical
             </button>
             <button
               type="button"
               onClick={() => setFormat('desktop')}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${format === 'desktop' ? 'bg-teal-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+              className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors sm:px-3 ${format === 'desktop' ? 'bg-teal-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
             >
               Horizontal
             </button>
             <button
               type="button"
               onClick={() => setRenderAttempt(attempt => attempt + 1)}
-              className="ml-auto rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-100"
+              className="ml-auto rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-100 sm:px-3"
             >
               Reload
             </button>
@@ -244,7 +242,7 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
 
           {/* Rendered PNG. Mobile: long-press to save. Desktop: use the download button. */}
           <div
-            className="relative w-full overflow-hidden rounded-xl bg-gray-950"
+            className="relative w-full overflow-hidden rounded-lg bg-gray-950 sm:rounded-xl"
             style={{ aspectRatio: `${cardW} / ${cardH}` }}
           >
             {pngDataUrl ? (
@@ -269,7 +267,7 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
             )}
           </div>
 
-          <p className="mt-3 text-xs text-gray-500">
+          <p className="mt-2 text-[11px] leading-4 text-gray-500 sm:mt-3 sm:text-xs">
             <strong className="text-gray-300">Tip: Share it to your Facebook post or Marketplace listing.</strong> On mobile, long-press the image to save it. If the preview looks wrong, tap <strong className="text-gray-300">Reload</strong>.
           </p>
 
@@ -349,7 +347,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
           height: MOBILE_CARD_H,
           display: 'flex',
           flexDirection: 'column',
-          padding: '44px 54px 38px',
+          padding: '34px 44px 32px',
           background: 'linear-gradient(180deg, #020617 0%, #07111f 58%, #042f2e 100%)',
           fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
           color: '#f3f4f6',
@@ -357,25 +355,44 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
           boxSizing: 'border-box',
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <IdentityBlock identityName={identityName} identityLocation={identityLocation} identityLabel={identityLabel} identitySrc={identitySrc} seller={seller} compact />
-          <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} />
-          <TitleBlock shoe={shoe} shareSize={shareSize} titleSize={56} metaSize={22} />
-          <PriceBlock shoe={shoe} priceSize={52} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <IdentityBlock
+            identityName={identityName}
+            identityLocation={identityLocation}
+            identityLabel={identityLabel}
+            identitySrc={identitySrc}
+            seller={seller}
+            avatarSize={62}
+            labelSize={13}
+            nameSize={34}
+            hostSize={18}
+            verifiedSize={13}
+          />
+          <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} size="lg" />
+          <TitleBlock shoe={shoe} shareSize={shareSize} titleSize={68} metaSize={28} maxLines={2} />
+          <PriceBlock shoe={shoe} priceSize={66} tagSize={16} />
         </div>
 
-        <ProductImageBlock shoe={shoe} heroSrc={heroSrc} size={hasDescription ? 690 : 760} />
+        <ProductImageBlock shoe={shoe} heroSrc={heroSrc} size={hasDescription ? 650 : 730} />
 
         {hasDescription && (
-          <div style={{ marginTop: 18 }}>
-            <DescriptionBlock description={shoe.description} maxLines={3} />
+          <div style={{ marginTop: 16 }}>
+            <DescriptionBlock
+              description={shoe.description}
+              maxLines={3}
+              labelSize={17}
+              bodySize={24}
+              lineHeight={1.35}
+              padding={20}
+              radius={16}
+            />
           </div>
         )}
 
-        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18, color: '#94a3b8', fontSize: 18, fontWeight: 700 }}>
+        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18, color: '#94a3b8', fontSize: 24, fontWeight: 750 }}>
           <span>{shoe.listing_type === 'donate' ? 'Available for donation' : 'Available on Go Pair PH'}</span>
           <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <LogoMark size={32} />
+            <LogoMark size={40} />
             <span><span style={{ color: '#f8fafc' }}>GoPair</span><span style={{ color: '#2dd4bf' }}>PH</span><span style={{ color: '#f8fafc' }}>.com</span></span>
           </span>
         </div>
@@ -503,6 +520,11 @@ function IdentityBlock({
   identitySrc,
   seller,
   compact = false,
+  avatarSize,
+  labelSize,
+  nameSize,
+  hostSize,
+  verifiedSize,
 }: {
   identityName: string;
   identityLocation: string | null;
@@ -510,10 +532,17 @@ function IdentityBlock({
   identitySrc: string | null;
   seller: Profile | null;
   compact?: boolean;
+  avatarSize?: number;
+  labelSize?: number;
+  nameSize?: number;
+  hostSize?: number;
+  verifiedSize?: number;
 }) {
-  const avatarSize = compact ? 52 : 74;
-  const nameSize = compact ? 24 : 36;
-  const hostSize = compact ? 13 : 18;
+  const resolvedAvatarSize = avatarSize ?? (compact ? 52 : 74);
+  const resolvedLabelSize = labelSize ?? (compact ? 10 : 13);
+  const resolvedNameSize = nameSize ?? (compact ? 24 : 36);
+  const resolvedHostSize = hostSize ?? (compact ? 13 : 18);
+  const resolvedVerifiedSize = verifiedSize ?? (compact ? 10 : 12);
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: compact ? 12 : 18 }}>
@@ -522,16 +551,16 @@ function IdentityBlock({
         <img
           src={identitySrc}
           alt={identityName}
-          width={avatarSize}
-          height={avatarSize}
+          width={resolvedAvatarSize}
+          height={resolvedAvatarSize}
           crossOrigin="anonymous"
-          style={{ width: avatarSize, height: avatarSize, borderRadius: compact ? 14 : 20, objectFit: 'cover', border: '1px solid #374151', background: '#020617' }}
+          style={{ width: resolvedAvatarSize, height: resolvedAvatarSize, borderRadius: compact ? 14 : 20, objectFit: 'cover', border: '1px solid #374151', background: '#020617' }}
         />
       ) : (
         <div
           style={{
-            width: avatarSize,
-            height: avatarSize,
+            width: resolvedAvatarSize,
+            height: resolvedAvatarSize,
             borderRadius: compact ? 14 : 20,
             background: '#0d9488',
             color: '#fff',
@@ -546,8 +575,8 @@ function IdentityBlock({
         </div>
       )}
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: compact ? 10 : 13, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 800 }}>{identityLabel}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: nameSize, fontWeight: 850, color: '#f8fafc', lineHeight: 1.05, letterSpacing: '-0.02em' }}>
+        <div style={{ fontSize: resolvedLabelSize, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 800 }}>{identityLabel}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: resolvedNameSize, fontWeight: 850, color: '#f8fafc', lineHeight: 1.05, letterSpacing: '-0.02em' }}>
           <span>{identityName}</span>
           {identityLabel === 'Seller' && seller?.is_verified && (
             <span
@@ -560,7 +589,7 @@ function IdentityBlock({
                 border: '1px solid rgba(20, 184, 166, 0.4)',
                 color: '#2dd4bf',
                 padding: compact ? '2px 8px' : '4px 10px',
-                fontSize: compact ? 10 : 12,
+                fontSize: resolvedVerifiedSize,
                 fontWeight: 800,
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
@@ -570,7 +599,7 @@ function IdentityBlock({
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: compact ? 3 : 7, color: '#94a3b8', fontSize: hostSize, fontWeight: 700 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: compact ? 3 : 7, color: '#94a3b8', fontSize: resolvedHostSize, fontWeight: 700 }}>
           <span>
             on <span style={{ color: '#f8fafc' }}>GoPair</span><span style={{ color: '#2dd4bf' }}>PH</span><span style={{ color: '#f8fafc' }}>.com</span>
           </span>
@@ -586,18 +615,39 @@ function IdentityBlock({
   );
 }
 
-function BadgeRow({ shoe, isFeatured, isSponsored }: { shoe: Shoe; isFeatured: boolean; isSponsored: boolean }) {
+const listingBadgeTones: Record<ListingType, { background: string; border: string; color: string }> = {
+  for_sale: { background: 'rgba(88, 28, 135, 0.35)', border: 'rgba(126, 34, 206, 0.7)', color: '#c084fc' },
+  donate: { background: 'rgba(20, 83, 45, 0.35)', border: 'rgba(22, 101, 52, 0.7)', color: '#86efac' },
+};
+
+const conditionBadgeTones: Record<Condition, { background: string; border: string; color: string }> = {
+  new: { background: 'rgba(20, 83, 45, 0.35)', border: 'rgba(22, 101, 52, 0.7)', color: '#86efac' },
+  like_new: { background: 'rgba(30, 58, 138, 0.35)', border: 'rgba(30, 64, 175, 0.75)', color: '#93c5fd' },
+  good: { background: 'rgba(113, 63, 18, 0.35)', border: 'rgba(161, 98, 7, 0.75)', color: '#fde047' },
+  fair: { background: 'rgba(124, 45, 18, 0.35)', border: 'rgba(194, 65, 12, 0.75)', color: '#fdba74' },
+};
+
+function BadgeRow({ shoe, isFeatured, isSponsored, size = 'sm' }: { shoe: Shoe; isFeatured: boolean; isSponsored: boolean; size?: 'sm' | 'lg' }) {
+  const badgeFontSize = size === 'lg' ? 18 : 13;
+  const badgePadding = size === 'lg' ? '7px 15px' : '4px 12px';
+  const listingTone = listingBadgeTones[shoe.listing_type];
+  const conditionTone = conditionBadgeTones[shoe.condition];
+
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-      <ListingTypeBadge type={shoe.listing_type} />
-      <Badge className={CONDITION_COLORS[shoe.condition]}>{CONDITIONS[shoe.condition]}</Badge>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: size === 'lg' ? 10 : 8 }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', borderRadius: 9999, background: listingTone.background, border: `1px solid ${listingTone.border}`, color: listingTone.color, padding: badgePadding, fontSize: badgeFontSize, lineHeight: 1, fontWeight: 750 }}>
+        {LISTING_TYPE_LABELS[shoe.listing_type]}
+      </span>
+      <span style={{ display: 'inline-flex', alignItems: 'center', borderRadius: 9999, background: conditionTone.background, border: `1px solid ${conditionTone.border}`, color: conditionTone.color, padding: badgePadding, fontSize: badgeFontSize, lineHeight: 1, fontWeight: 750 }}>
+        {CONDITIONS[shoe.condition]}
+      </span>
       {isFeatured && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 9999, background: 'rgba(20, 184, 166, 0.15)', border: '1px solid rgba(20, 184, 166, 0.4)', color: '#5eead4', padding: '4px 12px', fontSize: 13, fontWeight: 600 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 9999, background: 'rgba(20, 184, 166, 0.15)', border: '1px solid rgba(20, 184, 166, 0.4)', color: '#5eead4', padding: badgePadding, fontSize: badgeFontSize, fontWeight: 700 }}>
           ★ Featured
         </span>
       )}
       {isSponsored && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 9999, background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#fcd34d', padding: '4px 12px', fontSize: 13, fontWeight: 600 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 9999, background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#fcd34d', padding: badgePadding, fontSize: badgeFontSize, fontWeight: 700 }}>
           ✦ Sponsored
         </span>
       )}
@@ -605,10 +655,10 @@ function BadgeRow({ shoe, isFeatured, isSponsored }: { shoe: Shoe; isFeatured: b
   );
 }
 
-function TitleBlock({ shoe, shareSize, titleSize, metaSize }: { shoe: Shoe; shareSize: string; titleSize: number; metaSize: number }) {
+function TitleBlock({ shoe, shareSize, titleSize, metaSize, maxLines }: { shoe: Shoe; shareSize: string; titleSize: number; metaSize: number; maxLines?: number }) {
   return (
     <div>
-      <h1 style={{ fontSize: titleSize, lineHeight: 1.05, fontWeight: 850, letterSpacing: '-0.03em', color: '#f9fafb', margin: 0 }}>
+      <h1 style={{ fontSize: titleSize, lineHeight: 1.02, fontWeight: 850, letterSpacing: '-0.03em', color: '#f9fafb', margin: 0, display: maxLines ? '-webkit-box' : undefined, WebkitLineClamp: maxLines, WebkitBoxOrient: maxLines ? 'vertical' : undefined, overflow: maxLines ? 'hidden' : undefined }}>
         {formatListingName(shoe.brand, shoe.model)}
       </h1>
       <p style={{ marginTop: 12, fontSize: metaSize, color: '#9ca3af', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -624,10 +674,10 @@ function TitleBlock({ shoe, shareSize, titleSize, metaSize }: { shoe: Shoe; shar
   );
 }
 
-function PriceBlock({ shoe, priceSize }: { shoe: Shoe; priceSize: number }) {
+function PriceBlock({ shoe, priceSize, tagSize = 11 }: { shoe: Shoe; priceSize: number; tagSize?: number }) {
   if (shoe.listing_type === 'donate') {
     return (
-      <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.4)', borderRadius: 12, padding: '10px 14px', fontSize: 16, fontWeight: 700, color: '#86efac', width: 'fit-content' }}>
+      <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.4)', borderRadius: 12, padding: '10px 14px', fontSize: Math.max(16, tagSize + 4), fontWeight: 700, color: '#86efac', width: 'fit-content' }}>
         Free Donation
       </div>
     );
@@ -639,7 +689,7 @@ function PriceBlock({ shoe, priceSize }: { shoe: Shoe; priceSize: number }) {
         {formatPrice(shoe.price_php)}
       </span>
       {shoe.is_negotiable && (
-        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fcd34d', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: 9999, padding: '3px 10px' }}>
+        <span style={{ fontSize: tagSize, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fcd34d', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: 9999, padding: '3px 10px' }}>
           Negotiable
         </span>
       )}
@@ -647,14 +697,30 @@ function PriceBlock({ shoe, priceSize }: { shoe: Shoe; priceSize: number }) {
   );
 }
 
-function DescriptionBlock({ description, maxLines }: { description: string | null; maxLines: number }) {
+function DescriptionBlock({
+  description,
+  maxLines,
+  labelSize = 11,
+  bodySize = 14,
+  lineHeight = 1.5,
+  padding = 14,
+  radius = 12,
+}: {
+  description: string | null;
+  maxLines: number;
+  labelSize?: number;
+  bodySize?: number;
+  lineHeight?: number;
+  padding?: number;
+  radius?: number;
+}) {
   if (!description) return null;
   return (
-    <div style={{ borderRadius: 12, border: '1px solid #1f2937', background: 'rgba(17, 24, 39, 0.6)', padding: 14 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+    <div style={{ borderRadius: radius, border: '1px solid #1f2937', background: 'rgba(17, 24, 39, 0.6)', padding }}>
+      <div style={{ fontSize: labelSize, fontWeight: 750, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
         Description
       </div>
-      <div style={{ fontSize: 14, lineHeight: 1.5, color: '#d1d5db', whiteSpace: 'pre-wrap', display: '-webkit-box', WebkitLineClamp: maxLines, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+      <div style={{ fontSize: bodySize, lineHeight, color: '#d1d5db', whiteSpace: 'pre-wrap', display: '-webkit-box', WebkitLineClamp: maxLines, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
         {description}
       </div>
     </div>
