@@ -6,6 +6,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { SessionProvider } from '@/components/auth/SessionProvider';
 import { InAppBrowserRedirect } from '@/components/layout/InAppBrowserRedirect';
+import { AnnouncementBar } from '@/components/layout/AnnouncementBar';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -152,6 +153,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <SessionProvider>
           <InAppBrowserRedirect />
+          <AnnouncementBar />
           <Navbar />
           <main className="flex-1">
             {children}

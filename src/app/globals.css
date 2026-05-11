@@ -32,4 +32,24 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  .animate-marquee-left {
+    animation: marquee-left 22s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-marquee-left {
+      animation: none;
+    }
+  }
+}
+
+@keyframes marquee-left {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
 }
