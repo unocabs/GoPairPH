@@ -46,6 +46,25 @@ export default function PromoteListingPage() {
       </section>
 
       <section>
+        <h2 className="text-xl font-semibold text-gray-100">How Featured works</h2>
+        <p>
+          Featured is the home-page highlight for one listing at a time. It is designed for sellers
+          who want their pair to be the first thing visitors see when they land on Go Pair PH.
+        </p>
+        <ol className="list-decimal list-inside space-y-1.5">
+          <li>Message us first so we can confirm the Featured slot is available.</li>
+          <li>Pick a duration: <strong>7 days (₱50)</strong> or <strong>30 days (₱150)</strong>.</li>
+          <li>Pay via GCash or BPI, then send the receipt screenshot via Messenger with your listing link.</li>
+          <li>An admin activates your Featured slot within 24 hours after payment confirmation.</li>
+          <li>Your listing appears on the home page with a clear <strong>★ Featured</strong> tag until the window ends or the item sells.</li>
+        </ol>
+        <p className="mt-3 text-sm text-gray-400">
+          Featured is separate from Sponsored. Featured highlights your listing on the home page,
+          while Sponsored lifts it near the top of Browse.
+        </p>
+      </section>
+
+      <section>
         <h2 className="text-xl font-semibold text-gray-100">How Sponsored works</h2>
         <ol className="list-decimal list-inside space-y-1.5">
           <li>Open your listing and click <strong>Promote Listing</strong>.</li>
