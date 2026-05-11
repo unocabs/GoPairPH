@@ -13,8 +13,8 @@ type Tier = '7d' | '30d';
 type PaymentMethod = 'gcash' | 'bpi';
 
 const TIERS: Record<Tier, { label: string; days: number; price: number; priceLabel: string }> = {
-  '7d': { label: '7 Days', days: 7, price: 50, priceLabel: '₱50' },
-  '30d': { label: '30 Days', days: 30, price: 150, priceLabel: '₱150' },
+  '7d': { label: '7 Days', days: 7, price: 30, priceLabel: '₱30' },
+  '30d': { label: '30 Days', days: 30, price: 100, priceLabel: '₱100' },
 };
 
 interface PromoteListingModalProps {

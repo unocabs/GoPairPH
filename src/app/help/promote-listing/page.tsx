@@ -23,13 +23,14 @@ export default function PromoteListingPage() {
         <h2 className="text-xl font-semibold text-gray-100">The two ways your listing can stand out</h2>
         <ul className="list-disc list-inside space-y-1.5">
           <li>
-            <strong>★ Featured</strong> — our weekly &ldquo;Pick of the Week&rdquo; on the home page. We
-            choose these manually, and it&apos;s free. You can&apos;t buy your way in — we look for
-            listings the community will love.
+            <strong>★ Featured</strong> — our weekly &ldquo;Pair of the Week&rdquo; on the home page. A
+            shop seller may pay for this placement at the current Featured rate, or an admin may
+            choose any active listing we think the community will love, whether it is from a normal
+            seller or a shop seller.
           </li>
           <li>
-            <strong>Sponsored</strong> — seller-paid promotion. Pin your listing to the top of
-            Browse for 7 or 30 days. ₱50 or ₱150.
+            <strong>Sponsored</strong> — seller-paid Browse promotion. Community sellers and shop
+            sellers can pay to lift a listing near the top of Browse for 7 or 30 days. ₱30 or ₱100.
           </li>
         </ul>
       </section>
@@ -37,9 +38,10 @@ export default function PromoteListingPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">Who can buy a Sponsored slot?</h2>
         <p>
-          Only <Link href="/help/verification" className="text-teal-400 hover:text-teal-300">verified users</Link>.
-          This protects buyers from boosted scam listings. If you&apos;re not verified yet, get
-          verified first — it&apos;s a quick process and unlocks Sponsored along with other perks.
+          Sponsored is open to <Link href="/help/verification" className="text-teal-400 hover:text-teal-300">verified users</Link>,
+          including community sellers and shop sellers. This protects buyers from boosted scam listings.
+          If you&apos;re not verified yet, get verified first — it&apos;s a quick process and unlocks
+          Sponsored along with other perks.
         </p>
       </section>
 
@@ -47,11 +49,14 @@ export default function PromoteListingPage() {
         <h2 className="text-xl font-semibold text-gray-100">How Sponsored works</h2>
         <ol className="list-decimal list-inside space-y-1.5">
           <li>Open your listing and click <strong>Promote Listing</strong>.</li>
-          <li>Pick a duration: <strong>7 days (₱50)</strong> or <strong>30 days (₱150)</strong>.</li>
+          <li>Pick a duration: <strong>7 days (₱30)</strong> or <strong>30 days (₱100)</strong>.</li>
           <li>Pay via GCash or BPI — QR codes are shown in the modal.</li>
           <li>Send the receipt screenshot via Messenger.</li>
           <li>An admin activates your slot within 24 hours, and your listing rises to the top of Browse with a &ldquo;Sponsored&rdquo; tag.</li>
         </ol>
+        <p className="mt-3 text-sm text-gray-400">
+          Admins do not sponsor shoes themselves. We only activate Sponsored after a seller payment is confirmed.
+        </p>
       </section>
 
       <section>
@@ -86,9 +91,9 @@ export default function PromoteListingPage() {
           and the result was a fast sale. That&apos;s a great outcome.
         </p>
         <p className="text-sm text-gray-400">
-          Same goes for Featured — if we pick your listing for &ldquo;Pick of the Week&rdquo; and it sells in
-          three days, congrats! No carryover, but also no payment required. It&apos;s a thank-you from us
-          to the community.
+          Same goes for Featured — if your listing is chosen or paid into &ldquo;Pair of the Week&rdquo; and it
+          sells in three days, congrats! No carryover. Admin-picked Featured slots are a thank-you
+          from us to the community; paid shop Featured slots follow the same promotion-window policy.
         </p>
       </section>
 
@@ -99,6 +104,10 @@ export default function PromoteListingPage() {
           <li>
             Go Pair PH does <em>not</em> endorse Sponsored sellers — promotion is paid placement,
             not a quality stamp. Buyers should still review each listing carefully.
+          </li>
+          <li>
+            Featured means the listing is highlighted on the home page. It may be an admin choice
+            or a paid shop placement, and buyers should still do their usual checks.
           </li>
           <li>
             We may decline or revoke a promotion for listings that violate community guidelines

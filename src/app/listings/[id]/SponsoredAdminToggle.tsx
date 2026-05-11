@@ -12,8 +12,8 @@ interface SponsoredAdminToggleProps {
 }
 
 const DURATIONS: { label: string; days: number }[] = [
-  { label: '7d (₱50)', days: 7 },
-  { label: '30d (₱150)', days: 30 },
+  { label: '7d (₱30)', days: 7 },
+  { label: '30d (₱100)', days: 30 },
 ];
 
 /**
@@ -94,7 +94,7 @@ export function SponsoredAdminToggle({ shoeId, sponsoredUntil: initial, status }
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
-          <span className="text-[11px] text-gray-500 self-center mr-1">Sponsor for:</span>
+          <span className="text-[11px] text-gray-500 self-center mr-1">Activate paid slot for:</span>
           {DURATIONS.map(({ label, days }) => (
             <button
               key={days}

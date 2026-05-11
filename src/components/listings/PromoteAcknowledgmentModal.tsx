@@ -32,7 +32,7 @@ export function PromoteAcknowledgmentModal({ onClose, onProceed }: PromoteAcknow
           <ul className="space-y-2 text-sm text-gray-300">
             <li className="flex gap-2">
               <span className="text-teal-400 shrink-0">•</span>
-              <span>Pick a duration: <strong>7 days (₱50)</strong> or <strong>30 days (₱150)</strong>.</span>
+              <span>Pick a duration: <strong>7 days (₱30)</strong> or <strong>30 days (₱100)</strong>.</span>
             </li>
             <li className="flex gap-2">
               <span className="text-teal-400 shrink-0">•</span>
