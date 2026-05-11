@@ -6,6 +6,7 @@ const FOOTER_GROUPS = [
     heading: 'Marketplace',
     links: [
       { href: '/browse', label: 'Browse Listings' },
+      { href: '/shop', label: 'Shops' },
       { href: '/wishlist', label: 'Wishlist' },
       { href: '/listings/new', label: 'List a Shoe' },
     ],
@@ -38,8 +39,8 @@ export function Footer() {
           <div className="col-span-2 sm:col-span-1">
             <Logo size="sm" />
             <p className="mt-3 text-xs text-gray-500 leading-relaxed">
-              A community marketplace for runners in Pampanga, Philippines.
-              Buy, sell, and donate pre-loved running shoes.
+              A Pampanga running shoe marketplace for community sellers, shop sellers,
+              new pairs, pre-loved pairs, and donations.
             </p>
           </div>
 

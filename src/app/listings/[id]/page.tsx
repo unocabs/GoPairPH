@@ -30,6 +30,13 @@ import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import { getSponsoredSlotInfo } from '@/lib/sponsored';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
+
+function getSchemaCondition(condition: Shoe['condition']): string {
+  if (condition === 'new') return 'https://schema.org/NewCondition';
+  return 'https://schema.org/UsedCondition';
+}
+
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const shoe = await getShoe(params.id);
   if (!shoe) return { title: 'Listing not found' };
@@ -45,7 +52,11 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
   const listingName = formatListingName(shoe.brand, shoe.model);
   const title = `${listingName} — ${priceLabel}`;
-  const description = `${CONDITIONS[shoe.condition]} ${listingName} in ${shoe.color}, size ${formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}${shoe.mileage_km != null ? `, ${shoe.mileage_km}km` : ''}. Listed on Next Pair PH.`;
+  const sellerType = shoe.shop_id ? 'shop seller' : 'community seller';
+  const sizeLabel = formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm);
+  const sizeDetails = sizeLabel ? `, size ${sizeLabel}` : '';
+  const mileageDetails = shoe.mileage_km != null ? `, ${shoe.mileage_km}km` : '';
+  const description = `${CONDITIONS[shoe.condition]} ${listingName} in ${shoe.color}${sizeDetails}${mileageDetails}. Listed by a ${sellerType} on Go Pair PH.`;
 
   return {
     title,
@@ -150,15 +161,46 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
   const seller = shoe.profiles;
   const shop = shoe.shops && shoe.shops.status === 'active' ? shoe.shops : null;
   const shopLogoUrl = shop?.logo_storage_path ? getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, shop.logo_storage_path, 'shop-logos') : null;
+  const topImage = shoe.shoe_images?.find(i => i.view_type === 'top') ?? shoe.shoe_images?.[0];
+  const productImageUrl = topImage ? getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, topImage.storage_path) : null;
   const purchaseContext = await getPurchaseContext(shoe.id, currentProfileId, isOwner, shoe.status);
 
   const now = new Date();
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > now;
   const isFeatured = !!shoe.featured_until && new Date(shoe.featured_until) > now;
   const slotInfo = isOwner ? await getSponsoredSlotInfo() : null;
+  const listingName = formatListingName(shoe.brand, shoe.model);
+  const productJsonLd = shoe.listing_type === 'for_sale' && shoe.price_php && productImageUrl ? {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: listingName,
+    image: [productImageUrl],
+    description: shoe.description ?? `${CONDITIONS[shoe.condition]} ${listingName} listed on Go Pair PH.`,
+    brand: { '@type': 'Brand', name: shoe.brand === 'Other' ? listingName : shoe.brand },
+    color: shoe.color,
+    itemCondition: getSchemaCondition(shoe.condition),
+    offers: {
+      '@type': 'Offer',
+      url: `${SITE_URL}/listings/${shoe.id}`,
+      priceCurrency: 'PHP',
+      price: shoe.price_php,
+      availability: shoe.status === 'active' && shoe.has_stock
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      seller: shop
+        ? { '@type': 'Store', name: shop.name, url: `${SITE_URL}/shop/${shop.slug}` }
+        : { '@type': 'Person', name: seller?.display_name ?? 'Go Pair PH seller' },
+    },
+  } : null;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {productJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+        />
+      )}
       <Link href="/browse" className="mb-6 inline-flex items-center gap-1 text-sm text-teal-400 hover:text-teal-300 transition-colors">
         ← Back to Browse
       </Link>
@@ -417,7 +459,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && !shoe.shop_id && (
             <BuyButton
               listingId={shoe.id}
-              listingName={formatListingName(shoe.brand, shoe.model)}
+              listingName={listingName}
               priceFormatted={formatPrice(shoe.price_php)}
               pricePhp={shoe.price_php}
               isNegotiable={shoe.is_negotiable}
@@ -428,7 +470,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && shoe.shop_id && shoe.has_stock && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
             <BuyButton
               listingId={shoe.id}
-              listingName={formatListingName(shoe.brand, shoe.model)}
+              listingName={listingName}
               priceFormatted={formatPrice(shoe.price_php)}
               pricePhp={shoe.price_php}
               isNegotiable={shoe.is_negotiable}
@@ -445,7 +487,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
           {shoe.listing_type === 'donate' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && (
             <DonateRequestButton
               listingId={shoe.id}
-              listingName={formatListingName(shoe.brand, shoe.model)}
+              listingName={listingName}
               requesterId={currentProfileId}
             />
           )}
@@ -466,7 +508,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               {shoe.status === 'active' && slotInfo && (
                 <PromoteListingButton
                   listingId={shoe.id}
-                  listingName={formatListingName(shoe.brand, shoe.model)}
+                  listingName={listingName}
                   isVerified={isVerified}
                   slotsAvailable={slotInfo.slotsAvailable || isSponsored}
                   nextSlotOpensAt={slotInfo.nextSlotOpensAt}

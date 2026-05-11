@@ -13,6 +13,8 @@ import { ShopCarousel } from '@/components/shop/ShopCarousel';
 import { ShopListingsFilter } from '@/components/shop/ShopListingsFilter';
 import type { Shoe, Shop } from '@/types';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
+
 type SizeUnit = 'eu' | 'us' | 'cm';
 
 interface ShopLandingPageProps {
@@ -130,6 +132,7 @@ export default async function ShopLandingPage({ params, searchParams }: ShopLand
   const isOwner = profileId === shop.owner_profile_id;
   const theme = getShopTheme(shop.background_color, shop.accent_color);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const shopLogoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
   const listingTitleById = new Map(listings.map(listing => [listing.id, formatListingName(listing.brand, listing.model)]));
   const carouselItems = (shop.carousel_items ?? [])
     .filter(item => item.image_storage_path)
@@ -139,9 +142,32 @@ export default async function ShopLandingPage({ params, searchParams }: ShopLand
       imageUrl: getPublicUrl(supabaseUrl, item.image_storage_path, 'shop-logos'),
       listingTitle: item.listing_id ? listingTitleById.get(item.listing_id) ?? null : null,
     }));
+  const shopJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Store',
+    name: shop.name,
+    url: `${SITE_URL}/shop/${shop.slug}`,
+    description: shop.about ?? `Independent running shoe shop on Go Pair PH.`,
+    image: shopLogoUrl ?? `${SITE_URL}/og-image.png`,
+    logo: shopLogoUrl ?? `${SITE_URL}/icon.svg`,
+    address: shop.location ? {
+      '@type': 'PostalAddress',
+      addressLocality: shop.location,
+      addressRegion: 'Pampanga',
+      addressCountry: 'PH',
+    } : undefined,
+    areaServed: {
+      '@type': 'AdministrativeArea',
+      name: 'Pampanga, Philippines',
+    },
+  };
 
   return (
     <div style={{ backgroundColor: theme.background }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(shopJsonLd) }}
+      />
       <ShopHeader shop={shop} listingCount={count} />
       <ShopCarousel items={carouselItems} accentColor={theme.accent} backgroundColor={theme.background} />
 

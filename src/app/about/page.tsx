@@ -18,9 +18,9 @@ export default function AboutPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">What we do</h2>
         <p>
-          Go Pair PH connects runners in Pampanga who want to buy, sell, or donate pre-loved
-          running shoes. Every pair has miles left to give — and someone in your area is
-          looking for exactly the model in your closet.
+          Go Pair PH connects Pampanga runners with running shoes from both community sellers
+          and local shop sellers. You can browse new pairs, pre-loved pairs, and donations, or
+          list your own running shoes for buyers nearby.
         </p>
       </section>
 

@@ -5,7 +5,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
-    'How Go Pair PH collects, uses, and protects your personal information when you use our running shoe marketplace.',
+    'How Go Pair PH collects, uses, and protects your personal information when you use our running shoe marketplace and shop storefront platform.',
   alternates: { canonical: '/privacy' },
 };
 
@@ -15,9 +15,10 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">1. Who we are</h2>
         <p>
-          Go Pair PH (&quot;we&quot;, &quot;us&quot;) operates a community marketplace for
-          pre-loved running shoes in Pampanga, Philippines. This Privacy Policy explains what
-          information we collect from users (&quot;you&quot;) and how we use it.
+          Go Pair PH (&quot;we&quot;, &quot;us&quot;) operates a running shoe marketplace and shop
+          storefront platform in Pampanga, Philippines. This Privacy Policy explains what
+          information we collect from users, community sellers, shop sellers, and buyers
+          (&quot;you&quot;) and how we use it.
         </p>
       </section>
 

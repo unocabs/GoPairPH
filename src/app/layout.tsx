@@ -12,7 +12,30 @@ const inter = Inter({ subsets: ['latin'] });
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
 const SITE_NAME = 'Go Pair PH';
 const SITE_DESCRIPTION =
-  'A community marketplace for runners in Pampanga, Philippines. Buy, sell, and donate pre-loved running shoes with fellow Kapampangan.';
+  'A Pampanga running shoe marketplace for community sellers, shop sellers, new pairs, pre-loved pairs, and donations.';
+
+const siteJsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: SITE_NAME,
+    url: SITE_URL,
+    logo: `${SITE_URL}/icon.svg`,
+    description: SITE_DESCRIPTION,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE_NAME,
+    url: SITE_URL,
+    description: SITE_DESCRIPTION,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${SITE_URL}/browse?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  },
+];
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -29,9 +52,18 @@ export const metadata: Metadata = {
     'pampanga',
     'philippines',
     'marketplace',
+    'running shoes pampanga',
+    'pampanga running shoes',
+    'new running shoes',
     'pre-loved shoes',
+    'pre-loved running shoes',
     'second hand running shoes',
     'used running shoes',
+    'running shoe shops',
+    'running shoe resellers',
+    'shop sellers',
+    'community sellers',
+    'local running shoe marketplace',
     'angeles city',
     'san fernando pampanga',
     'buy running shoes pampanga',
@@ -112,6 +144,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Script>
       </head>
       <body className="min-h-screen flex flex-col bg-gray-950 text-gray-100">
+        <Script
+          id="site-json-ld"
+          type="application/ld+json"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
+        />
         <SessionProvider>
           <InAppBrowserRedirect />
           <Navbar />

@@ -10,7 +10,7 @@ import type { Shop } from '@/types';
 
 export const metadata: Metadata = {
   title: 'Shops — Go Pair PH',
-  description: 'Browse running-shoe shops in Pampanga on Go Pair PH.',
+  description: 'Browse running shoe shops and independent resellers in Pampanga on Go Pair PH.',
   alternates: { canonical: '/shop' },
 };
 
@@ -33,7 +33,7 @@ export default async function ShopsIndexPage() {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-100">Shops</h1>
-          <p className="mt-1 text-sm text-gray-500">Pampanga running-shoe resellers on Go Pair PH.</p>
+          <p className="mt-1 text-sm text-gray-500">Pampanga running shoe shops and independent resellers on Go Pair PH.</p>
         </div>
         <ApplyShopModalTrigger />
       </div>

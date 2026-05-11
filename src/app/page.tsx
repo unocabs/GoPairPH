@@ -87,20 +87,23 @@ export default async function HomePage() {
               <div className="flex items-center gap-2 mb-4">
                 <LogoMark size={40} />
                 <span className="bg-teal-500/10 text-teal-400 text-xs font-semibold px-3 py-1 rounded-full border border-teal-500/20">
-                  For Pampanga Runners
+                  Pampanga Running Shoe Marketplace
                 </span>
               </div>
               <h1 className="text-4xl font-extrabold tracking-tight text-gray-100 sm:text-5xl">
-                Pre-Loved Soles,<br />
-                <span className="text-teal-400">Fuel Your Runs</span>
+                Find Your Next<br />
+                <span className="text-teal-400">Running Pair in Pampanga</span>
               </h1>
               <p className="mt-4 text-lg text-gray-400 max-w-lg">
-                Buy, sell, and donate running shoes with fellow runners in Pampanga.
-                Every pair has miles left to give.
+                Buy from community sellers and local shop sellers, list your own pair, or
+                donate running shoes that still have miles to give.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href="/browse">
                   <Button size="lg" variant="secondary">Browse Listings</Button>
+                </Link>
+                <Link href="/shop">
+                  <Button size="lg" variant="outline">Browse Shops</Button>
                 </Link>
                 <Link href="/listings/new">
                   <Button size="lg">List Your Shoes</Button>
@@ -122,9 +125,9 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
           <div className="grid grid-cols-3 gap-2 sm:gap-6">
             {[
-              { icon: '💰', label: 'For Sale', desc: 'Gently-used or New running shoes' },
-              { icon: '🎁', label: 'Donate', desc: 'Help other runners and give shoes a second life' },
-              { icon: '📍', label: 'Pampanga', desc: 'Local marketplace for runners in Pampanga' },
+              { icon: '💰', label: 'Community', desc: 'Buy, sell, or donate with local runners' },
+              { icon: '🏬', label: 'Shops', desc: 'Browse independent running-shoe resellers' },
+              { icon: '📍', label: 'Pampanga', desc: 'New and pre-loved pairs in one local marketplace' },
             ].map(f => (
               <div key={f.label} className="flex items-center justify-center gap-2 sm:gap-3 py-1.5">
                 <span className="text-xl sm:text-2xl shrink-0" aria-hidden="true">{f.icon}</span>

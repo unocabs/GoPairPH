@@ -5,7 +5,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Terms of Service',
   description:
-    'The terms and conditions for using Go Pair PH, a community marketplace for pre-loved running shoes in Pampanga.',
+    'The terms and conditions for using Go Pair PH, a running shoe marketplace and shop storefront platform in Pampanga.',
   alternates: { canonical: '/terms' },
 };
 
@@ -32,10 +32,10 @@ export default function TermsPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">3. What Go Pair PH is (and isn&apos;t)</h2>
         <p>
-          Go Pair PH is a <strong>listing platform</strong>. We connect buyers and sellers,
-          but we do not handle payments, hold inventory, ship items, verify the authenticity
-          of shoes, or guarantee the conduct of any user. All transactions are conducted
-          directly between users.
+          Go Pair PH is a <strong>listing and shop storefront platform</strong>. We connect buyers
+          with community sellers and independent shop sellers, but we do not handle payments,
+          hold inventory, ship items, verify the authenticity of shoes, or guarantee the conduct
+          of any user or shop. All transactions are conducted directly between buyers and sellers.
         </p>
       </section>
 
