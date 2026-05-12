@@ -212,18 +212,6 @@ export default function CarbonPlatedRunningShoesPage() {
                 worth it for training, racing, buying pre-loved, or selling a pair that
                 still has fast miles left.
               </p>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Link href="/listings/new">
-                  <Button size="lg" className="w-full sm:w-auto">
-                    List Your Carbon-Plated Shoes
-                  </Button>
-                </Link>
-                <Link href="/browse?q=carbon">
-                  <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-                    Browse Carbon Shoes
-                  </Button>
-                </Link>
-              </div>
               <p className="mt-5 text-sm text-gray-500">Last updated: May 12, 2026</p>
             </div>
 
@@ -342,9 +330,6 @@ export default function CarbonPlatedRunningShoesPage() {
               <section className="rounded-lg border border-gray-800 bg-gray-900 p-6 sm:p-8">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div>
-                    <p className="text-sm font-semibold uppercase tracking-wider text-teal-400">
-                      Real shoe references
-                    </p>
                     <h2 className="mt-2 text-2xl font-bold text-gray-100">
                       Licensed branded shoe photos
                     </h2>

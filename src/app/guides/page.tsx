@@ -4,6 +4,14 @@ import Link from 'next/link';
 
 const guides = [
   {
+    href: '/adidas-running-shoes-pampanga',
+    title: 'Adidas Running Shoes in Pampanga',
+    description:
+      'Compare Adidas daily trainers, Adizero workout shoes, race-day pairs, and pre-loved buying checks for Pampanga runners.',
+    category: 'Brand Guide',
+    image: '/guides/adidas-running-shoes-pampanga-hero.jpg',
+  },
+  {
     href: '/carbon-plated-running-shoes-ph',
     title: 'Carbon-Plated Running Shoes in the Philippines',
     description:
