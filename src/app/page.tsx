@@ -105,9 +105,9 @@ export default async function HomePage() {
                 <Link href="/shop">
                   <Button size="lg" variant="outline">Browse Shops</Button>
                 </Link>
-                <Link href="/listings/new">
-                  <Button size="lg">List Your Shoes</Button>
-                </Link>
+                <a href="https://www.facebook.com/groups/gopairph" target="_blank" rel="noopener noreferrer">
+                  <Button size="lg">Join FB Group</Button>
+                </a>
               </div>
             </div>
 
