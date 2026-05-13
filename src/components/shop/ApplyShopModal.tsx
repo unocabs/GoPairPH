@@ -12,7 +12,7 @@ const PITCH = [
   { title: 'Free storefront, no tech setup', body: 'Logo, listings page, and a vanity URL — ready in a day.' },
   { title: 'Automatic exposure on /browse', body: "Every listing you post shows up in the marketplace's main feed and on your own page. Toggle off per-listing if you want it shop-only." },
   { title: 'Multi-stock built in', body: "One listing covers all the pairs you have on hand — no relisting after each sale." },
-  { title: 'Trusted Pampanga running audience', body: 'Your listings sit next to the same buyers already on Go Pair PH.' },
+  { title: 'Trusted Pampanga running audience', body: 'Your listings reach buyers already looking for running shoes on Go Pair PH.' },
   { title: 'Verified shop badge', body: 'A trust signal for buyers — included once your application is approved.' },
 ];
 
@@ -55,7 +55,9 @@ export function ApplyShopModal({ onClose }: ApplyShopModalProps) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
           <div>
             <h2 className="text-base font-bold text-gray-100">Open your shop on Go Pair PH</h2>
-            <p className="mt-0.5 text-xs text-gray-500">For Pampanga running shoe resellers — free to apply for the first shop to register.</p>
+            <p className="mt-0.5 text-xs text-gray-500">
+              For Pampanga and nearby running shoe resellers who serve Pampanga buyers. Free during early onboarding.
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -99,7 +101,7 @@ export function ApplyShopModal({ onClose }: ApplyShopModalProps) {
                 </button>
                 {copied && <span className="ml-2 text-xs text-green-400">Copied</span>}
               </li>
-              <li>Include shop name, FB page or business proof, Pampanga location, preferred URL slug, and your logo file.</li>
+              <li>Include shop name, FB page or business proof, Pampanga location or service area, preferred URL slug, and your logo file.</li>
               <li>We&apos;ll get back to you within a few days. Once approved, your shop is live at <span className="font-mono text-gray-400">/shop/your-slug</span>.</li>
             </ol>
           </div>

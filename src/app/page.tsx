@@ -95,8 +95,8 @@ export default async function HomePage() {
                 <span className="text-teal-400">Running Pair in Pampanga</span>
               </h1>
               <p className="mt-4 text-lg text-gray-400 max-w-lg">
-                Buy from community sellers and local shop sellers, list your own pair, or
-                donate running shoes that still have miles to give.
+                Buy from community sellers, local shops, and nearby sellers who can meet,
+                deliver, or ship to Pampanga buyers.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href="/browse">
@@ -127,7 +127,7 @@ export default async function HomePage() {
             {[
               { icon: '💰', label: 'Community', desc: 'Buy, sell, or donate with local runners' },
               { icon: '🏬', label: 'Shops', desc: 'Browse independent running-shoe resellers' },
-              { icon: '📍', label: 'Pampanga', desc: 'New and pre-loved pairs in one local marketplace' },
+              { icon: '📍', label: 'Pampanga', desc: 'Focused on Pampanga buyers, open to nearby sellers' },
             ].map(f => (
               <div key={f.label} className="flex items-center justify-center gap-2 sm:gap-3 py-1.5">
                 <span className="text-xl sm:text-2xl shrink-0" aria-hidden="true">{f.icon}</span>

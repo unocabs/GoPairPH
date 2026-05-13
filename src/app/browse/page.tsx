@@ -13,7 +13,7 @@ import type { Shoe } from '@/types';
 export const metadata: Metadata = {
   title: 'Browse Listings',
   description:
-    'Browse new and pre-loved running shoes from community sellers and shop sellers in Pampanga. Filter by brand, condition, and size.',
+    'Browse new and pre-loved running shoes from community sellers, shop sellers, and nearby sellers who serve Pampanga buyers.',
   alternates: { canonical: '/browse' },
 };
 
@@ -160,8 +160,8 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
         Browse Listings
       </h1>
       <p className="-mt-4 mb-6 max-w-2xl text-sm text-gray-500">
-        Find running shoes from community sellers and independent shop sellers, including
-        new pairs, pre-loved pairs, and donations across Pampanga.
+        Find running shoes from community sellers, independent shop sellers, and nearby
+        sellers who can meet, deliver, or ship to Pampanga buyers.
       </p>
 
       <SearchBar defaultValue={searchParams.q} />

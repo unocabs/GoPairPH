@@ -31,7 +31,7 @@ export default async function NewListingPage() {
       <p className="text-sm text-gray-500 mb-8">
         {result.shop
           ? `Posting as ${result.shop.name}.`
-          : 'Share your running shoes with the Pampanga running community.'}
+          : 'Share your running shoes with Pampanga buyers. Nearby sellers are welcome if they can meet, deliver, or ship.'}
       </p>
       <AuthGuard>
         <ListingForm profileId={result.profileId} shop={result.shop} />

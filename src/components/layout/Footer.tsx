@@ -39,8 +39,8 @@ export function Footer() {
           <div className="col-span-2 sm:col-span-1">
             <Logo size="sm" />
             <p className="mt-3 text-xs text-gray-500 leading-relaxed">
-              A Pampanga running shoe marketplace for community sellers, shop sellers,
-              new pairs, pre-loved pairs, and donations.
+              A Pampanga-focused running shoe marketplace for community sellers, shop sellers,
+              nearby sellers, new pairs, pre-loved pairs, and donations.
             </p>
           </div>
 
@@ -69,7 +69,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-8 pt-6 border-t border-gray-800 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
           <p className="text-xs text-gray-600">
-            © {new Date().getFullYear()} Go Pair PH. Built for Pampanga runners. To God be the glory.
+            © {new Date().getFullYear()} Go Pair PH. Built around Pampanga runners. To God be the glory.
           </p>
           <p className="text-xs text-gray-600">
             <Link href="/privacy" className="hover:text-teal-400 transition-colors">Privacy</Link>

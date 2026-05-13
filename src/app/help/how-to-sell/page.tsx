@@ -4,7 +4,7 @@ import { InfoPage } from '@/components/layout/InfoPage';
 
 export const metadata: Metadata = {
   title: 'How to Sell',
-  description: 'Step-by-step guide for community sellers and shop sellers listing running shoes on Go Pair PH.',
+  description: 'Step-by-step guide for community sellers, shop sellers, and nearby sellers serving Pampanga buyers on Go Pair PH.',
   alternates: { canonical: '/help/how-to-sell' },
 };
 
@@ -12,14 +12,15 @@ export default function HowToSellPage() {
   return (
     <InfoPage
       title="How to Sell"
-      subtitle="List as a community seller, or apply for a shop if you sell running shoes regularly."
+      subtitle="List as a community seller, or apply for a shop if you sell running shoes regularly and can serve Pampanga buyers."
     >
       <section>
         <h2 className="text-xl font-semibold text-gray-100">1. Choose how you sell</h2>
         <p>
           Community sellers can list individual running shoes from their own rotation. Shop
           sellers are independent running-shoe resellers with storefront pages on Go Pair PH.
-          If you want a shop page for your inventory, start at{' '}
+          Sellers from nearby areas are welcome if they can meet, deliver, or ship to Pampanga
+          buyers. If you want a shop page for your inventory, start at{' '}
           <Link href="/shop" className="text-teal-400 hover:text-teal-300">Shops</Link>{' '}
           and open the shop application.
         </p>
@@ -79,7 +80,7 @@ export default function HowToSellPage() {
         <h2 className="text-xl font-semibold text-gray-100">6. Coordinate payment, shipping, or meetup</h2>
         <p>
           Use the <strong>Message on Messenger</strong> button on the request card to
-          coordinate a meetup or shipping. Check the{' '}
+          coordinate meetup, delivery, or shipping with the buyer. Check the{' '}
           <Link href="/safety" className="text-teal-400 hover:text-teal-300">Safety Guide</Link>{' '}
           for tips on safe meetups and payment.
         </p>
