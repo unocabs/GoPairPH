@@ -9,16 +9,16 @@ function getClient(): Resend | null {
   return cached;
 }
 
-interface SendOfferEmailArgs {
-  to: string;
+interface SendEmailArgs {
+  to: string | string[];
   subject: string;
   html: string;
 }
 
-export async function sendOfferEmail({ to, subject, html }: SendOfferEmailArgs): Promise<void> {
+export async function sendEmail({ to, subject, html }: SendEmailArgs): Promise<void> {
   const client = getClient();
   if (!client) {
-    console.warn('[resend] RESEND_API_KEY not set — skipping offer email send');
+    console.warn('[resend] RESEND_API_KEY not set — skipping email send');
     return;
   }
 
@@ -29,3 +29,5 @@ export async function sendOfferEmail({ to, subject, html }: SendOfferEmailArgs):
     throw new Error(`Resend error: ${error.message ?? JSON.stringify(error)}`);
   }
 }
+
+export const sendOfferEmail = sendEmail;

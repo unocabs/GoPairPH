@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/admin/reports/listing-views",
+      "schedule": "0 9 * * 5"
+    }
+  ]
+}

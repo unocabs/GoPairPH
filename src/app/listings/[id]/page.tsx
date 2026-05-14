@@ -23,6 +23,7 @@ import { SponsoredAdminToggle } from './SponsoredAdminToggle';
 import { BuyButton } from '@/components/purchases/BuyButton';
 import { DonateRequestButton } from '@/components/purchases/DonateRequestButton';
 import { ContactSellerButtons } from '@/components/listings/ContactSellerButtons';
+import { ListingViewTracker } from '@/components/listings/ListingViewTracker';
 import { PromoteListingButton } from '@/components/listings/PromoteListingButton';
 import { SponsoredPill } from '@/components/listings/SponsoredPill';
 import { FeaturedPill } from '@/components/listings/FeaturedPill';
@@ -206,6 +207,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <ListingViewTracker listingId={shoe.id} />
       {productJsonLd && (
         <script
           type="application/ld+json"

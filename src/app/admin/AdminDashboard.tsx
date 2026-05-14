@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { formatRelativeDate, getPublicUrl } from '@/lib/utils';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
+import type { ListingViewSummary } from '@/lib/listingViews';
 import type { VerificationRequest, Profile, Shop, ShopStatus } from '@/types';
 
 type ShopWithOwner = Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location'> | null };
@@ -16,9 +17,11 @@ interface AdminDashboardProps {
   verified: Profile[];
   shops: ShopWithOwner[];
   profiles: Profile[];
+  listingViews: ListingViewSummary[];
+  viewWindow: { startDate: string; endDate: string };
 }
 
-type Tab = 'pending' | 'recent' | 'verified' | 'shops';
+type Tab = 'pending' | 'recent' | 'verified' | 'shops' | 'views';
 const ACCEPTED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 async function convertLogoToWebP(file: File): Promise<Blob> {
@@ -64,7 +67,7 @@ async function convertLogoToWebP(file: File): Promise<Blob> {
   });
 }
 
-export function AdminDashboard({ pending, recent, verified, shops, profiles }: AdminDashboardProps) {
+export function AdminDashboard({ pending, recent, verified, shops, profiles, listingViews, viewWindow }: AdminDashboardProps) {
   const [tab, setTab] = useState<Tab>('pending');
 
   return (
@@ -76,6 +79,7 @@ export function AdminDashboard({ pending, recent, verified, shops, profiles }: A
           { key: 'recent', label: `Recent reviews` },
           { key: 'verified', label: `Verified users (${verified.length})` },
           { key: 'shops', label: `Shops (${shops.length})` },
+          { key: 'views', label: `Listing views (${listingViews.length})` },
         ] as const).map(({ key, label }) => (
           <button
             key={key}
@@ -93,6 +97,80 @@ export function AdminDashboard({ pending, recent, verified, shops, profiles }: A
       {tab === 'recent' && <RecentList requests={recent} />}
       {tab === 'verified' && <VerifiedList users={verified} />}
       {tab === 'shops' && <ShopsPanel shops={shops} profiles={profiles} />}
+      {tab === 'views' && <ListingViewsPanel listings={listingViews} viewWindow={viewWindow} />}
+    </div>
+  );
+}
+
+function formatAdminDate(dateString: string): string {
+  return new Date(`${dateString}T00:00:00+08:00`).toLocaleDateString('en-PH', {
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+function ListingViewsPanel({
+  listings,
+  viewWindow,
+}: {
+  listings: ListingViewSummary[];
+  viewWindow: { startDate: string; endDate: string };
+}) {
+  if (listings.length === 0) {
+    return (
+      <div className="rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
+        <p className="text-gray-500">No listing views recorded yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+        <p className="text-sm font-semibold text-gray-100">Private listing view analytics</p>
+        <p className="mt-1 text-xs text-gray-500">
+          Showing daily views from {formatAdminDate(viewWindow.startDate)} to {formatAdminDate(viewWindow.endDate)}. Sellers and public users cannot see these counts.
+        </p>
+      </div>
+
+      <div className="grid gap-3">
+        {listings.map(listing => (
+          <div key={listing.listingId} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <Link href={listing.listingPath} target="_blank" className="font-semibold text-gray-100 hover:text-teal-400">
+                  {listing.listingName}
+                </Link>
+                <p className="mt-1 text-xs text-gray-500">
+                  {listing.shopName ? `Shop: ${listing.shopName}` : `Seller: ${listing.sellerName}`}
+                </p>
+              </div>
+              <div className="shrink-0 rounded-lg border border-teal-900 bg-teal-950 px-3 py-2 text-left lg:text-right">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-teal-400">Total views</p>
+                <p className="text-2xl font-bold text-teal-200">{listing.totalViews.toLocaleString('en-PH')}</p>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Daily views</p>
+              {listing.dailyViews.length === 0 ? (
+                <p className="rounded-lg border border-gray-800 bg-gray-950 px-3 py-2 text-xs text-gray-500">
+                  No views in this date range.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {listing.dailyViews.map(day => (
+                    <span key={`${listing.listingId}-${day.date}`} className="rounded-lg border border-gray-800 bg-gray-950 px-3 py-2 text-xs text-gray-300">
+                      <span className="text-gray-500">{formatAdminDate(day.date)}</span>{' '}
+                      <span className="font-semibold text-gray-100">{day.views.toLocaleString('en-PH')}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

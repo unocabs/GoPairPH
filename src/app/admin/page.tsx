@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { AdminDashboard } from './AdminDashboard';
+import { getDashboardViewWindow, getListingViewSummaries } from '@/lib/listingViews';
 import type { VerificationRequest, Profile, Shop } from '@/types';
 
 async function loadAdminData() {
@@ -18,7 +19,8 @@ async function loadAdminData() {
 
   if (!profile?.is_admin) return null;
 
-  const [pendingRes, recentRes, verifiedRes, shopsRes, profilesRes] = await Promise.all([
+  const viewWindow = getDashboardViewWindow();
+  const [pendingRes, recentRes, verifiedRes, shopsRes, profilesRes, listingViews] = await Promise.all([
     supabase
       .from('verification_requests')
       .select('*, profiles:profiles!user_id(*)')
@@ -43,6 +45,7 @@ async function loadAdminData() {
       .from('profiles')
       .select('id, user_id, display_name, location, avatar_url, fb_username, is_verified, is_admin, created_at, updated_at')
       .order('display_name'),
+    getListingViewSummaries({ ...viewWindow, limit: 100 }),
   ]);
 
   return {
@@ -51,6 +54,8 @@ async function loadAdminData() {
     verified: (verifiedRes.data as Profile[]) ?? [],
     shops: (shopsRes.data as (Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location'> | null })[]) ?? [],
     profiles: (profilesRes.data as Profile[]) ?? [],
+    listingViews,
+    viewWindow,
   };
 }
 
@@ -59,7 +64,7 @@ export default async function AdminPage() {
   if (!data) redirect('/');
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="mb-8">
         <h1 className="text-2xl font-bold text-gray-100">Admin Dashboard</h1>
         <p className="text-sm text-gray-500 mt-1">Review verification requests, manage verified users, and maintain shops.</p>
