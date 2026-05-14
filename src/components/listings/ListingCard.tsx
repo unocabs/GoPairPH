@@ -11,7 +11,7 @@ import { OutOfStockBadge } from '@/components/shop/OutOfStockBadge';
 import { ListingTypeBadge } from './ListingTypeBadge';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
-import { formatPrice, formatSize, getPublicUrl, formatRelativeDate, formatListingName } from '@/lib/utils';
+import { formatPrice, formatSize, getPublicUrl, formatRelativeDate, formatListingName, getListingPath } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { BuyModal } from '@/components/purchases/BuyModal';
 import { DonateRequestModal } from '@/components/purchases/DonateRequestModal';
@@ -40,11 +40,12 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
   const themedCardStyle = theme ? { backgroundColor: theme.surface, borderColor: isOwner ? theme.accent : theme.border } : undefined;
   const themedMutedStyle = theme ? { color: theme.mutedText } : undefined;
   const themedAccentStyle = theme ? { color: theme.accent } : undefined;
+  const listingPath = getListingPath(shoe);
 
   async function handleCopy(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    const url = `${window.location.origin}/listings/${shoe.id}`;
+    const url = `${window.location.origin}${listingPath}`;
     try {
       await navigator.clipboard.writeText(url);
     } catch {
@@ -71,7 +72,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
       isOwner ? 'border-teal-600 hover:border-teal-500' : 'border-gray-800 hover:border-gray-700'
     )} style={themedCardStyle}>
       {/* Clickable area navigates to listing */}
-      <Link href={`/listings/${shoe.id}`} className="group block">
+      <Link href={listingPath} className="group block">
         {/* Image */}
         <div className="relative aspect-square bg-gray-800" style={theme ? { backgroundColor: theme.surfaceStrong } : undefined}>
           {imageUrl ? (
@@ -241,7 +242,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
             </button>
           ) : showPlaceOrder ? (
             <Link
-              href={`/listings/${shoe.id}`}
+              href={listingPath}
               className="block w-full rounded-lg bg-teal-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-teal-500 transition-colors"
               style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
             >
@@ -261,6 +262,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
       {buyOpen && currentProfileId && shoe.price_php && createPortal(
         <BuyModal
           listingId={shoe.id}
+          listingSlug={shoe.slug}
           listingName={formatListingName(shoe.brand, shoe.model)}
           priceFormatted={formatPrice(shoe.price_php)}
           pricePhp={shoe.price_php}

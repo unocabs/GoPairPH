@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { getPublicUrl, formatPrice, formatSize, formatRelativeDate } from '@/lib/utils';
+import { getPublicUrl, formatPrice, formatSize, formatRelativeDate, getListingPath } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import type { WishlistSuggestion } from '@/types';
 
@@ -70,7 +70,7 @@ export function ViewSuggestionsModal({ wishlistId, wishlistName, onClose }: View
                   </div>
                   <div className="min-w-0 flex-1">
                     {shoe ? (
-                      <Link href={`/listings/${shoe.id}`} className="text-sm font-semibold text-gray-200 hover:text-teal-400 transition-colors">
+                      <Link href={getListingPath(shoe)} className="text-sm font-semibold text-gray-200 hover:text-teal-400 transition-colors">
                         {shoe.brand} {shoe.model}
                       </Link>
                     ) : (

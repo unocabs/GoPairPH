@@ -3,23 +3,26 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { SharePostModal } from './SharePostModal';
+import { getListingPath } from '@/lib/utils';
 import type { Shoe, Profile } from '@/types';
 
 interface ContactSellerButtonsProps {
   fbUsername?: string | null;
   listingId: string;
+  listingSlug?: string | null;
   isOwner?: boolean;
   /** When provided, enables the "Create Share Post" button which opens a downloadable share-card modal. */
   shoe?: Shoe;
   seller?: Profile | null;
 }
 
-export function ContactSellerButtons({ fbUsername, listingId, isOwner = false, shoe, seller }: ContactSellerButtonsProps) {
+export function ContactSellerButtons({ fbUsername, listingId, listingSlug, isOwner = false, shoe, seller }: ContactSellerButtonsProps) {
   const [copied, setCopied] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const listingPath = shoe ? getListingPath(shoe) : getListingPath({ id: listingId, slug: listingSlug });
 
   async function handleCopy() {
-    const url = `${window.location.origin}/listings/${listingId}`;
+    const url = `${window.location.origin}${listingPath}`;
     try {
       await navigator.clipboard.writeText(url);
     } catch {

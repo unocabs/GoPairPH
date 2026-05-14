@@ -43,6 +43,14 @@ export function formatListingName(brand: string, model: string): string {
   return brand === 'Other' ? model : `${brand} ${model}`;
 }
 
+export function getListingPath(listing: { id: string; slug?: string | null }): string {
+  return `/listings/${listing.slug || listing.id}`;
+}
+
+export function getAbsoluteListingUrl(siteUrl: string, listing: { id: string; slug?: string | null }): string {
+  return `${siteUrl}${getListingPath(listing)}`;
+}
+
 export function formatRelativeDate(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();

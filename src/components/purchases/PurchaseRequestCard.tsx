@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { formatRelativeDate, formatPrice, formatSize, getPublicUrl } from '@/lib/utils';
+import { formatRelativeDate, formatPrice, formatSize, getPublicUrl, getListingPath } from '@/lib/utils';
 import type { PurchaseRequest, PurchaseRequestStatus, Shoe } from '@/types';
 
 interface PurchaseRequestCardProps {
@@ -34,6 +34,7 @@ export function PurchaseRequestCard({
   // Resolve a thumbnail from whichever listing reference we have.
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const resolvedListing = listing ?? (request.listing as Shoe | undefined);
+  const listingPath = resolvedListing ? getListingPath(resolvedListing) : `/listings/${listingId}`;
   const topImg =
     resolvedListing?.shoe_images?.find(i => i.view_type === 'top') ??
     resolvedListing?.shoe_images?.[0];
@@ -83,7 +84,7 @@ export function PurchaseRequestCard({
   return (
     <div className="rounded-xl border border-gray-800 bg-gray-900 p-4 space-y-3">
       {/* Top: thumbnail + listing name */}
-      <Link href={`/listings/${listingId}`} className="flex items-center gap-3 group">
+      <Link href={listingPath} className="flex items-center gap-3 group">
         <div className="relative h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-gray-800 border border-gray-700">
           {thumbUrl ? (
             <Image

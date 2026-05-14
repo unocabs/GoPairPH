@@ -77,6 +77,7 @@ export interface ShoeVariant {
 
 export interface Shoe {
   id: string;
+  slug: string;
   seller_id: string;
   brand: string;
   model: string;

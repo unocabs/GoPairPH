@@ -12,6 +12,7 @@ import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { VariantsEditor, type VariantRow } from '@/components/listings/VariantsEditor';
+import { getListingPath } from '@/lib/utils';
 import type { Shoe } from '@/types';
 
 const BRAND_OPTIONS = BRANDS.map(b => ({ value: b, label: b }));
@@ -170,7 +171,7 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
         }
       }
 
-      router.push(`/listings/${shoe.id}`);
+      router.push(getListingPath(shoe));
       router.refresh();
     } catch (err) {
       const msg = (err as { message?: string })?.message ?? 'Failed to update';

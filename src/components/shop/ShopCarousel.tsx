@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
 import { getShopTheme } from '@/lib/shopTheme';
+import { getListingPath } from '@/lib/utils';
 import type { ShopCarouselItem } from '@/types';
 
 interface ShopCarouselProps {
-  items: Array<ShopCarouselItem & { imageUrl: string; listingTitle?: string | null }>;
+  items: Array<ShopCarouselItem & { imageUrl: string; listingSlug?: string | null; listingTitle?: string | null }>;
   accentColor: string;
   backgroundColor?: string;
 }
@@ -58,8 +59,8 @@ export function ShopCarousel({ items, accentColor, backgroundColor }: ShopCarous
 
             return (
               <div key={item.image_storage_path} className="h-full w-full min-w-0 flex-[0_0_100%]">
-                {item.listing_id ? (
-                  <Link href={`/listings/${item.listing_id}`} className="block h-full w-full">
+                {item.listing_id && item.listingSlug ? (
+                  <Link href={getListingPath({ id: item.listing_id, slug: item.listingSlug })} className="block h-full w-full">
                     {image}
                   </Link>
                 ) : image}

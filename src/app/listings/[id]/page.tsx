@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
@@ -11,7 +11,7 @@ import { ShopBadge } from '@/components/shop/ShopBadge';
 import { ListingTypeBadge } from '@/components/listings/ListingTypeBadge';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
-import { formatPrice, formatSize, formatRelativeDate, getPublicUrl, formatListingName } from '@/lib/utils';
+import { formatPrice, formatSize, formatRelativeDate, getPublicUrl, formatListingName, getListingPath, getAbsoluteListingUrl } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import type { Shoe, PurchaseRequest } from '@/types';
 import Image from 'next/image';
@@ -31,6 +31,7 @@ import { getSponsoredSlotInfo } from '@/lib/sponsored';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function getSchemaCondition(condition: Shoe['condition']): string {
   if (condition === 'new') return 'https://schema.org/NewCondition';
@@ -61,12 +62,12 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   return {
     title,
     description,
-    alternates: { canonical: `/listings/${shoe.id}` },
+    alternates: { canonical: getListingPath(shoe) },
     openGraph: {
       type: 'website',
       title,
       description,
-      url: `/listings/${shoe.id}`,
+      url: getListingPath(shoe),
       images: [{ url: imageUrl, alt: formatListingName(shoe.brand, shoe.model) }],
     },
     twitter: {
@@ -80,12 +81,22 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
 async function getShoe(id: string): Promise<Shoe | null> {
   const supabase = createClient();
-  const { data } = await supabase
+  const query = supabase
     .from('shoes')
-    .select('*, profiles(*), shoe_images(*), shops(*), shoe_variants(*)')
-    .eq('id', id)
-    .single();
+    .select('*, profiles(*), shoe_images(*), shops(*), shoe_variants(*)');
+
+  const { data } = UUID_RE.test(id)
+    ? await query.eq('id', id).single()
+    : await query.eq('slug', id).single();
+
   return data as Shoe | null;
+}
+
+async function getShoeByRouteParam(id: string): Promise<Shoe | null> {
+  const shoe = await getShoe(id);
+  if (!shoe) return null;
+  if (UUID_RE.test(id) && shoe.slug) redirect(getListingPath(shoe));
+  return shoe;
 }
 
 async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean; isVerified: boolean } | null> {
@@ -146,7 +157,7 @@ async function getPurchaseContext(shoeId: string, profileId: string | null, isOw
 
 export default async function ListingDetailPage({ params }: { params: { id: string } }) {
   const [shoe, currentProfile] = await Promise.all([
-    getShoe(params.id),
+    getShoeByRouteParam(params.id),
     getCurrentProfile(),
   ]);
 
@@ -181,7 +192,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
     itemCondition: getSchemaCondition(shoe.condition),
     offers: {
       '@type': 'Offer',
-      url: `${SITE_URL}/listings/${shoe.id}`,
+      url: getAbsoluteListingUrl(SITE_URL, shoe),
       priceCurrency: 'PHP',
       price: shoe.price_php,
       availability: shoe.status === 'active' && shoe.has_stock
@@ -459,6 +470,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && !shoe.shop_id && (
             <BuyButton
               listingId={shoe.id}
+              listingSlug={shoe.slug}
               listingName={listingName}
               priceFormatted={formatPrice(shoe.price_php)}
               pricePhp={shoe.price_php}
@@ -470,6 +482,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && shoe.shop_id && shoe.has_stock && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
             <BuyButton
               listingId={shoe.id}
+              listingSlug={shoe.slug}
               listingName={listingName}
               priceFormatted={formatPrice(shoe.price_php)}
               pricePhp={shoe.price_php}

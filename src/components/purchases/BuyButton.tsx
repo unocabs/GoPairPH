@@ -6,6 +6,7 @@ import type { Profile, ShoeVariant, Shop } from '@/types';
 
 interface BuyButtonProps {
   listingId: string;
+  listingSlug?: string | null;
   listingName: string;
   priceFormatted: string;
   pricePhp: number;
@@ -20,7 +21,7 @@ interface BuyButtonProps {
   className?: string;
 }
 
-export function BuyButton({ listingId, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, offerCount = 0, variants, initialVariantId, label, className }: BuyButtonProps) {
+export function BuyButton({ listingId, listingSlug, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, offerCount = 0, variants, initialVariantId, label, className }: BuyButtonProps) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -55,6 +56,7 @@ export function BuyButton({ listingId, listingName, priceFormatted, pricePhp, is
       {open && (
         <BuyModal
           listingId={listingId}
+          listingSlug={listingSlug}
           listingName={listingName}
           priceFormatted={priceFormatted}
           pricePhp={pricePhp}

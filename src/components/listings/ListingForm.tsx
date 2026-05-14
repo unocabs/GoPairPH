@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { PhotoUploader, type UploadedPhoto } from './PhotoUploader';
 import { VariantsEditor, type VariantRow } from './VariantsEditor';
+import { getListingPath } from '@/lib/utils';
 import type { Shop } from '@/types';
 
 const BRAND_OPTIONS = BRANDS.map(b => ({ value: b, label: b }));
@@ -127,7 +128,7 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
     setSubmitting(true);
     setError(null);
     try {
-      const { error: insertError } = await supabase
+      const { data: insertedShoe, error: insertError } = await supabase
         .from('shoes')
         .insert({
           id: shoeId,
@@ -148,7 +149,9 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
           shop_id: shop?.id ?? null,
           quantity: 0,
           listed_in_main_feed: isShop ? listedInMainFeed : true,
-        });
+        })
+        .select('id, slug')
+        .single();
       if (insertError) throw insertError;
 
       if (isShop) {
@@ -175,7 +178,7 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
       }));
       const { error: imgError } = await supabase.from('shoe_images').insert(imageRows);
       if (imgError) throw imgError;
-      router.push(`/listings/${shoeId}`);
+      router.push(getListingPath(insertedShoe ?? { id: shoeId }));
     } catch (err) {
       const msg = (err as { message?: string })?.message ?? 'Failed to publish listing';
       setError(msg);

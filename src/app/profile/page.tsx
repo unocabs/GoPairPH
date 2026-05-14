@@ -28,7 +28,7 @@ async function getOwnProfileData() {
   if (shoeIds.length > 0) {
     const { data: prData } = await supabase
       .from('purchase_requests')
-      .select('*, profiles(*), shoe_variants(*), listing:shoes!listing_id(id, status, brand, model, price_php, listing_type)')
+      .select('*, profiles(*), shoe_variants(*), listing:shoes!listing_id(id, slug, status, brand, model, price_php, listing_type)')
       .in('listing_id', shoeIds)
       .in('status', ['pending', 'accepted'])
       .order('created_at', { ascending: false });

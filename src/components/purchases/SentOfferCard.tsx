@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { formatRelativeDate, formatPrice, getPublicUrl, formatListingName } from '@/lib/utils';
+import { formatRelativeDate, formatPrice, getPublicUrl, formatListingName, getListingPath } from '@/lib/utils';
 import type { PurchaseRequest, PurchaseRequestStatus, Shoe } from '@/types';
 
 interface SentOfferCardProps {
@@ -52,7 +52,7 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
       )}
 
       {/* Top: thumbnail + listing name */}
-      <Link href={shoe ? `/listings/${shoe.id}` : '#'} className="flex items-center gap-3 group">
+      <Link href={shoe ? getListingPath(shoe) : '#'} className="flex items-center gap-3 group">
         <div className="relative h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-gray-800 border border-gray-700">
           {thumbUrl ? (
             <Image src={thumbUrl} alt={listingName} fill sizes="56px" className="object-cover" />

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Shoe } from '@/types';
 import { CONDITIONS } from '@/lib/constants';
-import { formatPrice, formatSize, getPublicUrl, formatListingName } from '@/lib/utils';
+import { formatPrice, formatSize, getPublicUrl, formatListingName, getListingPath } from '@/lib/utils';
 import { FeaturedPill } from '@/components/listings/FeaturedPill';
 
 interface FeaturedListingProps {
@@ -18,7 +18,7 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
 
   return (
     <Link
-      href={`/listings/${shoe.id}`}
+      href={getListingPath(shoe)}
       className="group relative block w-full max-w-[500px] aspect-[4/5] sm:h-[420px] sm:aspect-auto rounded-3xl overflow-hidden shadow-2xl shadow-black/60 transition-transform hover:scale-[1.01]"
     >
       {/* Background image (full bleed) */}

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { createClient } from '@/lib/supabase/server';
+import { getAbsoluteListingUrl } from '@/lib/utils';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
 
@@ -29,7 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const [{ data: listings }, { data: shops }] = await Promise.all([
       supabase
         .from('shoes')
-        .select('id, updated_at')
+        .select('id, slug, updated_at')
         .eq('status', 'active')
         .limit(1000),
       supabase
@@ -40,7 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ]);
 
     listingRoutes = (listings ?? []).map(shoe => ({
-      url: `${SITE_URL}/listings/${shoe.id}`,
+      url: getAbsoluteListingUrl(SITE_URL, shoe),
       lastModified: shoe.updated_at ? new Date(shoe.updated_at) : now,
       changeFrequency: 'weekly' as const,
       priority: 0.6,

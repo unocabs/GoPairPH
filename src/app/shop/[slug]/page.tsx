@@ -96,6 +96,17 @@ async function getShopListingCount(shopId: string): Promise<number> {
   return count ?? 0;
 }
 
+async function getCarouselListings(listingIds: string[]): Promise<Array<Pick<Shoe, 'id' | 'slug' | 'brand' | 'model'>>> {
+  if (listingIds.length === 0) return [];
+  const supabase = createClient();
+  const { data } = await supabase
+    .from('shoes')
+    .select('id, slug, brand, model')
+    .in('id', listingIds)
+    .eq('status', 'active');
+  return (data as Array<Pick<Shoe, 'id' | 'slug' | 'brand' | 'model'>>) ?? [];
+}
+
 async function getCurrentProfileId(): Promise<string | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -123,23 +134,30 @@ export default async function ShopLandingPage({ params, searchParams }: ShopLand
   const shop = await getShop(params.slug);
   if (!shop) notFound();
 
-  const [listings, count, profileId] = await Promise.all([
+  const carouselListingIds = Array.from(new Set((shop.carousel_items ?? [])
+    .map(item => item.listing_id)
+    .filter((id): id is string => !!id)));
+
+  const [listings, count, profileId, carouselListings] = await Promise.all([
     getShopListings(shop.id, searchParams),
     getShopListingCount(shop.id),
     getCurrentProfileId(),
+    getCarouselListings(carouselListingIds),
   ]);
   const offerCounts = await getOfferCounts(listings.map(s => s.id));
   const isOwner = profileId === shop.owner_profile_id;
   const theme = getShopTheme(shop.background_color, shop.accent_color);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const shopLogoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
-  const listingTitleById = new Map(listings.map(listing => [listing.id, formatListingName(listing.brand, listing.model)]));
+  const listingTitleById = new Map(carouselListings.map(listing => [listing.id, formatListingName(listing.brand, listing.model)]));
+  const listingSlugById = new Map(carouselListings.map(listing => [listing.id, listing.slug]));
   const carouselItems = (shop.carousel_items ?? [])
     .filter(item => item.image_storage_path)
     .slice(0, 4)
     .map(item => ({
       ...item,
       imageUrl: getPublicUrl(supabaseUrl, item.image_storage_path, 'shop-logos'),
+      listingSlug: item.listing_id ? listingSlugById.get(item.listing_id) ?? null : null,
       listingTitle: item.listing_id ? listingTitleById.get(item.listing_id) ?? null : null,
     }));
   const shopJsonLd = {

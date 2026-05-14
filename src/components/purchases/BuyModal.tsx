@@ -15,6 +15,7 @@ import type { Profile, ShoeVariant, Shop } from '@/types';
 
 interface BuyModalProps {
   listingId: string;
+  listingSlug?: string | null;
   listingName: string;
   priceFormatted: string;
   pricePhp: number;
@@ -29,7 +30,7 @@ interface BuyModalProps {
   onSubmitted: () => void;
 }
 
-export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, variants, initialVariantId, onClose, onSubmitted }: BuyModalProps) {
+export function BuyModal({ listingId, listingSlug, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, variants, initialVariantId, onClose, onSubmitted }: BuyModalProps) {
   const [message, setMessage] = useState('');
   const [bestOffer, setBestOffer] = useState('');
   const [variantId, setVariantId] = useState<string | null>(initialVariantId ?? null);
@@ -174,7 +175,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
                 </div>
               </div>
               {seller.fb_username && (
-                <ContactSellerButtons fbUsername={seller.fb_username} listingId={listingId} />
+                <ContactSellerButtons fbUsername={seller.fb_username} listingId={listingId} listingSlug={listingSlug} />
               )}
             </div>
           )}
