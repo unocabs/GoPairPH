@@ -62,18 +62,12 @@ export function WishlistForm() {
     if (field !== 'cm') setValue('size_cm', match.cm);
   }
 
-  async function uploadPhoto(file: File, token: string): Promise<string> {
+  async function preparePhoto(file: File): Promise<Blob> {
     const blob = await convertToWebP(file);
-    const fd = new FormData();
-    fd.append('file', blob, 'photo.webp');
-    fd.append('turnstileToken', token);
-    const res = await fetch('/api/wishlist/upload', { method: 'POST', body: fd });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.error ?? 'Photo upload failed');
+    if (blob.size > 10 * 1024 * 1024) {
+      throw new Error('Photo is too large (max 10MB).');
     }
-    const { storage_path } = await res.json();
-    return storage_path as string;
+    return blob;
   }
 
   async function onSubmit(data: WishlistFormData) {
@@ -84,17 +78,14 @@ export function WishlistForm() {
     setSubmitting(true);
     setError(null);
     try {
-      const images: { storage_path: string }[] = [];
+      const fd = new FormData();
+      fd.append('data', JSON.stringify(data));
+      fd.append('turnstileToken', turnstileToken);
       for (const photo of photos) {
-        const path = await uploadPhoto(photo, turnstileToken);
-        images.push({ storage_path: path });
+        fd.append('images', await preparePhoto(photo), 'photo.webp');
       }
 
-      const res = await fetch('/api/wishlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data, turnstileToken, images }),
-      });
+      const res = await fetch('/api/wishlist', { method: 'POST', body: fd });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? 'Failed to save');

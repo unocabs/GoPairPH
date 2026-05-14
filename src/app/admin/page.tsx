@@ -1,10 +1,63 @@
 export const dynamic = 'force-dynamic';
 
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { AdminDashboard } from './AdminDashboard';
 import { getDashboardViewWindow, getListingViewSummaries } from '@/lib/listingViews';
-import type { VerificationRequest, Profile, Shop } from '@/types';
+import type { VerificationRequest, Profile, Shop, WishlistItem, WishlistOffer, WishlistOfferReport } from '@/types';
+
+type PairRequestSummary = Pick<WishlistItem, 'id' | 'brand' | 'model'>;
+
+async function loadOpenLeadReports(): Promise<WishlistOfferReport[]> {
+  const service = createServiceClient();
+  const { data: reports, error } = await service
+    .from('wishlist_offer_reports')
+    .select('id, offer_id, wishlist_id, reason, note, reporter_id, status, reviewed_by, reviewed_at, created_at')
+    .eq('status', 'open')
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  if (error) {
+    console.warn('[admin] could not load Find My Pair lead reports:', error.message);
+    return [];
+  }
+
+  const rows = (reports as WishlistOfferReport[]) ?? [];
+  if (rows.length === 0) return [];
+
+  const offerIds = Array.from(new Set(rows.map(report => report.offer_id)));
+  const reporterIds = Array.from(new Set(rows.map(report => report.reporter_id).filter(Boolean) as string[]));
+
+  const [{ data: offers }, { data: reporters }] = await Promise.all([
+    service
+      .from('wishlist_offers')
+      .select('id, wishlist_id, url, price_php, note, offerer_id, shoe_id, created_at')
+      .in('id', offerIds),
+    reporterIds.length > 0
+      ? service.from('profiles').select('id, display_name').in('id', reporterIds)
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const offerRows = (offers as WishlistOffer[]) ?? [];
+  const wishlistIds = Array.from(new Set(offerRows.map(offer => offer.wishlist_id)));
+  const { data: items } = wishlistIds.length > 0
+    ? await service.from('wishlist_items').select('id, brand, model').in('id', wishlistIds)
+    : { data: [] };
+
+  const offerById = new Map(offerRows.map(offer => [offer.id, offer]));
+  const itemById = new Map(((items as PairRequestSummary[]) ?? []).map(item => [item.id, item]));
+  const reporterById = new Map(((reporters as Pick<Profile, 'id' | 'display_name'>[]) ?? []).map(reporter => [reporter.id, reporter]));
+
+  return rows.map(report => {
+    const offer = offerById.get(report.offer_id) ?? null;
+    return {
+      ...report,
+      offer,
+      item: offer ? itemById.get(offer.wishlist_id) ?? null : null,
+      reporter: report.reporter_id ? reporterById.get(report.reporter_id) ?? null : null,
+    };
+  });
+}
 
 async function loadAdminData() {
   const supabase = createClient();
@@ -20,7 +73,7 @@ async function loadAdminData() {
   if (!profile?.is_admin) return null;
 
   const viewWindow = getDashboardViewWindow();
-  const [pendingRes, recentRes, verifiedRes, shopsRes, profilesRes, listingViews] = await Promise.all([
+  const [pendingRes, recentRes, verifiedRes, shopsRes, profilesRes, listingViews, leadReports] = await Promise.all([
     supabase
       .from('verification_requests')
       .select('*, profiles:profiles!user_id(*)')
@@ -46,6 +99,7 @@ async function loadAdminData() {
       .select('id, user_id, display_name, location, avatar_url, fb_username, is_verified, is_admin, created_at, updated_at')
       .order('display_name'),
     getListingViewSummaries({ ...viewWindow, limit: 100 }),
+    loadOpenLeadReports(),
   ]);
 
   return {
@@ -55,6 +109,7 @@ async function loadAdminData() {
     shops: (shopsRes.data as (Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location'> | null })[]) ?? [],
     profiles: (profilesRes.data as Profile[]) ?? [],
     listingViews,
+    leadReports,
     viewWindow,
   };
 }

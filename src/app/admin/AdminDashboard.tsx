@@ -4,10 +4,10 @@ import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { formatRelativeDate, getPublicUrl } from '@/lib/utils';
+import { formatPrice, formatRelativeDate, getPublicUrl } from '@/lib/utils';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import type { ListingViewSummary } from '@/lib/listingViews';
-import type { VerificationRequest, Profile, Shop, ShopStatus } from '@/types';
+import type { VerificationRequest, Profile, Shop, ShopStatus, WishlistOfferReport, WishlistOfferReportReason } from '@/types';
 
 type ShopWithOwner = Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location'> | null };
 
@@ -18,11 +18,21 @@ interface AdminDashboardProps {
   shops: ShopWithOwner[];
   profiles: Profile[];
   listingViews: ListingViewSummary[];
+  leadReports: WishlistOfferReport[];
   viewWindow: { startDate: string; endDate: string };
 }
 
-type Tab = 'pending' | 'recent' | 'verified' | 'shops' | 'views';
+type Tab = 'pending' | 'recent' | 'verified' | 'shops' | 'views' | 'leadReports';
 const ACCEPTED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+
+const LEAD_REPORT_REASON_LABELS: Record<WishlistOfferReportReason, string> = {
+  unavailable_or_sold: 'Unavailable or sold',
+  price_changed: 'Price changed',
+  wrong_item: 'Wrong item',
+  broken_link: 'Broken link',
+  spam_or_duplicate: 'Spam or duplicate',
+  other: 'Other',
+};
 
 async function convertLogoToWebP(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -67,7 +77,7 @@ async function convertLogoToWebP(file: File): Promise<Blob> {
   });
 }
 
-export function AdminDashboard({ pending, recent, verified, shops, profiles, listingViews, viewWindow }: AdminDashboardProps) {
+export function AdminDashboard({ pending, recent, verified, shops, profiles, listingViews, leadReports, viewWindow }: AdminDashboardProps) {
   const [tab, setTab] = useState<Tab>('pending');
 
   return (
@@ -80,6 +90,7 @@ export function AdminDashboard({ pending, recent, verified, shops, profiles, lis
           { key: 'verified', label: `Verified users (${verified.length})` },
           { key: 'shops', label: `Shops (${shops.length})` },
           { key: 'views', label: `Listing views (${listingViews.length})` },
+          { key: 'leadReports', label: `Lead reports (${leadReports.length})` },
         ] as const).map(({ key, label }) => (
           <button
             key={key}
@@ -98,6 +109,7 @@ export function AdminDashboard({ pending, recent, verified, shops, profiles, lis
       {tab === 'verified' && <VerifiedList users={verified} />}
       {tab === 'shops' && <ShopsPanel shops={shops} profiles={profiles} />}
       {tab === 'views' && <ListingViewsPanel listings={listingViews} viewWindow={viewWindow} />}
+      {tab === 'leadReports' && <LeadReportsPanel reports={leadReports} />}
     </div>
   );
 }
@@ -167,6 +179,133 @@ function ListingViewsPanel({
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LeadReportsPanel({ reports }: { reports: WishlistOfferReport[] }) {
+  const [dismissing, setDismissing] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const router = useRouter();
+
+  async function handleDismiss(report: WishlistOfferReport) {
+    setDismissing(report.id);
+    const res = await fetch(`/api/admin/wishlist-offer-reports/${report.id}`, { method: 'PATCH' });
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as { error?: string } | null;
+      alert(body?.error ?? 'Could not dismiss report.');
+      setDismissing(null);
+      return;
+    }
+    router.refresh();
+  }
+
+  async function handleDeleteLead(report: WishlistOfferReport) {
+    if (!report.offer) {
+      await handleDismiss(report);
+      return;
+    }
+    if (!confirm('Delete this reported lead? The report will be removed with it.')) return;
+
+    setDeleting(report.id);
+    const res = await fetch(`/api/wishlist/${report.wishlist_id}/offers/${report.offer_id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as { error?: string } | null;
+      alert(body?.error ?? 'Could not delete lead.');
+      setDeleting(null);
+      return;
+    }
+    router.refresh();
+  }
+
+  if (reports.length === 0) {
+    return (
+      <div className="rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
+        <p className="text-gray-500">No open lead reports.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+        <p className="text-sm font-semibold text-gray-100">Find My Pair lead reports</p>
+        <p className="mt-1 text-xs text-gray-500">
+          Reports do not change the public lead display. Dismiss valid links or delete bad leads after review.
+        </p>
+      </div>
+
+      <div className="grid gap-3">
+        {reports.map(report => (
+          <div key={report.id} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-amber-800 bg-amber-950 px-2 py-0.5 text-xs font-semibold text-amber-300">
+                    {LEAD_REPORT_REASON_LABELS[report.reason]}
+                  </span>
+                  <span className="text-xs text-gray-500">{formatRelativeDate(report.created_at)}</span>
+                </div>
+
+                <Link
+                  href={`/find-my-pair?item=${report.wishlist_id}`}
+                  target="_blank"
+                  className="mt-2 block font-semibold text-gray-100 hover:text-teal-400"
+                >
+                  {report.item ? `${report.item.brand} ${report.item.model}` : 'Pair request'}
+                </Link>
+
+                {report.offer ? (
+                  <div className="mt-2 space-y-1">
+                    <a
+                      href={report.offer.url}
+                      target="_blank"
+                      rel="nofollow noopener noreferrer"
+                      className="block break-all text-sm text-teal-400 underline hover:text-teal-300"
+                    >
+                      {report.offer.url}
+                    </a>
+                    <p className="text-xs text-gray-500">
+                      Lead posted {formatRelativeDate(report.offer.created_at)}
+                      {report.offer.price_php != null ? ` · ${formatPrice(report.offer.price_php)}` : ''}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm text-gray-500">Lead already deleted.</p>
+                )}
+
+                {report.note && (
+                  <p className="mt-3 rounded-lg border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-300 whitespace-pre-wrap">
+                    {report.note}
+                  </p>
+                )}
+                <p className="mt-2 text-xs text-gray-500">
+                  Reporter: {report.reporter?.display_name ?? 'Anonymous'}
+                </p>
+              </div>
+
+              <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col">
+                <button
+                  type="button"
+                  onClick={() => handleDismiss(report)}
+                  disabled={dismissing === report.id || deleting === report.id}
+                  className="rounded-lg border border-gray-700 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-800 disabled:opacity-50"
+                >
+                  {dismissing === report.id ? 'Dismissing...' : 'Dismiss report'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteLead(report)}
+                  disabled={dismissing === report.id || deleting === report.id}
+                  className="rounded-lg border border-red-900/70 px-3 py-2 text-xs font-medium text-red-400 transition-colors hover:bg-red-950 disabled:opacity-50"
+                >
+                  {deleting === report.id ? 'Deleting...' : 'Delete lead'}
+                </button>
+              </div>
             </div>
           </div>
         ))}

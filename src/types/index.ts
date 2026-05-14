@@ -173,3 +173,29 @@ export interface WishlistOffer {
   created_at: string;
   profiles?: Pick<Profile, 'id' | 'display_name' | 'avatar_url'> | null;
 }
+
+export type WishlistOfferReportReason =
+  | 'unavailable_or_sold'
+  | 'price_changed'
+  | 'wrong_item'
+  | 'broken_link'
+  | 'spam_or_duplicate'
+  | 'other';
+
+export type WishlistOfferReportStatus = 'open' | 'dismissed';
+
+export interface WishlistOfferReport {
+  id: string;
+  offer_id: string;
+  wishlist_id: string;
+  reason: WishlistOfferReportReason;
+  note: string | null;
+  reporter_id: string | null;
+  status: WishlistOfferReportStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  offer?: WishlistOffer | null;
+  item?: Pick<WishlistItem, 'id' | 'brand' | 'model'> | null;
+  reporter?: Pick<Profile, 'id' | 'display_name'> | null;
+}

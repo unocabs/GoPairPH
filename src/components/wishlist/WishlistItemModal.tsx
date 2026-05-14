@@ -1,14 +1,17 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from '@/components/auth/SessionProvider';
 import { createClient } from '@/lib/supabase/client';
 import { formatPrice, formatRelativeDate, formatSize, getPublicUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
+import { Textarea } from '@/components/ui/Textarea';
+import { TurnstileWidget } from '@/components/ui/TurnstileWidget';
 import { AddOfferForm } from './AddOfferForm';
-import type { WishlistItem, WishlistOffer, WishlistImage } from '@/types';
+import type { WishlistItem, WishlistOffer, WishlistImage, WishlistOfferReportReason } from '@/types';
 
 interface WishlistItemModalProps {
   initialItem: WishlistItem;
@@ -27,6 +30,15 @@ function priceRangeLabel(min: number | null, max: number | null): string | null 
   return `Up to ${formatPrice(max!)}`;
 }
 
+const REPORT_REASON_OPTIONS: { value: WishlistOfferReportReason; label: string }[] = [
+  { value: 'unavailable_or_sold', label: 'Unavailable or sold' },
+  { value: 'price_changed', label: 'Price changed' },
+  { value: 'wrong_item', label: 'Wrong item' },
+  { value: 'broken_link', label: 'Broken link' },
+  { value: 'spam_or_duplicate', label: 'Spam or duplicate' },
+  { value: 'other', label: 'Other' },
+];
+
 export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalProps) {
   const router = useRouter();
   const { profile } = useSession();
@@ -36,6 +48,13 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
   const [copied, setCopied] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deletingOfferIds, setDeletingOfferIds] = useState<Set<string>>(new Set());
+  const [reportingOffer, setReportingOffer] = useState<WishlistOffer | null>(null);
+  const [reportReason, setReportReason] = useState<WishlistOfferReportReason>('unavailable_or_sold');
+  const [reportNote, setReportNote] = useState('');
+  const [reportTurnstileToken, setReportTurnstileToken] = useState<string | null>(null);
+  const [submittingReport, setSubmittingReport] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [reportedOfferIds, setReportedOfferIds] = useState<Set<string>>(new Set());
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const images = item.wishlist_images ?? [];
@@ -105,6 +124,53 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
     setOffers(prev => [offer, ...prev]);
   }
 
+  function openReportForm(offer: WishlistOffer) {
+    setReportingOffer(offer);
+    setReportReason('unavailable_or_sold');
+    setReportNote('');
+    setReportTurnstileToken(null);
+    setReportError(null);
+  }
+
+  function closeReportForm() {
+    if (submittingReport) return;
+    setReportingOffer(null);
+    setReportTurnstileToken(null);
+    setReportError(null);
+  }
+
+  async function handleReportSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!reportingOffer || !reportTurnstileToken) return;
+
+    setSubmittingReport(true);
+    setReportError(null);
+    try {
+      const res = await fetch(`/api/wishlist/${item.id}/offers/${reportingOffer.id}/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reason: reportReason,
+          note: reportNote,
+          turnstileToken: reportTurnstileToken,
+        }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? 'Failed to report lead');
+      }
+      setReportedOfferIds(prev => new Set(prev).add(reportingOffer.id));
+      setReportingOffer(null);
+      setReportNote('');
+      setReportTurnstileToken(null);
+    } catch (err) {
+      setReportError((err as { message?: string })?.message ?? 'Failed to report lead');
+      setReportTurnstileToken(null);
+    } finally {
+      setSubmittingReport(false);
+    }
+  }
+
   async function handleOfferDelete(offer: WishlistOffer) {
     if (!profile?.is_admin && profile?.id !== offer.offerer_id) return;
     if (!confirm('Delete this lead?')) return;
@@ -131,6 +197,7 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
   }
 
   return (
+    <>
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
@@ -223,16 +290,26 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
                         {offer.profiles?.display_name ? `from ${offer.profiles.display_name} · ` : ''}
                         {formatRelativeDate(offer.created_at)}
                       </p>
-                      {canDeleteOffer && (
+                      <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
-                          onClick={() => handleOfferDelete(offer)}
-                          disabled={deletingOffer}
-                          className="self-start rounded-md border border-red-900/70 px-2 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-950/60 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
+                          onClick={() => openReportForm(offer)}
+                          disabled={reportedOfferIds.has(offer.id)}
+                          className="rounded-md border border-gray-700 px-2 py-1 text-xs font-medium text-gray-400 transition-colors hover:bg-gray-800 hover:text-gray-200 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          {deletingOffer ? 'Deleting...' : 'Delete lead'}
+                          {reportedOfferIds.has(offer.id) ? 'Reported' : 'Report lead'}
                         </button>
-                      )}
+                        {canDeleteOffer && (
+                          <button
+                            type="button"
+                            onClick={() => handleOfferDelete(offer)}
+                            disabled={deletingOffer}
+                            className="rounded-md border border-red-900/70 px-2 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-950/60 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {deletingOffer ? 'Deleting...' : 'Delete lead'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </li>
                   );
@@ -260,5 +337,53 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
         </div>
       </div>
     </div>
+    {reportingOffer && (
+      <div
+        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4"
+        onClick={e => { if (e.target === e.currentTarget) closeReportForm(); }}
+      >
+        <form onSubmit={handleReportSubmit} className="w-full max-w-md rounded-2xl border border-gray-700 bg-gray-900 p-5 shadow-2xl">
+          <div className="mb-4">
+            <h3 className="text-base font-semibold text-gray-100">Report lead</h3>
+            <p className="mt-1 text-xs text-gray-500">
+              This report goes to the Go Pair PH admin queue. The lead stays visible until an admin reviews it.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <Select
+              label="Reason"
+              value={reportReason}
+              onChange={e => setReportReason(e.target.value as WishlistOfferReportReason)}
+              options={REPORT_REASON_OPTIONS}
+              required
+            />
+            <Textarea
+              label="Note (optional)"
+              rows={3}
+              maxLength={500}
+              value={reportNote}
+              onChange={e => setReportNote(e.target.value)}
+              placeholder="Add details that can help review this lead."
+            />
+            <TurnstileWidget
+              onToken={setReportTurnstileToken}
+              onExpire={() => setReportTurnstileToken(null)}
+            />
+            {reportError && <p className="text-sm text-red-400">{reportError}</p>}
+          </div>
+
+          <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="outline" onClick={closeReportForm} disabled={submittingReport}>
+              Cancel
+            </Button>
+            <Button type="submit" loading={submittingReport} disabled={!reportTurnstileToken || submittingReport}>
+              Submit report
+            </Button>
+          </div>
+        </form>
+      </div>
+    )}
+    </>
   );
 }

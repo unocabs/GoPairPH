@@ -10,10 +10,34 @@ const bodySchema = z.object({
   images: z.array(z.object({ storage_path: z.string() })).max(5).optional().default([]),
 });
 
+type ParsedWishlistRequest = z.infer<typeof bodySchema>;
+
 export async function POST(request: Request) {
-  let parsed;
+  let parsed: ParsedWishlistRequest;
+  let imageFiles: Blob[] = [];
   try {
-    parsed = bodySchema.parse(await request.json());
+    const contentType = request.headers.get('content-type') ?? '';
+    if (contentType.includes('multipart/form-data')) {
+      const form = await request.formData();
+      const rawData = form.get('data');
+      const rawToken = form.get('turnstileToken');
+      if (typeof rawData !== 'string' || typeof rawToken !== 'string') {
+        return NextResponse.json({ error: 'Invalid form data' }, { status: 400 });
+      }
+      const files: Blob[] = [];
+      for (const entry of form.getAll('images')) {
+        if (entry instanceof Blob) files.push(entry);
+        if (files.length >= 5) break;
+      }
+      imageFiles = files;
+      parsed = bodySchema.parse({
+        data: JSON.parse(rawData),
+        turnstileToken: rawToken,
+        images: [],
+      });
+    } else {
+      parsed = bodySchema.parse(await request.json());
+    }
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
@@ -38,6 +62,27 @@ export async function POST(request: Request) {
   }
 
   const service = createServiceClient();
+  const uploadedImages: { storage_path: string }[] = [...parsed.images];
+
+  for (const file of imageFiles) {
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 });
+    }
+
+    const folder = `${crypto.randomUUID()}`;
+    const path = `anon/wishlist/${folder}/${Date.now()}.webp`;
+    const buffer = await file.arrayBuffer();
+    const { error: upErr } = await service.storage
+      .from('shoe-images')
+      .upload(path, buffer, { contentType: 'image/webp', upsert: false });
+
+    if (upErr) {
+      return NextResponse.json({ error: upErr.message }, { status: 400 });
+    }
+
+    uploadedImages.push({ storage_path: path });
+  }
+
   const { brand, model, color, size_eu, size_us, size_cm, price_min_php, price_max_php, description, location } = parsed.data;
 
   const { data: inserted, error: insertErr } = await service
@@ -62,8 +107,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: insertErr?.message ?? 'Failed to create pair request' }, { status: 400 });
   }
 
-  if (parsed.images.length > 0) {
-    const rows = parsed.images.map((img, i) => ({
+  if (uploadedImages.length > 0) {
+    const rows = uploadedImages.map((img, i) => ({
       wishlist_id: inserted.id,
       storage_path: img.storage_path,
       order: i,
