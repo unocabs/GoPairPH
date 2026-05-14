@@ -500,9 +500,9 @@ export default function CarbonPlatedRunningShoesPage() {
                       Browse Carbon Shoes
                     </Button>
                   </Link>
-                  <Link href="/wishlist/new">
+                  <Link href="/find-my-pair/new">
                     <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                      Post a Wishlist Item
+                      Post a Pair Request
                     </Button>
                   </Link>
                 </div>

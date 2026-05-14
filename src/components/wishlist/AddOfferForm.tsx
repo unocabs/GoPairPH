@@ -96,10 +96,10 @@ export function AddOfferForm({ wishlistId, onAdded }: AddOfferFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border border-gray-800 bg-gray-900/60 p-4">
-      <p className="text-sm font-semibold text-gray-200">Add an offer</p>
+      <p className="text-sm font-semibold text-gray-200">Drop a lead</p>
       <p className="text-xs text-gray-500">
-        Paste a link to where this shoe is for sale — Go Pair, Facebook Marketplace, Carousell, anywhere.
-        Anyone can add an offer. Spam will be removed.
+        Paste a link from Go Pair PH, Facebook Marketplace, Carousell, a shop page, or anywhere this pair is available.
+        Anyone can add a lead. Spam will be removed.
       </p>
 
       {profile && myListings.length > 0 && (
@@ -144,7 +144,7 @@ export function AddOfferForm({ wishlistId, onAdded }: AddOfferFormProps) {
       {error && <p className="text-sm text-red-400">{error}</p>}
 
       <Button type="submit" loading={submitting} disabled={!turnstileToken || submitting || !url.trim()} className="w-full">
-        Add offer
+        Drop lead
       </Button>
     </form>
   );

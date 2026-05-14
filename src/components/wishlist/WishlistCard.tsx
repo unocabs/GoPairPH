@@ -69,8 +69,8 @@ export function WishlistCard({ item, offerCount, onOpen }: WishlistCardProps) {
             ? 'inline-flex items-center gap-1.5 rounded-full bg-teal-950 border border-teal-800 px-2.5 py-1 text-xs font-medium text-teal-300'
             : 'text-xs text-gray-500'}>
             {offerCount > 0
-              ? `${offerCount} offer${offerCount === 1 ? '' : 's'}`
-              : 'No offers yet'}
+              ? `${offerCount} lead${offerCount === 1 ? '' : 's'}`
+              : 'No leads yet'}
           </span>
           <span className="text-xs text-gray-600">{formatRelativeDate(item.created_at)}</span>
         </div>

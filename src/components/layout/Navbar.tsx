@@ -115,8 +115,8 @@ export function Navbar() {
             <Link href="/guides" className="rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors">
               Guides
             </Link>
-            <Link href="/wishlist" className="rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors">
-              Wishlist
+            <Link href="/find-my-pair" className="rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors">
+              Find My Pair
             </Link>
             {user && (
               <Link href="/listings/new" className="ml-2">
@@ -297,7 +297,7 @@ export function Navbar() {
             <Link href="/browse" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Browse</Link>
             <Link href="/shop" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Shops</Link>
             <Link href="/guides" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Guides</Link>
-            <Link href="/wishlist" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Wishlist</Link>
+            <Link href="/find-my-pair" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Find My Pair</Link>
             {user && (
               <>
                 <Link href="/listings/new" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-teal-400 hover:bg-gray-800">+ List a Shoe</Link>

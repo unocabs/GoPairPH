@@ -56,7 +56,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     shoeId = shoe.id;
   }
 
-  // Make sure the wishlist item still exists.
+  // Make sure the pair request still exists.
   const service = createServiceClient();
   const { data: existing } = await service
     .from('wishlist_items')
@@ -64,7 +64,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     .eq('id', params.id)
     .single();
   if (!existing) {
-    return NextResponse.json({ error: 'Wishlist item not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Pair request not found' }, { status: 404 });
   }
 
   const { data: inserted, error: insertErr } = await service

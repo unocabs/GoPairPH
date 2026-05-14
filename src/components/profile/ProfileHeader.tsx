@@ -65,7 +65,7 @@ export function ProfileHeader({ profile, listingCount, wishlistCount, isOwnProfi
         <p className="text-xs text-gray-500 mt-1">Member since {formatRelativeDate(profile.created_at)}</p>
         <div className="flex gap-4 mt-3 justify-center sm:justify-start text-sm">
           <span><strong className="text-gray-100">{listingCount}</strong> <span className="text-gray-500">listings</span></span>
-          <span><strong className="text-gray-100">{wishlistCount}</strong> <span className="text-gray-500">wishlist</span></span>
+          <span><strong className="text-gray-100">{wishlistCount}</strong> <span className="text-gray-500">pair requests</span></span>
         </div>
       </div>
     </div>

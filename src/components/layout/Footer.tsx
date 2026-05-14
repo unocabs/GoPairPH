@@ -7,7 +7,7 @@ const FOOTER_GROUPS = [
     links: [
       { href: '/browse', label: 'Browse Listings' },
       { href: '/shop', label: 'Shops' },
-      { href: '/wishlist', label: 'Wishlist' },
+      { href: '/find-my-pair', label: 'Find My Pair' },
       { href: '/listings/new', label: 'List a Shoe' },
     ],
   },
@@ -16,7 +16,7 @@ const FOOTER_GROUPS = [
     links: [
       { href: '/help/how-to-buy', label: 'How to Buy' },
       { href: '/help/how-to-sell', label: 'How to Sell' },
-      { href: '/help/wishlist', label: 'How Wishlist Works' },
+      { href: '/help/find-my-pair', label: 'How Find My Pair Works' },
       { href: '/help/verification', label: 'Verification Process' },
     ],
   },

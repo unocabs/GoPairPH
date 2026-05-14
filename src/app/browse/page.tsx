@@ -192,7 +192,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
           </div>
         </div>
 
-        {/* Wishlist CTA — full width below on desktop, last on mobile */}
+        {/* Find My Pair CTA — full width below on desktop, last on mobile */}
         <section className="w-full">
           <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-6 text-center">
             <h3 className="text-lg font-bold text-gray-100">
@@ -200,16 +200,16 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
             </h3>
 
             <p className="mt-2 text-sm text-gray-400">
-              Post a wishlist item and let other runners know what
-              you&apos;re looking for.
+              Post a pair request and let the community drop available
+              links.
             </p>
 
             <Link
-              href="/wishlist/new"
+              href="/find-my-pair/new"
               className="mt-4 inline-block w-full"
             >
               <Button className="w-full sm:w-auto">
-                Post a Wishlist Item
+                Post a Pair Request
               </Button>
             </Link>
           </div>

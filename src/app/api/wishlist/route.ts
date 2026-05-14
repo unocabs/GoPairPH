@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     .single();
 
   if (insertErr || !inserted) {
-    return NextResponse.json({ error: insertErr?.message ?? 'Failed to create wishlist item' }, { status: 400 });
+    return NextResponse.json({ error: insertErr?.message ?? 'Failed to create pair request' }, { status: 400 });
   }
 
   if (parsed.images.length > 0) {

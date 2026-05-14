@@ -100,7 +100,7 @@ export function WishlistForm() {
         throw new Error(body.error ?? 'Failed to save');
       }
 
-      router.push('/wishlist');
+      router.push('/find-my-pair');
       router.refresh();
     } catch (err) {
       const msg = (err as { message?: string })?.message ?? 'Failed to save';
@@ -118,7 +118,7 @@ export function WishlistForm() {
         <Input label="Model" placeholder="e.g. Vaporfly 3" required error={errors.model?.message} {...register('model')} />
       </div>
 
-      <Input label="Color" placeholder="e.g. Black/White" hint="Optional — what colorway are you after?" error={errors.color?.message} {...register('color')} />
+      <Input label="Color" placeholder="e.g. Black/White" hint="Optional — what colorway are you looking for?" error={errors.color?.message} {...register('color')} />
 
       <div>
         <p className="text-sm font-medium text-gray-300 mb-1">
@@ -146,14 +146,14 @@ export function WishlistForm() {
 
       <Input label="Location" placeholder="e.g. Angeles Pampanga" hint="Where you'd like to receive the shoes (city or area)." error={errors.location?.message} {...register('location')} />
 
-      <Textarea label="Description (optional)" rows={3} placeholder="Anything else? e.g. condition preference, where you'd like to meet…" {...register('description')} />
+      <Textarea label="Description (optional)" rows={3} placeholder="Anything else? e.g. condition preference, links you've already checked, where you'd like to meet…" {...register('description')} />
 
       <WishlistPhotoPicker files={photos} onChange={setPhotos} />
 
       <TurnstileWidget onToken={setTurnstileToken} onExpire={() => setTurnstileToken(null)} />
 
       <Button type="submit" size="lg" loading={submitting} disabled={!turnstileToken || submitting} className="w-full">
-        Post Wishlist Item
+        Post Pair Request
       </Button>
     </form>
   );

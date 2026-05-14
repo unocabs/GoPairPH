@@ -28,7 +28,7 @@ export default function PrivacyPage() {
           <li><strong>Account info from Google sign-in:</strong> your name, email address, and profile picture, as provided by Google when you authenticate.</li>
           <li><strong>Profile info you give us:</strong> display name, location (e.g. &quot;Angeles City&quot;), optional Facebook Messenger username.</li>
           <li><strong>Listings:</strong> photos and details of shoes you list (brand, model, size, condition, price, description).</li>
-          <li><strong>Activity:</strong> purchase requests you send or receive, wishlist items, and messages between you and other users.</li>
+          <li><strong>Activity:</strong> purchase requests you send or receive, Find My Pair requests, and messages between you and other users.</li>
           <li><strong>Technical:</strong> standard server logs (IP address, browser, timestamps) needed to operate the site.</li>
         </ul>
       </section>
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
         <h2 className="text-xl font-semibold text-gray-100">3. How we use it</h2>
         <ul className="list-disc list-inside space-y-1.5">
           <li>To create and maintain your account and authenticate sign-ins.</li>
-          <li>To display your listings, profile, and wishlist to other users.</li>
+          <li>To display your listings, profile, and pair requests to other users.</li>
           <li>To deliver purchase requests and connect buyers with sellers.</li>
           <li>To prevent abuse, fraud, and unsafe behavior on the platform.</li>
           <li>To respond when you contact us for support.</li>

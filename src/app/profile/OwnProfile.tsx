@@ -56,7 +56,7 @@ export function OwnProfile({
     { key: 'listings', label: 'My Listings', count: shoes.length },
     { key: 'purchases', label: 'Purchase Requests', count: purchaseRequests.length, badgeTone: 'attention' },
     { key: 'offers', label: 'Sent Offers', count: sentOffers.length, badgeTone: 'attention' },
-    { key: 'wishlist', label: 'Wishlist', count: wishlist.length },
+    { key: 'wishlist', label: 'Find My Pair', count: wishlist.length },
     { key: 'sales', label: 'Purchase History', count: purchaseHistory.length },
   ];
 
@@ -182,13 +182,13 @@ export function OwnProfile({
       {tab === 'wishlist' && (
         <div>
           <div className="flex justify-between items-center mb-4">
-            <p className="text-sm text-gray-500">Shoes you&apos;re looking for</p>
-            <Link href="/wishlist/new">
-              <Button size="sm">+ Add to Wishlist</Button>
+            <p className="text-sm text-gray-500">Pair requests you&apos;ve posted</p>
+            <Link href="/find-my-pair/new">
+              <Button size="sm">+ Post Pair Request</Button>
             </Link>
           </div>
           {wishlist.length === 0 ? (
-            <p className="text-gray-500">Your wishlist is empty.</p>
+            <p className="text-gray-500">You haven&apos;t posted any pair requests yet.</p>
           ) : (
             <WishlistDeepLinkGrid items={wishlist} />
           )}

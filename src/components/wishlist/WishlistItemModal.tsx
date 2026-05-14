@@ -35,6 +35,7 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
   const [loadingOffers, setLoadingOffers] = useState(true);
   const [copied, setCopied] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deletingOfferIds, setDeletingOfferIds] = useState<Set<string>>(new Set());
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const images = item.wishlist_images ?? [];
@@ -70,7 +71,7 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
   }, [onClose]);
 
   async function handleCopy() {
-    const url = `${window.location.origin}/wishlist?item=${item.id}`;
+    const url = `${window.location.origin}/find-my-pair?item=${item.id}`;
     try {
       await navigator.clipboard.writeText(url);
     } catch {
@@ -87,7 +88,7 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
 
   async function handleDelete() {
     if (!isOwner) return;
-    if (!confirm('Remove this wishlist item? All offers on it will also be removed.')) return;
+    if (!confirm('Remove this pair request? All leads on it will also be removed.')) return;
     setDeleting(true);
     const supabase = createClient();
     const { error } = await supabase.from('wishlist_items').delete().eq('id', item.id);
@@ -102,6 +103,31 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
 
   function handleOfferAdded(offer: WishlistOffer) {
     setOffers(prev => [offer, ...prev]);
+  }
+
+  async function handleOfferDelete(offer: WishlistOffer) {
+    if (!profile?.is_admin && profile?.id !== offer.offerer_id) return;
+    if (!confirm('Delete this lead?')) return;
+
+    setDeletingOfferIds(prev => new Set(prev).add(offer.id));
+    try {
+      const res = await fetch(`/api/wishlist/${item.id}/offers/${offer.id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? 'Failed to delete lead');
+      }
+      setOffers(prev => prev.filter(existing => existing.id !== offer.id));
+    } catch (err) {
+      alert((err as { message?: string })?.message ?? 'Failed to delete lead');
+    } finally {
+      setDeletingOfferIds(prev => {
+        const next = new Set(prev);
+        next.delete(offer.id);
+        return next;
+      });
+    }
   }
 
   return (
@@ -161,18 +187,22 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-semibold text-gray-200">
-                {loadingOffers ? 'Offers' : `${offers.length} offer${offers.length === 1 ? '' : 's'}`}
+                {loadingOffers ? 'Leads' : `${offers.length} lead${offers.length === 1 ? '' : 's'}`}
               </p>
             </div>
             {loadingOffers ? (
-              <div className="rounded-xl border border-gray-800 bg-gray-900/60 p-4 text-sm text-gray-500">Loading offers…</div>
+              <div className="rounded-xl border border-gray-800 bg-gray-900/60 p-4 text-sm text-gray-500">Loading leads...</div>
             ) : offers.length === 0 ? (
               <div className="rounded-xl border border-dashed border-gray-800 p-4 text-sm text-gray-500 text-center">
-                No offers yet. Be the first.
+                No leads yet. Be the first.
               </div>
             ) : (
               <ul className="space-y-2">
-                {offers.map(offer => (
+                {offers.map(offer => {
+                  const canDeleteOffer = !!profile && (profile.is_admin || profile.id === offer.offerer_id);
+                  const deletingOffer = deletingOfferIds.has(offer.id);
+
+                  return (
                   <li key={offer.id} className="rounded-xl border border-gray-800 bg-gray-900/60 p-3 text-sm">
                     <div className="flex items-start justify-between gap-3">
                       <a
@@ -188,12 +218,25 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
                       )}
                     </div>
                     {offer.note && <p className="mt-1 text-gray-300">{offer.note}</p>}
-                    <p className="mt-1 text-xs text-gray-500">
-                      {offer.profiles?.display_name ? `from ${offer.profiles.display_name} · ` : ''}
-                      {formatRelativeDate(offer.created_at)}
-                    </p>
+                    <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-xs text-gray-500">
+                        {offer.profiles?.display_name ? `from ${offer.profiles.display_name} · ` : ''}
+                        {formatRelativeDate(offer.created_at)}
+                      </p>
+                      {canDeleteOffer && (
+                        <button
+                          type="button"
+                          onClick={() => handleOfferDelete(offer)}
+                          disabled={deletingOffer}
+                          className="self-start rounded-md border border-red-900/70 px-2 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-950/60 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
+                        >
+                          {deletingOffer ? 'Deleting...' : 'Delete lead'}
+                        </button>
+                      )}
+                    </div>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             )}
           </div>
@@ -210,7 +253,7 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
                 loading={deleting}
                 className="border-red-800 text-red-400 hover:bg-red-950 hover:text-red-300"
               >
-                Remove this wishlist item
+                Remove this pair request
               </Button>
             </div>
           )}

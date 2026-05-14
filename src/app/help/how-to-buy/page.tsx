@@ -105,8 +105,8 @@ export default function HowToBuyPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">Can&apos;t find what you want?</h2>
         <p>
-          Post a wishlist item and let other runners know what you&apos;re looking for. See{' '}
-          <Link href="/help/wishlist" className="text-teal-400 hover:text-teal-300">How Wishlist Works</Link>{' '}
+          Post a pair request and let the community drop available links. See{' '}
+          <Link href="/help/find-my-pair" className="text-teal-400 hover:text-teal-300">How Find My Pair Works</Link>{' '}
           for details.
         </p>
       </section>
