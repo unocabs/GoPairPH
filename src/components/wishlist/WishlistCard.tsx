@@ -47,12 +47,12 @@ export function WishlistCard({ item, offerCount, onOpen }: WishlistCardProps) {
       )}
 
       <div className="p-4 space-y-3">
-        <div>
-          <p className="font-semibold text-gray-100 truncate">{item.brand} {item.model}</p>
-          {item.color && <p className="text-xs text-gray-500 mt-0.5">{item.color}</p>}
-        </div>
+        <p className="font-semibold text-gray-100 truncate">{item.brand} {item.model}</p>
 
         <div className="space-y-1 text-sm">
+          {item.color && (
+            <p><span className="text-gray-500">Color:</span> <span className="text-gray-300">{item.color}</span></p>
+          )}
           {sizeLabel && (
             <p><span className="text-gray-500">Size:</span> <span className="text-gray-300">{sizeLabel}</span></p>
           )}
