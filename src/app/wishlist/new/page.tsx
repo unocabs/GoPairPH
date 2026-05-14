@@ -1,22 +1,8 @@
 export const dynamic = 'force-dynamic';
 
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import { AuthGuard } from '@/components/auth/AuthGuard';
 import { WishlistForm } from '@/components/wishlist/WishlistForm';
 
-async function getProfileId(): Promise<string | null> {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data } = await supabase.from('profiles').select('id').eq('user_id', user.id).single();
-  return data?.id ?? null;
-}
-
-export default async function NewWishlistPage() {
-  const profileId = await getProfileId();
-  if (!profileId) redirect('/');
-
+export default function NewWishlistPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex items-center gap-3">
@@ -47,7 +33,6 @@ export default async function NewWishlistPage() {
             </svg>
           </button>
 
-          {/* Tooltip Content */}
           <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-72">
             <div className="bg-gray-800 text-gray-200 text-sm rounded-lg p-4 shadow-xl border border-gray-700">
               <p className="mb-3">
@@ -64,19 +49,16 @@ export default async function NewWishlistPage() {
               </a>
             </div>
 
-            {/* Arrow */}
             <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-gray-800" />
           </div>
         </div>
       </div>
 
       <p className="text-sm text-gray-500 mb-8">
-        Let other runners know what shoe you&apos;re looking for.
+        Let other runners know what shoe you&apos;re looking for. No account needed.
       </p>
 
-      <AuthGuard>
-        <WishlistForm profileId={profileId} />
-      </AuthGuard>
+      <WishlistForm />
     </div>
   );
 }

@@ -15,7 +15,7 @@ async function getOwnProfileData() {
 
   const [shoesRes, wishlistRes] = await Promise.all([
     supabase.from('shoes').select('*, shoe_images(*), shops(*), shoe_variants(*)').eq('seller_id', profile.id).order('created_at', { ascending: false }),
-    supabase.from('wishlist_items').select('*, wishlist_images(*), wishlist_suggestions(count)').eq('user_id', profile.id).order('created_at', { ascending: false }),
+    supabase.from('wishlist_items').select('*, wishlist_images(*), wishlist_offers(count)').eq('user_id', profile.id).order('created_at', { ascending: false }),
   ]);
 
   const allShoes = (shoesRes.data as Shoe[]) ?? [];

@@ -145,7 +145,7 @@ export interface WishlistSuggestion {
 
 export interface WishlistItem {
   id: string;
-  user_id: string;
+  user_id: string | null;
   brand: string;
   model: string;
   color: string | null;
@@ -155,8 +155,21 @@ export interface WishlistItem {
   price_min_php: number | null;
   price_max_php: number | null;
   description: string | null;
+  location: string | null;
   created_at: string;
   profiles?: Profile;
   wishlist_images?: WishlistImage[];
-  wishlist_suggestions?: { count: number }[]; // aggregate count from join
+  wishlist_offers?: { count: number }[] | WishlistOffer[];
+}
+
+export interface WishlistOffer {
+  id: string;
+  wishlist_id: string;
+  url: string;
+  price_php: number | null;
+  note: string | null;
+  offerer_id: string | null;
+  shoe_id: string | null;
+  created_at: string;
+  profiles?: Pick<Profile, 'id' | 'display_name' | 'avatar_url'> | null;
 }

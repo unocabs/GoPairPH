@@ -43,6 +43,7 @@ export const wishlistSchema = z.object({
   price_min_php: z.coerce.number().min(0).optional().nullable(),
   price_max_php: z.coerce.number().min(0).optional().nullable(),
   description: z.string().optional().nullable(),
+  location: z.string().max(80).optional().nullable(),
 }).superRefine((data, ctx) => {
   if (data.price_min_php != null && data.price_max_php != null && data.price_min_php > data.price_max_php) {
     ctx.addIssue({
@@ -51,6 +52,13 @@ export const wishlistSchema = z.object({
       path: ['price_min_php'],
     });
   }
+});
+
+export const offerSchema = z.object({
+  url: z.string().url('Please paste a valid URL').max(500),
+  price_php: z.coerce.number().min(0).optional().nullable(),
+  note: z.string().max(140).optional().nullable(),
+  shoe_id: z.string().uuid().optional().nullable(),
 });
 
 export const profileSchema = z.object({
@@ -64,4 +72,5 @@ export const profileSchema = z.object({
 
 export type ListingFormData = z.infer<typeof listingSchema>;
 export type WishlistFormData = z.infer<typeof wishlistSchema>;
+export type OfferFormData = z.infer<typeof offerSchema>;
 export type ProfileFormData = z.infer<typeof profileSchema>;

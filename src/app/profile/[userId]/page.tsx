@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ListingGrid } from '@/components/listings/ListingGrid';
-import { WishlistCard } from '@/components/wishlist/WishlistCard';
+import { WishlistDeepLinkGrid } from '@/components/wishlist/WishlistDeepLinkGrid';
 import Link from 'next/link';
 import type { Profile, Shoe, WishlistItem } from '@/types';
 
@@ -23,7 +23,7 @@ async function getPublicProfile(userId: string) {
       .order('created_at', { ascending: false }),
     supabase
       .from('wishlist_items')
-      .select('*, profiles(*), wishlist_images(*), wishlist_suggestions(count)')
+      .select('*, wishlist_images(*), wishlist_offers(count)')
       .eq('user_id', profile.id)
       .order('created_at', { ascending: false }),
   ]);
@@ -70,16 +70,7 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
       {wishlist.length > 0 && (
         <section>
           <h2 className="text-xl font-bold text-gray-100 mb-4">Wishlist ({wishlist.length})</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {wishlist.map(item => (
-              <WishlistCard
-                key={item.id}
-                item={item}
-                isOwner={!!currentProfileId && item.user_id === currentProfileId}
-                currentProfileId={currentProfileId ?? undefined}
-              />
-            ))}
-          </div>
+          <WishlistDeepLinkGrid items={wishlist} />
         </section>
       )}
     </div>

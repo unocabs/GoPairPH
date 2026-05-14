@@ -4,13 +4,13 @@ import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { wishlistSchema, type WishlistFormData } from '@/lib/validations';
 import { BRANDS, SIZE_CONVERSIONS } from '@/lib/constants';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
+import { TurnstileWidget } from '@/components/ui/TurnstileWidget';
 import { WishlistPhotoPicker } from './WishlistPhotoPicker';
 
 const BRAND_OPTIONS = BRANDS.map(b => ({ value: b, label: b }));
@@ -41,12 +41,12 @@ async function convertToWebP(file: File): Promise<Blob> {
   });
 }
 
-export function WishlistForm({ profileId }: { profileId: string }) {
+export function WishlistForm() {
   const [photos, setPhotos] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const router = useRouter();
-  const supabase = createClient();
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<WishlistFormData>({
     resolver: zodResolver(wishlistSchema) as Resolver<WishlistFormData>,
@@ -62,44 +62,42 @@ export function WishlistForm({ profileId }: { profileId: string }) {
     if (field !== 'cm') setValue('size_cm', match.cm);
   }
 
+  async function uploadPhoto(file: File, token: string): Promise<string> {
+    const blob = await convertToWebP(file);
+    const fd = new FormData();
+    fd.append('file', blob, 'photo.webp');
+    fd.append('turnstileToken', token);
+    const res = await fetch('/api/wishlist/upload', { method: 'POST', body: fd });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error ?? 'Photo upload failed');
+    }
+    const { storage_path } = await res.json();
+    return storage_path as string;
+  }
+
   async function onSubmit(data: WishlistFormData) {
+    if (!turnstileToken) {
+      setError('Please complete the captcha to continue.');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
-      const { data: wishlist, error: insertErr } = await supabase
-        .from('wishlist_items')
-        .insert({
-          user_id: profileId,
-          brand: data.brand,
-          model: data.model,
-          color: data.color || null,
-          size_eu: data.size_eu ?? null,
-          size_us: data.size_us ?? null,
-          size_cm: data.size_cm ?? null,
-          price_min_php: data.price_min_php ?? null,
-          price_max_php: data.price_max_php ?? null,
-          description: data.description || null,
-        })
-        .select('id')
-        .single();
-      if (insertErr) throw insertErr;
+      const images: { storage_path: string }[] = [];
+      for (const photo of photos) {
+        const path = await uploadPhoto(photo, turnstileToken);
+        images.push({ storage_path: path });
+      }
 
-      // Upload reference photos (if any)
-      if (photos.length > 0) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('Not authenticated');
-        const imageRows: { wishlist_id: string; storage_path: string; order: number }[] = [];
-        for (let i = 0; i < photos.length; i++) {
-          const blob = await convertToWebP(photos[i]);
-          const path = `${user.id}/wishlist/${wishlist.id}/${i}-${Date.now()}.webp`;
-          const { error: upErr } = await supabase.storage
-            .from('shoe-images')
-            .upload(path, blob, { contentType: 'image/webp', upsert: true });
-          if (upErr) throw upErr;
-          imageRows.push({ wishlist_id: wishlist.id, storage_path: path, order: i });
-        }
-        const { error: imgErr } = await supabase.from('wishlist_images').insert(imageRows);
-        if (imgErr) throw imgErr;
+      const res = await fetch('/api/wishlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data, turnstileToken, images }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? 'Failed to save');
       }
 
       router.push('/wishlist');
@@ -146,11 +144,15 @@ export function WishlistForm({ profileId }: { profileId: string }) {
         </div>
       </div>
 
+      <Input label="Location" placeholder="e.g. Angeles Pampanga" hint="Where you'd like to receive the shoes (city or area)." error={errors.location?.message} {...register('location')} />
+
       <Textarea label="Description (optional)" rows={3} placeholder="Anything else? e.g. condition preference, where you'd like to meet…" {...register('description')} />
 
       <WishlistPhotoPicker files={photos} onChange={setPhotos} />
 
-      <Button type="submit" size="lg" loading={submitting} className="w-full">
+      <TurnstileWidget onToken={setTurnstileToken} onExpire={() => setTurnstileToken(null)} />
+
+      <Button type="submit" size="lg" loading={submitting} disabled={!turnstileToken || submitting} className="w-full">
         Post Wishlist Item
       </Button>
     </form>

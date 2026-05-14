@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { EditProfileModal } from '@/components/profile/EditProfileModal';
 import { ListingGrid } from '@/components/listings/ListingGrid';
-import { WishlistCard } from '@/components/wishlist/WishlistCard';
+import { WishlistDeepLinkGrid } from '@/components/wishlist/WishlistDeepLinkGrid';
 import { PurchaseRequestCard } from '@/components/purchases/PurchaseRequestCard';
 import { PurchaseHistoryCard } from '@/components/purchases/PurchaseHistoryCard';
 import { SentOfferCard } from '@/components/purchases/SentOfferCard';
@@ -38,15 +38,11 @@ export function OwnProfile({
   initialTab,
 }: OwnProfileProps) {
   const [profile, setProfile] = useState(initialProfile);
-  const [wishlist, setWishlist] = useState(initialWishlist);
+  const [wishlist] = useState(initialWishlist);
   const [purchaseRequests, setPurchaseRequests] = useState(initialPurchaseRequests);
   const [sentOffers, setSentOffers] = useState(initialSentOffers);
   const [editOpen, setEditOpen] = useState(false);
   const [tab, setTab] = useState<ProfileTab>(initialTab ?? 'listings');
-
-  function handleWishlistDeleted(id: string) {
-    setWishlist(prev => prev.filter(w => w.id !== id));
-  }
 
   function handlePurchaseRequestChanged(id: string) {
     setPurchaseRequests(prev => prev.filter(r => r.id !== id));
@@ -194,11 +190,7 @@ export function OwnProfile({
           {wishlist.length === 0 ? (
             <p className="text-gray-500">Your wishlist is empty.</p>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {wishlist.map(item => (
-                <WishlistCard key={item.id} item={item} isOwner currentProfileId={profile.id} onDeleted={handleWishlistDeleted} />
-              ))}
-            </div>
+            <WishlistDeepLinkGrid items={wishlist} />
           )}
         </div>
       )}
