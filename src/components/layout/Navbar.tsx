@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useSession } from '@/hooks/useSession';
 import { createClient } from '@/lib/supabase/client';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
+import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { useRouter, usePathname } from 'next/navigation';
 import { Logo } from '@/components/brand/Logo';
@@ -137,12 +137,11 @@ export function Navbar() {
                   className="relative flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-gray-950"
                 >
                   {user.user_metadata?.avatar_url ? (
-                    <Image
+                    <Avatar
                       src={user.user_metadata.avatar_url}
-                      alt="Avatar"
-                      width={36}
-                      height={36}
-                      className={`rounded-full border-2 transition-colors ${
+                      alt={user.user_metadata?.full_name || user.email || 'Avatar'}
+                      size={36}
+                      className={`border-2 transition-colors ${
                         adminPendingCount > 0
                           ? 'border-amber-400 ring-2 ring-amber-400/40 ring-offset-2 ring-offset-gray-950 hover:border-amber-300'
                           : 'border-gray-700 hover:border-teal-500'

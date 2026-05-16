@@ -14,7 +14,7 @@ import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
 import { formatPrice, formatSize, formatRelativeDate, getPublicUrl, formatListingName, getListingPath, getAbsoluteListingUrl } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import type { Shoe, PurchaseRequest } from '@/types';
-import Image from 'next/image';
+import { Avatar } from '@/components/ui/Avatar';
 import { StatusButton } from './StatusButton';
 import { DeleteListingButton } from './DeleteListingButton';
 import { CompleteSaleButtons } from './CompleteSaleButtons';
@@ -375,13 +375,12 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             <div className="mt-6 rounded-xl border border-gray-800 bg-gray-900 p-4">
               <div className="flex items-center gap-4">
                 <Link href={`/profile/${seller.id}`} className="shrink-0">
-                  {seller.avatar_url ? (
-                    <Image src={seller.avatar_url} alt={seller.display_name} width={48} height={48} className="rounded-full border border-gray-700" />
-                  ) : (
-                    <div className="h-12 w-12 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold">
-                      {seller.display_name[0]?.toUpperCase() ?? 'U'}
-                    </div>
-                  )}
+                  <Avatar
+                    src={seller.avatar_url}
+                    alt={seller.display_name}
+                    size={48}
+                    className="border border-gray-700"
+                  />
                 </Link>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-gray-500">Seller</p>

@@ -370,32 +370,49 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
           />
           <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} size="lg" />
           <TitleBlock shoe={shoe} shareSize={shareSize} titleSize={68} metaSize={28} maxLines={2} />
-          <PriceBlock shoe={shoe} priceSize={66} tagSize={16} />
-        </div>
-
-        <ProductImageBlock shoe={shoe} heroSrc={heroSrc} size={hasDescription ? 650 : 730} />
-
-        {hasDescription && (
-          <div style={{ marginTop: 16 }}>
+          {hasDescription && (
             <DescriptionBlock
               description={shoe.description}
-              maxLines={3}
-              labelSize={17}
-              bodySize={24}
+              maxLines={2}
+              labelSize={15}
+              bodySize={22}
               lineHeight={1.35}
-              padding={20}
-              radius={16}
+              padding={18}
+              radius={14}
+              singleParagraph
             />
-          </div>
-        )}
-
-        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18, color: '#94a3b8', fontSize: 24, fontWeight: 750 }}>
-          <span>{shoe.listing_type === 'donate' ? 'Available for donation' : 'Available on Go Pair PH'}</span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <LogoMark size={40} />
-            <span><span style={{ color: '#f8fafc' }}>GoPair</span><span style={{ color: '#2dd4bf' }}>PH</span><span style={{ color: '#f8fafc' }}>.com</span></span>
-          </span>
+          )}
         </div>
+
+        <ProductImageBlock
+          shoe={shoe}
+          heroSrc={heroSrc}
+          size={hasDescription ? 880 : 940}
+          topLeftOverlay={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderRadius: 9999, background: 'rgba(2, 6, 23, 0.2)', backdropFilter: 'blur(6px)', border: '1px solid rgba(45, 212, 191, 0.35)', color: '#f8fafc', fontSize: 22, fontWeight: 800 }}>
+              <LogoMark size={32} />
+              <span><span style={{ color: '#f8fafc' }}>GoPair</span><span style={{ color: '#2dd4bf' }}>PH</span><span style={{ color: '#f8fafc' }}>.com</span></span>
+            </div>
+          }
+          bottomRightOverlay={
+            shoe.listing_type === 'donate' ? (
+              <div style={{ padding: '14px 22px', borderRadius: 18, background: 'rgba(34, 197, 94, 0.92)', color: '#062e1b', fontWeight: 850, fontSize: 36, letterSpacing: '-0.01em' }}>
+                Free Donation
+              </div>
+            ) : shoe.price_php != null ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                <div style={{ padding: '12px 22px', borderRadius: 18, background: 'rgba(2, 6, 23, 0.85)', backdropFilter: 'blur(8px)', border: '1px solid rgba(45, 212, 191, 0.45)', color: '#2dd4bf', fontWeight: 900, fontSize: 64, letterSpacing: '-0.03em', lineHeight: 1 }}>
+                  {formatPrice(shoe.price_php)}
+                </div>
+                {shoe.is_negotiable && (
+                  <span style={{ fontSize: 18, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fcd34d', background: 'rgba(245, 158, 11, 0.18)', border: '1px solid rgba(245, 158, 11, 0.55)', borderRadius: 9999, padding: '5px 14px' }}>
+                    Negotiable
+                  </span>
+                )}
+              </div>
+            ) : null
+          }
+        />
       </div>
     );
   }
@@ -475,10 +492,14 @@ function ProductImageBlock({
   shoe,
   heroSrc,
   size,
+  topLeftOverlay,
+  bottomRightOverlay,
 }: {
   shoe: Shoe;
   heroSrc: string | null;
   size: number;
+  topLeftOverlay?: React.ReactNode;
+  bottomRightOverlay?: React.ReactNode;
 }) {
   return (
     <div
@@ -508,7 +529,17 @@ function ProductImageBlock({
           <span style={{ fontSize: 16, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 600 }}>No photo</span>
         </div>
       )}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(2,6,23,0) 60%, rgba(2,6,23,0.22) 100%)' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(2,6,23,0) 55%, rgba(2,6,23,0.35) 100%)', pointerEvents: 'none' }} />
+      {topLeftOverlay && (
+        <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 1 }}>
+          {topLeftOverlay}
+        </div>
+      )}
+      {bottomRightOverlay && (
+        <div style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 1 }}>
+          {bottomRightOverlay}
+        </div>
+      )}
     </div>
   );
 }
@@ -674,7 +705,7 @@ function TitleBlock({ shoe, shareSize, titleSize, metaSize, maxLines }: { shoe: 
   );
 }
 
-function PriceBlock({ shoe, priceSize, tagSize = 11 }: { shoe: Shoe; priceSize: number; tagSize?: number }) {
+function PriceBlock({ shoe, priceSize, tagSize = 11, alignEnd = false }: { shoe: Shoe; priceSize: number; tagSize?: number; alignEnd?: boolean }) {
   if (shoe.listing_type === 'donate') {
     return (
       <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.4)', borderRadius: 12, padding: '10px 14px', fontSize: Math.max(16, tagSize + 4), fontWeight: 700, color: '#86efac', width: 'fit-content' }}>
@@ -684,8 +715,8 @@ function PriceBlock({ shoe, priceSize, tagSize = 11 }: { shoe: Shoe; priceSize: 
   }
   if (shoe.price_php == null) return null;
   return (
-    <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-      <span style={{ fontSize: priceSize, fontWeight: 850, color: '#2dd4bf', letterSpacing: '-0.03em' }}>
+    <div style={{ display: 'flex', flexDirection: alignEnd ? 'column' : 'row', alignItems: alignEnd ? 'flex-end' : 'baseline', gap: alignEnd ? 8 : 12 }}>
+      <span style={{ fontSize: priceSize, fontWeight: 850, color: '#2dd4bf', letterSpacing: '-0.03em', lineHeight: 1 }}>
         {formatPrice(shoe.price_php)}
       </span>
       {shoe.is_negotiable && (
@@ -705,6 +736,7 @@ function DescriptionBlock({
   lineHeight = 1.5,
   padding = 14,
   radius = 12,
+  singleParagraph = false,
 }: {
   description: string | null;
   maxLines: number;
@@ -713,15 +745,18 @@ function DescriptionBlock({
   lineHeight?: number;
   padding?: number;
   radius?: number;
+  /** When true, line breaks in the source collapse to spaces so the text flows as one paragraph. */
+  singleParagraph?: boolean;
 }) {
   if (!description) return null;
+  const body = singleParagraph ? description.replace(/\s+/g, ' ').trim() : description;
   return (
     <div style={{ borderRadius: radius, border: '1px solid #1f2937', background: 'rgba(17, 24, 39, 0.6)', padding }}>
       <div style={{ fontSize: labelSize, fontWeight: 750, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
         Description
       </div>
-      <div style={{ fontSize: bodySize, lineHeight, color: '#d1d5db', whiteSpace: 'pre-wrap', display: '-webkit-box', WebkitLineClamp: maxLines, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-        {description}
+      <div style={{ fontSize: bodySize, lineHeight, color: '#d1d5db', whiteSpace: singleParagraph ? 'normal' : 'pre-wrap', display: '-webkit-box', WebkitLineClamp: maxLines, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {body}
       </div>
     </div>
   );
