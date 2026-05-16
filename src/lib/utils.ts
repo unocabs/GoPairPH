@@ -56,13 +56,14 @@ export function formatRelativeDate(dateString: string): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const formatAgo = (value: number, unit: string) => `${value} ${unit}${value === 1 ? '' : 's'} ago`;
 
   if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-  return `${Math.floor(diffDays / 365)} years ago`;
+  if (diffDays < 7) return formatAgo(diffDays, 'day');
+  if (diffDays < 30) return formatAgo(Math.floor(diffDays / 7), 'week');
+  if (diffDays < 365) return formatAgo(Math.floor(diffDays / 30), 'month');
+  return formatAgo(Math.floor(diffDays / 365), 'year');
 }
 
 export function formatShortDate(dateString: string): string {
