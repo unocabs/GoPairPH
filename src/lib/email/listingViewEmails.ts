@@ -62,7 +62,7 @@ export function renderListingViewMilestoneEmail({
             <tr>
               <td style="padding:12px 28px 4px;">
                 <p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.7;">Hi ${escape(sellerName)}, good news. Your <strong>${escape(listingName)}</strong> listing is being seen by runners on Go Pair PH.</p>
-                <p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.7;">It just reached <strong>${formatNumber(milestone)} views</strong>. That means your pair is getting in front of people who are already looking for running shoes.</p>
+                <p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.7;">It just hit <strong>${formatNumber(milestone)} views today</strong>. That means your pair is in front of people who are actively looking right now.</p>
                 <p style="margin:0;color:#334155;font-size:15px;line-height:1.7;">To keep the momentum going, share your Go Pair PH listing link again in Facebook groups, Marketplace, Messenger, or Reddit.</p>
               </td>
             </tr>
