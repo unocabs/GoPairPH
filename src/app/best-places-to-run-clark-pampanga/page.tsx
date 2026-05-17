@@ -227,18 +227,6 @@ export default function BestPlacesToRunClarkPampangaPage() {
                 A practical local guide for easy loops, tempo runs, intervals, long runs,
                 and choosing the right shoes for Clark roads.
               </p>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Link href="/browse">
-                  <Button size="lg" className="w-full sm:w-auto">
-                    Browse Running Shoes
-                  </Button>
-                </Link>
-                <Link href="/find-my-pair/new">
-                  <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-                    Post a Pair Request
-                  </Button>
-                </Link>
-              </div>
               <p className="mt-5 text-sm text-gray-500">Last updated: May 17, 2026</p>
             </div>
 
