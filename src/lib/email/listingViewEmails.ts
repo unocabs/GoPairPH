@@ -84,6 +84,70 @@ export function renderListingViewMilestoneEmail({
 </html>`;
 }
 
+interface LifetimeMilestoneEmailArgs {
+  sellerName: string;
+  brand: string;
+  model: string;
+  milestone: number;
+  listingUrl: string;
+}
+
+// One-time celebration email when a listing crosses a lifetime view threshold
+// (currently 20). Distinct from the daily milestone — different copy emphasizes
+// the cumulative achievement, not today's activity.
+export function renderListingViewLifetimeMilestoneEmail({
+  sellerName,
+  brand,
+  model,
+  milestone,
+  listingUrl,
+}: LifetimeMilestoneEmailArgs): string {
+  const listingName = formatListingName(brand, model);
+  return `
+<!doctype html>
+<html>
+  <body style="margin:0;background:#f8fafc;font-family:Arial,sans-serif;color:#0f172a;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:28px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;">
+            <tr>
+              <td style="padding:28px 28px 8px;">
+                <p style="margin:0 0 10px;color:#0f766e;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Go Pair PH</p>
+                <h1 style="margin:0;color:#0f172a;font-size:26px;line-height:1.2;">${formatNumber(milestone)} runners checked out your pair 🎯</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 28px 4px;">
+                <p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.7;">Hi ${escape(sellerName)}, milestone unlocked. Your <strong>${escape(listingName)}</strong> listing has now been viewed by <strong>${formatNumber(milestone)} unique runners</strong> on Go Pair PH since you posted it.</p>
+                <p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.7;">That's real interest — this kind of traction usually means the listing is well-priced and well-described. Keep an eye out for incoming offers.</p>
+                <p style="margin:0;color:#334155;font-size:15px;line-height:1.7;">Want to push it further? Reshare the link in running groups and on Marketplace. The more eyes, the faster it sells.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px 28px;">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="border-radius:10px;background:#0d9488;">
+                      <a href="${escape(listingUrl)}" style="display:inline-block;padding:12px 22px;color:#ffffff;font-weight:700;text-decoration:none;font-size:14px;">View your listing</a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="background-color:#f9fafb;padding:20px 28px;border-top:1px solid #e5e7eb;text-align:center;color:#6b7280;font-size:12px;">
+                You're getting this once per listing when it crosses ${formatNumber(milestone)} lifetime views.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
+
 export function renderAdminListingViewsReportEmail({
   windowStart,
   windowEnd,

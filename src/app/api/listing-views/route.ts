@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { getManilaDateString } from '@/lib/listingViews';
-import { renderListingViewMilestoneEmail } from '@/lib/email/listingViewEmails';
+import { renderListingViewMilestoneEmail, renderListingViewLifetimeMilestoneEmail } from '@/lib/email/listingViewEmails';
 import { sendEmail } from '@/lib/email/resend';
 import { getAbsoluteListingUrl } from '@/lib/utils';
 
@@ -17,7 +17,10 @@ const bodySchema = z.object({
 interface RecordViewResult {
   counted: boolean;
   total_views: number;
+  /** Daily-tier crossed today; 0 when no tier crossed. */
   new_milestone: number;
+  /** One-time lifetime milestone crossed; 0 when not applicable. */
+  lifetime_milestone: number;
 }
 
 function hashVisitorId(visitorId: string, listingId: string): string {
@@ -78,7 +81,7 @@ export async function POST(request: Request) {
   }
 
   const result = record as RecordViewResult;
-  if (result.new_milestone > 0) {
+  if (result.new_milestone > 0 || result.lifetime_milestone > 0) {
     try {
       const sellerProfile = Array.isArray(listing.profiles) ? listing.profiles[0] : listing.profiles;
       const sellerUserId = sellerProfile?.user_id;
@@ -88,17 +91,37 @@ export async function POST(request: Request) {
         if (sellerEmail) {
           const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
           const listingUrl = getAbsoluteListingUrl(siteUrl.replace(/\/$/, ''), listing);
-          await sendEmail({
-            to: sellerEmail,
-            subject: 'Your running shoes are getting noticed on Go Pair PH',
-            html: renderListingViewMilestoneEmail({
-              sellerName: sellerProfile?.display_name ?? 'there',
-              brand: listing.brand,
-              model: listing.model,
-              milestone: result.new_milestone,
-              listingUrl,
-            }),
-          });
+          const sellerName = sellerProfile?.display_name ?? 'there';
+
+          if (result.new_milestone > 0) {
+            await sendEmail({
+              to: sellerEmail,
+              subject: 'Your running shoes are getting noticed on Go Pair PH',
+              html: renderListingViewMilestoneEmail({
+                sellerName,
+                brand: listing.brand,
+                model: listing.model,
+                milestone: result.new_milestone,
+                listingUrl,
+              }),
+            });
+          }
+
+          // Lifetime milestone is one-time (currently 20). Sent separately so the
+          // copy can lean into the cumulative achievement, not today's activity.
+          if (result.lifetime_milestone > 0) {
+            await sendEmail({
+              to: sellerEmail,
+              subject: `${result.lifetime_milestone} runners have viewed your pair — Go Pair PH`,
+              html: renderListingViewLifetimeMilestoneEmail({
+                sellerName,
+                brand: listing.brand,
+                model: listing.model,
+                milestone: result.lifetime_milestone,
+                listingUrl,
+              }),
+            });
+          }
         }
       }
     } catch (emailError) {
