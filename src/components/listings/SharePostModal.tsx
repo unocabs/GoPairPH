@@ -11,6 +11,7 @@ interface SharePostModalProps {
   shoe: Shoe;
   seller: Profile | null;
   onClose: () => void;
+  onDownloaded?: () => void;
 }
 
 const CARD_W = 1200;
@@ -57,7 +58,7 @@ async function urlToDataUrl(url: string): Promise<string> {
   });
 }
 
-export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
+export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePostModalProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [heroSrc, setHeroSrc] = useState<string | null>(null);
   const [identitySrc, setIdentitySrc] = useState<string | null>(null);
@@ -188,6 +189,7 @@ export function SharePostModal({ shoe, seller, onClose }: SharePostModalProps) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    onDownloaded?.();
   }
 
   return (
