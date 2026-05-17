@@ -23,6 +23,7 @@ import { SponsoredAdminToggle } from './SponsoredAdminToggle';
 import { BuyButton } from '@/components/purchases/BuyButton';
 import { DonateRequestButton } from '@/components/purchases/DonateRequestButton';
 import { ContactSellerButtons } from '@/components/listings/ContactSellerButtons';
+import { SaveListingButton } from '@/components/listings/SaveListingButton';
 import { ListingViewTracker } from '@/components/listings/ListingViewTracker';
 import { PromoteListingButton } from '@/components/listings/PromoteListingButton';
 import { SponsoredPill } from '@/components/listings/SponsoredPill';
@@ -32,6 +33,7 @@ import { getSponsoredSlotInfo } from '@/lib/sponsored';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
 import { PageShell } from '@/components/layout/PageShell';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { isListingSaved } from '@/lib/savedListings';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -178,6 +180,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const topImage = shoe.shoe_images?.find(i => i.view_type === 'top') ?? shoe.shoe_images?.[0];
   const productImageUrl = topImage ? getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, topImage.storage_path) : null;
   const purchaseContext = await getPurchaseContext(shoe.id, currentProfileId, isOwner, shoe.status);
+  const isSaved = await isListingSaved(currentProfileId, shoe.id);
 
   const now = new Date();
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > now;
@@ -455,6 +458,22 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 shoe={shoe}
                 seller={seller}
               />
+            </div>
+          )}
+
+          {!isOwner && (
+            <div className="mt-4">
+              <SaveListingButton
+                listingId={shoe.id}
+                initialSaved={isSaved}
+                canSave={!!currentProfileId}
+                variant="button"
+              />
+              {!currentProfileId && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Sign in to save pairs and revisit them from your profile.
+                </p>
+              )}
             </div>
           )}
 

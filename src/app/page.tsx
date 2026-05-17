@@ -10,6 +10,7 @@ import { FeaturedListing } from '@/components/home/FeaturedListing';
 import { FirstListingNudge } from '@/components/listings/FirstListingNudge';
 import { LogoMark } from '@/components/brand/Logo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { getSavedListingIds } from '@/lib/savedListings';
 import type { Shoe } from '@/types';
 
 async function getRecentListings(): Promise<Shoe[]> {
@@ -53,7 +54,7 @@ async function getFeaturedListing(): Promise<Shoe | null> {
   return (data as Shoe) ?? null;
 }
 
-async function getCurrentProfileAndRequests(): Promise<{ profileId: string; requestListingIds: Set<string> } | null> {
+async function getCurrentProfileAndRequests(listingIds: string[]): Promise<{ profileId: string; requestListingIds: Set<string>; savedListingIds: Set<string> } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -67,7 +68,8 @@ async function getCurrentProfileAndRequests(): Promise<{ profileId: string; requ
     .in('status', ['pending', 'accepted']);
 
   const requestListingIds = new Set((requests ?? []).map((r: { listing_id: string }) => r.listing_id));
-  return { profileId: profile.id, requestListingIds };
+  const savedListingIds = await getSavedListingIds(profile.id, listingIds);
+  return { profileId: profile.id, requestListingIds, savedListingIds };
 }
 
 async function getMarketplaceActivity(): Promise<{
@@ -110,12 +112,12 @@ async function getMarketplaceActivity(): Promise<{
 }
 
 export default async function HomePage() {
-  const [recentShoes, userContext, featured, activity] = await Promise.all([
+  const [recentShoes, featured, activity] = await Promise.all([
     getRecentListings(),
-    getCurrentProfileAndRequests(),
     getFeaturedListing(),
     getMarketplaceActivity(),
   ]);
+  const userContext = await getCurrentProfileAndRequests(recentShoes.map(s => s.id));
   const offerCounts = await getOfferCounts(recentShoes.map(s => s.id));
 
   return (
@@ -290,6 +292,7 @@ export default async function HomePage() {
           shoes={recentShoes}
           currentProfileId={userContext?.profileId}
           myRequestListingIds={userContext?.requestListingIds}
+          savedListingIds={userContext?.savedListingIds}
           offerCounts={offerCounts}
           emptyMessage="No listings yet. Be the first to list your shoes!"
         />

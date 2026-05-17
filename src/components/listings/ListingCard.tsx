@@ -18,6 +18,7 @@ import { DonateRequestModal } from '@/components/purchases/DonateRequestModal';
 import { SponsoredPill } from './SponsoredPill';
 import { NewPill } from './NewPill';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
+import { SaveListingButton } from './SaveListingButton';
 import { type ShopTheme } from '@/lib/shopTheme';
 
 const NEW_PILL_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -29,10 +30,12 @@ interface ListingCardProps {
   offerCount?: number;
   /** Owner-only: total + last-7-days view counts. Rendered as a pill on the card. */
   viewSummary?: { total: number; last7d: number };
+  isSaved?: boolean;
+  onSavedChange?: (listingId: string, saved: boolean) => void;
   theme?: ShopTheme;
 }
 
-export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false, offerCount = 0, viewSummary, theme }: ListingCardProps) {
+export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false, offerCount = 0, viewSummary, isSaved = false, onSavedChange, theme }: ListingCardProps) {
   const [buyOpen, setBuyOpen] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -42,6 +45,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
   const topImage = shoe.shoe_images?.find(img => img.view_type === 'top') ?? shoe.shoe_images?.[0];
   const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path) : null;
   const isOwner = !!currentProfileId && shoe.seller_id === currentProfileId;
+  const canSave = !!currentProfileId && !isOwner;
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > new Date();
   const isFresh = Date.now() - new Date(shoe.created_at).getTime() < NEW_PILL_WINDOW_MS;
   const themedCardStyle = theme ? { backgroundColor: theme.surface, borderColor: isOwner ? theme.accent : theme.border } : undefined;
@@ -237,6 +241,19 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
               </svg>
             )}
           </button>
+        </div>
+      )}
+
+      {!isOwner && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square">
+          <div className="pointer-events-auto absolute right-2 top-2">
+            <SaveListingButton
+              listingId={shoe.id}
+              initialSaved={isSaved}
+              canSave={canSave}
+              onSavedChange={onSavedChange}
+            />
+          </div>
         </div>
       )}
 

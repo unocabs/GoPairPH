@@ -15,12 +15,13 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest } from '@/types';
 import Link from 'next/link';
 
-type ProfileTab = 'listings' | 'purchases' | 'offers' | 'wishlist' | 'sales';
+type ProfileTab = 'listings' | 'purchases' | 'offers' | 'wishlist' | 'saved' | 'sales';
 
 interface OwnProfileProps {
   profile: Profile;
   shoes: Shoe[];
   wishlist: WishlistItem[];
+  savedListings: Shoe[];
   purchaseRequests: PurchaseRequest[];
   sentOffers: PurchaseRequest[];
   purchaseHistory: PurchaseRequest[];
@@ -34,6 +35,7 @@ export function OwnProfile({
   profile: initialProfile,
   shoes,
   wishlist: initialWishlist,
+  savedListings: initialSavedListings,
   purchaseRequests: initialPurchaseRequests,
   sentOffers: initialSentOffers,
   purchaseHistory,
@@ -44,6 +46,7 @@ export function OwnProfile({
 }: OwnProfileProps) {
   const [profile, setProfile] = useState(initialProfile);
   const [wishlist] = useState(initialWishlist);
+  const [savedListings, setSavedListings] = useState(initialSavedListings);
   const [purchaseRequests, setPurchaseRequests] = useState(initialPurchaseRequests);
   const [sentOffers, setSentOffers] = useState(initialSentOffers);
   const [editOpen, setEditOpen] = useState(false);
@@ -57,10 +60,15 @@ export function OwnProfile({
     setSentOffers(prev => prev.filter(r => r.id !== id));
   }
 
+  function handleSavedListingChanged(id: string, saved: boolean) {
+    if (!saved) setSavedListings(prev => prev.filter(shoe => shoe.id !== id));
+  }
+
   const tabs: ReadonlyArray<{ key: ProfileTab; label: string; count: number; badgeTone?: 'default' | 'attention' }> = [
     { key: 'listings', label: 'My Listings', count: shoes.length },
     { key: 'purchases', label: 'Purchase Requests', count: purchaseRequests.length, badgeTone: 'attention' },
     { key: 'offers', label: 'Sent Offers', count: sentOffers.length, badgeTone: 'attention' },
+    { key: 'saved', label: 'Saved Pairs', count: savedListings.length },
     { key: 'wishlist', label: 'Find My Pair', count: wishlist.length },
     { key: 'sales', label: 'Purchase History', count: purchaseHistory.length },
   ];
@@ -225,6 +233,30 @@ export function OwnProfile({
             </SurfaceCard>
           ) : (
             <WishlistDeepLinkGrid items={wishlist} />
+          )}
+        </div>
+      )}
+
+      {tab === 'saved' && (
+        <div>
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-gray-500">Pairs you saved for later</p>
+            <Link href="/browse">
+              <Button size="sm" variant="outline" className="w-full sm:w-auto">Browse Pairs</Button>
+            </Link>
+          </div>
+          {savedListings.length === 0 ? (
+            <SurfaceCard className="border-dashed p-8 text-center text-gray-500">
+              No saved pairs yet. Save pairs you like and come back before they sell.
+            </SurfaceCard>
+          ) : (
+            <ListingGrid
+              shoes={savedListings}
+              currentProfileId={profile.id}
+              savedListingIds={new Set(savedListings.map(shoe => shoe.id))}
+              onSavedChange={handleSavedListingChanged}
+              emptyMessage="No saved pairs yet. Save pairs you like and come back before they sell."
+            />
           )}
         </div>
       )}

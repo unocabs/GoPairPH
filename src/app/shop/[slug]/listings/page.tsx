@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { getOfferCounts } from '@/lib/offers';
+import { getSavedListingIds } from '@/lib/savedListings';
 import { ListingGrid } from '@/components/listings/ListingGrid';
 import type { Shoe, Shop } from '@/types';
 
@@ -39,6 +40,20 @@ async function getShopListings(shopId: string): Promise<Shoe[]> {
   });
 }
 
+async function getCurrentProfileId(): Promise<string | null> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  return data?.id ?? null;
+}
+
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const shop = await getShop(params.slug);
   if (!shop) return { title: 'Shop not found' };
@@ -53,8 +68,12 @@ export default async function ShopListingsPage({ params }: { params: { slug: str
   const shop = await getShop(params.slug);
   if (!shop) notFound();
 
-  const listings = await getShopListings(shop.id);
+  const [listings, profileId] = await Promise.all([
+    getShopListings(shop.id),
+    getCurrentProfileId(),
+  ]);
   const offerCounts = await getOfferCounts(listings.map(s => s.id));
+  const savedListingIds = await getSavedListingIds(profileId, listings.map(s => s.id));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -65,6 +84,8 @@ export default async function ShopListingsPage({ params }: { params: { slug: str
       <ListingGrid
         shoes={listings}
         offerCounts={offerCounts}
+        currentProfileId={profileId ?? undefined}
+        savedListingIds={savedListingIds}
         emptyMessage="This shop hasn't posted any listings yet."
       />
     </div>

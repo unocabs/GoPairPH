@@ -13,6 +13,7 @@ import { SortSelector } from '@/components/listings/SortSelector';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageShell } from '@/components/layout/PageShell';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { getSavedListingIds } from '@/lib/savedListings';
 import type { Shoe } from '@/types';
 
 export const metadata: Metadata = {
@@ -155,7 +156,7 @@ function SearchBar({ defaultValue }: { defaultValue?: string }) {
   );
 }
 
-async function getCurrentProfileAndRequests(): Promise<{ profileId: string; requestListingIds: Set<string> } | null> {
+async function getCurrentProfileAndRequests(listingIds: string[]): Promise<{ profileId: string; requestListingIds: Set<string>; savedListingIds: Set<string> } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -169,14 +170,13 @@ async function getCurrentProfileAndRequests(): Promise<{ profileId: string; requ
     .in('status', ['pending', 'accepted']);
 
   const requestListingIds = new Set((requests ?? []).map((r: { listing_id: string }) => r.listing_id));
-  return { profileId: profile.id, requestListingIds };
+  const savedListingIds = await getSavedListingIds(profile.id, listingIds);
+  return { profileId: profile.id, requestListingIds, savedListingIds };
 }
 
 export default async function BrowsePage({ searchParams }: BrowsePageProps) {
-  const [shoes, userContext] = await Promise.all([
-    getListings(searchParams),
-    getCurrentProfileAndRequests(),
-  ]);
+  const shoes = await getListings(searchParams);
+  const userContext = await getCurrentProfileAndRequests(shoes.map(s => s.id));
   const offerCounts = await getOfferCounts(shoes.map(s => s.id));
 
   return (
@@ -210,6 +210,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
               shoes={shoes}
               currentProfileId={userContext?.profileId}
               myRequestListingIds={userContext?.requestListingIds}
+              savedListingIds={userContext?.savedListingIds}
               offerCounts={offerCounts}
               emptyMessage="No listings match your filters. Try adjusting them."
             />

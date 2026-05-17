@@ -6,6 +6,7 @@ import { OwnProfile } from './OwnProfile';
 import { PageShell } from '@/components/layout/PageShell';
 import { getViewSummariesForListings } from '@/lib/listingViews';
 import { getCompletedSalesCount } from '@/lib/sales';
+import { getSavedListings } from '@/lib/savedListings';
 import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest } from '@/types';
 
 async function getOwnProfileData() {
@@ -16,9 +17,10 @@ async function getOwnProfileData() {
   const { data: profile } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
   if (!profile) return null;
 
-  const [shoesRes, wishlistRes] = await Promise.all([
+  const [shoesRes, wishlistRes, savedListings] = await Promise.all([
     supabase.from('shoes').select('*, shoe_images(*), shops(*), shoe_variants(*)').eq('seller_id', profile.id).order('created_at', { ascending: false }),
     supabase.from('wishlist_items').select('*, wishlist_images(*), wishlist_offers(count)').eq('user_id', profile.id).order('created_at', { ascending: false }),
+    getSavedListings(profile.id),
   ]);
 
   const allShoes = (shoesRes.data as Shoe[]) ?? [];
@@ -81,6 +83,7 @@ async function getOwnProfileData() {
     profile: profile as Profile,
     shoes,
     wishlist: (wishlistRes.data as WishlistItem[]) ?? [],
+    savedListings,
     purchaseRequests,
     sentOffers,
     purchaseHistory,
@@ -90,8 +93,8 @@ async function getOwnProfileData() {
   };
 }
 
-type ProfileTab = 'listings' | 'purchases' | 'offers' | 'sales' | 'wishlist';
-const VALID_TABS: ProfileTab[] = ['listings', 'purchases', 'offers', 'sales', 'wishlist'];
+type ProfileTab = 'listings' | 'purchases' | 'offers' | 'sales' | 'wishlist' | 'saved';
+const VALID_TABS: ProfileTab[] = ['listings', 'purchases', 'offers', 'sales', 'wishlist', 'saved'];
 
 export default async function ProfilePage({ searchParams }: { searchParams: { tab?: string } }) {
   const data = await getOwnProfileData();

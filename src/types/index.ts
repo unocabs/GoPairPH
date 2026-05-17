@@ -124,6 +124,14 @@ export interface PurchaseRequest {
   shoe_variants?: ShoeVariant | null;
 }
 
+export interface SavedListing {
+  id: string;
+  user_id: string;
+  listing_id: string;
+  created_at: string;
+  listing?: Shoe | null;
+}
+
 export interface WishlistImage {
   id: string;
   wishlist_id: string;
