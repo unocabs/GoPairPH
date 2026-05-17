@@ -40,24 +40,35 @@ export function PurchaseRequestCard({
     resolvedListing?.shoe_images?.[0];
   const thumbUrl = topImg && supabaseUrl ? getPublicUrl(supabaseUrl, topImg.storage_path) : null;
 
-  async function handleAccept() {
-    if (!confirm('Accept this purchase request? Your listing will be reserved for this buyer until you mark it sold.')) return;
+  async function changeStatus(next: 'accepted' | 'declined') {
     setLoading(true);
     setError(null);
-    const { error: err } = await createClient().rpc('accept_purchase_request', { p_request_id: request.id });
-    if (err) { setError(err.message); setLoading(false); return; }
-    setStatus('accepted');
-    setLoading(false);
+    try {
+      const res = await fetch(`/api/purchase-requests/${request.id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: next }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? 'Failed to update request');
+      }
+      setStatus(next);
+      if (next === 'declined') onChanged(request.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update request');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleAccept() {
+    if (!confirm('Accept this purchase request? Your listing will be reserved for this buyer until you mark it sold.')) return;
+    await changeStatus('accepted');
   }
 
   async function handleDecline() {
-    setLoading(true);
-    setError(null);
-    const { error: err } = await createClient().from('purchase_requests').update({ status: 'declined' }).eq('id', request.id);
-    if (err?.message) { setError(err.message); setLoading(false); return; }
-    setStatus('declined');
-    setLoading(false);
-    onChanged(request.id);
+    await changeStatus('declined');
   }
 
   async function handleCompleteSale() {

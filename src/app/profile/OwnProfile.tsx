@@ -25,6 +25,8 @@ interface OwnProfileProps {
   sentOffers: PurchaseRequest[];
   purchaseHistory: PurchaseRequest[];
   latestVerification: VerificationRequest | null;
+  viewCounts?: Record<string, { total: number; last7d: number }>;
+  completedSales?: number;
   initialTab?: ProfileTab;
 }
 
@@ -36,6 +38,8 @@ export function OwnProfile({
   sentOffers: initialSentOffers,
   purchaseHistory,
   latestVerification,
+  viewCounts,
+  completedSales,
   initialTab,
 }: OwnProfileProps) {
   const [profile, setProfile] = useState(initialProfile);
@@ -66,7 +70,7 @@ export function OwnProfile({
       {/* Profile header — stacks centered on mobile, row on sm+ */}
       <SurfaceCard glow className="mb-8 flex flex-col items-center gap-4 p-5 sm:flex-row sm:items-start sm:gap-6 sm:p-6">
         <div className="flex-1 w-full">
-          <ProfileHeader profile={profile} listingCount={shoes.length} wishlistCount={wishlist.length} isOwnProfile />
+          <ProfileHeader profile={profile} listingCount={shoes.length} wishlistCount={wishlist.length} completedSales={completedSales} isOwnProfile />
           <div className="mt-3 flex justify-center sm:justify-start">
             <RequestVerificationButton
               profileId={profile.id}
@@ -127,7 +131,7 @@ export function OwnProfile({
               <Button size="sm" className="w-full sm:w-auto">+ List a Shoe</Button>
             </Link>
           </SurfaceCard>
-          <ListingGrid shoes={shoes} currentProfileId={profile.id} emptyMessage="You haven't listed any shoes yet." />
+          <ListingGrid shoes={shoes} currentProfileId={profile.id} viewCounts={viewCounts} emptyMessage="You haven't listed any shoes yet." />
         </div>
       )}
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
-import { renderOfferEmail, renderShopOrderEmail } from '@/lib/email/offerNotification';
+import { renderOfferEmail, renderShopOrderEmail, renderDonationRequestEmail } from '@/lib/email/offerNotification';
 import { sendOfferEmail } from '@/lib/email/resend';
 import { formatCondition, formatListingName, formatSize } from '@/lib/utils';
 
@@ -130,7 +130,7 @@ async function sendNotification({ buyerId, listingId, message, offerPricePhp, va
 
   const { data: listing, error: listingErr } = await service
     .from('shoes')
-    .select('id, brand, model, size_eu, size_us, size_cm, condition, mileage_km, price_php, seller_id, shop_id, shops(name)')
+    .select('id, brand, model, size_eu, size_us, size_cm, condition, mileage_km, price_php, listing_type, seller_id, shop_id, shops(name)')
     .eq('id', listingId)
     .single();
   if (listingErr || !listing) throw new Error(`listing fetch failed: ${listingErr?.message}`);
@@ -160,6 +160,25 @@ async function sendNotification({ buyerId, listingId, message, offerPricePhp, va
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? '';
   const offerLink = `${siteUrl}/profile`;
+
+  // Donate listings: lighter template, no price talk.
+  if (listing.listing_type === 'donate') {
+    const html = renderDonationRequestEmail({
+      donor_name: sellerProfile.display_name,
+      listing_title: listingTitle,
+      shoe_size: formatSize(listing.size_eu, listing.size_us, listing.size_cm) || '—',
+      condition: formatCondition(listing.condition),
+      requester_name: buyerProfile?.display_name ?? 'A Go Pair PH runner',
+      requester_message: message,
+      request_link: offerLink,
+    });
+    await sendOfferEmail({
+      to: sellerEmail,
+      subject: `New donation request: ${listingTitle} — Go Pair PH`,
+      html,
+    });
+    return;
+  }
 
   if (listing.shop_id) {
     let selectedSize = formatSize(listing.size_eu, listing.size_us, listing.size_cm) || 'Selected size';

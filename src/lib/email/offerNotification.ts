@@ -21,6 +21,28 @@ interface ShopOrderEmailData {
   order_link: string;
 }
 
+interface DonationRequestEmailData {
+  donor_name: string;
+  listing_title: string;
+  shoe_size: string;
+  condition: string;
+  requester_name: string;
+  requester_message: string | null;
+  request_link: string;
+}
+
+interface RequestStatusChangeEmailData {
+  buyer_name: string;
+  listing_title: string;
+  seller_name: string;
+  status: 'accepted' | 'declined';
+  /** "Free donation" when listing is a donate; pretty peso price otherwise. */
+  price_label: string;
+  request_link: string;
+  /** Optional Messenger link to the seller for buyer→seller follow-up after accept. */
+  messenger_link: string | null;
+}
+
 function escape(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -398,4 +420,142 @@ export function renderShopOrderEmail(data: ShopOrderEmailData): string {
     </table>
   </body>
 </html>`;
+}
+
+// Simple branded shell shared by the donation + status-change emails.
+// Keeps the markup small while staying consistent with the offer/shop templates above.
+function renderSimpleEmail({
+  preheader,
+  headline,
+  intro,
+  rows,
+  message,
+  ctaLabel,
+  ctaHref,
+  footer,
+}: {
+  preheader: string;
+  headline: string;
+  intro: string;
+  rows: Array<{ label: string; value: string }>;
+  message: string | null;
+  ctaLabel: string;
+  ctaHref: string;
+  footer: string;
+}): string {
+  const rowsHtml = rows.map(r => `
+    <tr>
+      <td style="padding: 6px 0; color: #6b7280; font-size: 13px; font-family: 'Segoe UI', Arial, sans-serif;">${escape(r.label)}</td>
+      <td style="padding: 6px 0; color: #111827; font-size: 14px; font-weight: 600; text-align: right; font-family: 'Segoe UI', Arial, sans-serif;">${escape(r.value)}</td>
+    </tr>`).join('');
+
+  const messageBlock = message
+    ? `
+            <tr>
+              <td style="padding: 0 40px 24px 40px;">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f0fdfa; border-left: 4px solid #0d9488; border-radius: 6px;">
+                  <tr>
+                    <td style="padding: 16px 20px;">
+                      <p style="color: #0f766e; font-size: 13px; font-weight: 600; margin: 0 0 6px 0; font-family: 'Segoe UI', Arial, sans-serif;">💬 Message</p>
+                      <p style="color: #134e4a; font-size: 14px; line-height: 22px; margin: 0; font-style: italic; font-family: 'Segoe UI', Arial, sans-serif;">"${escape(message)}"</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>`
+    : '';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${escape(headline)} — Go Pair PH</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f4f6f8; font-family: 'Segoe UI', Arial, sans-serif;">
+    <div style="display: none; max-height: 0; overflow: hidden;">${escape(preheader)}</div>
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f6f8;">
+      <tr>
+        <td align="center" style="padding: 24px 12px;">
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+            <tr>
+              <td style="padding: 32px 40px 12px 40px;">
+                <h1 style="color: #111827; font-size: 22px; font-weight: 700; margin: 0 0 8px 0;">${escape(headline)}</h1>
+                <p style="color: #4b5563; font-size: 14px; line-height: 22px; margin: 0;">${escape(intro)}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 40px 16px 40px;">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                  ${rowsHtml}
+                </table>
+              </td>
+            </tr>
+            ${messageBlock}
+            <tr>
+              <td align="center" style="padding: 0 40px 28px 40px;">
+                <a href="${encodeURI(ctaHref)}" style="background-color: #0d9488; color: #ffffff; padding: 12px 22px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">${escape(ctaLabel)}</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="background-color: #f9fafb; padding: 20px 40px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px;">
+                ${escape(footer)} · <a href="https://gopairph.com/safety" style="color: #0d9488; text-decoration: none;">Safety Guide</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
+
+export function renderDonationRequestEmail(data: DonationRequestEmailData): string {
+  return renderSimpleEmail({
+    preheader: `${data.requester_name} requested your free donation on Go Pair PH.`,
+    headline: 'Someone requested your donation 🙌',
+    intro: `Hi ${data.donor_name}, a fellow runner just asked for the pair you're giving away.`,
+    rows: [
+      { label: 'Listing', value: data.listing_title },
+      { label: 'Size', value: data.shoe_size },
+      { label: 'Condition', value: data.condition },
+      { label: 'Requested by', value: data.requester_name },
+    ],
+    message: data.requester_message,
+    ctaLabel: 'Review request',
+    ctaHref: data.request_link,
+    footer: "You're getting this because your listing is set to donate.",
+  });
+}
+
+export function renderRequestStatusChangeEmail(data: RequestStatusChangeEmailData): string {
+  const accepted = data.status === 'accepted';
+  const headline = accepted
+    ? 'Your request was accepted 🎉'
+    : 'Your request was declined';
+  const intro = accepted
+    ? `Good news, ${data.buyer_name} — ${data.seller_name} accepted your request. Coordinate the meetup or shipping with them directly.`
+    : `Hi ${data.buyer_name}, ${data.seller_name} declined your request. No worries — keep browsing, there are more pairs.`;
+
+  const ctaLabel = accepted && data.messenger_link
+    ? `Message ${data.seller_name}`
+    : 'View on Go Pair PH';
+  const ctaHref = accepted && data.messenger_link ? data.messenger_link : data.request_link;
+
+  return renderSimpleEmail({
+    preheader: accepted
+      ? `${data.seller_name} accepted your request. Time to coordinate the meetup.`
+      : `${data.seller_name} declined your request. Keep browsing — more pairs are listed daily.`,
+    headline,
+    intro,
+    rows: [
+      { label: 'Listing', value: data.listing_title },
+      { label: 'Price', value: data.price_label },
+      { label: 'Seller', value: data.seller_name },
+    ],
+    message: null,
+    ctaLabel,
+    ctaHref,
+    footer: "You're getting this because you have an active request on Go Pair PH.",
+  });
 }

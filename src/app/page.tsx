@@ -7,6 +7,7 @@ import { ListingGrid } from '@/components/listings/ListingGrid';
 import { Button } from '@/components/ui/Button';
 import { HeroFallback } from '@/components/home/HeroFallback';
 import { FeaturedListing } from '@/components/home/FeaturedListing';
+import { FirstListingNudge } from '@/components/listings/FirstListingNudge';
 import { LogoMark } from '@/components/brand/Logo';
 import type { Shoe } from '@/types';
 
@@ -163,6 +164,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <FirstListingNudge />
 
       {/* Recent Listings */}
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">

@@ -9,10 +9,12 @@ interface ProfileHeaderProps {
   profile: Profile;
   listingCount: number;
   wishlistCount: number;
+  /** Completed sales count, shown as a trust signal when > 0. */
+  completedSales?: number;
   isOwnProfile?: boolean;
 }
 
-export function ProfileHeader({ profile, listingCount, wishlistCount, isOwnProfile }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, listingCount, wishlistCount, completedSales, isOwnProfile }: ProfileHeaderProps) {
   return (
     // Center on mobile, left-align from sm+
     <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left gap-5">
@@ -57,6 +59,12 @@ export function ProfileHeader({ profile, listingCount, wishlistCount, isOwnProfi
           </p>
         ) : null}
         <p className="text-xs text-gray-500 mt-1">Member since {formatRelativeDate(profile.created_at)}</p>
+        {!!completedSales && completedSales > 0 && (
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 px-2.5 py-0.5 text-xs font-semibold text-teal-300">
+            <span aria-hidden>🤝</span>
+            {completedSales} successful deal{completedSales === 1 ? '' : 's'}
+          </p>
+        )}
         <div className="flex gap-4 mt-3 justify-center sm:justify-start text-sm">
           <span><strong className="text-gray-100">{listingCount}</strong> <span className="text-gray-500">listings</span></span>
           <span><strong className="text-gray-100">{wishlistCount}</strong> <span className="text-gray-500">pair requests</span></span>

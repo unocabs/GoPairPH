@@ -69,6 +69,55 @@ function one<T>(value: T | T[] | null | undefined): T | null {
   return value ?? null;
 }
 
+export interface ViewSummary {
+  total: number;
+  last7d: number;
+}
+
+/**
+ * Batch-fetch view counts for a list of listings. Used to surface counts to
+ * the listing owner in their own profile (e.g. "47 views · 12 this week").
+ *
+ * Uses service-role client because listing_view_totals / listing_daily_view_counts
+ * are revoked from anon + authenticated.
+ */
+export async function getViewSummariesForListings(shoeIds: string[]): Promise<Map<string, ViewSummary>> {
+  const result = new Map<string, ViewSummary>();
+  if (shoeIds.length === 0) return result;
+
+  const service = createServiceClient();
+  const { startDate, endDate } = getDashboardViewWindow(7);
+
+  const [{ data: totalRows }, { data: dailyRows }] = await Promise.all([
+    service
+      .from('listing_view_totals')
+      .select('listing_id, total_views')
+      .in('listing_id', shoeIds),
+    service
+      .from('listing_daily_view_counts')
+      .select('listing_id, view_date, views')
+      .in('listing_id', shoeIds)
+      .gte('view_date', startDate)
+      .lte('view_date', endDate),
+  ]);
+
+  for (const id of shoeIds) result.set(id, { total: 0, last7d: 0 });
+
+  for (const row of (totalRows as { listing_id: string; total_views: number }[] | null) ?? []) {
+    const existing = result.get(row.listing_id) ?? { total: 0, last7d: 0 };
+    existing.total = row.total_views;
+    result.set(row.listing_id, existing);
+  }
+
+  for (const row of (dailyRows as DailyCountRow[] | null) ?? []) {
+    const existing = result.get(row.listing_id) ?? { total: 0, last7d: 0 };
+    existing.last7d += row.views;
+    result.set(row.listing_id, existing);
+  }
+
+  return result;
+}
+
 export async function getListingViewSummaries({
   startDate,
   endDate,

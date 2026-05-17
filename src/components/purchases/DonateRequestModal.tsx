@@ -1,19 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 
 interface DonateRequestModalProps {
   listingId: string;
   listingName: string;
-  requesterId: string;
+  /** Kept for backwards compatibility; the API now resolves the buyer from the session. */
+  requesterId?: string;
   onClose: () => void;
   onSubmitted: () => void;
 }
 
-export function DonateRequestModal({ listingId, listingName, requesterId, onClose, onSubmitted }: DonateRequestModalProps) {
+export function DonateRequestModal({ listingId, listingName, onClose, onSubmitted }: DonateRequestModalProps) {
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,14 +21,24 @@ export function DonateRequestModal({ listingId, listingName, requesterId, onClos
   async function handleSubmit() {
     setSubmitting(true);
     setError(null);
-    const { error: err } = await createClient().from('purchase_requests').insert({
-      listing_id: listingId,
-      buyer_id: requesterId,
-      message: message.trim() || null,
-      offer_price_php: null,
-    });
-    if (err) { setError(err.message); setSubmitting(false); return; }
-    onSubmitted();
+    try {
+      const res = await fetch('/api/offers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listing_id: listingId,
+          message: message.trim() || null,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? 'Failed to send request');
+      }
+      onSubmitted();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send request');
+      setSubmitting(false);
+    }
   }
 
   return (

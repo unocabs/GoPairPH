@@ -16,17 +16,23 @@ import { cn } from '@/lib/utils';
 import { BuyModal } from '@/components/purchases/BuyModal';
 import { DonateRequestModal } from '@/components/purchases/DonateRequestModal';
 import { SponsoredPill } from './SponsoredPill';
+import { NewPill } from './NewPill';
+import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import { type ShopTheme } from '@/lib/shopTheme';
+
+const NEW_PILL_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 interface ListingCardProps {
   shoe: Shoe;
   currentProfileId?: string;
   hasExistingRequest?: boolean;
   offerCount?: number;
+  /** Owner-only: total + last-7-days view counts. Rendered as a pill on the card. */
+  viewSummary?: { total: number; last7d: number };
   theme?: ShopTheme;
 }
 
-export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false, offerCount = 0, theme }: ListingCardProps) {
+export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false, offerCount = 0, viewSummary, theme }: ListingCardProps) {
   const [buyOpen, setBuyOpen] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -37,6 +43,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
   const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path) : null;
   const isOwner = !!currentProfileId && shoe.seller_id === currentProfileId;
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > new Date();
+  const isFresh = Date.now() - new Date(shoe.created_at).getTime() < NEW_PILL_WINDOW_MS;
   const themedCardStyle = theme ? { backgroundColor: theme.surface, borderColor: isOwner ? theme.accent : theme.border } : undefined;
   const themedMutedStyle = theme ? { color: theme.mutedText } : undefined;
   const themedAccentStyle = theme ? { color: theme.accent } : undefined;
@@ -99,6 +106,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
           <div className={`absolute ${shoe.shops?.logo_storage_path ? 'top-2 left-12' : 'top-2 left-2'} flex flex-col items-start gap-1`}>
             {shoe.listing_type === 'donate' && <ListingTypeBadge type={shoe.listing_type} />}
             {isSponsored && <SponsoredPill size="sm" />}
+            {isFresh && shoe.status === 'active' && !isSponsored && <NewPill size="sm" />}
           </div>
           {offerCount > 0 && shoe.status === 'active' && (
             <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 px-2.5 py-1">
@@ -135,7 +143,12 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
 
         {/* Details */}
         <div className="p-3.5">
-          <h3 className="font-semibold text-gray-100 truncate text-sm" style={theme ? { color: theme.text } : undefined}>{formatListingName(shoe.brand, shoe.model)}</h3>
+          <div className="flex items-center gap-1 min-w-0">
+            <h3 className="font-semibold text-gray-100 truncate text-sm" style={theme ? { color: theme.text } : undefined}>{formatListingName(shoe.brand, shoe.model)}</h3>
+            {!shoe.shop_id && shoe.profiles?.is_verified && (
+              <span className="shrink-0"><VerifiedBadge size="sm" iconOnly /></span>
+            )}
+          </div>
           {shoe.shop_id ? (
             (() => {
               const inStock = (shoe.shoe_variants ?? []).filter(v => v.quantity > 0);
@@ -180,6 +193,19 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
           )}
 
           <p className="mt-1.5 text-xs text-gray-600" style={themedMutedStyle}>{formatRelativeDate(shoe.created_at)}</p>
+
+          {isOwner && viewSummary && (
+            <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-slate-800/70 border border-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-gray-300" title="Total views · last 7 days (only you can see this)">
+              <svg className="h-3 w-3 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {viewSummary.total} view{viewSummary.total === 1 ? '' : 's'}
+              {viewSummary.last7d > 0 && (
+                <span className="text-teal-300"> · {viewSummary.last7d} this week</span>
+              )}
+            </p>
+          )}
         </div>
       </Link>
 

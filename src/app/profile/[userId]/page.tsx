@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getCompletedSalesCount } from '@/lib/sales';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ListingGrid } from '@/components/listings/ListingGrid';
 import { WishlistDeepLinkGrid } from '@/components/wishlist/WishlistDeepLinkGrid';
@@ -51,6 +52,7 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
   if (!data) notFound();
 
   const { profile, shoes, wishlist } = data;
+  const completedSales = await getCompletedSalesCount(profile.id);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -59,7 +61,7 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
       </Link>
 
       <div className="mb-8">
-        <ProfileHeader profile={profile} listingCount={shoes.length} wishlistCount={wishlist.length} />
+        <ProfileHeader profile={profile} listingCount={shoes.length} wishlistCount={wishlist.length} completedSales={completedSales} />
       </div>
 
       <section className="mb-8">

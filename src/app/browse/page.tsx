@@ -6,8 +6,10 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { getOfferCounts } from '@/lib/offers';
+import { FirstListingNudge } from '@/components/listings/FirstListingNudge';
 import { ListingGrid } from '@/components/listings/ListingGrid';
 import { FilterPanel } from '@/components/listings/FilterPanel';
+import { SortSelector } from '@/components/listings/SortSelector';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageShell } from '@/components/layout/PageShell';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
@@ -29,18 +31,37 @@ interface BrowsePageProps {
     size_unit?: string;
     size_eu?: string;
     q?: string;
+    sort?: string;
   };
 }
 
 type SizeUnit = 'eu' | 'us' | 'cm';
+type SortKey = 'mixed' | 'newest' | 'price_asc' | 'price_desc';
 
-function shuffleListings(listings: Shoe[]): Shoe[] {
-  const shuffled = [...listings];
-  for (let i = shuffled.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+function parseSort(raw: string | undefined): SortKey {
+  if (raw === 'newest' || raw === 'price_asc' || raw === 'price_desc') return raw;
+  return 'mixed';
+}
+
+function sortListings(listings: Shoe[], key: SortKey): Shoe[] {
+  const arr = [...listings];
+  if (key === 'mixed') {
+    // Fisher-Yates shuffle. Default sort: fair rotation across all listings in
+    // the bucket so old listings still surface and re-listing can't game the order.
+    // Freshness is communicated via the per-card "NEW" pill, not order.
+    for (let i = arr.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
   }
-  return shuffled;
+  if (key === 'newest') {
+    return arr.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  }
+  if (key === 'price_asc') {
+    return arr.sort((a, b) => (a.price_php ?? Number.POSITIVE_INFINITY) - (b.price_php ?? Number.POSITIVE_INFINITY));
+  }
+  return arr.sort((a, b) => (b.price_php ?? Number.NEGATIVE_INFINITY) - (a.price_php ?? Number.NEGATIVE_INFINITY));
 }
 
 function getSizeFilter(searchParams: BrowsePageProps['searchParams']): { column: 'size_eu' | 'size_us' | 'size_cm'; value: number } | null {
@@ -79,9 +100,10 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
   const { data } = await query.limit(60);
   const all = (data as Shoe[]) ?? [];
 
-  // Randomize on each refresh while preserving marketplace priorities:
-  // sponsored listings stay above regular listings, and photoless listings
-  // stay below listings with images.
+  // Sort within four priority buckets: sponsored listings stay above regular,
+  // and photoless listings stay below listings with images. The user's chosen
+  // sort (newest / price asc / desc) is applied within each bucket.
+  const sortKey = parseSort(searchParams.sort);
   const now = Date.now();
   const isActiveSponsored = (s: Shoe) =>
     s.sponsored_until != null && new Date(s.sponsored_until).getTime() > now;
@@ -105,10 +127,10 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
   });
 
   return [
-    ...shuffleListings(sponsoredWithPhoto),
-    ...shuffleListings(regularWithPhoto),
-    ...shuffleListings(sponsoredWithoutPhoto),
-    ...shuffleListings(regularWithoutPhoto),
+    ...sortListings(sponsoredWithPhoto, sortKey),
+    ...sortListings(regularWithPhoto, sortKey),
+    ...sortListings(sponsoredWithoutPhoto, sortKey),
+    ...sortListings(regularWithoutPhoto, sortKey),
   ];
 }
 
@@ -159,6 +181,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
 
   return (
     <PageShell>
+      <FirstListingNudge />
       <PageHeader
         eyebrow="Marketplace"
         title="Browse Listings"
@@ -174,9 +197,14 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
         <div className="flex flex-col gap-6 lg:flex-row">
           {/* Listings — first on mobile, right side on desktop */}
           <div className="order-1 lg:order-2 flex-1 min-w-0">
-            <p className="mb-4 text-sm text-gray-500">
-              {shoes.length} listing{shoes.length !== 1 ? "s" : ""} found
-            </p>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-gray-500">
+                {shoes.length} listing{shoes.length !== 1 ? "s" : ""} found
+              </p>
+              <Suspense>
+                <SortSelector />
+              </Suspense>
+            </div>
 
             <ListingGrid
               shoes={shoes}

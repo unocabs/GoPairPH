@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { OwnProfile } from './OwnProfile';
 import { PageShell } from '@/components/layout/PageShell';
+import { getViewSummariesForListings } from '@/lib/listingViews';
+import { getCompletedSalesCount } from '@/lib/sales';
 import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest } from '@/types';
 
 async function getOwnProfileData() {
@@ -23,6 +25,15 @@ async function getOwnProfileData() {
   const shoeIds = allShoes.map(s => s.id);
   // Exclude completed items from My Listings — they live in Purchase History
   const shoes = allShoes.filter(s => s.status !== 'sold' && s.status !== 'donated');
+
+  // Owner-only view counts. Plain object so it serializes cleanly into the
+  // client OwnProfile component.
+  const viewMap = await getViewSummariesForListings(shoes.map(s => s.id));
+  const viewCounts: Record<string, { total: number; last7d: number }> = {};
+  viewMap.forEach((value, key) => { viewCounts[key] = value; });
+
+  // Buyer-facing trust signal on the seller's own profile header.
+  const completedSales = await getCompletedSalesCount(profile.id);
 
   // Incoming purchase requests on my listings (pending + accepted)
   let purchaseRequests: PurchaseRequest[] = [];
@@ -74,6 +85,8 @@ async function getOwnProfileData() {
     sentOffers,
     purchaseHistory,
     latestVerification,
+    viewCounts,
+    completedSales,
   };
 }
 
