@@ -1,157 +1,425 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { InfoPage } from '@/components/layout/InfoPage';
+import { Logo, LogoMark } from '@/components/brand/Logo';
+import { PageShell } from '@/components/layout/PageShell';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
 
 export const metadata: Metadata = {
-  title: 'How to Sell Running Shoes Faster',
-  description: 'Use Go Pair PH as a clean seller link for Facebook groups, Marketplace, Messenger, and Pampanga running-shoe buyers.',
+  title: 'How to Sell on Go Pair PH',
+  description: 'List your running shoes in minutes and connect with runners in Pampanga on Go Pair PH.',
   alternates: { canonical: '/help/how-to-sell' },
+};
+
+type StepVisual = 'signin' | 'upload' | 'details' | 'share' | 'sold';
+
+const steps: ReadonlyArray<{
+  number: string;
+  title: string;
+  text: string;
+  icon: IconName;
+  visual: StepVisual;
+}> = [
+  {
+    number: '1',
+    title: 'Sign In',
+    text: 'Continue with Google to create your account or sign in.',
+    icon: 'user',
+    visual: 'signin',
+  },
+  {
+    number: '2',
+    title: 'Create Your Listing',
+    text: "Click '+ List a Shoe' and upload clear photos of your running shoes.",
+    icon: 'shoe',
+    visual: 'upload',
+  },
+  {
+    number: '3',
+    title: 'Add Details',
+    text: 'Add brand, model, size, condition, mileage, price, and location.',
+    icon: 'form',
+    visual: 'details',
+  },
+  {
+    number: '4',
+    title: 'Share Your Listing',
+    text: 'Publish your listing and share it to Facebook groups with one click.',
+    icon: 'send',
+    visual: 'share',
+  },
+  {
+    number: '5',
+    title: 'Meet & Mark as Sold',
+    text: 'Meet up or ship your shoes. Once sold, mark your listing as sold.',
+    icon: 'check',
+    visual: 'sold',
+  },
+];
+
+const tips: ReadonlyArray<{ title: string; icon: IconName }> = [
+  { title: 'Use clear photos from multiple angles.', icon: 'camera' },
+  { title: 'Provide accurate details and mileage.', icon: 'form' },
+  { title: 'Mention meetup locations.', icon: 'pin' },
+  { title: 'Include original box and accessories if available.', icon: 'box' },
+  { title: 'Respond quickly to interested buyers.', icon: 'chat' },
+];
+
+type IconName = 'user' | 'shoe' | 'form' | 'send' | 'check' | 'camera' | 'pin' | 'box' | 'chat';
+
+const iconPaths: Record<IconName, React.ReactNode> = {
+  user: (
+    <>
+      <path d="M20 21a8 8 0 0 0-16 0" />
+      <circle cx="12" cy="7" r="4" />
+    </>
+  ),
+  shoe: (
+    <path d="M4 14.5c3.2.2 5.6-1.2 7.2-4.2l2 1.8c1.4 1.2 3.3 2 5.2 2.2l1.8.2c.8.1 1.4.8 1.4 1.6v1.4H4v-3Z" />
+  ),
+  form: (
+    <>
+      <path d="M8 6h9" />
+      <path d="M8 12h9" />
+      <path d="M8 18h5" />
+      <path d="M4 6h.01" />
+      <path d="M4 12h.01" />
+      <path d="M4 18h.01" />
+    </>
+  ),
+  send: (
+    <>
+      <path d="m22 2-7 20-4-9-9-4 20-7Z" />
+      <path d="M22 2 11 13" />
+    </>
+  ),
+  check: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8.5 12.5 2.2 2.2 4.8-5.4" />
+    </>
+  ),
+  camera: (
+    <>
+      <path d="M4 8h3l1.4-2h7.2L17 8h3v11H4V8Z" />
+      <circle cx="12" cy="13.5" r="3" />
+    </>
+  ),
+  pin: (
+    <>
+      <path d="M12 22s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </>
+  ),
+  box: (
+    <>
+      <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
+      <path d="M4 7.5 12 12l8-4.5" />
+      <path d="M12 12v9" />
+    </>
+  ),
+  chat: (
+    <>
+      <path d="M21 12a7.5 7.5 0 0 1-7.5 7.5H8l-5 2 1.6-4.4A7.5 7.5 0 1 1 21 12Z" />
+      <path d="M8 12h.01" />
+      <path d="M12 12h.01" />
+      <path d="M16 12h.01" />
+    </>
+  ),
 };
 
 export default function HowToSellPage() {
   return (
-    <InfoPage
-      title="How to Sell"
-      subtitle="Create one clean Go Pair PH listing, then share it anywhere buyers already talk: Facebook groups, Marketplace, Messenger, or your shop page."
+    <PageShell contentClassName="py-8 sm:py-10 lg:py-12">
+      <HeroSection />
+
+      <section className="mt-8 space-y-4 sm:mt-10">
+        {steps.map((step) => (
+          <StepCard key={step.number} step={step} />
+        ))}
+      </section>
+
+      <TipsSection />
+    </PageShell>
+  );
+}
+
+function HeroSection() {
+  return (
+    <section className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.72fr)] lg:items-center">
+      <div>
+        <Logo size="lg" />
+        <h1 className="mt-8 max-w-3xl text-4xl font-extrabold tracking-tight text-gray-100 sm:text-5xl lg:text-6xl">
+          How to Sell on <span className="text-teal-300">Go Pair PH</span>
+        </h1>
+        <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-300">
+          List your running shoes in minutes and connect with runners in Pampanga.
+        </p>
+        <div className="mt-7 flex flex-wrap gap-3">
+          <Link
+            href="/listings/new"
+            className="inline-flex items-center justify-center rounded-lg bg-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400"
+          >
+            + List a Shoe
+          </Link>
+          <Link
+            href="/browse"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-700 bg-slate-900/60 px-5 py-3 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-800 hover:text-gray-100"
+          >
+            See Marketplace
+          </Link>
+        </div>
+      </div>
+
+      <HeroPreview />
+    </section>
+  );
+}
+
+function HeroPreview() {
+  return (
+    <SurfaceCard glow className="relative overflow-hidden p-4 sm:p-5">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_22%,rgba(20,184,166,0.16),transparent_32%)]" />
+      <div className="relative rounded-2xl border border-white/[0.08] bg-slate-950/70 p-4">
+        <div className="flex items-center justify-between">
+          <LogoMark size={30} />
+          <span className="rounded-full border border-teal-400/25 bg-teal-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-teal-300">
+            Live Pair
+          </span>
+        </div>
+        <div className="mt-5 grid gap-4 sm:grid-cols-[130px_minmax(0,1fr)]">
+          <div className="relative aspect-square overflow-hidden rounded-xl border border-white/[0.08] bg-gradient-to-br from-slate-800 via-slate-900 to-teal-950">
+            <div className="absolute left-5 right-4 top-14 h-9 rounded-full bg-slate-950/80 shadow-[0_18px_30px_rgba(0,0,0,0.45)]" />
+            <div className="absolute left-4 top-9 h-9 w-24 -rotate-6 rounded-[999px_999px_999px_24px] border border-teal-300/40 bg-gray-200 shadow-[0_18px_36px_rgba(45,212,191,0.22)]" />
+            <div className="absolute left-12 top-12 h-2 w-12 -rotate-6 rounded-full bg-lime-300/80" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">Featured example</p>
+            <h2 className="mt-2 text-2xl font-bold text-gray-100">Nike Alphafly 3</h2>
+            <p className="mt-1 text-sm text-gray-400">Like New · US 9 · 10 km</p>
+            <p className="mt-4 text-3xl font-extrabold text-teal-300">₱8,000</p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <span className="rounded-lg border border-white/[0.08] bg-slate-900 px-3 py-2 text-xs text-gray-300">San Fernando</span>
+              <span className="rounded-lg border border-white/[0.08] bg-slate-900 px-3 py-2 text-xs text-gray-300">Share ready</span>
+            </div>
+          </div>
+        </div>
+        <p className="mt-5 rounded-xl border border-teal-500/20 bg-teal-500/[0.06] px-4 py-3 text-sm leading-6 text-teal-100">
+          A clean pair page helps buyers see the details faster.
+        </p>
+      </div>
+    </SurfaceCard>
+  );
+}
+
+function StepCard({ step }: { step: (typeof steps)[number] }) {
+  return (
+    <SurfaceCard
+      as="article"
+      hover
+      className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-center"
     >
-      <section>
-        <h2 className="text-xl font-semibold text-gray-100">Go Pair PH works with Facebook, not against it</h2>
-        <p>
-          Facebook is still where many local buyers discover pairs. Go Pair PH gives your post a
-          better home: a clean, searchable listing page with photos, size, condition, mileage,
-          price, seller profile, and contact path in one place.
-        </p>
-        <p>
-          The simple flow is: list once on Go Pair PH, copy your listing link, then share that
-          link to Facebook groups, Marketplace, Messenger chats, your shop page, or your personal
-          profile. When buyers ask for details, you send the same link instead of repeating the
-          same information over and over.
-        </p>
-      </section>
+      <div className="flex gap-4 lg:gap-5">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-slate-950 text-2xl font-extrabold tabular-nums text-teal-300 sm:h-14 sm:w-14">
+          {step.number}
+        </div>
+        <div className="min-w-0">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-teal-400/30 bg-teal-400/10 text-teal-300">
+            <Icon name={step.icon} className="h-5 w-5" />
+          </div>
+          <h2 className="text-xl font-bold leading-tight text-gray-100 sm:text-2xl">{step.title}</h2>
+          <p className="mt-2 text-sm leading-6 text-gray-400">{step.text}</p>
+        </div>
+      </div>
 
-      <section className="rounded-2xl border border-teal-500/20 bg-teal-500/[0.04] p-5">
-        <h2 className="text-xl font-semibold text-gray-100">Why this helps sellers</h2>
-        <ul className="mt-3 list-disc list-inside space-y-1.5">
-          <li><strong>Cleaner than a comment thread</strong> — buyers can see the full pair details immediately.</li>
-          <li><strong>Built for runners</strong> — size, mileage, condition, brand, and model are treated as first-class details.</li>
-          <li><strong>Searchable longer</strong> — your pair can still be found after a Facebook post gets buried.</li>
-          <li><strong>Easy to share</strong> — one link works for FB groups, Marketplace, Messenger, and shop pages.</li>
-          <li><strong>More trust</strong> — real photos, seller profiles, and verification signals help buyers decide faster.</li>
-        </ul>
-        <p className="mt-4">
-          Ready to try it?{' '}
-          <Link href="/listings/new" className="text-teal-400 hover:text-teal-300">List your shoes</Link>
-          {' '}and use Go Pair PH as the source of truth for the sale.
-        </p>
-      </section>
+      <MockPanel type={step.visual} />
+    </SurfaceCard>
+  );
+}
 
-      <section>
-        <h2 className="text-xl font-semibold text-gray-100">1. Choose how you sell</h2>
-        <p>
-          Community sellers can list individual running shoes from their own rotation. Shop
-          sellers are independent running-shoe resellers with storefront pages on Go Pair PH.
-          Sellers from nearby areas are welcome if they can meet, deliver, or ship to Pampanga
-          buyers. If you want a shop page for your inventory, start at{' '}
-          <Link href="/shop" className="text-teal-400 hover:text-teal-300">Shops</Link>{' '}
-          and open the shop application.
-        </p>
-      </section>
+function MockPanel({ type }: { type: StepVisual }) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-teal-400/35 bg-slate-950/70 shadow-[0_18px_55px_rgba(0,0,0,0.28),0_0_42px_rgba(20,184,166,0.06)]">
+      <MockTopBar />
+      <div className="p-4 sm:p-5">
+        {type === 'signin' && <SignInMock />}
+        {type === 'upload' && <UploadMock />}
+        {type === 'details' && <DetailsMock />}
+        {type === 'share' && <ShareMock />}
+        {type === 'sold' && <SoldMock />}
+      </div>
+    </div>
+  );
+}
 
-      <section>
-        <h2 className="text-xl font-semibold text-gray-100">2. Set up your profile</h2>
-        <p>
-          Add your <strong>Facebook username</strong> in{' '}
-          <Link href="/profile" className="text-teal-400 hover:text-teal-300">My Profile → Edit Profile</Link>{' '}
-          so buyers can reach you on Messenger. This is required so interested buyers can
-          easily contact you.
-        </p>
-      </section>
+function MockTopBar() {
+  return (
+    <div className="flex items-center justify-between border-b border-white/[0.08] bg-slate-900/60 px-4 py-3">
+      <Logo size="sm" />
+      <div className="hidden items-center gap-4 text-[11px] font-medium text-gray-500 sm:flex">
+        <span>Browse</span>
+        <span>Shops</span>
+        <span>Guides</span>
+      </div>
+      <span className="rounded-lg bg-teal-500 px-2.5 py-1 text-[10px] font-bold text-white">+ List a Shoe</span>
+    </div>
+  );
+}
 
-      <section>
-        <h2 className="text-xl font-semibold text-gray-100">3. List a shoe</h2>
-        <p>
-          Go to <Link href="/listings/new" className="text-teal-400 hover:text-teal-300">+ List a Shoe</Link>{' '}
-          and fill in the details:
-        </p>
-        <ul className="list-disc list-inside space-y-1.5">
-          <li><strong>Brand &amp; model</strong> — pick from the list, or choose &quot;Other&quot; and add the model name.</li>
-          <li><strong>Color &amp; size</strong> — fill any one size (EU, US, or CM), the others auto-fill.</li>
-          <li><strong>Condition &amp; mileage</strong> — be honest. New shoes auto-set mileage to 0.</li>
-          <li><strong>Listing type</strong> — For Sale or Donate (free).</li>
-          <li><strong>Price</strong> — toggle <em>Negotiable</em> if you&apos;re open to offers.</li>
-        </ul>
-      </section>
+function SignInMock() {
+  return (
+    <div className="mx-auto max-w-sm rounded-xl border border-white/[0.08] bg-slate-900/70 p-5">
+      <h3 className="text-lg font-bold text-gray-100">Welcome back!</h3>
+      <p className="mt-1 text-xs text-gray-500">Sign in to continue</p>
+      <button className="mt-5 flex w-full items-center justify-center gap-3 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-gray-900">
+        <span className="font-bold text-blue-600">G</span>
+        Continue with Google
+      </button>
+      <p className="mt-4 text-xs leading-5 text-gray-500">By continuing, you agree to our Terms and Privacy Policy.</p>
+    </div>
+  );
+}
 
-      <section>
-        <h2 className="text-xl font-semibold text-gray-100">4. Add good photos</h2>
-        <p>
-          Top and sole photos are required. Add a few more angles if there&apos;s notable wear
-          or any defects. Real, well-lit photos sell faster than stock images.
-        </p>
-      </section>
+function UploadMock() {
+  return (
+    <div>
+      <h3 className="text-sm font-semibold text-gray-100">Create New Listing</h3>
+      <p className="mt-1 text-xs text-gray-500">Upload up to 6 photos</p>
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {[0, 1, 2, 3].map((item) => (
+          <div key={item} className="aspect-square rounded-lg border border-white/[0.08] bg-gradient-to-br from-slate-800 via-slate-900 to-teal-950 p-2">
+            <div className="mt-7 h-5 rounded-full bg-slate-950/80" />
+            <div className="mx-auto -mt-3 h-7 w-16 -rotate-6 rounded-full bg-gray-200 shadow-[0_12px_22px_rgba(45,212,191,0.18)]" />
+          </div>
+        ))}
+        <div className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-gray-700 bg-slate-900/60 text-center text-xs text-gray-500">
+          +<br />Upload more
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      <section>
-        <h2 className="text-xl font-semibold text-gray-100">5. Share your clean listing link</h2>
-        <p>
-          After publishing, open the listing page and use the seller share buttons to copy the
-          link or create a share post. Then paste it wherever your buyers already are:
-        </p>
-        <ul className="list-disc list-inside space-y-1.5">
-          <li>Facebook running groups and local buy/sell groups</li>
-          <li>Facebook Marketplace descriptions or comments</li>
-          <li>Messenger conversations with interested buyers</li>
-          <li>Your shop page, personal profile, or weekly inventory post</li>
-        </ul>
-        <p>
-          A good caption is short: brand, model, size, condition, price, location, and the Go Pair
-          PH link for full photos and details.
-        </p>
-      </section>
+function DetailsMock() {
+  const fields = [
+    ['Brand', 'Nike'],
+    ['Model', 'Alphafly 3'],
+    ['Size', 'US 9 / 26.5cm'],
+    ['Condition', 'Like New'],
+    ['Mileage', '10 km'],
+    ['Price', '₱8,000'],
+    ['Location', 'San Fernando, Pampanga'],
+  ];
 
-      <section>
-        <h2 className="text-xl font-semibold text-gray-100">6. Review incoming offers or orders</h2>
-        <p>
-          When buyers send offers, you&apos;ll see them in{' '}
-          <Link href="/profile?tab=purchases" className="text-teal-400 hover:text-teal-300">My Profile → Purchase Requests</Link>.
-          The avatar icon in the top-right shows a dot when you have new ones.
-        </p>
-        <p>
-          For each request you can <strong>Accept</strong> or <strong>Decline</strong>. Accepting
-          reserves the listing for that buyer and automatically declines the others.
-        </p>
-        <p>
-          Shop sellers can also receive orders for shop listings, including size-specific
-          requests when a listing has multiple available sizes.
-        </p>
-      </section>
+  return (
+    <div>
+      <h3 className="text-sm font-semibold text-gray-100">Shoe Details</h3>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {fields.map(([label, value]) => (
+          <div key={label} className={label === 'Location' ? 'lg:col-span-2' : ''}>
+            <p className="text-[11px] font-medium text-gray-500">{label}</p>
+            <div className="mt-1 rounded-lg border border-white/[0.08] bg-slate-900 px-3 py-2 text-xs font-medium text-gray-200">
+              {value}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
-      <section>
-        <h2 className="text-xl font-semibold text-gray-100">7. Coordinate payment, shipping, or meetup</h2>
-        <p>
-          Use the <strong>Message on Messenger</strong> button on the request card to
-          coordinate meetup, delivery, or shipping with the buyer. Check the{' '}
-          <Link href="/safety" className="text-teal-400 hover:text-teal-300">Safety Guide</Link>{' '}
-          for tips on safe meetups and payment.
-        </p>
-      </section>
+function ShareMock() {
+  return (
+    <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_150px] md:items-center">
+      <div>
+        <h3 className="text-sm font-semibold text-gray-100">Your listing is ready!</h3>
+        <p className="mt-1 text-xs text-gray-500">Get more visibility by sharing to FB groups.</p>
+        <div className="mt-4 rounded-xl border border-white/[0.08] bg-slate-900/70 p-3">
+          <div className="flex gap-3">
+            <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-slate-700 to-teal-950" />
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-100">Nike Alphafly 3</p>
+              <p className="mt-1 text-xs text-gray-500">Like New · US 9 · 10 km</p>
+              <p className="mt-2 font-bold text-teal-300">₱8,000</p>
+            </div>
+          </div>
+          <button className="mt-4 w-full rounded-lg bg-teal-500 px-4 py-2 text-xs font-bold text-white">
+            Post on FB Group
+          </button>
+        </div>
+      </div>
+      <div className="mx-auto w-32 rounded-[2rem] border border-gray-700 bg-gray-950 p-2 shadow-2xl">
+        <div className="rounded-[1.5rem] bg-white p-2 text-gray-900">
+          <p className="text-xs font-bold">facebook</p>
+          {['Pampanga Runners', 'Pampanga Shoes Buy and Sell', 'Go Pair PH'].map((group) => (
+            <div key={group} className="mt-2 flex items-center justify-between rounded-md bg-gray-100 p-1.5">
+              <span className="max-w-[72px] truncate text-[9px] font-medium">{group}</span>
+              <span className="h-3 w-3 rounded-full bg-teal-500" />
+            </div>
+          ))}
+          <div className="mt-2 rounded-md bg-teal-500 py-1 text-center text-[9px] font-bold text-white">Post</div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      <section>
-        <h2 className="text-xl font-semibold text-gray-100">8. Mark as sold</h2>
-        <p>
-          After the buyer has received the pair and paid, click{' '}
-          <strong>Mark as Sold</strong> on the request card. The listing becomes &quot;Sold&quot;
-          and the transaction is added to both your and the buyer&apos;s purchase histories.
-        </p>
-      </section>
+function SoldMock() {
+  return (
+    <div>
+      <h3 className="text-sm font-semibold text-gray-100">Your Listing</h3>
+      <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_170px]">
+        <div className="flex gap-3 rounded-xl border border-white/[0.08] bg-slate-900/70 p-3">
+          <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-slate-700 to-teal-950" />
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-semibold text-gray-100">Nike Alphafly 3</p>
+              <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-bold text-green-300">Active</span>
+            </div>
+            <p className="mt-1 text-xs text-gray-500">Like New · US 9 · 10 km</p>
+            <p className="mt-2 font-bold text-teal-300">₱8,000</p>
+          </div>
+        </div>
+        <div className="rounded-xl border border-white/[0.08] bg-slate-900/70 p-2 text-sm text-gray-300">
+          {['Mark as Sold', 'Edit Listing', 'Delete Listing'].map((action) => (
+            <div key={action} className="rounded-lg px-3 py-2 hover:bg-slate-800">{action}</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      <section>
-        <h2 className="text-xl font-semibold text-gray-100">Tip: Get verified</h2>
-        <p>
-          Verified sellers get a check badge that helps buyers trust them faster. See the{' '}
-          <Link href="/help/verification" className="text-teal-400 hover:text-teal-300">Verification Process</Link>{' '}
-          for how to request it.
-        </p>
-      </section>
-    </InfoPage>
+function TipsSection() {
+  return (
+    <SurfaceCard as="section" glow className="mt-8 p-5 sm:p-6">
+      <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-teal-300">
+        Tips for Selling Faster
+      </h2>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {tips.map((tip) => (
+          <div key={tip.title} className="rounded-xl border border-white/[0.08] bg-slate-950/45 p-4 transition-colors hover:border-teal-400/30">
+            <Icon name={tip.icon} className="h-6 w-6 text-teal-300" />
+            <p className="mt-3 text-sm leading-6 text-gray-300">{tip.title}</p>
+          </div>
+        ))}
+      </div>
+    </SurfaceCard>
+  );
+}
+
+function Icon({ name, className }: { name: IconName; className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      {iconPaths[name]}
+    </svg>
   );
 }
