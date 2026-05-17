@@ -178,7 +178,7 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
       }));
       const { error: imgError } = await supabase.from('shoe_images').insert(imageRows);
       if (imgError) throw imgError;
-      router.push(getListingPath(insertedShoe ?? { id: shoeId }));
+      router.push(`${getListingPath(insertedShoe ?? { id: shoeId })}?listed=1`);
     } catch (err) {
       const msg = (err as { message?: string })?.message ?? 'Failed to publish listing';
       setError(msg);

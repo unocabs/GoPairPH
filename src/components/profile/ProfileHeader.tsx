@@ -69,6 +69,12 @@ export function ProfileHeader({ profile, listingCount, wishlistCount, completedS
           <span><strong className="text-gray-100">{listingCount}</strong> <span className="text-gray-500">listings</span></span>
           <span><strong className="text-gray-100">{wishlistCount}</strong> <span className="text-gray-500">pair requests</span></span>
         </div>
+        {isOwnProfile && (
+          <p className="mt-2 max-w-xl text-xs leading-5 text-gray-500">
+            Your seller profile is a reusable storefront for every link you share. Facebook posts
+            move fast; your Go Pair PH profile keeps your listings, history, and trust signals together.
+          </p>
+        )}
       </div>
     </div>
   );

@@ -158,7 +158,7 @@ async function getPurchaseContext(shoeId: string, profileId: string | null, isOw
   return null;
 }
 
-export default async function ListingDetailPage({ params }: { params: { id: string } }) {
+export default async function ListingDetailPage({ params, searchParams }: { params: { id: string }; searchParams?: { listed?: string } }) {
   const [shoe, currentProfile] = await Promise.all([
     getShoeByRouteParam(params.id),
     getCurrentProfile(),
@@ -184,6 +184,23 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
   const isFeatured = !!shoe.featured_until && new Date(shoe.featured_until) > now;
   const slotInfo = isOwner ? await getSponsoredSlotInfo() : null;
   const listingName = formatListingName(shoe.brand, shoe.model);
+  const listingUrl = getAbsoluteListingUrl(SITE_URL, shoe);
+  const justListed = isOwner && searchParams?.listed === '1';
+  const shareSizeLabel = shoe.shop_id
+    ? 'See listing for available sizes'
+    : formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm);
+  const sharePriceLabel = shoe.listing_type === 'for_sale' && shoe.price_php
+    ? `${formatPrice(shoe.price_php)}${shoe.is_negotiable ? ' negotiable' : ''}`
+    : 'Free donation';
+  const shareLocationLabel = shop?.location ?? seller?.location ?? 'Pampanga';
+  const suggestedCaption = [
+    `Selling my ${listingName} on Go Pair PH.`,
+    `Size: ${shareSizeLabel || 'See listing'}`,
+    `Condition: ${CONDITIONS[shoe.condition]}`,
+    `Price: ${sharePriceLabel}`,
+    `Location: ${shareLocationLabel}`,
+    `Full details and photos: ${listingUrl}`,
+  ].join('\n');
   const productJsonLd = shoe.listing_type === 'for_sale' && shoe.price_php && productImageUrl ? {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -219,6 +236,41 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
       <Link href="/browse" className="mb-6 inline-flex items-center gap-1 text-sm text-teal-400 hover:text-teal-300 transition-colors">
         ← Back to Browse
       </Link>
+
+      {justListed && (
+        <SurfaceCard glow className="mb-6 border-teal-500/25 bg-teal-500/[0.05] p-4 sm:p-5">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.5fr)] lg:items-center">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">Your listing is live</p>
+              <h2 className="mt-2 text-xl font-bold text-gray-100">Share it anywhere buyers already are.</h2>
+              <p className="mt-2 text-sm leading-6 text-gray-400">
+                Copy the Go Pair PH link for Facebook groups, Marketplace, Messenger, or your shop page.
+                This clean page keeps the price, size, condition, mileage, photos, and seller details in one place.
+              </p>
+            </div>
+            <div className="rounded-xl border border-white/[0.08] bg-slate-950/55 p-3">
+              <ContactSellerButtons
+                fbUsername={null}
+                listingId={shoe.id}
+                isOwner
+                shoe={shoe}
+                seller={seller ?? null}
+              />
+            </div>
+          </div>
+          <div className="mt-4 rounded-xl border border-white/[0.08] bg-slate-950/55 p-3">
+            <label htmlFor="suggested-share-caption" className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+              Suggested FB caption
+            </label>
+            <textarea
+              id="suggested-share-caption"
+              readOnly
+              value={suggestedCaption}
+              className="mt-2 min-h-[150px] w-full resize-none rounded-lg border border-gray-800 bg-slate-950 px-3 py-2 text-sm leading-6 text-gray-300 outline-none"
+            />
+          </div>
+        </SurfaceCard>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(380px,0.92fr)]">
         {/* Gallery */}

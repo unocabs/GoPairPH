@@ -64,6 +64,10 @@ export function OwnProfile({
     { key: 'wishlist', label: 'Find My Pair', count: wishlist.length },
     { key: 'sales', label: 'Purchase History', count: purchaseHistory.length },
   ];
+  const listingViewSummaries = Object.values(viewCounts ?? {});
+  const totalListingViews = listingViewSummaries.reduce((sum, item) => sum + item.total, 0);
+  const viewsThisWeek = listingViewSummaries.reduce((sum, item) => sum + item.last7d, 0);
+  const activeListings = shoes.filter((shoe) => shoe.status === 'active').length;
 
   return (
     <div>
@@ -120,16 +124,39 @@ export function OwnProfile({
 
       {tab === 'listings' && (
         <div>
-          <SurfaceCard className="mb-4 flex flex-col gap-3 border-teal-500/20 bg-teal-500/[0.04] p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-3">
-              <span className="text-xl leading-none mt-0.5" aria-hidden>👟</span>
-              <p className="text-sm text-gray-300 leading-relaxed">
-                Keep all your running shoe listings in one place — active, sold, or donated. Share your Go Pair PH listing on Facebook Marketplace, groups, or anywhere else while easily managing everything here.
-              </p>
+          <SurfaceCard className="mb-4 border-teal-500/20 bg-teal-500/[0.04] p-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex gap-3">
+                <span className="text-xl leading-none mt-0.5" aria-hidden>👟</span>
+                <div>
+                  <p className="text-sm font-semibold text-gray-100">Your pair is being seen.</p>
+                  <p className="mt-1 text-sm text-gray-300 leading-relaxed">
+                    Keep one clean listing link for each pair, then share it on Facebook Marketplace,
+                    groups, Messenger, or anywhere else while managing everything here.
+                  </p>
+                </div>
+              </div>
+              <Link href="/listings/new" className="lg:shrink-0">
+                <Button size="sm" className="w-full lg:w-auto">+ List a Shoe</Button>
+              </Link>
             </div>
-            <Link href="/listings/new" className="sm:shrink-0">
-              <Button size="sm" className="w-full sm:w-auto">+ List a Shoe</Button>
-            </Link>
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              {[
+                { label: 'Active listings', value: activeListings.toLocaleString() },
+                { label: 'Total listing views', value: totalListingViews.toLocaleString() },
+                { label: 'Views this week', value: viewsThisWeek.toLocaleString() },
+              ].map((stat) => (
+                <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-slate-950/55 px-4 py-3">
+                  <p className="text-lg font-bold text-gray-100">{stat.value}</p>
+                  <p className="mt-0.5 text-xs text-gray-500">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+            {purchaseRequests.length > 0 && (
+              <p className="mt-3 text-xs font-medium text-sky-300">
+                {purchaseRequests.length} active buyer request{purchaseRequests.length !== 1 ? 's' : ''} waiting for your response.
+              </p>
+            )}
           </SurfaceCard>
           <ListingGrid shoes={shoes} currentProfileId={profile.id} viewCounts={viewCounts} emptyMessage="You haven't listed any shoes yet." />
         </div>

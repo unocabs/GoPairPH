@@ -9,6 +9,7 @@ import { HeroFallback } from '@/components/home/HeroFallback';
 import { FeaturedListing } from '@/components/home/FeaturedListing';
 import { FirstListingNudge } from '@/components/listings/FirstListingNudge';
 import { LogoMark } from '@/components/brand/Logo';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import type { Shoe } from '@/types';
 
 async function getRecentListings(): Promise<Shoe[]> {
@@ -69,11 +70,51 @@ async function getCurrentProfileAndRequests(): Promise<{ profileId: string; requ
   return { profileId: profile.id, requestListingIds };
 }
 
+async function getMarketplaceActivity(): Promise<{
+  newListingsThisWeek: number;
+  activePairRequests: number;
+  soldOrReservedPairs: number;
+  recentSellers: number;
+}> {
+  const supabase = createClient();
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+
+  const [newListingsRes, pairRequestsRes, soldReservedRes, recentSellerRes] = await Promise.all([
+    supabase
+      .from('shoes')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'active')
+      .gte('created_at', weekAgo.toISOString()),
+    supabase
+      .from('wishlist_items')
+      .select('id', { count: 'exact', head: true }),
+    supabase
+      .from('shoes')
+      .select('id', { count: 'exact', head: true })
+      .in('status', ['sold', 'reserved', 'donated']),
+    supabase
+      .from('shoes')
+      .select('seller_id')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(30),
+  ]);
+
+  return {
+    newListingsThisWeek: newListingsRes.count ?? 0,
+    activePairRequests: pairRequestsRes.count ?? 0,
+    soldOrReservedPairs: soldReservedRes.count ?? 0,
+    recentSellers: new Set((recentSellerRes.data ?? []).map(row => row.seller_id)).size,
+  };
+}
+
 export default async function HomePage() {
-  const [recentShoes, userContext, featured] = await Promise.all([
+  const [recentShoes, userContext, featured, activity] = await Promise.all([
     getRecentListings(),
     getCurrentProfileAndRequests(),
     getFeaturedListing(),
+    getMarketplaceActivity(),
   ]);
   const offerCounts = await getOfferCounts(recentShoes.map(s => s.id));
 
@@ -119,20 +160,23 @@ export default async function HomePage() {
                 <span className="text-teal-300">Running Pair in Pampanga</span>
               </h1>
               <p className="mt-4 max-w-lg text-lg leading-8 text-gray-300/85">
-                Buy from community sellers, local shops, and nearby sellers who can meet,
-                deliver, or ship to Pampanga buyers.
+                Buy from Pampanga runners and shops, or list once and share your clean
+                Go Pair PH listing anywhere your buyers already are.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href="/browse">
                   <Button size="lg" variant="secondary">Browse Listings</Button>
                 </Link>
+                <Link href="/listings/new">
+                  <Button size="lg">List Your Shoes</Button>
+                </Link>
                 <Link href="/shop">
                   <Button size="lg" variant="outline">Browse Shops</Button>
                 </Link>
-                <a href="https://www.facebook.com/groups/gopairph" target="_blank" rel="noopener noreferrer">
-                  <Button size="lg">Post on FB Group</Button>
-                </a>
               </div>
+              <p className="mt-4 text-xs font-medium uppercase tracking-[0.18em] text-teal-300/80">
+                List once. Share anywhere.
+              </p>
             </div>
 
             {/* Right slot — featured listing if set, else marketplace pulse.
@@ -165,7 +209,77 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Marketplace activity */}
+      <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+        <div className="grid gap-2 sm:grid-cols-4">
+          {[
+            { label: 'New listings this week', value: activity.newListingsThisWeek },
+            { label: 'Active pair requests', value: activity.activePairRequests },
+            { label: 'Sold, reserved, or donated', value: activity.soldOrReservedPairs },
+            { label: 'Recent active sellers', value: activity.recentSellers },
+          ].map((stat) => (
+            <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-slate-950/55 px-4 py-3 shadow-[0_12px_35px_rgba(0,0,0,0.18)]">
+              <p className="text-xl font-bold tabular-nums text-gray-100">{stat.value.toLocaleString()}</p>
+              <p className="mt-0.5 text-xs text-gray-500">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <FirstListingNudge />
+
+      {/* Seller benefits */}
+      <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
+        <SurfaceCard glow className="overflow-hidden border-teal-500/20 bg-slate-950/70 p-5 sm:p-7">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] lg:items-center">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">For sellers</p>
+              <h2 className="mt-3 text-2xl font-bold tracking-tight text-gray-100 sm:text-3xl">
+                Why sellers list on Go Pair PH
+              </h2>
+              <p className="mt-3 text-sm leading-7 text-gray-400 sm:text-base">
+                Go Pair PH works as your seller advantage layer on top of Facebook. Create one
+                clean listing page, then share that link to FB groups, Marketplace, Messenger,
+                or your shop page so serious runners can check the details faster.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link href="/listings/new">
+                  <Button>List Your Shoes</Button>
+                </Link>
+                <Link href="/help/how-to-sell">
+                  <Button variant="outline">How Selling Works</Button>
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                {
+                  title: 'Cleaner than FB posts',
+                  desc: 'One focused page for price, size, condition, mileage, photos, and seller details.',
+                },
+                {
+                  title: 'Built for runners',
+                  desc: 'Buyers can scan running-specific details instead of digging through comment threads.',
+                },
+                {
+                  title: 'Searchable by intent',
+                  desc: 'Brand, size, condition, and carbon-shoe searches keep your pair discoverable after posts get buried.',
+                },
+                {
+                  title: 'Trust faster',
+                  desc: 'A complete profile, real photos, listing history, and clear contact path make buyers more confident.',
+                },
+              ].map((item) => (
+                <div key={item.title} className="rounded-xl border border-white/[0.08] bg-slate-900/60 p-4 shadow-[0_12px_35px_rgba(0,0,0,0.18)]">
+                  <h3 className="text-sm font-semibold text-gray-100">{item.title}</h3>
+                  <p className="mt-2 text-xs leading-6 text-gray-400 sm:text-sm">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </SurfaceCard>
+      </section>
 
       {/* Recent Listings */}
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">

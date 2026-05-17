@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { InfoPage } from '@/components/layout/InfoPage';
 
 export const metadata: Metadata = {
-  title: 'How to Sell',
-  description: 'Step-by-step guide for community sellers, shop sellers, and nearby sellers serving Pampanga buyers on Go Pair PH.',
+  title: 'How to Sell Running Shoes Faster',
+  description: 'Use Go Pair PH as a clean seller link for Facebook groups, Marketplace, Messenger, and Pampanga running-shoe buyers.',
   alternates: { canonical: '/help/how-to-sell' },
 };
 
@@ -12,8 +12,39 @@ export default function HowToSellPage() {
   return (
     <InfoPage
       title="How to Sell"
-      subtitle="List as a community seller, or apply for a shop if you sell running shoes regularly and can serve Pampanga buyers."
+      subtitle="Create one clean Go Pair PH listing, then share it anywhere buyers already talk: Facebook groups, Marketplace, Messenger, or your shop page."
     >
+      <section>
+        <h2 className="text-xl font-semibold text-gray-100">Go Pair PH works with Facebook, not against it</h2>
+        <p>
+          Facebook is still where many local buyers discover pairs. Go Pair PH gives your post a
+          better home: a clean, searchable listing page with photos, size, condition, mileage,
+          price, seller profile, and contact path in one place.
+        </p>
+        <p>
+          The simple flow is: list once on Go Pair PH, copy your listing link, then share that
+          link to Facebook groups, Marketplace, Messenger chats, your shop page, or your personal
+          profile. When buyers ask for details, you send the same link instead of repeating the
+          same information over and over.
+        </p>
+      </section>
+
+      <section className="rounded-2xl border border-teal-500/20 bg-teal-500/[0.04] p-5">
+        <h2 className="text-xl font-semibold text-gray-100">Why this helps sellers</h2>
+        <ul className="mt-3 list-disc list-inside space-y-1.5">
+          <li><strong>Cleaner than a comment thread</strong> — buyers can see the full pair details immediately.</li>
+          <li><strong>Built for runners</strong> — size, mileage, condition, brand, and model are treated as first-class details.</li>
+          <li><strong>Searchable longer</strong> — your pair can still be found after a Facebook post gets buried.</li>
+          <li><strong>Easy to share</strong> — one link works for FB groups, Marketplace, Messenger, and shop pages.</li>
+          <li><strong>More trust</strong> — real photos, seller profiles, and verification signals help buyers decide faster.</li>
+        </ul>
+        <p className="mt-4">
+          Ready to try it?{' '}
+          <Link href="/listings/new" className="text-teal-400 hover:text-teal-300">List your shoes</Link>
+          {' '}and use Go Pair PH as the source of truth for the sale.
+        </p>
+      </section>
+
       <section>
         <h2 className="text-xl font-semibold text-gray-100">1. Choose how you sell</h2>
         <p>
@@ -60,7 +91,25 @@ export default function HowToSellPage() {
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold text-gray-100">5. Review incoming offers or orders</h2>
+        <h2 className="text-xl font-semibold text-gray-100">5. Share your clean listing link</h2>
+        <p>
+          After publishing, open the listing page and use the seller share buttons to copy the
+          link or create a share post. Then paste it wherever your buyers already are:
+        </p>
+        <ul className="list-disc list-inside space-y-1.5">
+          <li>Facebook running groups and local buy/sell groups</li>
+          <li>Facebook Marketplace descriptions or comments</li>
+          <li>Messenger conversations with interested buyers</li>
+          <li>Your shop page, personal profile, or weekly inventory post</li>
+        </ul>
+        <p>
+          A good caption is short: brand, model, size, condition, price, location, and the Go Pair
+          PH link for full photos and details.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-gray-100">6. Review incoming offers or orders</h2>
         <p>
           When buyers send offers, you&apos;ll see them in{' '}
           <Link href="/profile?tab=purchases" className="text-teal-400 hover:text-teal-300">My Profile → Purchase Requests</Link>.
@@ -77,7 +126,7 @@ export default function HowToSellPage() {
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold text-gray-100">6. Coordinate payment, shipping, or meetup</h2>
+        <h2 className="text-xl font-semibold text-gray-100">7. Coordinate payment, shipping, or meetup</h2>
         <p>
           Use the <strong>Message on Messenger</strong> button on the request card to
           coordinate meetup, delivery, or shipping with the buyer. Check the{' '}
@@ -87,7 +136,7 @@ export default function HowToSellPage() {
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold text-gray-100">7. Mark as sold</h2>
+        <h2 className="text-xl font-semibold text-gray-100">8. Mark as sold</h2>
         <p>
           After the buyer has received the pair and paid, click{' '}
           <strong>Mark as Sold</strong> on the request card. The listing becomes &quot;Sold&quot;
