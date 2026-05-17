@@ -79,22 +79,45 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gray-900 border-b border-gray-800">
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-900/30 via-transparent to-transparent pointer-events-none" />
+      <section className="relative overflow-hidden border-b border-gray-800 bg-[#020617]">
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(circle at 28% 42%, rgba(20,184,166,0.2), transparent 34%), linear-gradient(120deg, #020617 0%, #0f172a 44%, #022c22 100%)',
+          }}
+        />
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.05]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }}
+        />
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.035] mix-blend-overlay"
+          style={{
+            backgroundImage:
+              'radial-gradient(circle at center, rgba(255,255,255,0.9) 0.7px, transparent 0.7px)',
+            backgroundSize: '4px 4px',
+          }}
+        />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-gray-950/70 to-transparent pointer-events-none" />
         <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 lg:gap-10">
             <div className="max-w-2xl">
               <div className="flex items-center gap-2 mb-4">
                 <LogoMark size={40} />
-                <span className="bg-teal-500/10 text-teal-400 text-xs font-semibold px-3 py-1 rounded-full border border-teal-500/20">
+                <span className="rounded-full border border-teal-400/30 bg-teal-400/10 px-3 py-1 text-xs font-semibold text-teal-300 shadow-[0_0_28px_rgba(20,184,166,0.12)] backdrop-blur-sm">
                   Pampanga Running Shoe Marketplace
                 </span>
               </div>
-              <h1 className="text-4xl font-extrabold tracking-tight text-gray-100 sm:text-5xl">
+              <h1 className="text-4xl font-extrabold tracking-tight text-gray-100 drop-shadow-[0_16px_36px_rgba(0,0,0,0.45)] sm:text-5xl">
                 Find Your Next<br />
-                <span className="text-teal-400">Running Pair in Pampanga</span>
+                <span className="text-teal-300">Running Pair in Pampanga</span>
               </h1>
-              <p className="mt-4 text-lg text-gray-400 max-w-lg">
+              <p className="mt-4 max-w-lg text-lg leading-8 text-gray-300/85">
                 Buy from community sellers, local shops, and nearby sellers who can meet,
                 deliver, or ship to Pampanga buyers.
               </p>

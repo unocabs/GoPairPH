@@ -19,7 +19,7 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
   return (
     <Link
       href={getListingPath(shoe)}
-      className="group relative block w-full max-w-[500px] aspect-[4/5] sm:h-[420px] sm:aspect-auto rounded-3xl overflow-hidden shadow-2xl shadow-black/60 transition-transform hover:scale-[1.01]"
+      className="group relative block w-full max-w-[500px] aspect-[4/5] overflow-hidden rounded-[28px] border border-white/10 bg-gray-950/70 shadow-[0_24px_80px_rgba(0,0,0,0.55),0_0_60px_rgba(20,184,166,0.12)] backdrop-blur-md transition-transform hover:scale-[1.01] sm:h-[420px] sm:aspect-auto"
     >
       {/* Background image (full bleed) */}
       <div className="absolute inset-0 bg-stone-900">

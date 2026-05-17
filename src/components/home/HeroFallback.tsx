@@ -101,11 +101,11 @@ export async function HeroFallback() {
 
   return (
     <div
-      className="relative w-full max-w-[380px] rounded-2xl p-6 backdrop-blur-sm"
+      className="relative w-full max-w-[380px] rounded-[28px] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.5),0_0_50px_rgba(20,184,166,0.12)] backdrop-blur-md"
       style={{
         background:
-          'linear-gradient(160deg, rgba(20,184,166,0.06), rgba(17,24,39,0.4) 60%)',
-        border: '1px solid rgba(45,212,191,0.18)',
+          'linear-gradient(160deg, rgba(20,184,166,0.1), rgba(15,23,42,0.72) 58%, rgba(2,6,23,0.82))',
+        border: '1px solid rgba(255,255,255,0.1)',
       }}
     >
       {/* Header */}
