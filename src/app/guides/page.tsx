@@ -4,6 +4,14 @@ import Link from 'next/link';
 
 const guides = [
   {
+    href: '/best-places-to-run-clark-pampanga',
+    title: 'Best Places to Run in Clark, Pampanga',
+    description:
+      'A local guide to Clark running spots, workouts, safety notes, and shoe ideas for Pampanga runners.',
+    category: 'Local Running Guide',
+    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Angelesjf9605_26.JPG?width=1200',
+  },
+  {
     href: '/adidas-running-shoes-pampanga',
     title: 'Adidas Running Shoes in Pampanga',
     description:
