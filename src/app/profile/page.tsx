@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { OwnProfile } from './OwnProfile';
+import { PageShell } from '@/components/layout/PageShell';
 import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest } from '@/types';
 
 async function getOwnProfileData() {
@@ -88,8 +89,8 @@ export default async function ProfilePage({ searchParams }: { searchParams: { ta
     : 'listings';
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <PageShell>
       <OwnProfile {...data} initialTab={initialTab} />
-    </div>
+    </PageShell>
   );
 }

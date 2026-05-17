@@ -20,7 +20,7 @@ export function ProfileHeader({ profile, listingCount, wishlistCount, isOwnProfi
         src={profile.avatar_url}
         alt={profile.display_name}
         size={80}
-        className="border-4 border-gray-800 shrink-0"
+        className="shrink-0 border-4 border-teal-400/40 shadow-[0_0_36px_rgba(20,184,166,0.16)]"
         fallbackClassName="shrink-0"
       />
 

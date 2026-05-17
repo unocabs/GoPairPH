@@ -68,13 +68,13 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
 
   return (
     <div className={cn(
-      'relative overflow-hidden rounded-xl border bg-gray-900 transition-all hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5',
-      isOwner ? 'border-teal-600 hover:border-teal-500' : 'border-gray-800 hover:border-gray-700'
+      'relative overflow-hidden rounded-xl border bg-slate-900/72 shadow-[0_16px_50px_rgba(0,0,0,0.26)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:shadow-[0_22px_70px_rgba(0,0,0,0.36),0_0_36px_rgba(20,184,166,0.08)]',
+      isOwner ? 'border-teal-500/60 hover:border-teal-400' : 'border-white/[0.08] hover:border-teal-400/30'
     )} style={themedCardStyle}>
       {/* Clickable area navigates to listing */}
       <Link href={listingPath} className="group block">
         {/* Image */}
-        <div className="relative aspect-square bg-gray-800" style={theme ? { backgroundColor: theme.surfaceStrong } : undefined}>
+        <div className="relative aspect-square bg-slate-950" style={theme ? { backgroundColor: theme.surfaceStrong } : undefined}>
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -134,7 +134,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
         </div>
 
         {/* Details */}
-        <div className="p-3">
+        <div className="p-3.5">
           <h3 className="font-semibold text-gray-100 truncate text-sm" style={theme ? { color: theme.text } : undefined}>{formatListingName(shoe.brand, shoe.model)}</h3>
           {shoe.shop_id ? (
             (() => {
@@ -216,7 +216,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
 
       {/* Action buttons — outside Link to avoid nested interactive elements */}
       {(isOwner || showBuy || showDonate || showPlaceOrder) && (
-        <div className="px-3 pb-3">
+        <div className="px-3.5 pb-3.5">
           {isOwner ? (
             <div className="flex w-full items-center justify-center gap-1 rounded-lg border border-teal-800 bg-teal-950/70 px-3 py-2 text-sm font-semibold text-teal-300" style={theme ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.accent } : undefined}>
               <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">

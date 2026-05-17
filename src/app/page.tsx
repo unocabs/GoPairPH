@@ -144,15 +144,15 @@ export default async function HomePage() {
       </section>
 
       {/* Features — tightened: row on mobile, single line on desktop */}
-      <section className="border-b border-gray-800 bg-gray-950">
+      <section className="border-b border-white/[0.08] bg-slate-950">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
-          <div className="grid grid-cols-3 gap-2 sm:gap-6">
+          <div className="grid grid-cols-3 gap-2 divide-x divide-white/[0.08] rounded-xl border border-white/[0.08] bg-slate-900/45 p-2 shadow-[0_14px_50px_rgba(0,0,0,0.24)] backdrop-blur-sm sm:gap-0 sm:p-3">
             {[
               { icon: '💰', label: 'Community', desc: 'Buy, sell, or donate with local runners' },
               { icon: '🏬', label: 'Shops', desc: 'Browse independent running-shoe resellers' },
               { icon: '📍', label: 'Pampanga', desc: 'Focused on Pampanga buyers, open to nearby sellers' },
             ].map(f => (
-              <div key={f.label} className="flex items-center justify-center gap-2 sm:gap-3 py-1.5">
+              <div key={f.label} className="flex items-center justify-center gap-2 px-2 py-1.5 sm:gap-3">
                 <span className="text-xl sm:text-2xl shrink-0" aria-hidden="true">{f.icon}</span>
                 <div className="min-w-0">
                   <p className="font-semibold text-gray-200 text-xs sm:text-sm leading-tight">{f.label}</p>

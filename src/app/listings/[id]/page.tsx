@@ -30,6 +30,8 @@ import { FeaturedPill } from '@/components/listings/FeaturedPill';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import { getSponsoredSlotInfo } from '@/lib/sponsored';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
+import { PageShell } from '@/components/layout/PageShell';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -206,7 +208,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
   } : null;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <PageShell>
       <ListingViewTracker listingId={shoe.id} />
       {productJsonLd && (
         <script
@@ -218,7 +220,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
         ← Back to Browse
       </Link>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(380px,0.92fr)]">
         {/* Gallery */}
         <div className="min-w-0">
           <PhotoGallery
@@ -229,7 +231,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
         </div>
 
         {/* Details */}
-        <div>
+        <SurfaceCard glow className="p-5 sm:p-6">
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <ListingTypeBadge type={shoe.listing_type} />
             <Badge className={cn(CONDITION_COLORS[shoe.condition])}>
@@ -274,7 +276,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
           {/* Available sizes — shop variant listings only */}
           {shoe.shop_id && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
-            <div className="mt-5 rounded-xl border border-gray-800 bg-gray-900">
+            <div className="mt-5 rounded-xl border border-white/[0.08] bg-slate-950/55">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
                 <h3 className="text-sm font-semibold text-gray-100">Available sizes</h3>
                 {!shoe.has_stock && (
@@ -307,7 +309,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
           )}
 
           {/* Specs */}
-          <dl className="mt-6 grid grid-cols-2 gap-3 rounded-xl border border-gray-800 bg-gray-900 p-4">
+          <dl className="mt-6 grid grid-cols-2 gap-3 rounded-xl border border-white/[0.08] bg-slate-950/55 p-4">
             {[
               ...(shoe.shop_id ? [] : [{ label: 'Size', value: formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm) }]),
               ...(shoe.shop_id ? [] : [{ label: 'Mileage', value: shoe.mileage_km != null ? `${shoe.mileage_km.toLocaleString()} km` : 'Not provided' }]),
@@ -332,7 +334,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
           {/* Seller / Shop Card */}
           {shop ? (
-            <div className="mt-6 rounded-xl border border-gray-800 bg-gray-900 p-4">
+            <div className="mt-6 rounded-xl border border-white/[0.08] bg-slate-950/55 p-4">
               <div className="flex items-center gap-4">
                 <Link href={`/shop/${shop.slug}`} className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-gray-700 bg-gray-950">
                   <SafeShopImage src={shopLogoUrl} alt={shop.name} className="h-full w-full object-cover" logoSize={32} />
@@ -372,7 +374,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               </div>
             </div>
           ) : seller && (
-            <div className="mt-6 rounded-xl border border-gray-800 bg-gray-900 p-4">
+            <div className="mt-6 rounded-xl border border-white/[0.08] bg-slate-950/55 p-4">
               <div className="flex items-center gap-4">
                 <Link href={`/profile/${seller.id}`} className="shrink-0">
                   <Avatar
@@ -431,7 +433,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
           )}
 
           {purchaseContext?.type === 'reserved_for_someone_else' && (
-            <div className="mt-4 rounded-xl border border-gray-700 bg-gray-900 p-4">
+            <div className="mt-4 rounded-xl border border-white/[0.08] bg-slate-950/55 p-4">
               <p className="text-sm font-semibold text-gray-300">Sale Pending</p>
               <p className="text-xs text-gray-500 mt-1">This listing is reserved for another buyer right now.</p>
             </div>
@@ -565,8 +567,8 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               </div>
             </div>
           )}
-        </div>
+        </SurfaceCard>
       </div>
-    </div>
+    </PageShell>
   );
 }

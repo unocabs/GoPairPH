@@ -92,7 +92,7 @@ export function FilterPanel() {
 
   return (
     <aside className="w-full lg:w-56 shrink-0">
-      <div className="sticky top-20 rounded-xl border border-gray-800 bg-gray-900 p-4">
+      <div className="sticky top-20 rounded-xl border border-white/[0.08] bg-slate-900/72 p-4 shadow-[0_16px_50px_rgba(0,0,0,0.24)] backdrop-blur-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="font-semibold text-gray-200 text-sm">Filters</h2>
@@ -118,8 +118,8 @@ export function FilterPanel() {
                   onClick={() => updateParam('type', opt.value)}
                   className={`block w-full text-left px-2 py-1.5 text-sm rounded-lg transition-colors ${
                     params.get('type') === opt.value || (!params.get('type') && opt.value === '')
-                      ? 'bg-teal-500/10 text-teal-400 font-medium'
-                      : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+                      ? 'bg-teal-500/10 text-teal-300 font-medium ring-1 ring-teal-400/15'
+                      : 'text-gray-400 hover:bg-slate-800/70 hover:text-gray-200'
                   }`}
                 >
                   {opt.label}
@@ -134,7 +134,7 @@ export function FilterPanel() {
             <select
               value={params.get('brand') ?? ''}
               onChange={e => updateParam('brand', e.target.value)}
-              className="w-full text-sm border border-gray-700 rounded-lg px-2 py-1.5 bg-gray-800 text-gray-200 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+              className="w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-sm text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             >
               <option value="" className="bg-gray-800">All brands</option>
               {BRANDS.map(b => <option key={b} value={b} className="bg-gray-800">{b}</option>)}
@@ -147,7 +147,7 @@ export function FilterPanel() {
             <select
               value={params.get('condition') ?? ''}
               onChange={e => updateParam('condition', e.target.value)}
-              className="w-full text-sm border border-gray-700 rounded-lg px-2 py-1.5 bg-gray-800 text-gray-200 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+              className="w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-sm text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             >
               <option value="" className="bg-gray-800">Any condition</option>
               {Object.entries(CONDITIONS).map(([v, l]) => <option key={v} value={v} className="bg-gray-800">{l}</option>)}
@@ -161,7 +161,7 @@ export function FilterPanel() {
               <select
                 value={currentSizeUnit}
                 onChange={e => updateSizeUnit(e.target.value)}
-                className="w-20 text-sm border border-gray-700 rounded-lg px-2 py-1.5 bg-gray-800 text-gray-200 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                className="w-20 rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-sm text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               >
                 {SIZE_UNITS.map(unit => (
                   <option key={unit.value} value={unit.value} className="bg-gray-800">
@@ -177,7 +177,7 @@ export function FilterPanel() {
                 min={selectedSizeUnit.min}
                 max={selectedSizeUnit.max}
                 step={0.5}
-                className="min-w-0 flex-1 text-sm border border-gray-700 rounded-lg px-2 py-1.5 bg-gray-800 text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                className="min-w-0 flex-1 rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-sm text-gray-200 placeholder-gray-600 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
             </div>
           </div>

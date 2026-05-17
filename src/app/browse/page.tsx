@@ -8,6 +8,9 @@ import { createClient } from '@/lib/supabase/server';
 import { getOfferCounts } from '@/lib/offers';
 import { ListingGrid } from '@/components/listings/ListingGrid';
 import { FilterPanel } from '@/components/listings/FilterPanel';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import type { Shoe } from '@/types';
 
 export const metadata: Metadata = {
@@ -111,17 +114,17 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
 
 function SearchBar({ defaultValue }: { defaultValue?: string }) {
   return (
-    <form method="GET" action="/browse" className="mb-6">
+    <form method="GET" action="/browse">
       <div className="flex gap-2">
         <input
           name="q"
           defaultValue={defaultValue}
           placeholder="Search brand or model..."
-          className="flex-1 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+          className="flex-1 rounded-lg border border-white/[0.08] bg-slate-950/70 px-4 py-2.5 text-sm text-gray-100 placeholder-gray-500 shadow-inner shadow-black/20 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
         />
         <button
           type="submit"
-          className="rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-400 transition-colors"
+          className="rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-500/15 transition-colors hover:bg-teal-400"
         >
           Search
         </button>
@@ -155,16 +158,16 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const offerCounts = await getOfferCounts(shoes.map(s => s.id));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="mb-6 text-2xl font-bold text-gray-100">
-        Browse Listings
-      </h1>
-      <p className="-mt-4 mb-6 max-w-2xl text-sm text-gray-500">
-        Find running shoes from community sellers, independent shop sellers, and nearby
-        sellers who can meet, deliver, or ship to Pampanga buyers.
-      </p>
-
-      <SearchBar defaultValue={searchParams.q} />
+    <PageShell>
+      <PageHeader
+        eyebrow="Marketplace"
+        title="Browse Listings"
+        subtitle="Find running shoes from community sellers, independent shop sellers, and nearby sellers who can meet, deliver, or ship to Pampanga buyers."
+      >
+        <SurfaceCard className="p-3 sm:p-4">
+          <SearchBar defaultValue={searchParams.q} />
+        </SurfaceCard>
+      </PageHeader>
 
       <div className="flex flex-col gap-6">
         {/* Filter + Listings row */}
@@ -194,7 +197,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
 
         {/* Find My Pair CTA — full width below on desktop, last on mobile */}
         <section className="w-full">
-          <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-6 text-center">
+          <SurfaceCard glow className="border-teal-500/20 bg-teal-500/5 p-6 text-center">
             <h3 className="text-lg font-bold text-gray-100">
               Can&apos;t find the right pair?
             </h3>
@@ -212,9 +215,9 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
                 Post a Pair Request
               </Button>
             </Link>
-          </div>
+          </SurfaceCard>
         </section>
       </div>
-    </div>
+    </PageShell>
   );
 }

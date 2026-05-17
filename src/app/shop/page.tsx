@@ -6,6 +6,9 @@ import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { getPublicUrl } from '@/lib/utils';
 import { ApplyShopModalTrigger } from './ApplyShopModalTrigger';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import type { Shop } from '@/types';
 
 export const metadata: Metadata = {
@@ -29,22 +32,21 @@ export default async function ShopsIndexPage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-100">Shops</h1>
-          <p className="mt-1 text-sm text-gray-500">Running shoe shops and independent resellers that serve Pampanga buyers.</p>
-        </div>
-        <ApplyShopModalTrigger />
-      </div>
+    <PageShell>
+      <PageHeader
+        eyebrow="Storefronts"
+        title="Shops"
+        subtitle="Running shoe shops and independent resellers that serve Pampanga buyers."
+        actions={<ApplyShopModalTrigger />}
+      />
 
       {shops.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-800 bg-gray-900/50 p-10 text-center">
+        <SurfaceCard className="border-dashed p-10 text-center">
           <p className="text-sm text-gray-400">No shops yet — be the first.</p>
           <div className="mt-4">
             <ApplyShopModalTrigger />
           </div>
-        </div>
+        </SurfaceCard>
       ) : (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {shops.map(shop => {
@@ -53,7 +55,7 @@ export default async function ShopsIndexPage() {
               <li key={shop.id}>
                 <Link
                   href={`/shop/${shop.slug}`}
-                  className="flex items-center gap-4 rounded-xl border border-gray-800 bg-gray-900 p-4 transition-all hover:border-teal-700 hover:bg-gray-800/60"
+                  className="flex items-center gap-4 rounded-xl border border-white/[0.08] bg-slate-900/72 p-4 shadow-[0_16px_50px_rgba(0,0,0,0.24)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-teal-400/35 hover:bg-slate-900/86"
                 >
                   {logoUrl ? (
                     <Image
@@ -79,6 +81,6 @@ export default async function ShopsIndexPage() {
           })}
         </ul>
       )}
-    </div>
+    </PageShell>
   );
 }

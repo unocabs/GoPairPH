@@ -11,6 +11,7 @@ import { SentOfferCard } from '@/components/purchases/SentOfferCard';
 import { RequestVerificationButton } from '@/components/profile/RequestVerificationButton';
 import { formatPrice, formatListingName } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest } from '@/types';
 import Link from 'next/link';
 
@@ -63,7 +64,7 @@ export function OwnProfile({
   return (
     <div>
       {/* Profile header — stacks centered on mobile, row on sm+ */}
-      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 mb-8">
+      <SurfaceCard glow className="mb-8 flex flex-col items-center gap-4 p-5 sm:flex-row sm:items-start sm:gap-6 sm:p-6">
         <div className="flex-1 w-full">
           <ProfileHeader profile={profile} listingCount={shoes.length} wishlistCount={wishlist.length} isOwnProfile />
           <div className="mt-3 flex justify-center sm:justify-start">
@@ -79,10 +80,10 @@ export function OwnProfile({
         <div className="w-full sm:w-auto flex justify-center sm:block">
           <Button variant="outline" onClick={() => setEditOpen(true)}>Edit Profile</Button>
         </div>
-      </div>
+      </SurfaceCard>
 
       {/* Tabs — horizontal scroll on mobile so 4 fit comfortably */}
-      <div className="-mx-4 sm:mx-0 overflow-x-auto border-b border-gray-800 mb-6">
+      <SurfaceCard className="-mx-4 mb-6 overflow-x-auto rounded-none border-x-0 border-gray-800/80 bg-slate-950/40 px-0 py-0 sm:mx-0 sm:rounded-xl sm:border-x sm:px-2">
         <div className="flex gap-1 px-4 sm:px-0 min-w-max sm:min-w-0">
           {tabs.map(({ key, label, count, badgeTone }) => {
             const active = tab === key;
@@ -111,11 +112,11 @@ export function OwnProfile({
             );
           })}
         </div>
-      </div>
+      </SurfaceCard>
 
       {tab === 'listings' && (
         <div>
-          <div className="mb-4 rounded-xl border border-teal-500/20 bg-teal-500/[0.04] p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <SurfaceCard className="mb-4 flex flex-col gap-3 border-teal-500/20 bg-teal-500/[0.04] p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex gap-3">
               <span className="text-xl leading-none mt-0.5" aria-hidden>👟</span>
               <p className="text-sm text-gray-300 leading-relaxed">
@@ -125,7 +126,7 @@ export function OwnProfile({
             <Link href="/listings/new" className="sm:shrink-0">
               <Button size="sm" className="w-full sm:w-auto">+ List a Shoe</Button>
             </Link>
-          </div>
+          </SurfaceCard>
           <ListingGrid shoes={shoes} currentProfileId={profile.id} emptyMessage="You haven't listed any shoes yet." />
         </div>
       )}
@@ -134,10 +135,10 @@ export function OwnProfile({
         <div>
           <p className="text-sm text-gray-500 mb-4">Active purchase requests on your for-sale listings</p>
           {purchaseRequests.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
+            <SurfaceCard className="flex flex-col items-center justify-center border-dashed py-16 text-center">
               <span className="text-4xl opacity-50">🛒</span>
               <p className="mt-3 text-gray-500">No pending purchase requests.</p>
-            </div>
+            </SurfaceCard>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {purchaseRequests.map(req => {
@@ -165,10 +166,10 @@ export function OwnProfile({
         <div>
           <p className="text-sm text-gray-500 mb-4">Offers you&apos;ve sent and items reserved for you</p>
           {sentOffers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
+            <SurfaceCard className="flex flex-col items-center justify-center border-dashed py-16 text-center">
               <span className="text-4xl opacity-50">📨</span>
               <p className="mt-3 text-gray-500">You haven&apos;t sent any offers yet.</p>
-            </div>
+            </SurfaceCard>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {sentOffers.map(req => (
@@ -188,7 +189,9 @@ export function OwnProfile({
             </Link>
           </div>
           {wishlist.length === 0 ? (
-            <p className="text-gray-500">You haven&apos;t posted any pair requests yet.</p>
+            <SurfaceCard className="border-dashed p-8 text-center text-gray-500">
+              You haven&apos;t posted any pair requests yet.
+            </SurfaceCard>
           ) : (
             <WishlistDeepLinkGrid items={wishlist} />
           )}
@@ -199,10 +202,10 @@ export function OwnProfile({
         <div>
           <p className="text-sm text-gray-500 mb-4">Items you&apos;ve bought or sold</p>
           {purchaseHistory.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
+            <SurfaceCard className="flex flex-col items-center justify-center border-dashed py-16 text-center">
               <span className="text-4xl opacity-50">💰</span>
               <p className="mt-3 text-gray-500">No completed purchases yet.</p>
-            </div>
+            </SurfaceCard>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {purchaseHistory.map(req => (

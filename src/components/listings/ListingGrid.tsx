@@ -1,6 +1,7 @@
 import { type Shoe } from '@/types';
 import { type ShopTheme } from '@/lib/shopTheme';
 import { ListingCard } from './ListingCard';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
 
 interface ListingGridProps {
   shoes: Shoe[];
@@ -14,10 +15,10 @@ interface ListingGridProps {
 export function ListingGrid({ shoes, emptyMessage = 'No listings found.', currentProfileId, myRequestListingIds, offerCounts, theme }: ListingGridProps) {
   if (shoes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
+      <SurfaceCard className="flex flex-col items-center justify-center border-dashed py-16 text-center">
         <span className="text-4xl opacity-50">👟</span>
         <p className="mt-3 text-gray-500">{emptyMessage}</p>
-      </div>
+      </SurfaceCard>
     );
   }
 
