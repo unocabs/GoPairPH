@@ -64,6 +64,43 @@ const tips: ReadonlyArray<{ title: string; icon: IconName }> = [
   { title: 'Respond quickly to interested buyers.', icon: 'chat' },
 ];
 
+const sellerBenefits: ReadonlyArray<{
+  title: string;
+  text: string;
+  icon: IconName;
+}> = [
+  {
+    title: 'List once, share anywhere',
+    text: 'Create one clean pair link, then share it to FB groups, Marketplace, Messenger, or friends.',
+    icon: 'send',
+  },
+  {
+    title: 'Cleaner than a normal FB post',
+    text: 'Buyers can check photos, size, condition, mileage, price, and location in one place.',
+    icon: 'form',
+  },
+  {
+    title: 'Built for runners',
+    text: 'Go Pair PH is focused on running shoes, not random marketplace items.',
+    icon: 'shoe',
+  },
+  {
+    title: 'Easier for serious buyers',
+    text: 'Runners can browse by brand, size, and condition, then save pairs they like.',
+    icon: 'check',
+  },
+  {
+    title: 'Looks more trustworthy',
+    text: 'A clean pair page and seller profile help buyers decide faster.',
+    icon: 'user',
+  },
+  {
+    title: 'Your pair is easier to revisit',
+    text: 'FB posts can get buried, but your Go Pair PH link stays easy to share again.',
+    icon: 'chat',
+  },
+];
+
 type IconName = 'user' | 'shoe' | 'form' | 'send' | 'check' | 'camera' | 'pin' | 'box' | 'chat';
 
 const iconPaths: Record<IconName, React.ReactNode> = {
@@ -132,6 +169,8 @@ export default function HowToSellPage() {
     <PageShell contentClassName="py-8 sm:py-10 lg:py-12">
       <HeroSection />
 
+      <SellerBenefitsSection />
+
       <section className="mt-8 space-y-4 sm:mt-10">
         {steps.map((step) => (
           <StepCard key={step.number} step={step} />
@@ -140,6 +179,62 @@ export default function HowToSellPage() {
 
       <TipsSection />
     </PageShell>
+  );
+}
+
+function SellerBenefitsSection() {
+  return (
+    <SurfaceCard as="section" glow className="relative mt-8 overflow-hidden p-5 sm:mt-10 sm:p-6">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(20,184,166,0.12),transparent_34%)]" />
+      <div className="relative">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
+              Seller benefits
+            </p>
+            <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-gray-100 sm:text-3xl">
+              Why add your running shoes on Go Pair PH?
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
+              Use Go Pair PH as a clean seller page, then keep sharing your pair wherever your buyers already are.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row lg:shrink-0">
+            <Link
+              href="/listings/new"
+              className="inline-flex items-center justify-center rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400"
+            >
+              List Your Running Shoes
+            </Link>
+            <Link
+              href="/browse"
+              className="inline-flex items-center justify-center rounded-lg border border-gray-700 bg-slate-950/60 px-4 py-2.5 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-800 hover:text-gray-100"
+            >
+              See Marketplace
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {sellerBenefits.map((benefit) => (
+            <div
+              key={benefit.title}
+              className="rounded-xl border border-white/[0.08] bg-slate-950/45 p-4 transition-colors hover:border-teal-400/30 hover:bg-slate-950/65"
+            >
+              <div className="flex gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-teal-400/30 bg-teal-400/10 text-teal-300">
+                  <Icon name={benefit.icon} className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-gray-100">{benefit.title}</h3>
+                  <p className="mt-1.5 text-sm leading-6 text-gray-400">{benefit.text}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </SurfaceCard>
   );
 }
 
