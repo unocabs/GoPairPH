@@ -17,9 +17,9 @@ import { getSavedListingIds } from '@/lib/savedListings';
 import type { Shoe } from '@/types';
 
 export const metadata: Metadata = {
-  title: 'Browse Listings',
+  title: 'Marketplace',
   description:
-    'Browse new and pre-loved running shoes from community sellers, shop sellers, and nearby sellers who serve Pampanga buyers.',
+    'Shop the Go Pair PH marketplace for new and pre-loved running shoes from community sellers, shop sellers, and nearby sellers who serve Pampanga buyers.',
   alternates: { canonical: '/browse' },
 };
 
@@ -50,7 +50,7 @@ function sortListings(listings: Shoe[], key: SortKey): Shoe[] {
   if (key === 'mixed') {
     // Fisher-Yates shuffle. Default sort: fair rotation across all listings in
     // the bucket so old listings still surface and re-listing can't game the order.
-    // Freshness is communicated via the per-card "NEW" pill, not order.
+    // Freshness is also communicated via the per-card "Just Posted" pill.
     for (let i = arr.length - 1; i > 0; i -= 1) {
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -186,8 +186,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
     <PageShell>
       <FirstListingNudge />
       <PageHeader
-        eyebrow="Marketplace"
-        title="Browse Listings"
+        title="Marketplace"
         subtitle="Find running shoes from community sellers, independent shop sellers, and nearby sellers who can meet, deliver, or ship to Pampanga buyers."
       >
         <SurfaceCard className="p-3 sm:p-4">
