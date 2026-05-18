@@ -38,6 +38,7 @@ interface BrowsePageProps {
 
 type SizeUnit = 'eu' | 'us' | 'cm';
 type SortKey = 'mixed' | 'newest' | 'price_asc' | 'price_desc';
+const FRESH_LISTING_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 function parseSort(raw: string | undefined): SortKey {
   if (raw === 'newest' || raw === 'price_asc' || raw === 'price_desc') return raw;
@@ -101,37 +102,39 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
   const { data } = await query.limit(60);
   const all = (data as Shoe[]) ?? [];
 
-  // Sort within four priority buckets: sponsored listings stay above regular,
-  // and photoless listings stay below listings with images. The user's chosen
-  // sort (newest / price asc / desc) is applied within each bucket.
+  // Sort within quality buckets. Image-backed sponsored listings lead, fresh
+  // image-backed listings come next, regular image-backed listings rotate in
+  // mixed mode, and no-image listings stay at the bottom even if sponsored.
   const sortKey = parseSort(searchParams.sort);
   const now = Date.now();
   const isActiveSponsored = (s: Shoe) =>
     s.sponsored_until != null && new Date(s.sponsored_until).getTime() > now;
+  const isFresh = (s: Shoe) =>
+    now - new Date(s.created_at).getTime() < FRESH_LISTING_WINDOW_MS;
   const hasPhoto = (s: Shoe) => (s.shoe_images?.length ?? 0) > 0;
 
   const sponsoredWithPhoto: Shoe[] = [];
+  const freshWithPhoto: Shoe[] = [];
   const regularWithPhoto: Shoe[] = [];
-  const sponsoredWithoutPhoto: Shoe[] = [];
-  const regularWithoutPhoto: Shoe[] = [];
+  const withoutPhoto: Shoe[] = [];
 
   all.forEach((shoe) => {
-    if (isActiveSponsored(shoe) && hasPhoto(shoe)) {
+    if (!hasPhoto(shoe)) {
+      withoutPhoto.push(shoe);
+    } else if (isActiveSponsored(shoe)) {
       sponsoredWithPhoto.push(shoe);
+    } else if (isFresh(shoe)) {
+      freshWithPhoto.push(shoe);
     } else if (hasPhoto(shoe)) {
       regularWithPhoto.push(shoe);
-    } else if (isActiveSponsored(shoe)) {
-      sponsoredWithoutPhoto.push(shoe);
-    } else {
-      regularWithoutPhoto.push(shoe);
     }
   });
 
   return [
     ...sortListings(sponsoredWithPhoto, sortKey),
+    ...sortListings(freshWithPhoto, sortKey),
     ...sortListings(regularWithPhoto, sortKey),
-    ...sortListings(sponsoredWithoutPhoto, sortKey),
-    ...sortListings(regularWithoutPhoto, sortKey),
+    ...sortListings(withoutPhoto, sortKey),
   ];
 }
 
