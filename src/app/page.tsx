@@ -213,16 +213,21 @@ export default async function HomePage() {
 
       {/* Marketplace activity */}
       <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
-        <div className="grid gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {[
             { label: 'New listings this week', value: activity.newListingsThisWeek },
             { label: 'Active pair requests', value: activity.activePairRequests },
             { label: 'Sold, reserved, or donated', value: activity.soldOrReservedPairs },
             { label: 'Recent active sellers', value: activity.recentSellers },
           ].map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-slate-950/55 px-4 py-3 shadow-[0_12px_35px_rgba(0,0,0,0.18)]">
-              <p className="text-xl font-bold tabular-nums text-gray-100">{stat.value.toLocaleString()}</p>
-              <p className="mt-0.5 text-xs text-gray-500">{stat.label}</p>
+            <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-slate-950/55 px-3 py-2.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] sm:px-4 sm:py-3">
+              <p className="text-lg font-bold tabular-nums text-gray-100 sm:text-xl">
+                {stat.value.toLocaleString()}
+                {stat.label === 'New listings this week' && stat.value >= 2 ? (
+                  <span className="ml-1" aria-label="celebration">🎉</span>
+                ) : null}
+              </p>
+              <p className="mt-0.5 text-[11px] leading-snug text-gray-500 sm:text-xs">{stat.label}</p>
             </div>
           ))}
         </div>
