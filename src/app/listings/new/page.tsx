@@ -45,7 +45,7 @@ export default async function NewListingPage() {
     getProfileAndShop(),
     getDemandSignals(),
   ]);
-  if (!result) redirect('/');
+  if (!result) redirect('/auth/sign-in?next=/listings/new');
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
