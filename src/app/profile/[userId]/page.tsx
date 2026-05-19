@@ -37,24 +37,24 @@ async function getPublicProfile(userId: string) {
   };
 }
 
-async function getCurrentProfileId(): Promise<string | null> {
+async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data } = await supabase.from('profiles').select('id').eq('user_id', user.id).single();
-  return data?.id ?? null;
+  const { data } = await supabase.from('profiles').select('id, is_admin').eq('user_id', user.id).single();
+  return data ? { id: data.id, isAdmin: !!data.is_admin } : null;
 }
 
 export default async function PublicProfilePage({ params }: { params: { userId: string } }) {
-  const [data, currentProfileId] = await Promise.all([
+  const [data, currentProfile] = await Promise.all([
     getPublicProfile(params.userId),
-    getCurrentProfileId(),
+    getCurrentProfile(),
   ]);
   if (!data) notFound();
 
   const { profile, shoes, wishlist } = data;
   const completedSales = await getCompletedSalesCount(profile.id);
-  const savedListingIds = await getSavedListingIds(currentProfileId, shoes.map(s => s.id));
+  const savedListingIds = await getSavedListingIds(currentProfile?.id ?? null, shoes.map(s => s.id));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -70,7 +70,8 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
         <h2 className="text-xl font-bold text-gray-100 mb-4">Active Listings ({shoes.length})</h2>
         <ListingGrid
           shoes={shoes}
-          currentProfileId={currentProfileId ?? undefined}
+          currentProfileId={currentProfile?.id}
+          currentProfileIsAdmin={currentProfile?.isAdmin}
           savedListingIds={savedListingIds}
           emptyMessage="No active listings."
         />

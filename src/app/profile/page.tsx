@@ -50,7 +50,7 @@ async function getOwnProfileData() {
   }
 
   // Purchase history: only completed transactions (reserved/accepted live in the Sent Offers tab)
-  const purchaseSelect = '*, profiles(*), shoe_variants(*), listing:shoes!listing_id(*, shoe_images(*), profiles(*))';
+  const purchaseSelect = '*, profiles(*), shoe_variants(*), listing:shoes!listing_id(*, shoe_images(*), profiles!shoes_seller_id_fkey(*))';
   const [boughtRes, soldRes, sentOffersRes] = await Promise.all([
     supabase.from('purchase_requests').select(purchaseSelect).eq('buyer_id', profile.id).eq('status', 'completed'),
     shoeIds.length > 0

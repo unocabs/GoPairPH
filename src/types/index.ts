@@ -100,6 +100,10 @@ export interface Shoe {
   featured_until: string | null;
   sponsored_until: string | null;
   sponsored_started_at: string | null;
+  quality_flagged_at: string | null;
+  quality_flagged_by: string | null;
+  quality_flag_reasons: string[];
+  quality_flag_note: string | null;
   shop_id: string | null;
   quantity: number;
   listed_in_main_feed: boolean;

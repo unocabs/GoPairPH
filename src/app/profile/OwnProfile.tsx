@@ -166,7 +166,13 @@ export function OwnProfile({
               </p>
             )}
           </SurfaceCard>
-          <ListingGrid shoes={shoes} currentProfileId={profile.id} viewCounts={viewCounts} emptyMessage="You haven't listed any shoes yet." />
+          <ListingGrid
+            shoes={shoes}
+            currentProfileId={profile.id}
+            currentProfileIsAdmin={profile.is_admin}
+            viewCounts={viewCounts}
+            emptyMessage="You haven't listed any shoes yet."
+          />
         </div>
       )}
 
@@ -253,6 +259,7 @@ export function OwnProfile({
             <ListingGrid
               shoes={savedListings}
               currentProfileId={profile.id}
+              currentProfileIsAdmin={profile.is_admin}
               savedListingIds={new Set(savedListings.map(shoe => shoe.id))}
               onSavedChange={handleSavedListingChanged}
               emptyMessage="No saved pairs yet. Save pairs you like and come back before they sell."

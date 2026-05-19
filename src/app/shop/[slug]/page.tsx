@@ -60,7 +60,7 @@ async function getShopListings(shopId: string, searchParams: ShopLandingPageProp
   const supabase = createClient();
   const { data } = await supabase
     .from('shoes')
-    .select('*, profiles(*), shoe_images(*), shops(*), shoe_variants(*)')
+    .select('*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)')
     .eq('shop_id', shopId)
     .eq('status', 'active')
     .order('created_at', { ascending: false })
@@ -108,17 +108,17 @@ async function getCarouselListings(listingIds: string[]): Promise<Array<Pick<Sho
   return (data as Array<Pick<Shoe, 'id' | 'slug' | 'brand' | 'model'>>) ?? [];
 }
 
-async function getCurrentProfileId(): Promise<string | null> {
+async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data } = await supabase
     .from('profiles')
-    .select('id')
+    .select('id, is_admin')
     .eq('user_id', user.id)
     .maybeSingle();
-  return data?.id ?? null;
+  return data ? { id: data.id, isAdmin: !!data.is_admin } : null;
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
@@ -139,15 +139,15 @@ export default async function ShopLandingPage({ params, searchParams }: ShopLand
     .map(item => item.listing_id)
     .filter((id): id is string => !!id)));
 
-  const [listings, count, profileId, carouselListings] = await Promise.all([
+  const [listings, count, currentProfile, carouselListings] = await Promise.all([
     getShopListings(shop.id, searchParams),
     getShopListingCount(shop.id),
-    getCurrentProfileId(),
+    getCurrentProfile(),
     getCarouselListings(carouselListingIds),
   ]);
   const offerCounts = await getOfferCounts(listings.map(s => s.id));
-  const savedListingIds = await getSavedListingIds(profileId, listings.map(s => s.id));
-  const isOwner = profileId === shop.owner_profile_id;
+  const savedListingIds = await getSavedListingIds(currentProfile?.id ?? null, listings.map(s => s.id));
+  const isOwner = currentProfile?.id === shop.owner_profile_id;
   const theme = getShopTheme(shop.background_color, shop.accent_color);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const shopLogoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
@@ -211,7 +211,8 @@ export default async function ShopLandingPage({ params, searchParams }: ShopLand
             <ListingGrid
               shoes={listings}
               offerCounts={offerCounts}
-              currentProfileId={profileId ?? undefined}
+              currentProfileId={currentProfile?.id}
+              currentProfileIsAdmin={currentProfile?.isAdmin}
               savedListingIds={savedListingIds}
               emptyMessage="No shop listings match these filters yet."
               theme={theme}

@@ -32,7 +32,7 @@ export async function getSavedListings(profileId: string): Promise<Shoe[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from('saved_listings')
-    .select('listing:shoes!saved_listings_listing_id_fkey(*, profiles(*), shoe_images(*), shops(*), shoe_variants(*))')
+    .select('listing:shoes!saved_listings_listing_id_fkey(*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*))')
     .eq('user_id', profileId)
     .order('created_at', { ascending: false });
 

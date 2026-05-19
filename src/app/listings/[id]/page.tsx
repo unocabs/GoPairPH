@@ -20,6 +20,7 @@ import { DeleteListingButton } from './DeleteListingButton';
 import { CompleteSaleButtons } from './CompleteSaleButtons';
 import { FeatureToggleButton } from './FeatureToggleButton';
 import { SponsoredAdminToggle } from './SponsoredAdminToggle';
+import { QualityFlagAdminPanel } from './QualityFlagAdminPanel';
 import { BuyButton } from '@/components/purchases/BuyButton';
 import { DonateRequestButton } from '@/components/purchases/DonateRequestButton';
 import { ContactSellerButtons } from '@/components/listings/ContactSellerButtons';
@@ -28,6 +29,8 @@ import { ListingViewTracker } from '@/components/listings/ListingViewTracker';
 import { PromoteListingButton } from '@/components/listings/PromoteListingButton';
 import { SponsoredPill } from '@/components/listings/SponsoredPill';
 import { FeaturedPill } from '@/components/listings/FeaturedPill';
+import { FlaggedPill } from '@/components/listings/FlaggedPill';
+import { QualityFlagNotice } from '@/components/listings/QualityFlagNotice';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import { getSponsoredSlotInfo } from '@/lib/sponsored';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
@@ -88,7 +91,7 @@ async function getShoe(id: string): Promise<Shoe | null> {
   const supabase = createClient();
   const query = supabase
     .from('shoes')
-    .select('*, profiles(*), shoe_images(*), shops(*), shoe_variants(*)');
+    .select('*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)');
 
   const { data } = UUID_RE.test(id)
     ? await query.eq('id', id).single()
@@ -174,6 +177,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const isAdmin = currentProfile?.isAdmin ?? false;
   const isVerified = currentProfile?.isVerified ?? false;
   const isOwner = currentProfileId === shoe.seller_id;
+  const canSeeQualityFlag = !!shoe.quality_flagged_at && (isOwner || isAdmin);
   const seller = shoe.profiles;
   const shop = shoe.shops && shoe.shops.status === 'active' ? shoe.shops : null;
   const shopLogoUrl = shop?.logo_storage_path ? getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, shop.logo_storage_path, 'shop-logos') : null;
@@ -299,6 +303,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               <FeaturedPill featuredUntil={shoe.featured_until} />
             )}
             {isSponsored && <SponsoredPill />}
+            {canSeeQualityFlag && <FlaggedPill />}
           </div>
 
           <h1 className="text-3xl font-bold text-gray-100">{formatListingName(shoe.brand, shoe.model)}</h1>
@@ -306,6 +311,15 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           {shoe.shops && shoe.shops.status === 'active' && (
             <div className="mt-2">
               <ShopBadge shop={shoe.shops} variant="sold-by" />
+            </div>
+          )}
+
+          {canSeeQualityFlag && (
+            <div className="mt-4">
+              <QualityFlagNotice
+                reasons={shoe.quality_flag_reasons}
+                note={shoe.quality_flag_note}
+              />
             </div>
           )}
 
@@ -641,6 +655,14 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 <p className="mt-2 text-[11px] text-gray-500">
                   Activate after the seller pays. The 15% slot cap is enforced when sellers try to buy a slot.
                 </p>
+              </div>
+              <div className="border-t border-gray-800 pt-4">
+                <QualityFlagAdminPanel
+                  shoeId={shoe.id}
+                  flaggedAt={shoe.quality_flagged_at}
+                  reasons={shoe.quality_flag_reasons}
+                  note={shoe.quality_flag_note}
+                />
               </div>
             </div>
           )}

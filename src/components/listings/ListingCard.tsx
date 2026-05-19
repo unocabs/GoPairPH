@@ -17,6 +17,7 @@ import { BuyModal } from '@/components/purchases/BuyModal';
 import { DonateRequestModal } from '@/components/purchases/DonateRequestModal';
 import { SponsoredPill } from './SponsoredPill';
 import { NewPill } from './NewPill';
+import { FlaggedPill } from './FlaggedPill';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import { SaveListingButton } from './SaveListingButton';
 import { type ShopTheme } from '@/lib/shopTheme';
@@ -26,6 +27,7 @@ const NEW_PILL_WINDOW_MS = 24 * 60 * 60 * 1000;
 interface ListingCardProps {
   shoe: Shoe;
   currentProfileId?: string;
+  currentProfileIsAdmin?: boolean;
   hasExistingRequest?: boolean;
   offerCount?: number;
   /** Owner-only: total + last-7-days view counts. Rendered as a pill on the card. */
@@ -35,7 +37,7 @@ interface ListingCardProps {
   theme?: ShopTheme;
 }
 
-export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false, offerCount = 0, viewSummary, isSaved = false, onSavedChange, theme }: ListingCardProps) {
+export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = false, hasExistingRequest = false, offerCount = 0, viewSummary, isSaved = false, onSavedChange, theme }: ListingCardProps) {
   const [buyOpen, setBuyOpen] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -45,6 +47,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
   const topImage = shoe.shoe_images?.find(img => img.view_type === 'top') ?? shoe.shoe_images?.[0];
   const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path) : null;
   const isOwner = !!currentProfileId && shoe.seller_id === currentProfileId;
+  const canSeeQualityFlag = !!shoe.quality_flagged_at && (isOwner || currentProfileIsAdmin);
   const canSave = !!currentProfileId && !isOwner;
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > new Date();
   const isFresh = Date.now() - new Date(shoe.created_at).getTime() < NEW_PILL_WINDOW_MS;
@@ -80,7 +83,9 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
   return (
     <div className={cn(
       'relative overflow-hidden rounded-xl border bg-slate-900/72 shadow-[0_16px_50px_rgba(0,0,0,0.26)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:shadow-[0_22px_70px_rgba(0,0,0,0.36),0_0_36px_rgba(20,184,166,0.08)]',
-      isOwner ? 'border-teal-500/60 hover:border-teal-400' : 'border-white/[0.08] hover:border-teal-400/30'
+      canSeeQualityFlag
+        ? 'border-amber-300/45 hover:border-amber-300/70'
+        : isOwner ? 'border-teal-500/60 hover:border-teal-400' : 'border-white/[0.08] hover:border-teal-400/30'
     )} style={themedCardStyle}>
       {/* Clickable area navigates to listing */}
       <Link href={listingPath} className="group block">
@@ -109,6 +114,7 @@ export function ListingCard({ shoe, currentProfileId, hasExistingRequest = false
           )}
           <div className={`absolute ${shoe.shops?.logo_storage_path ? 'top-2 left-12' : 'top-2 left-2'} flex flex-col items-start gap-1`}>
             {shoe.listing_type === 'donate' && <ListingTypeBadge type={shoe.listing_type} />}
+            {canSeeQualityFlag && <FlaggedPill size="sm" />}
             {isSponsored && <SponsoredPill size="sm" />}
             {isFresh && shoe.status === 'active' && !isSponsored && <NewPill size="sm" />}
           </div>

@@ -87,7 +87,7 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
   const supabase = createClient();
   let query = supabase
     .from('shoes')
-    .select('*, profiles(*), shoe_images(*), shops(*), shoe_variants(*)')
+    .select('*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)')
     .eq('status', 'active')
     .eq('listed_in_main_feed', true)
     .eq('has_stock', true);
@@ -104,7 +104,7 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
 
   // Sort within quality buckets. Image-backed sponsored listings lead, fresh
   // image-backed listings come next, regular image-backed listings rotate in
-  // mixed mode, and no-image listings stay at the bottom even if sponsored.
+  // mixed mode, and low-priority listings stay at the bottom even if sponsored.
   const sortKey = parseSort(searchParams.sort);
   const now = Date.now();
   const isActiveSponsored = (s: Shoe) =>
@@ -112,15 +112,16 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
   const isFresh = (s: Shoe) =>
     now - new Date(s.created_at).getTime() < FRESH_LISTING_WINDOW_MS;
   const hasPhoto = (s: Shoe) => (s.shoe_images?.length ?? 0) > 0;
+  const isQualityFlagged = (s: Shoe) => !!s.quality_flagged_at;
 
   const sponsoredWithPhoto: Shoe[] = [];
   const freshWithPhoto: Shoe[] = [];
   const regularWithPhoto: Shoe[] = [];
-  const withoutPhoto: Shoe[] = [];
+  const lowPriority: Shoe[] = [];
 
   all.forEach((shoe) => {
-    if (!hasPhoto(shoe)) {
-      withoutPhoto.push(shoe);
+    if (isQualityFlagged(shoe) || !hasPhoto(shoe)) {
+      lowPriority.push(shoe);
     } else if (isActiveSponsored(shoe)) {
       sponsoredWithPhoto.push(shoe);
     } else if (isFresh(shoe)) {
@@ -134,7 +135,7 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
     ...sortListings(sponsoredWithPhoto, sortKey),
     ...sortListings(freshWithPhoto, sortKey),
     ...sortListings(regularWithPhoto, sortKey),
-    ...sortListings(withoutPhoto, sortKey),
+    ...sortListings(lowPriority, sortKey),
   ];
 }
 
@@ -159,11 +160,11 @@ function SearchBar({ defaultValue }: { defaultValue?: string }) {
   );
 }
 
-async function getCurrentProfileAndRequests(listingIds: string[]): Promise<{ profileId: string; requestListingIds: Set<string>; savedListingIds: Set<string> } | null> {
+async function getCurrentProfileAndRequests(listingIds: string[]): Promise<{ profileId: string; isAdmin: boolean; requestListingIds: Set<string>; savedListingIds: Set<string> } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data: profile } = await supabase.from('profiles').select('id').eq('user_id', user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('id, is_admin').eq('user_id', user.id).single();
   if (!profile) return null;
 
   const { data: requests } = await supabase
@@ -174,7 +175,7 @@ async function getCurrentProfileAndRequests(listingIds: string[]): Promise<{ pro
 
   const requestListingIds = new Set((requests ?? []).map((r: { listing_id: string }) => r.listing_id));
   const savedListingIds = await getSavedListingIds(profile.id, listingIds);
-  return { profileId: profile.id, requestListingIds, savedListingIds };
+  return { profileId: profile.id, isAdmin: !!profile.is_admin, requestListingIds, savedListingIds };
 }
 
 export default async function BrowsePage({ searchParams }: BrowsePageProps) {
@@ -211,6 +212,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
             <ListingGrid
               shoes={shoes}
               currentProfileId={userContext?.profileId}
+              currentProfileIsAdmin={userContext?.isAdmin}
               myRequestListingIds={userContext?.requestListingIds}
               savedListingIds={userContext?.savedListingIds}
               offerCounts={offerCounts}

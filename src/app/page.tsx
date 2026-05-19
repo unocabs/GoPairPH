@@ -17,7 +17,7 @@ async function getRecentListings(): Promise<Shoe[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from('shoes')
-    .select('*, profiles(*), shoe_images(*), shops(*), shoe_variants(*)')
+    .select('*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)')
     .eq('status', 'active')
     .eq('has_stock', true)
     .order('created_at', { ascending: false })
@@ -44,7 +44,7 @@ async function getFeaturedListing(): Promise<Shoe | null> {
   const supabase = createClient();
   const { data } = await supabase
     .from('shoes')
-    .select('*, profiles(*), shoe_images(*), shops(*), shoe_variants(*)')
+    .select('*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)')
     .eq('status', 'active')
     .eq('has_stock', true)
     .gt('featured_until', new Date().toISOString())
@@ -54,11 +54,11 @@ async function getFeaturedListing(): Promise<Shoe | null> {
   return (data as Shoe) ?? null;
 }
 
-async function getCurrentProfileAndRequests(listingIds: string[]): Promise<{ profileId: string; requestListingIds: Set<string>; savedListingIds: Set<string> } | null> {
+async function getCurrentProfileAndRequests(listingIds: string[]): Promise<{ profileId: string; isAdmin: boolean; requestListingIds: Set<string>; savedListingIds: Set<string> } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data: profile } = await supabase.from('profiles').select('id').eq('user_id', user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('id, is_admin').eq('user_id', user.id).single();
   if (!profile) return null;
 
   const { data: requests } = await supabase
@@ -69,7 +69,7 @@ async function getCurrentProfileAndRequests(listingIds: string[]): Promise<{ pro
 
   const requestListingIds = new Set((requests ?? []).map((r: { listing_id: string }) => r.listing_id));
   const savedListingIds = await getSavedListingIds(profile.id, listingIds);
-  return { profileId: profile.id, requestListingIds, savedListingIds };
+  return { profileId: profile.id, isAdmin: !!profile.is_admin, requestListingIds, savedListingIds };
 }
 
 async function getMarketplaceActivity(): Promise<{
@@ -296,6 +296,7 @@ export default async function HomePage() {
         <ListingGrid
           shoes={recentShoes}
           currentProfileId={userContext?.profileId}
+          currentProfileIsAdmin={userContext?.isAdmin}
           myRequestListingIds={userContext?.requestListingIds}
           savedListingIds={userContext?.savedListingIds}
           offerCounts={offerCounts}

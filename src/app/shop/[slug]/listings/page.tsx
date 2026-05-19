@@ -24,7 +24,7 @@ async function getShopListings(shopId: string): Promise<Shoe[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from('shoes')
-    .select('*, profiles(*), shoe_images(*), shops(*), shoe_variants(*)')
+    .select('*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)')
     .eq('shop_id', shopId)
     .eq('status', 'active')
     .eq('has_stock', true)
@@ -40,18 +40,18 @@ async function getShopListings(shopId: string): Promise<Shoe[]> {
   });
 }
 
-async function getCurrentProfileId(): Promise<string | null> {
+async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data } = await supabase
     .from('profiles')
-    .select('id')
+    .select('id, is_admin')
     .eq('user_id', user.id)
     .maybeSingle();
 
-  return data?.id ?? null;
+  return data ? { id: data.id, isAdmin: !!data.is_admin } : null;
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
@@ -68,12 +68,12 @@ export default async function ShopListingsPage({ params }: { params: { slug: str
   const shop = await getShop(params.slug);
   if (!shop) notFound();
 
-  const [listings, profileId] = await Promise.all([
+  const [listings, currentProfile] = await Promise.all([
     getShopListings(shop.id),
-    getCurrentProfileId(),
+    getCurrentProfile(),
   ]);
   const offerCounts = await getOfferCounts(listings.map(s => s.id));
-  const savedListingIds = await getSavedListingIds(profileId, listings.map(s => s.id));
+  const savedListingIds = await getSavedListingIds(currentProfile?.id ?? null, listings.map(s => s.id));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -84,7 +84,8 @@ export default async function ShopListingsPage({ params }: { params: { slug: str
       <ListingGrid
         shoes={listings}
         offerCounts={offerCounts}
-        currentProfileId={profileId ?? undefined}
+        currentProfileId={currentProfile?.id}
+        currentProfileIsAdmin={currentProfile?.isAdmin}
         savedListingIds={savedListingIds}
         emptyMessage="This shop hasn't posted any listings yet."
       />
