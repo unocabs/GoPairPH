@@ -12,6 +12,87 @@ import { LogoMark } from '@/components/brand/Logo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import type { Shoe } from '@/types';
 
+type SellerBenefitIcon = 'user' | 'shoe' | 'form' | 'send' | 'check' | 'chat';
+
+const sellerBenefits: ReadonlyArray<{
+  title: string;
+  text: string;
+  icon: SellerBenefitIcon;
+}> = [
+  {
+    title: 'List once, share anywhere',
+    text: 'Create one clean pair link, then share it to FB groups, Marketplace, Messenger, or friends.',
+    icon: 'send',
+  },
+  {
+    title: 'Cleaner than a normal FB post',
+    text: 'Buyers can check photos, size, condition, mileage, price, and location in one place.',
+    icon: 'form',
+  },
+  {
+    title: 'Built for runners',
+    text: 'Go Pair PH is focused on running shoes, not random marketplace items.',
+    icon: 'shoe',
+  },
+  {
+    title: 'Easier for serious buyers',
+    text: 'Runners can browse by brand, size, and condition, then save pairs they like.',
+    icon: 'check',
+  },
+  {
+    title: 'Looks more trustworthy',
+    text: 'A clean pair page and seller profile help buyers decide faster.',
+    icon: 'user',
+  },
+  {
+    title: 'Your pair is easier to revisit',
+    text: 'FB posts can get buried, but your Go Pair PH link stays easy to share again.',
+    icon: 'chat',
+  },
+];
+
+const sellerBenefitIconPaths: Record<SellerBenefitIcon, React.ReactNode> = {
+  user: (
+    <>
+      <path d="M20 21a8 8 0 0 0-16 0" />
+      <circle cx="12" cy="7" r="4" />
+    </>
+  ),
+  shoe: (
+    <path d="M4 14.5c3.2.2 5.6-1.2 7.2-4.2l2 1.8c1.4 1.2 3.3 2 5.2 2.2l1.8.2c.8.1 1.4.8 1.4 1.6v1.4H4v-3Z" />
+  ),
+  form: (
+    <>
+      <path d="M8 6h9" />
+      <path d="M8 12h9" />
+      <path d="M8 18h5" />
+      <path d="M4 6h.01" />
+      <path d="M4 12h.01" />
+      <path d="M4 18h.01" />
+    </>
+  ),
+  send: (
+    <>
+      <path d="m22 2-7 20-4-9-9-4 20-7Z" />
+      <path d="M22 2 11 13" />
+    </>
+  ),
+  check: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8.5 12.5 2.2 2.2 4.8-5.4" />
+    </>
+  ),
+  chat: (
+    <>
+      <path d="M21 12a7.5 7.5 0 0 1-7.5 7.5H8l-5 2 1.6-4.4A7.5 7.5 0 1 1 21 12Z" />
+      <path d="M8 12h.01" />
+      <path d="M12 12h.01" />
+      <path d="M16 12h.01" />
+    </>
+  ),
+};
+
 async function getRecentListings(): Promise<Shoe[]> {
   const supabase = createPublicClient();
   const { data } = await supabase
@@ -217,50 +298,52 @@ export default async function HomePage() {
 
       {/* Seller benefits */}
       <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
-        <SurfaceCard glow className="overflow-hidden border-teal-500/20 bg-slate-950/70 p-5 sm:p-7">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] lg:items-center">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">For sellers</p>
-              <h2 className="mt-3 text-2xl font-bold tracking-tight text-gray-100 sm:text-3xl">
-                Why sellers list on Go Pair PH
-              </h2>
-              <p className="mt-3 text-sm leading-7 text-gray-400 sm:text-base">
-                Go Pair PH works as your seller advantage layer on top of Facebook. Create one
-                clean listing page, then share that link to FB groups, Marketplace, Messenger,
-                or your shop page so serious runners can check the details faster.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link href="/listings/new">
-                  <Button>Create Seller Listing</Button>
+        <SurfaceCard glow className="relative overflow-hidden border-teal-500/20 bg-slate-950/70 p-5 sm:p-7">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(20,184,166,0.12),transparent_34%)]" />
+          <div className="relative">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-2xl">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
+                  Seller benefits
+                </p>
+                <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-gray-100 sm:text-3xl">
+                  Why add your running shoes on Go Pair PH?
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
+                  Use Go Pair PH as a clean seller page, then keep sharing your pair wherever your buyers already are.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row lg:shrink-0">
+                <Link
+                  href="/listings/new"
+                  className="inline-flex items-center justify-center rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400"
+                >
+                  List Your Running Shoes
                 </Link>
-                <Link href="/help/how-to-sell">
-                  <Button variant="outline">How Selling Works</Button>
+                <Link
+                  href="/browse"
+                  className="inline-flex items-center justify-center rounded-lg border border-gray-700 bg-slate-950/60 px-4 py-2.5 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-800 hover:text-gray-100"
+                >
+                  See Marketplace
                 </Link>
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              {[
-                {
-                  title: 'Cleaner than FB posts',
-                  desc: 'One focused page for price, size, condition, mileage, photos, and seller details.',
-                },
-                {
-                  title: 'Built for runners',
-                  desc: 'Buyers can scan running-specific details instead of digging through comment threads.',
-                },
-                {
-                  title: 'Searchable by intent',
-                  desc: 'Brand, size, condition, and carbon-shoe searches keep your pair discoverable after posts get buried.',
-                },
-                {
-                  title: 'Trust faster',
-                  desc: 'A complete profile, real photos, listing history, and clear contact path make buyers more confident.',
-                },
-              ].map((item) => (
-                <div key={item.title} className="rounded-xl border border-white/[0.08] bg-slate-900/60 p-4 shadow-[0_12px_35px_rgba(0,0,0,0.18)]">
-                  <h3 className="text-sm font-semibold text-gray-100">{item.title}</h3>
-                  <p className="mt-2 text-xs leading-6 text-gray-400 sm:text-sm">{item.desc}</p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {sellerBenefits.map((benefit) => (
+                <div
+                  key={benefit.title}
+                  className="rounded-xl border border-white/[0.08] bg-slate-950/45 p-4 transition-colors hover:border-teal-400/30 hover:bg-slate-950/65"
+                >
+                  <div className="flex gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-teal-400/30 bg-teal-400/10 text-teal-300">
+                      <SellerBenefitIcon name={benefit.icon} className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold text-gray-100">{benefit.title}</h3>
+                      <p className="mt-1.5 text-sm leading-6 text-gray-400">{benefit.text}</p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -296,5 +379,22 @@ export default async function HomePage() {
         </div>
       </section>
     </div>
+  );
+}
+
+function SellerBenefitIcon({ name, className }: { name: SellerBenefitIcon; className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      {sellerBenefitIconPaths[name]}
+    </svg>
   );
 }
