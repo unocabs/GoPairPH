@@ -18,7 +18,7 @@ const locationChoices: ReadonlyArray<{
   label: string;
 }> = [
   { value: 'pampanga', label: "I'm in Pampanga" },
-  { value: 'nearby', label: "I'm nearby" },
+  { value: 'nearby', label: "I'm nearby (Central Luzon & NCR)" },
   { value: 'farther', label: "I'm farther away" },
 ];
 
