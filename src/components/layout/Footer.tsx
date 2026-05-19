@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Logo } from './Logo';
+import { SOCIAL_LINKS } from '@/lib/socialLinks';
 
 const FOOTER_GROUPS = [
   {
@@ -34,7 +35,7 @@ export function Footer() {
   return (
     <footer className="border-t border-gray-800 bg-gray-950 mt-auto">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-5">
           {/* Brand column */}
           <div className="col-span-2 sm:col-span-1">
             <Logo size="sm" />
@@ -64,6 +65,26 @@ export function Footer() {
               </ul>
             </div>
           ))}
+
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-300 mb-3">
+              Follow
+            </h3>
+            <ul className="space-y-2">
+              {SOCIAL_LINKS.map((link) => (
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-gray-500 hover:text-teal-400 transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         {/* Bottom bar */}

@@ -7,6 +7,7 @@ import { Footer } from '@/components/layout/Footer';
 import { SessionProvider } from '@/components/auth/SessionProvider';
 import { InAppBrowserRedirect } from '@/components/layout/InAppBrowserRedirect';
 import { AnnouncementBar } from '@/components/layout/AnnouncementBar';
+import { SOCIAL_URLS } from '@/lib/socialLinks';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,6 +24,7 @@ const siteJsonLd = [
     url: SITE_URL,
     logo: `${SITE_URL}/icon.svg`,
     description: SITE_DESCRIPTION,
+    sameAs: SOCIAL_URLS,
   },
   {
     '@context': 'https://schema.org',
