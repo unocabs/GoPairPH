@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Logo, LogoMark } from '@/components/brand/Logo';
 import { PageShell } from '@/components/layout/PageShell';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { CanListWidget } from '@/components/listings/CanListWidget';
 
 export const metadata: Metadata = {
   title: 'How to Sell on Go Pair PH',
@@ -170,6 +171,10 @@ export default function HowToSellPage() {
       <HeroSection />
 
       <SellerBenefitsSection />
+
+      <div className="mt-8 sm:mt-10">
+        <CanListWidget showCta />
+      </div>
 
       <section className="mt-8 space-y-4 sm:mt-10">
         {steps.map((step) => (
