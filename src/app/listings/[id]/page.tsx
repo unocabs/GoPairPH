@@ -177,7 +177,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const isAdmin = currentProfile?.isAdmin ?? false;
   const isVerified = currentProfile?.isVerified ?? false;
   const isOwner = currentProfileId === shoe.seller_id;
-  const canSeeQualityFlag = !!shoe.quality_flagged_at && (isOwner || isAdmin);
+  const canSeeQualityFlag = !!shoe.quality_flagged_at && !!currentProfileId && (isOwner || isAdmin === true);
   const seller = shoe.profiles;
   const shop = shoe.shops && shoe.shops.status === 'active' ? shoe.shops : null;
   const shopLogoUrl = shop?.logo_storage_path ? getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, shop.logo_storage_path, 'shop-logos') : null;

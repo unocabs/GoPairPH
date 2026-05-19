@@ -47,7 +47,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
   const topImage = shoe.shoe_images?.find(img => img.view_type === 'top') ?? shoe.shoe_images?.[0];
   const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path) : null;
   const isOwner = !!currentProfileId && shoe.seller_id === currentProfileId;
-  const canSeeQualityFlag = !!shoe.quality_flagged_at && (isOwner || currentProfileIsAdmin);
+  const canSeeQualityFlag = !!shoe.quality_flagged_at && !!currentProfileId && (isOwner || currentProfileIsAdmin === true);
   const canSave = !!currentProfileId && !isOwner;
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > new Date();
   const isFresh = Date.now() - new Date(shoe.created_at).getTime() < NEW_PILL_WINDOW_MS;
