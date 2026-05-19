@@ -20,6 +20,59 @@ const MOBILE_CARD_W = 1080;
 const MOBILE_CARD_H = 1350;
 type ShareFormat = 'mobile' | 'desktop';
 
+function truncateText(text: string | null | undefined, maxChars: number): string {
+  const normalized = (text ?? '').replace(/\s+/g, ' ').trim();
+  if (normalized.length <= maxChars) return normalized;
+  return `${normalized.slice(0, Math.max(0, maxChars - 3)).trimEnd()}...`;
+}
+
+function appendEllipsis(text: string, maxChars: number): string {
+  const base = text.replace(/\s+/g, ' ').trim();
+  if (base.endsWith('...')) return truncateText(base, maxChars);
+  return truncateText(`${base}...`, maxChars);
+}
+
+function buildTruncatedDescriptionLines(description: string | null | undefined, maxLines: number, maxChars: number): string[] {
+  const normalized = (description ?? '').replace(/\s+/g, ' ').trim();
+  if (!normalized) return ['Message the seller for full details.'];
+
+  const words = normalized.split(' ');
+  const lines: string[] = [];
+  let current = '';
+  let usedWords = 0;
+
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length <= maxChars) {
+      current = next;
+      usedWords += 1;
+      continue;
+    }
+
+    if (current) {
+      lines.push(current);
+      if (lines.length === maxLines) break;
+      current = word;
+      usedWords += 1;
+    } else {
+      lines.push(truncateText(word, maxChars));
+      usedWords += 1;
+      if (lines.length === maxLines) break;
+    }
+  }
+
+  if (lines.length < maxLines && current) {
+    lines.push(current);
+  }
+
+  const hasMore = usedWords < words.length || lines.some(line => line.length > maxChars);
+  if (hasMore && lines.length > 0) {
+    lines[lines.length - 1] = appendEllipsis(lines[lines.length - 1], maxChars);
+  }
+
+  return lines.slice(0, maxLines).map(line => truncateText(line, maxChars));
+}
+
 function waitForNextPaint(): Promise<void> {
   return new Promise(resolve => {
     requestAnimationFrame(() => {
@@ -398,11 +451,13 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
           gap: 20,
           background: 'linear-gradient(135deg, #020617 0%, #0b1220 50%, #042f2e 100%)',
           borderRight: '1px solid rgba(20, 184, 166, 0.25)',
+          boxSizing: 'border-box',
+          overflow: 'hidden',
         }}
       >
         <IdentityBlock identityName={identityName} identityLocation={identityLocation} identityLabel={identityLabel} identitySrc={identitySrc} seller={seller} compact />
         <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} />
-        <TitleBlock shoe={shoe} shareSize={shareSize} titleSize={52} metaSize={18} />
+        <TitleBlock shoe={shoe} shareSize={shareSize} titleSize={52} metaSize={18} maxLines={3} />
         <PriceBlock shoe={shoe} priceSize={40} />
         <DescriptionBlock description={shoe.description} maxLines={5} />
         <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 9, color: '#94a3b8', fontSize: 13, fontWeight: 700 }}>
@@ -482,9 +537,13 @@ const VerticalShareCard = forwardRef<HTMLDivElement, VerticalShareCardProps>(fun
   const thumbnailSrcs = gallerySrcs.slice(0, 3);
   const description = hasDescription ? shoe.description : 'Message the seller for full details.';
   const hideBrand = shoe.brand.trim().toLowerCase() === 'other';
+  const displayBrand = truncateText(shoe.brand, 18);
+  const displayModel = truncateText(shoe.model, 46);
+  const displayColor = truncateText(shoe.color, 28);
+  const displaySize = truncateText(shareSize, 24);
   const modelTitleSize = hideBrand
-    ? shoe.model.length > 13 ? 66 : 78
-    : shoe.model.length > 13 ? 58 : 72;
+    ? displayModel.length > 13 ? 66 : 78
+    : displayModel.length > 13 ? 58 : 72;
 
   return (
     <div
@@ -522,33 +581,33 @@ const VerticalShareCard = forwardRef<HTMLDivElement, VerticalShareCardProps>(fun
             <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} size="lg" />
           </div>
 
-          <div style={{ marginTop: hideBrand ? 72 : 64 }}>
+          <div style={{ marginTop: hideBrand ? 72 : 64, height: 410, overflow: 'hidden' }}>
             {!hideBrand && (
-              <div style={{ color: '#f8fafc', fontSize: 80, lineHeight: 0.96, fontWeight: 900, letterSpacing: 0 }}>
-                {shoe.brand}
+              <div style={{ color: '#f8fafc', fontSize: 80, lineHeight: 0.96, fontWeight: 900, letterSpacing: 0, maxWidth: 360, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {displayBrand}
               </div>
             )}
-            <div style={{ color: '#22d3c5', fontSize: modelTitleSize, lineHeight: 1.02, fontWeight: 900, letterSpacing: 0, marginTop: hideBrand ? 0 : 8 }}>
-              {shoe.model}
+            <div style={{ color: '#22d3c5', fontSize: modelTitleSize, lineHeight: 1.02, fontWeight: 900, letterSpacing: 0, marginTop: hideBrand ? 0 : 8, maxWidth: 360, overflow: 'hidden', overflowWrap: 'break-word' }}>
+              {displayModel}
             </div>
             <div style={{ width: 130, height: 4, background: '#22d3c5', marginTop: 28 }} />
-            <div style={{ marginTop: 28, color: '#a9b6c5', fontSize: 27, lineHeight: 1.22, fontWeight: 500 }}>
-              {shoe.color}
+            <div style={{ marginTop: 28, color: '#a9b6c5', fontSize: 27, lineHeight: 1.22, fontWeight: 500, width: 340, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {displayColor}
             </div>
-            {shareSize && (
-              <div style={{ marginTop: 8, color: '#f8fafc', fontSize: 29, lineHeight: 1.22, fontWeight: 850 }}>
-                {shareSize}
+            {displaySize && (
+              <div style={{ marginTop: 8, color: '#f8fafc', fontSize: 29, lineHeight: 1.22, fontWeight: 850, width: 340, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {displaySize}
               </div>
             )}
           </div>
 
-          <div style={{ marginTop: 44 }}>
+          <div style={{ marginTop: 12 }}>
             <VerticalDescriptionBlock description={description} />
           </div>
 
           <VerticalPriceRibbon shoe={shoe} />
 
-          <div style={{ marginTop: 18, width: 274, borderRadius: 14, border: '1px solid rgba(148,163,184,0.34)', background: 'rgba(2, 6, 23, 0.2)', padding: '16px 16px', display: 'flex', gap: 12, alignItems: 'flex-start', boxSizing: 'border-box' }}>
+          <div style={{ marginTop: 14, width: 274, borderRadius: 14, border: '1px solid rgba(148,163,184,0.34)', background: 'rgba(2, 6, 23, 0.2)', padding: '16px 16px', display: 'flex', gap: 12, alignItems: 'flex-start', boxSizing: 'border-box' }}>
             <FeatureIcon kind="shield" size={36} color="#22d3c5" />
             <div>
               <div style={{ color: '#22d3c5', fontSize: 16, lineHeight: 1.08, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0 }}>
@@ -649,22 +708,17 @@ function VerticalImageFrame({
 }
 
 function VerticalDescriptionBlock({ description }: { description: string | null }) {
-  const lines = (description ?? '')
-    .split(/\r?\n/)
-    .map(line => line.trim())
-    .filter(Boolean)
-    .slice(0, 4);
-  const resolvedLines = lines.length ? lines : ['Message the seller for full details.'];
+  const resolvedLines = buildTruncatedDescriptionLines(description, 4, 30);
 
   return (
-    <div style={{ width: 340, minHeight: 216, borderRadius: 14, border: '1px solid rgba(248,250,252,0.62)', background: 'rgba(2, 6, 23, 0.18)', padding: '26px 28px', boxSizing: 'border-box' }}>
+    <div style={{ width: 340, height: 216, borderRadius: 14, border: '1px solid rgba(248,250,252,0.62)', background: 'rgba(2, 6, 23, 0.18)', padding: '26px 28px', boxSizing: 'border-box', overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#22d3c5', fontSize: 15, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0 }}>
         <FeatureIcon kind="details" size={34} color="#22d3c5" />
         Description
       </div>
-      <div style={{ marginTop: 26, color: '#e5e7eb', fontSize: 21, lineHeight: 1.42 }}>
+      <div style={{ marginTop: 26, color: '#e5e7eb', fontSize: 21, lineHeight: 1.42, overflow: 'hidden' }}>
         {resolvedLines.map(line => (
-          <div key={line}>{line}</div>
+          <div key={line} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{line}</div>
         ))}
       </div>
     </div>
@@ -677,11 +731,12 @@ function VerticalPriceRibbon({ shoe }: { shoe: Shoe }) {
     : shoe.price_php != null
       ? formatPrice(shoe.price_php)
       : 'Message';
+  const displayLabel = truncateText(label, 12);
 
   return (
-    <div style={{ marginTop: 40, marginLeft: -42, width: 395, height: 110, borderRadius: '0 22px 22px 0', background: 'linear-gradient(90deg, rgba(13,148,136,0.96) 0%, rgba(15,118,110,0.92) 72%, rgba(13,148,136,0.62) 100%)', boxShadow: '0 18px 34px rgba(0,0,0,0.22)', display: 'flex', alignItems: 'center', paddingLeft: 56, boxSizing: 'border-box' }}>
-      <div style={{ color: '#f8fafc', fontSize: label.length > 9 ? 52 : 74, lineHeight: 1, fontWeight: 950, letterSpacing: 0 }}>
-        {label}
+    <div style={{ marginTop: 24, marginLeft: -42, width: 395, height: 110, borderRadius: '0 22px 22px 0', background: 'linear-gradient(90deg, rgba(13,148,136,0.96) 0%, rgba(15,118,110,0.92) 72%, rgba(13,148,136,0.62) 100%)', boxShadow: '0 18px 34px rgba(0,0,0,0.22)', display: 'flex', alignItems: 'center', paddingLeft: 56, paddingRight: 24, boxSizing: 'border-box', overflow: 'hidden' }}>
+      <div style={{ maxWidth: 310, color: '#f8fafc', fontSize: displayLabel.length > 9 ? 52 : 74, lineHeight: 1, fontWeight: 950, letterSpacing: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {displayLabel}
       </div>
     </div>
   );
@@ -840,6 +895,8 @@ function IdentityBlock({
   const resolvedNameSize = nameSize ?? (compact ? 24 : 36);
   const resolvedHostSize = hostSize ?? (compact ? 13 : 18);
   const resolvedVerifiedSize = verifiedSize ?? (compact ? 10 : 12);
+  const displayIdentityName = truncateText(identityName, 24);
+  const displayIdentityLocation = truncateText(identityLocation, 22);
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: compact ? 12 : 18 }}>
@@ -873,8 +930,8 @@ function IdentityBlock({
       )}
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: resolvedLabelSize, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 800 }}>{identityLabel}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: resolvedNameSize, fontWeight: 850, color: '#f8fafc', lineHeight: 1.05, letterSpacing: '-0.02em' }}>
-          <span>{identityName}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: compact ? 320 : 460, fontSize: resolvedNameSize, fontWeight: 850, color: '#f8fafc', lineHeight: 1.05, letterSpacing: '-0.02em', overflow: 'hidden' }}>
+          <span style={{ minWidth: 0, maxWidth: identityLabel === 'Seller' && seller?.is_verified ? (compact ? 230 : 330) : '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayIdentityName}</span>
           {identityLabel === 'Seller' && seller?.is_verified && (
             <span
               style={{
@@ -890,20 +947,21 @@ function IdentityBlock({
                 fontWeight: 800,
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
+                flexShrink: 0,
               }}
             >
               Verified
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: compact ? 3 : 7, color: '#94a3b8', fontSize: resolvedHostSize, fontWeight: 700 }}>
-          <span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: compact ? 3 : 7, maxWidth: compact ? 320 : 460, color: '#94a3b8', fontSize: resolvedHostSize, fontWeight: 700, overflow: 'hidden' }}>
+          <span style={{ flexShrink: 0 }}>
             on <span style={{ color: '#f8fafc' }}>GoPair</span><span style={{ color: '#2dd4bf' }}>PH</span><span style={{ color: '#f8fafc' }}>.com</span>
           </span>
-          {identityLocation && (
+          {displayIdentityLocation && (
             <>
-              <span style={{ color: '#334155' }}>•</span>
-              <span>{identityLocation}</span>
+              <span style={{ color: '#334155', flexShrink: 0 }}>•</span>
+              <span style={{ minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayIdentityLocation}</span>
             </>
           )}
         </div>
@@ -953,17 +1011,20 @@ function BadgeRow({ shoe, isFeatured, isSponsored, size = 'sm' }: { shoe: Shoe; 
 }
 
 function TitleBlock({ shoe, shareSize, titleSize, metaSize, maxLines }: { shoe: Shoe; shareSize: string; titleSize: number; metaSize: number; maxLines?: number }) {
+  const displayColor = truncateText(shoe.color, 30);
+  const displayShareSize = truncateText(shareSize, 28);
+
   return (
-    <div>
-      <h1 style={{ fontSize: titleSize, lineHeight: 1.02, fontWeight: 850, letterSpacing: '-0.03em', color: '#f9fafb', margin: 0, display: maxLines ? '-webkit-box' : undefined, WebkitLineClamp: maxLines, WebkitBoxOrient: maxLines ? 'vertical' : undefined, overflow: maxLines ? 'hidden' : undefined }}>
+    <div style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>
+      <h1 style={{ fontSize: titleSize, lineHeight: 1.02, fontWeight: 850, letterSpacing: '-0.03em', color: '#f9fafb', margin: 0, display: maxLines ? '-webkit-box' : undefined, WebkitLineClamp: maxLines, WebkitBoxOrient: maxLines ? 'vertical' : undefined, overflow: maxLines ? 'hidden' : undefined, textOverflow: maxLines ? 'ellipsis' : undefined, maxHeight: maxLines ? titleSize * 1.02 * maxLines : undefined, overflowWrap: 'break-word' }}>
         {formatListingName(shoe.brand, shoe.model)}
       </h1>
-      <p style={{ marginTop: 12, fontSize: metaSize, color: '#9ca3af', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <span>{shoe.color}</span>
-        {shareSize && (
+      <p style={{ marginTop: 12, fontSize: metaSize, color: '#9ca3af', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'nowrap', maxWidth: '100%', overflow: 'hidden' }}>
+        <span style={{ minWidth: 0, maxWidth: 210, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayColor}</span>
+        {displayShareSize && (
           <>
-            <span style={{ color: '#374151' }}>•</span>
-            <span style={{ color: '#d1d5db', fontWeight: 700 }}>{shareSize}</span>
+            <span style={{ color: '#374151', flexShrink: 0 }}>•</span>
+            <span style={{ minWidth: 0, maxWidth: 190, color: '#d1d5db', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayShareSize}</span>
           </>
         )}
       </p>
@@ -1021,7 +1082,7 @@ function DescriptionBlock({
       <div style={{ fontSize: labelSize, fontWeight: 750, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
         Description
       </div>
-      <div style={{ fontSize: bodySize, lineHeight, color: '#d1d5db', whiteSpace: singleParagraph ? 'normal' : 'pre-wrap', display: '-webkit-box', WebkitLineClamp: maxLines, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ fontSize: bodySize, lineHeight, color: '#d1d5db', whiteSpace: singleParagraph ? 'normal' : 'pre-wrap', display: '-webkit-box', WebkitLineClamp: maxLines, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis', overflowWrap: 'break-word' }}>
         {body}
       </div>
     </div>
