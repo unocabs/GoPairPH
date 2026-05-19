@@ -258,7 +258,7 @@ export default async function HomePage() {
             {[
               { icon: '💰', label: 'Community', desc: 'Buy, sell, or donate with local runners' },
               { icon: '🏬', label: 'Shops', desc: 'Browse independent running-shoe resellers' },
-              { icon: '📍', label: 'Pampanga', desc: 'Focused on Pampanga buyers, open to nearby sellers' },
+              { icon: '📍', label: 'Pampanga & nearby', desc: 'Focused on Pampanga buyers, open to nearby sellers' },
             ].map(f => (
               <div key={f.label} className="flex items-center justify-center gap-2 px-2 py-1.5 sm:gap-3">
                 <span className="text-xl sm:text-2xl shrink-0" aria-hidden="true">{f.icon}</span>
