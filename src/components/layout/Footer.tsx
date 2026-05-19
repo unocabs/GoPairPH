@@ -5,9 +5,9 @@ const FOOTER_GROUPS = [
   {
     heading: 'Marketplace',
     links: [
-      { href: '/browse', label: 'Browse Listings' },
+      { href: '/browse', label: 'All Listings' },
       { href: '/shop', label: 'Shops' },
-      { href: '/find-my-pair', label: 'Find My Pair' },
+      { href: '/find-my-pair', label: 'Pair Requests' },
       { href: '/listings/new', label: 'List a Shoe' },
     ],
   },
@@ -76,7 +76,7 @@ export function Footer() {
             <span className="mx-2 text-gray-800">·</span>
             <Link href="/terms" className="hover:text-teal-400 transition-colors">Terms</Link>
             <span className="mx-2 text-gray-800">·</span>
-            <Link href="/contact" className="hover:text-teal-400 transition-colors">Contact</Link>
+            <Link href="/contact" className="hover:text-teal-400 transition-colors">Contact Go Pair PH</Link>
           </p>
         </div>
       </div>

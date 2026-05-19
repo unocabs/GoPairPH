@@ -15,18 +15,26 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
     shoe.shoe_images?.find(img => img.view_type === 'top') ?? shoe.shoe_images?.[0];
   const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path) : null;
   const seller = shoe.profiles;
+  const listingName = formatListingName(shoe.brand, shoe.model);
 
   return (
-    <Link
-      href={getListingPath(shoe)}
+    <article
       className="group relative block w-full max-w-[500px] aspect-[4/5] overflow-hidden rounded-[28px] border border-white/10 bg-gray-950/70 shadow-[0_24px_80px_rgba(0,0,0,0.55),0_0_60px_rgba(20,184,166,0.12)] backdrop-blur-md transition-transform hover:scale-[1.01] sm:h-[420px] sm:aspect-auto"
     >
+      <Link
+        href={getListingPath(shoe)}
+        aria-label={`View featured listing: ${listingName}`}
+        className="absolute inset-0 z-30"
+      >
+        <span className="sr-only">View featured listing: {listingName}</span>
+      </Link>
+
       {/* Background image (full bleed) */}
       <div className="absolute inset-0 bg-stone-900">
         {imageUrl ? (
           <Image
             src={imageUrl}
-            alt={formatListingName(shoe.brand, shoe.model)}
+            alt={listingName}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-105"
             sizes="500px"
@@ -48,7 +56,7 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
       />
 
       {/* TOP: live spotlight indicator + location */}
-      <div className="absolute top-5 left-5 right-5 flex items-center justify-between">
+      <div className="pointer-events-none absolute top-5 left-5 right-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
             <span className="absolute inset-0 rounded-full bg-teal-400 animate-ping" />
@@ -66,26 +74,26 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
       </div>
 
       {/* TOP-RIGHT: pick-of-the-week badge */}
-      <div className="absolute top-16 right-5">
+      <div className="pointer-events-none absolute top-16 right-5">
         <FeaturedPill compact featuredUntil={shoe.featured_until} />
       </div>
 
       {/* MIDDLE: huge brand + model */}
-      <div className="absolute left-6 right-6 bottom-[160px] sm:bottom-[140px]">
+      <div className="pointer-events-none absolute left-6 right-6 bottom-[160px] sm:bottom-[140px]">
         <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-teal-300 mb-2">
           Featured Listing
         </div>
-        <h2 className="text-3xl sm:text-5xl font-black text-white leading-[0.95] tracking-tight drop-shadow-2xl">
+        <p className="text-3xl sm:text-5xl font-black text-white leading-[0.95] tracking-tight drop-shadow-2xl">
           {shoe.brand === 'Other' ? (
             <span className="text-teal-300">{shoe.model}</span>
           ) : (
             <>{shoe.brand}<br /><span className="text-teal-300">{shoe.model}</span></>
           )}
-        </h2>
+        </p>
       </div>
 
       {/* BOTTOM: spec chips + price + CTA */}
-      <div className="absolute left-5 right-5 bottom-5">
+      <div className="pointer-events-none absolute left-5 right-5 bottom-5">
         {/* Chips */}
         <div className="flex items-center gap-1.5 mb-4 flex-wrap">
           <span className="rounded-full backdrop-blur-md bg-white/10 border border-white/20 px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider">
@@ -164,6 +172,6 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
         className="absolute top-0 right-16 w-1 h-12 bg-orange-400"
         aria-hidden="true"
       />
-    </Link>
+    </article>
   );
 }

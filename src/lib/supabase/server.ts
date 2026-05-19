@@ -26,6 +26,21 @@ export function createClient() {
   );
 }
 
+// Cookie-free public client for cacheable server-rendered pages.
+export function createPublicClient() {
+  return createBaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    }
+  );
+}
+
 // Uses the base supabase-js client (no cookie/session logic) so the service role
 // key is sent as-is and RLS is bypassed regardless of any user session.
 export function createServiceClient() {

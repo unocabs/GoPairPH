@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createPublicClient } from '@/lib/supabase/server';
 
 interface PulseStats {
   totalActive: number;
@@ -32,7 +32,7 @@ function formatKm(km: number): string {
 }
 
 async function getPulseStats(): Promise<PulseStats> {
-  const supabase = createClient();
+  const supabase = createPublicClient();
 
   // Active listings split by type
   const { data: activeShoes } = await supabase

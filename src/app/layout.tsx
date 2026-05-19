@@ -113,7 +113,10 @@ export const metadata: Metadata = {
       'max-video-preview': -1,
     },
   },
-  icons: { icon: '/icon.svg' },
+  icons: {
+    icon: '/icon.svg',
+    apple: '/apple-touch-icon.png',
+  },
   category: 'marketplace',
   verification: {
     google: 'QHkPELcZgx22-fYojuvxkycrjlQo4VyCDPPKfqY19ZU',

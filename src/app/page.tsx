@@ -1,7 +1,7 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
+import { createPublicClient } from '@/lib/supabase/server';
 import { getOfferCounts } from '@/lib/offers';
 import { ListingGrid } from '@/components/listings/ListingGrid';
 import { Button } from '@/components/ui/Button';
@@ -10,11 +10,10 @@ import { FeaturedListing } from '@/components/home/FeaturedListing';
 import { FirstListingNudge } from '@/components/listings/FirstListingNudge';
 import { LogoMark } from '@/components/brand/Logo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { getSavedListingIds } from '@/lib/savedListings';
 import type { Shoe } from '@/types';
 
 async function getRecentListings(): Promise<Shoe[]> {
-  const supabase = createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from('shoes')
     .select('*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)')
@@ -41,7 +40,7 @@ async function getRecentListings(): Promise<Shoe[]> {
  * an admin accidentally features more than one.
  */
 async function getFeaturedListing(): Promise<Shoe | null> {
-  const supabase = createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from('shoes')
     .select('*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)')
@@ -54,31 +53,13 @@ async function getFeaturedListing(): Promise<Shoe | null> {
   return (data as Shoe) ?? null;
 }
 
-async function getCurrentProfileAndRequests(listingIds: string[]): Promise<{ profileId: string; isAdmin: boolean; requestListingIds: Set<string>; savedListingIds: Set<string> } | null> {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data: profile } = await supabase.from('profiles').select('id, is_admin').eq('user_id', user.id).single();
-  if (!profile) return null;
-
-  const { data: requests } = await supabase
-    .from('purchase_requests')
-    .select('listing_id')
-    .eq('buyer_id', profile.id)
-    .in('status', ['pending', 'accepted']);
-
-  const requestListingIds = new Set((requests ?? []).map((r: { listing_id: string }) => r.listing_id));
-  const savedListingIds = await getSavedListingIds(profile.id, listingIds);
-  return { profileId: profile.id, isAdmin: !!profile.is_admin, requestListingIds, savedListingIds };
-}
-
 async function getMarketplaceActivity(): Promise<{
   newListingsThisWeek: number;
   activePairRequests: number;
   soldOrReservedPairs: number;
   recentSellers: number;
 }> {
-  const supabase = createClient();
+  const supabase = createPublicClient();
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
 
@@ -117,7 +98,6 @@ export default async function HomePage() {
     getFeaturedListing(),
     getMarketplaceActivity(),
   ]);
-  const userContext = await getCurrentProfileAndRequests(recentShoes.map(s => s.id));
   const offerCounts = await getOfferCounts(recentShoes.map(s => s.id));
 
   return (
@@ -251,7 +231,7 @@ export default async function HomePage() {
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
                 <Link href="/listings/new">
-                  <Button>List Your Shoes</Button>
+                  <Button>Create Seller Listing</Button>
                 </Link>
                 <Link href="/help/how-to-sell">
                   <Button variant="outline">How Selling Works</Button>
@@ -295,10 +275,6 @@ export default async function HomePage() {
         </div>
         <ListingGrid
           shoes={recentShoes}
-          currentProfileId={userContext?.profileId}
-          currentProfileIsAdmin={userContext?.isAdmin}
-          myRequestListingIds={userContext?.requestListingIds}
-          savedListingIds={userContext?.savedListingIds}
           offerCounts={offerCounts}
           emptyMessage="No listings yet. Be the first to list your shoes!"
         />

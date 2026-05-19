@@ -277,7 +277,7 @@ function HeroSection() {
 
 function HeroPreview() {
   return (
-    <SurfaceCard glow className="relative overflow-hidden p-4 sm:p-5">
+    <SurfaceCard glow className="relative hidden overflow-hidden p-4 sm:p-5 lg:block">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_22%,rgba(20,184,166,0.16),transparent_32%)]" />
       <div className="relative rounded-2xl border border-white/[0.08] bg-slate-950/70 p-4">
         <div className="flex items-center justify-between">
