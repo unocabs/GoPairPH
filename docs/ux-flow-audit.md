@@ -54,7 +54,7 @@ Status: implemented first fix pass
 
 #### Seller
 
-- Create Share Post may still be missed after the first publish moment; later it mainly lives on the listing detail page.
+- Share Post may still be missed after the first publish moment; later it mainly lives on the listing detail page.
 - Profile stats show views, but they do not strongly convert views into the next action, such as sharing again.
 - Sellers can skip Messenger, then later become harder to close with.
 - Purchase requests depend on email plus the user noticing Profile/Navbar counts; if the seller does not revisit, response lag can hurt buyer confidence.
@@ -78,7 +78,7 @@ Send request first -> Seller accepts -> Coordinate on Messenger -> Seller marks 
 
 1. Add logged-out CTAs: "Sign in to Send Offer", "Sign in to Save Pair", and return to the listing after sign-in. Implemented.
 2. After buyer submits an offer, show "Request sent. Track it in Sent Offers." Implemented.
-3. Add a visible Share/Create Share Post action from seller My Listings cards. Implemented as a `Share Post` action using the existing share-post modal.
+3. Add a visible Share/Share Post action from seller My Listings cards. Implemented as a `Share Post` action using the existing share-post modal.
 4. Add "Share again" next to seller view stats when a listing has views. Implemented.
 5. Ask buyers for Messenger/contact info before sending a request if their profile has no Messenger username. Implemented as an optional prompt.
 
@@ -94,7 +94,7 @@ Send request first -> Seller accepts -> Coordinate on Messenger -> Seller marks 
 ### Remaining After First Fix Pass
 
 - Measure whether logged-out CTAs increase sign-in and offer starts.
-- Decide whether seller cards should later expose "Create Share Post" directly, or whether linking to detail remains enough.
+- Decide whether seller cards should later expose "Share Post" directly, or whether linking to detail remains enough.
 - Decide whether Messenger should become required for sellers if non-Messenger listings underperform.
 - Review mobile screenshots for card height, modal density, and whether the buyer contact prompt feels helpful or heavy.
 - Continue with Run 2: Buyer Friction Audit.
@@ -115,5 +115,5 @@ Send request first -> Seller accepts -> Coordinate on Messenger -> Seller marks 
 - Which action matters most on listing cards for logged-out users: save, sign in, or open details?
 - Should Messenger be shown before or after Send Offer for buyers?
 - Should sellers be required to add Messenger, or should it stay strongly recommended?
-- Should the post-publish share prompt become a checklist: copy link, create share post, share to FB group?
+- Should the post-publish share prompt become a checklist: copy link, share post, share to FB group?
 - What metric should define success for Save Pair: saves per listing view, return visits, or eventual offers?
