@@ -199,6 +199,60 @@ Checked: May 20, 2026
 - Should "Share Post" be seller-only on detail pages, while buyers only get copy/share link?
 - Should the optional Messenger prompt appear only after the buyer starts typing a message, or remain near the seller trust area?
 
+## Run 3: Seller Friction Audit
+
+Status: first fixes implemented
+
+Checked: May 20, 2026
+
+### Scope Checked
+
+- Listing creation entry point and deferred sign-in behavior.
+- Seller Messenger/contact gate before listing.
+- Post-publish sharing and Share Post creation.
+- Profile > My Listings stats and share nudges.
+- Profile > Purchase Requests response flow.
+- Navbar/profile routing for pending seller requests.
+
+### Top Seller Friction Findings
+
+1. Logged-out sellers were blocked before entering listing details.
+   - Risk: sellers could bounce before investing effort.
+   - Fix: implemented deferred login after Step 1 details, before photos.
+
+2. Share momentum from Profile > My Listings still had an extra step.
+   - Risk: the stats card says "Share again", but taking sellers to the detail page can lose intent.
+   - Fix: implemented direct Share Post modal from the stats nudge.
+
+3. Purchase request cards do not explain what to do when buyers lack Messenger.
+   - Risk: seller may hesitate or stall after seeing no contact option.
+   - Fix: added neutral guidance when the buyer has not added Messenger.
+
+4. Purchase request accept/complete actions still use native confirm dialogs.
+   - Risk: native confirms feel abrupt and do not reinforce the next step clearly.
+   - Likely fix: replace with compact in-card confirmation or modal copy explaining reservation and next action.
+
+5. Seller contact gate may still feel heavy before listing.
+   - Risk: sellers who are ready to list can perceive Messenger as another blocker.
+   - Likely fix: keep recommended, but consider showing it after details or making the skip path visually lighter.
+
+6. Post-publish sharing depends on the seller noticing and acting immediately.
+   - Risk: if they miss the first share moment, discovery depends on later profile nudges.
+   - Likely fix: make post-publish share feel like a short checklist: copy link, create share post, post to FB group.
+
+### Run 3 Implementation Notes
+
+- Profile > My Listings `Share again` now opens the Share Post creator directly.
+- Purchase request cards now show a neutral note when the buyer has no Messenger contact.
+- Deferred listing login lets sellers start Step 1 before auth and resume after sign-in.
+
+### Run 3 Remaining Priorities
+
+1. Replace native purchase request confirmations with clearer in-app confirmation UX.
+2. Revisit seller Messenger gate weight after observing deferred-login listing behavior.
+3. Polish post-publish sharing into a compact checklist.
+4. Review mobile density for profile seller stats and purchase request cards.
+
 ## Psychology Notes To Revisit
 
 - Does the dark, high-contrast style feel premium and focused, or too heavy for casual first-time buyers?

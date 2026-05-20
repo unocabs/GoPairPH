@@ -166,6 +166,11 @@ export function PurchaseRequestCard({
           </>
         )}
       </div>
+      {!request.profiles?.fb_username && (
+        <p className="rounded-lg border border-white/[0.08] bg-slate-950/45 px-3 py-2 text-xs leading-5 text-gray-400">
+          Buyer has not added Messenger. Use their message or profile to coordinate after accepting.
+        </p>
+      )}
 
       {status === 'pending' && (
         <div className="flex gap-2 pt-1">

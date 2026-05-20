@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { createPortal } from 'react-dom';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { EditProfileModal } from '@/components/profile/EditProfileModal';
 import { ListingGrid } from '@/components/listings/ListingGrid';
@@ -9,11 +11,16 @@ import { PurchaseRequestCard } from '@/components/purchases/PurchaseRequestCard'
 import { PurchaseHistoryCard } from '@/components/purchases/PurchaseHistoryCard';
 import { SentOfferCard } from '@/components/purchases/SentOfferCard';
 import { RequestVerificationButton } from '@/components/profile/RequestVerificationButton';
-import { formatPrice, formatListingName, getListingPath } from '@/lib/utils';
+import { formatPrice, formatListingName } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest } from '@/types';
 import Link from 'next/link';
+
+const SharePostModal = dynamic(
+  () => import('@/components/listings/SharePostModal').then(mod => mod.SharePostModal),
+  { ssr: false },
+);
 
 type ProfileTab = 'listings' | 'purchases' | 'offers' | 'wishlist' | 'saved' | 'sales';
 
@@ -51,6 +58,7 @@ export function OwnProfile({
   const [sentOffers, setSentOffers] = useState(initialSentOffers);
   const [editOpen, setEditOpen] = useState(false);
   const [tab, setTab] = useState<ProfileTab>(initialTab ?? 'listings');
+  const [sharePostShoe, setSharePostShoe] = useState<Shoe | null>(null);
 
   function handlePurchaseRequestChanged(id: string) {
     setPurchaseRequests(prev => prev.filter(r => r.id !== id));
@@ -172,11 +180,11 @@ export function OwnProfile({
                 <p className="text-xs leading-5 text-gray-400">
                   People are checking your pairs. Share again while there&apos;s momentum.
                 </p>
-                <Link href={getListingPath(shareTarget)} className="sm:shrink-0">
-                  <Button size="sm" variant="outline" className="w-full sm:w-auto">
+                <div className="sm:shrink-0">
+                  <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => setSharePostShoe(shareTarget)}>
                     Share again
                   </Button>
-                </Link>
+                </div>
               </div>
             )}
           </SurfaceCard>
@@ -304,6 +312,15 @@ export function OwnProfile({
 
       {editOpen && (
         <EditProfileModal profile={profile} onClose={() => setEditOpen(false)} onUpdated={setProfile} />
+      )}
+      {sharePostShoe && typeof window !== 'undefined' && createPortal(
+        <SharePostModal
+          shoe={sharePostShoe}
+          seller={profile}
+          onClose={() => setSharePostShoe(null)}
+          onDownloaded={() => setSharePostShoe(null)}
+        />,
+        document.body,
       )}
     </div>
   );
