@@ -174,10 +174,10 @@ Checked: May 20, 2026
 
 1. Make logged-out card save icons route to sign-in instead of being disabled. Implemented.
 2. Standardize buyer action labels across cards, detail pages, modals, submit buttons, and success states. Implemented for for-sale buyer CTAs.
-3. Lighten the optional Messenger prompt so it cannot be mistaken for a required step.
-4. Compress modal trust/safety copy for mobile while keeping the safety link available.
+3. Lighten the optional Messenger prompt so it cannot be mistaken for a required step. Implemented.
+4. Compress modal trust/safety copy for mobile while keeping the safety link available. Implemented.
 5. Subordinate non-owner share actions on listing detail pages below buyer CTAs.
-6. Soften no-Messenger seller messaging so it reassures instead of warning.
+6. Soften no-Messenger seller messaging so it reassures instead of warning. Implemented.
 
 ### Run 2 Implementation Notes
 
@@ -188,6 +188,9 @@ Checked: May 20, 2026
   - fixed-price community listings use "Request to Buy";
   - shop listings continue to use "Place Order".
 - Offer/request modal titles, submit buttons, helper text, and success states now follow the same action language.
+- Optional buyer Messenger prompt is now visually lighter, explicitly optional, and uses "Add" / "Skip" instead of a heavier two-choice gate.
+- Offer/order/donation modal trust copy is shorter on mobile while preserving the safety guide link for shop orders.
+- No-Messenger seller messaging now uses neutral reassurance instead of an amber warning treatment.
 
 ### Run 2 Open Questions
 

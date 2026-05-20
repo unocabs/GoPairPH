@@ -493,9 +493,8 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 seller={seller}
               />
               {!isOwner && !seller.fb_username && (
-                <div className="mt-3 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] px-3 py-2 text-xs leading-5 text-amber-100">
-                  This seller has not added a Messenger contact yet. You can still send a request and send your contact details in the message,
-                  and they will see it in their Go Pair PH profile.
+                <div className="mt-3 rounded-lg border border-white/[0.08] bg-slate-950/45 px-3 py-2 text-xs leading-5 text-gray-400">
+                  Go Pair PH requests are available. Add your contact in the message so the seller can reply from their profile.
                 </div>
               )}
             </div>

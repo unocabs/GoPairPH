@@ -64,9 +64,9 @@ export function DonateRequestModal({ listingId, listingName, requesterId, reques
             <p className="text-sm font-bold text-green-400 mt-0.5">Free Donation</p>
           </div>
 
-          <div className="rounded-lg bg-green-950 border border-green-800 px-3 py-2.5">
-            <p className="text-xs text-green-300">
-              The donor will review your request and reach out to arrange a pickup. Be respectful — donations are a gift from a fellow runner!
+          <div className="rounded-lg border border-green-800/70 bg-green-950/60 px-3 py-2.5">
+            <p className="text-xs leading-5 text-green-300">
+              The donor reviews your request first. Arrange pickup or shipping only after they accept.
             </p>
           </div>
 

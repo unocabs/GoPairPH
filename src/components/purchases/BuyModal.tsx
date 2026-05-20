@@ -181,9 +181,9 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
                 </div>
               </div>
               {seller.fb_username && (
-                <div className="mt-3 rounded-lg border border-blue-500/20 bg-blue-500/[0.06] px-3 py-2 text-xs leading-5 text-blue-100">
-                  Messenger is available for coordination after you send a Go Pair PH request.
-                </div>
+                <p className="mt-2 text-xs leading-5 text-gray-500">
+                  Messenger available after the seller accepts.
+                </p>
               )}
             </div>
           )}
@@ -209,15 +209,15 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
           )}
 
           {/* Generalized notice */}
-          <div className="rounded-lg bg-sky-950 border border-sky-800 px-3 py-2.5">
-            <p className="text-xs text-sky-300">
+          <div className="rounded-lg border border-sky-800/60 bg-sky-950/55 px-3 py-2.5">
+            <p className="text-xs leading-5 text-sky-300">
               {isShopOrder
-                ? 'The shop will review your order and confirm availability. After they accept, coordinate payment, delivery, shipping, or meetup directly with the shop. The order is completed when the shop marks the sale as complete, which also updates stock.'
-                : `The seller will review your ${requestLabel}. Once they accept, you can coordinate the deal directly — meetup, online payment, shipping, whatever works for both of you. The sale is finalized when the seller marks it as sold.`}
+                ? 'The shop reviews your order first. Pay only after they confirm availability and payment/delivery details.'
+                : `The seller reviews your ${requestLabel} first. Coordinate meetup, payment, or shipping only after they accept.`}
             </p>
             {isShopOrder && (
-              <p className="mt-2 text-xs font-semibold text-sky-200">
-                IMPORTANT: Only send payment after the shop confirms your order details directly. Keep screenshots of payment and delivery conversations for your records. Read the{' '}
+              <p className="mt-1.5 text-xs text-sky-200">
+                Keep screenshots for your records. Read the{' '}
                 <a href="https://gopairph.com/safety" target="_blank" rel="noopener noreferrer" className="underline hover:text-white">
                   Go Pair PH Safety Guide
                 </a>.
