@@ -62,6 +62,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
   const themedMutedStyle = theme ? { color: theme.mutedText } : undefined;
   const themedAccentStyle = theme ? { color: theme.accent } : undefined;
   const listingPath = getListingPath(shoe);
+  const signInHref = `/auth/sign-in?next=${encodeURIComponent(listingPath)}`;
 
   async function handleCopy(e: React.MouseEvent) {
     e.preventDefault();
@@ -89,13 +90,13 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
 
   return (
     <div className={cn(
-      'relative overflow-hidden rounded-xl border bg-slate-900/72 shadow-[0_16px_50px_rgba(0,0,0,0.26)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:shadow-[0_22px_70px_rgba(0,0,0,0.36),0_0_36px_rgba(20,184,166,0.08)]',
+      'relative flex h-full flex-col overflow-hidden rounded-xl border bg-slate-900/72 shadow-[0_16px_50px_rgba(0,0,0,0.26)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:shadow-[0_22px_70px_rgba(0,0,0,0.36),0_0_36px_rgba(20,184,166,0.08)]',
       canSeeQualityFlag
         ? 'border-amber-300/45 hover:border-amber-300/70'
         : isOwner ? 'border-teal-500/60 hover:border-teal-400' : 'border-white/[0.08] hover:border-teal-400/30'
     )} style={themedCardStyle}>
       {/* Clickable area navigates to listing */}
-      <Link href={listingPath} className="group block">
+      <Link href={listingPath} className="group flex flex-1 flex-col">
         {/* Image */}
         <div className="relative aspect-square bg-slate-950" style={theme ? { backgroundColor: theme.surfaceStrong } : undefined}>
           {imageUrl ? (
@@ -159,7 +160,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
         </div>
 
         {/* Details */}
-        <div className="p-3.5">
+        <div className="flex flex-1 flex-col p-3.5">
           <div className="flex items-center gap-1 min-w-0">
             <h3 className="font-semibold text-gray-100 truncate text-sm" style={theme ? { color: theme.text } : undefined}>{formatListingName(shoe.brand, shoe.model)}</h3>
             {!shoe.shop_id && shoe.profiles?.is_verified && (
@@ -264,6 +265,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
               listingId={shoe.id}
               initialSaved={isSaved}
               canSave={canSave}
+              signInHref={signInHref}
               onSavedChange={onSavedChange}
             />
           </div>
@@ -287,7 +289,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
             </button>
           ) : submitted ? (
             <div className="rounded-lg border border-teal-800 bg-teal-950 px-3 py-2 text-xs text-teal-400 text-center" style={theme ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.accent } : undefined}>
-              <p>{showDonate ? 'Request sent. Track it in Sent Offers.' : 'Request sent. Track it in Sent Offers.'}</p>
+              <p>{showDonate ? 'Request sent. Track it in Sent Offers.' : shoe.is_negotiable ? 'Offer sent. Track it in Sent Offers.' : 'Request sent. Track it in Sent Offers.'}</p>
               <Link href="/profile?tab=offers" className="mt-1 inline-flex font-semibold text-teal-100 underline underline-offset-2 hover:text-white">
                 View Sent Offers
               </Link>
@@ -302,7 +304,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
               className="w-full rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-500 transition-colors"
               style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
             >
-              Send Offer
+              {shoe.is_negotiable ? 'Send Offer' : 'Request to Buy'}
             </button>
           ) : showPlaceOrder ? (
             <Link

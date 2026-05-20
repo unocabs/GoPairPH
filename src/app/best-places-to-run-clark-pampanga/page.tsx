@@ -344,7 +344,7 @@ export default function BestPlacesToRunClarkPampangaPage() {
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                   <Link href="/browse">
                     <Button size="lg" className="w-full sm:w-auto">
-                      Browse Listings
+                      Browse Marketplace
                     </Button>
                   </Link>
                   <Link href="/find-my-pair/new">

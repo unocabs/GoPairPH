@@ -59,7 +59,7 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <Link href="/browse" className="mb-6 inline-flex items-center gap-1 text-sm text-teal-400 hover:text-teal-300 transition-colors">
-        ← Back to Browse
+        ← Back to Marketplace
       </Link>
 
       <div className="mb-8">

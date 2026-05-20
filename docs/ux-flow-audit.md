@@ -26,7 +26,7 @@ Status: implemented first fix pass
 
 ### What Already Exists
 
-- Buyer can browse listings.
+- Buyer can browse marketplace.
 - Buyer can open listing details.
 - Buyer can save pairs and revisit them in Profile > Saved Pairs.
 - Buyer can send offer, place shop order, or request donation.
@@ -96,8 +96,105 @@ Send request first -> Seller accepts -> Coordinate on Messenger -> Seller marks 
 - Measure whether logged-out CTAs increase sign-in and offer starts.
 - Decide whether seller cards should later expose "Share Post" directly, or whether linking to detail remains enough.
 - Decide whether Messenger should become required for sellers if non-Messenger listings underperform.
-- Review mobile screenshots for card height, modal density, and whether the buyer contact prompt feels helpful or heavy.
-- Continue with Run 2: Buyer Friction Audit.
+- Continue with Run 3: Seller Friction Audit.
+
+## Run 2: Buyer Friction Audit
+
+Status: first fixes implemented
+
+Checked: May 20, 2026
+
+### Scope Checked
+
+- Logged-out browse cards.
+- Logged-out listing detail page.
+- Detail-page sign-in return URLs.
+- Save Pair behavior.
+- Offer/order/donation modal structure from code and recent QA.
+- Post-submit success state.
+- Buyer trust signals: seller identity, verification, Messenger/contact, safety notes, and status messaging.
+- Mobile-first risks: action density, scroll distance, button clarity, and modal height.
+
+### What Feels Stronger After Run 1
+
+- Detail pages now give logged-out buyers clear primary actions: "Sign in to Send Offer", "Sign in to Place Order", "Sign in to Request Donation", and "Sign in to Save Pair".
+- Detail-page sign-in links preserve the listing return path through `/auth/sign-in?next=...`, which should reduce post-login disorientation.
+- Buyer success states now tell users to track requests in Sent Offers and include a direct link.
+- Messenger is framed as coordination after a Go Pair PH request instead of the main conversion path.
+- Seller identity and verification are visible near the buyer decision point.
+- The modal layering fix makes the request modal feel like the active frontmost task instead of something trapped inside the detail layout.
+
+### Top Buyer Friction Findings
+
+1. Logged-out save buttons on browse cards are visible but disabled.
+   - Buyer moment: a new visitor taps the heart/save icon while scanning.
+   - Risk: a disabled control feels like the site is broken or unavailable, especially on mobile where icon-only controls carry less explanation.
+   - Likely fix: keep the compact icon, but make it a sign-in link with `next` set to that listing or current browse URL. Do not add a heavy card CTA.
+
+2. Buyer action language is not fully consistent.
+   - Buyer moment: card says "Send Offer", detail says "Sign in to Send Offer", modal says "Request to Buy", submit says "Send Purchase Request", and success says "Request sent".
+   - Risk: each label is understandable alone, but the mental model shifts from offer to request to purchase. That can add hesitation right before submission.
+   - Likely fix: choose one vocabulary family per listing type. For community for-sale listings, prefer "Send Offer" when negotiable and "Request to Buy" when fixed price; keep the modal title and submit button aligned.
+
+3. The buyer contact prompt may look like a required step.
+   - Buyer moment: a signed-in buyer without Messenger opens the offer/order/donation modal.
+   - Risk: the prompt has "Add Messenger" and "Continue", which can make the buyer think they must choose before sending even though the form can proceed without it.
+   - Likely fix: make it visibly optional and lighter. Consider "Add Messenger (optional)" plus "Skip" or a collapsed inline prompt so the primary submit action remains the obvious next step.
+
+4. Request modals are trustworthy but text-heavy.
+   - Buyer moment: the buyer wants to send a quick request from mobile.
+   - Risk: seller card, coordination note, Messenger prompt, message box, and safety copy can push the final submit button far down. Too much explanation at the decision point can feel like friction.
+   - Likely fix: keep the trust content, but compress it. Use short bullets or one-line helper copy, and move deeper safety guidance behind a link.
+
+5. Public share actions on the detail page can compete with buyer intent.
+   - Buyer moment: logged-out buyer sees seller/contact/share area before the primary sign-in offer CTA.
+   - Risk: "Copy & Share Link" and "Share Post" are useful, but they may distract from the buyer's main job: save, sign in, or send an offer.
+   - Likely fix: keep sharing available, but visually subordinate it for non-owners. The strongest visible action should remain the transaction CTA.
+
+6. "Seller has not added Messenger" warning can reduce confidence before the buyer has acted.
+   - Buyer moment: buyer likes a listing but sees an amber warning above the sign-in/send-offer CTA.
+   - Risk: the message is honest, but the color and placement can subconsciously read as danger or poor seller quality.
+   - Likely fix: soften the tone and placement. Example: "Go Pair PH request available. Add your contact in the message so the seller can reply from their profile."
+
+7. Saved Pairs has value, but the browse-card save flow does not explain the payoff.
+   - Buyer moment: buyer is browsing casually and not ready to send an offer.
+   - Risk: Save Pair is the lower-commitment conversion, but icon-only save has low perceived value for new users.
+   - Likely fix: keep cards compact, but on first sign-in/save success, show a small toast like "Saved. Find it in Profile > Saved Pairs."
+
+### Psychological Notes
+
+- The site already feels more marketplace-like because prices, condition, size, verification, and seller identity are close to the action.
+- Teal is working as the primary action color, but too many teal borders/badges can make secondary elements feel equally important.
+- Amber warnings should be used carefully. On buyer paths, amber can trigger "something is wrong" even when the message is only informational.
+- Button labels should reduce risk in the buyer's head. "Request" feels safer than "Buy" when payment is not happening on-site; "Offer" feels right when price is negotiable.
+- For mobile users, the best conversion path is usually one clear next action per screen section. Extra trust content should support that action, not compete with it.
+- Familiarity matters: the flow should feel like Facebook Marketplace plus a clearer request tracker, not like a checkout form with too many obligations.
+
+### Recommended Run 2 Fix Order
+
+1. Make logged-out card save icons route to sign-in instead of being disabled. Implemented.
+2. Standardize buyer action labels across cards, detail pages, modals, submit buttons, and success states. Implemented for for-sale buyer CTAs.
+3. Lighten the optional Messenger prompt so it cannot be mistaken for a required step.
+4. Compress modal trust/safety copy for mobile while keeping the safety link available.
+5. Subordinate non-owner share actions on listing detail pages below buyer CTAs.
+6. Soften no-Messenger seller messaging so it reassures instead of warning.
+
+### Run 2 Implementation Notes
+
+- Logged-out save icons on listing cards now route to sign-in instead of rendering as disabled controls.
+- Card save sign-in links return buyers to the specific listing they tried to save, preserving item intent.
+- For-sale buyer CTAs now distinguish negotiable and fixed-price intent more consistently:
+  - negotiable community listings use "Send Offer";
+  - fixed-price community listings use "Request to Buy";
+  - shop listings continue to use "Place Order".
+- Offer/request modal titles, submit buttons, helper text, and success states now follow the same action language.
+
+### Run 2 Open Questions
+
+- Should a logged-out card save return to the exact listing, or back to the browse page the buyer came from?
+- For fixed-price community listings, should the primary action say "Request to Buy" instead of "Send Offer"?
+- Should "Share Post" be seller-only on detail pages, while buyers only get copy/share link?
+- Should the optional Messenger prompt appear only after the buyer starts typing a message, or remain near the seller trust area?
 
 ## Psychology Notes To Revisit
 

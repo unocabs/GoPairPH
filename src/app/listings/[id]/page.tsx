@@ -195,6 +195,9 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const listingUrl = getAbsoluteListingUrl(SITE_URL, shoe);
   const justListed = isOwner && searchParams?.listed === '1';
   const signInHref = `/auth/sign-in?next=${encodeURIComponent(getListingPath(shoe))}`;
+  const signedOutForSaleCtaLabel = shoe.shop_id
+    ? 'Sign in to Place Order'
+    : shoe.is_negotiable ? 'Sign in to Send Offer' : 'Sign in to Request to Buy';
   const shareSizeLabel = shoe.shop_id
     ? 'See listing for available sizes'
     : formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm);
@@ -232,6 +235,21 @@ export default async function ListingDetailPage({ params, searchParams }: { para
         : { '@type': 'Person', name: seller?.display_name ?? 'Go Pair PH seller' },
     },
   } : null;
+  const galleryOverlay = (
+    <>
+      {shoe.shops && shoe.shops.status === 'active' && <ShopLogoOverlay shop={shoe.shops} size="lg" />}
+      {!isOwner && (
+        <div className="absolute right-3 top-3 z-20">
+          <SaveListingButton
+            listingId={shoe.id}
+            initialSaved={isSaved}
+            canSave={!!currentProfileId}
+            signInHref={signInHref}
+          />
+        </div>
+      )}
+    </>
+  );
 
   return (
     <PageShell>
@@ -243,7 +261,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
         />
       )}
       <Link href="/browse" className="mb-6 inline-flex items-center gap-1 text-sm text-teal-400 hover:text-teal-300 transition-colors">
-        ← Back to Browse
+        ← Back to Marketplace
       </Link>
 
       {justListed && (
@@ -287,7 +305,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           <PhotoGallery
             images={shoe.shoe_images ?? []}
             isOwner={isOwner}
-            overlay={shoe.shops && shoe.shops.status === 'active' ? <ShopLogoOverlay shop={shoe.shops} size="lg" /> : null}
+            overlay={galleryOverlay}
           />
         </div>
 
@@ -483,23 +501,6 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             </div>
           )}
 
-          {!isOwner && (
-            <div className="mt-4">
-              <SaveListingButton
-                listingId={shoe.id}
-                initialSaved={isSaved}
-                canSave={!!currentProfileId}
-                variant="button"
-                signInHref={signInHref}
-              />
-              {!currentProfileId && (
-                <p className="mt-2 text-xs text-gray-500">
-                  Sign in to save pairs and revisit them from your profile.
-                </p>
-              )}
-            </div>
-          )}
-
           {/* Purchase context — for_sale listings */}
           {purchaseContext?.type === 'my_request_pending' && (
             <div className="mt-4 rounded-xl border border-amber-800 bg-amber-950 p-4">
@@ -599,7 +600,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               href={signInHref}
               className="mt-4 flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
             >
-              {shoe.shop_id ? 'Sign in to Place Order' : 'Sign in to Send Offer'}
+              {signedOutForSaleCtaLabel}
             </Link>
           )}
 

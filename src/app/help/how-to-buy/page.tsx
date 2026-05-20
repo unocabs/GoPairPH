@@ -21,7 +21,7 @@ const steps: ReadonlyArray<{
 }> = [
   {
     number: '1',
-    title: 'Browse Listings',
+    title: 'Browse Marketplace',
     text: 'Explore running shoes listed by community sellers and shops.',
     icon: 'search',
     visual: 'browse',
@@ -275,7 +275,7 @@ function MockTopBar() {
 function BrowseMock() {
   return (
     <div>
-      <h3 className="text-sm font-semibold text-gray-100">Browse Listings</h3>
+      <h3 className="text-sm font-semibold text-gray-100">Browse Marketplace</h3>
       <div className="mt-4 grid gap-2 sm:grid-cols-4">
         {['Search', 'Brand', 'Size', 'Condition'].map((filter) => (
           <div key={filter} className="rounded-lg border border-white/[0.08] bg-slate-900 px-3 py-2 text-xs text-gray-500">

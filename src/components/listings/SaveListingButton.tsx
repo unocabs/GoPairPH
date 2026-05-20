@@ -98,6 +98,22 @@ export function SaveListingButton({
     );
   }
 
+  if (!canSave && signInHref) {
+    return (
+      <Link
+        href={signInHref}
+        title="Sign in to Save Pair"
+        aria-label="Sign in to Save Pair"
+        className={cn(
+          'flex h-8 w-8 items-center justify-center rounded-lg border border-white/15 bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/80',
+          className,
+        )}
+      >
+        <HeartIcon filled={false} />
+      </Link>
+    );
+  }
+
   return (
     <button
       type="button"

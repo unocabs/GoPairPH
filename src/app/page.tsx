@@ -228,7 +228,7 @@ export default async function HomePage() {
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href="/browse">
-                  <Button size="lg" variant="secondary">Browse Listings</Button>
+                  <Button size="lg" variant="secondary">Browse Marketplace</Button>
                 </Link>
                 <Link href="/listings/new">
                   <Button size="lg">List Your Shoes</Button>

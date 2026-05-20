@@ -47,6 +47,11 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const shopLogoUrl = shop?.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
   const submitDisabled = showVariantSelector && availableVariants.length === 0;
+  const actionLabel = isShopOrder ? 'Place Order' : isNegotiable ? 'Send Offer' : 'Request to Buy';
+  const requestLabel = isNegotiable ? 'offer' : 'request';
+  const summaryLabel = isShopOrder
+    ? "You're buying"
+    : isNegotiable ? "You're sending an offer for" : "You're requesting to buy";
 
   useEffect(() => {
     if (!showVariantSelector) return;
@@ -106,7 +111,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
     >
       <div className="w-full max-w-md rounded-2xl bg-gray-900 border border-gray-700 shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800 shrink-0">
-          <h2 className="font-semibold text-gray-100">{isShopOrder ? 'Place Order' : 'Request to Buy'}</h2>
+          <h2 className="font-semibold text-gray-100">{actionLabel}</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-300 transition-colors">
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -117,7 +122,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
           {/* Item summary */}
           <div className="rounded-lg bg-gray-800 px-3 py-2.5 flex items-start gap-3">
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-gray-500">{isShopOrder ? "You're buying" : "You're requesting to buy"}</p>
+              <p className="text-xs text-gray-500">{summaryLabel}</p>
               <p className="text-sm font-medium text-gray-200 truncate">{listingName}</p>
               <p className="text-sm font-bold text-teal-400 mt-0.5">
                 {priceFormatted}
@@ -208,7 +213,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
             <p className="text-xs text-sky-300">
               {isShopOrder
                 ? 'The shop will review your order and confirm availability. After they accept, coordinate payment, delivery, shipping, or meetup directly with the shop. The order is completed when the shop marks the sale as complete, which also updates stock.'
-                : 'The seller will review your request. Once they accept, you can coordinate the deal directly — meetup, online payment, shipping, whatever works for both of you. The sale is finalized when the seller marks it as sold.'}
+                : `The seller will review your ${requestLabel}. Once they accept, you can coordinate the deal directly — meetup, online payment, shipping, whatever works for both of you. The sale is finalized when the seller marks it as sold.`}
             </p>
             {isShopOrder && (
               <p className="mt-2 text-xs font-semibold text-sky-200">
@@ -236,7 +241,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
         <div className="flex gap-3 px-5 py-4 border-t border-gray-800 shrink-0">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
           <Button type="button" onClick={handleSubmit} loading={submitting} disabled={submitDisabled} className="flex-1">
-            {submitDisabled ? 'Out of Stock' : isShopOrder ? 'Place Order' : 'Send Purchase Request'}
+            {submitDisabled ? 'Out of Stock' : actionLabel}
           </Button>
         </div>
       </div>
