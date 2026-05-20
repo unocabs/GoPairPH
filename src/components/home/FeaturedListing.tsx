@@ -19,7 +19,7 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
 
   return (
     <article
-      className="group relative block w-full max-w-[500px] aspect-[4/5] overflow-hidden rounded-[28px] border border-white/10 bg-gray-950/70 shadow-[0_24px_80px_rgba(0,0,0,0.55),0_0_60px_rgba(20,184,166,0.12)] backdrop-blur-md transition-transform hover:scale-[1.01] sm:h-[420px] sm:aspect-auto"
+      className="group relative block w-full max-w-[500px] aspect-[4/5] overflow-hidden rounded-[24px] border border-white/10 bg-gray-950/70 shadow-[0_24px_80px_rgba(0,0,0,0.55),0_0_60px_rgba(20,184,166,0.12)] backdrop-blur-md transition-transform hover:scale-[1.01] sm:h-[420px] sm:aspect-auto sm:rounded-[28px]"
     >
       <Link
         href={getListingPath(shoe)}
@@ -56,34 +56,34 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
       />
 
       {/* TOP: live spotlight indicator + location */}
-      <div className="pointer-events-none absolute top-5 left-5 right-5 flex items-center justify-between">
+      <div className="pointer-events-none absolute left-4 right-4 top-4 flex items-center justify-between sm:left-5 sm:right-5 sm:top-5">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
             <span className="absolute inset-0 rounded-full bg-teal-400 animate-ping" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-400" />
           </span>
-          <span className="text-[10px] font-bold text-teal-300 uppercase tracking-[0.3em]">
+          <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-teal-300 sm:text-[10px] sm:tracking-[0.3em]">
             Live Spotlight
           </span>
         </div>
         {seller?.location && (
-          <span className="text-[10px] font-mono text-stone-300 uppercase tracking-widest backdrop-blur-sm bg-black/30 px-2 py-1 rounded">
+          <span className="rounded bg-black/30 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-stone-300 backdrop-blur-sm sm:text-[10px]">
             {seller.location}
           </span>
         )}
       </div>
 
       {/* TOP-RIGHT: pick-of-the-week badge */}
-      <div className="pointer-events-none absolute top-16 right-5">
+      <div className="pointer-events-none absolute right-4 top-12 origin-top-right scale-[0.82] sm:right-5 sm:top-16 sm:scale-100">
         <FeaturedPill compact featuredUntil={shoe.featured_until} />
       </div>
 
       {/* MIDDLE: huge brand + model */}
-      <div className="pointer-events-none absolute left-6 right-6 bottom-[160px] sm:bottom-[140px]">
-        <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-teal-300 mb-2">
+      <div className="pointer-events-none absolute left-5 right-5 bottom-[172px] sm:left-6 sm:right-6 sm:bottom-[140px]">
+        <div className="mb-1.5 font-mono text-[9px] uppercase tracking-[0.26em] text-teal-300 sm:mb-2 sm:text-[10px] sm:tracking-[0.3em]">
           Featured Listing
         </div>
-        <p className="text-3xl sm:text-5xl font-black text-white leading-[0.95] tracking-tight drop-shadow-2xl">
+        <p className="text-[26px] font-black leading-[0.95] tracking-tight text-white drop-shadow-2xl sm:text-5xl">
           {shoe.brand === 'Other' ? (
             <span className="text-teal-300">{shoe.model}</span>
           ) : (
@@ -93,19 +93,19 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
       </div>
 
       {/* BOTTOM: spec chips + price + CTA */}
-      <div className="pointer-events-none absolute left-5 right-5 bottom-5">
+      <div className="pointer-events-none absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-5 sm:right-5">
         {/* Chips */}
-        <div className="flex items-center gap-1.5 mb-4 flex-wrap">
-          <span className="rounded-full backdrop-blur-md bg-white/10 border border-white/20 px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider">
+        <div className="mb-3 flex flex-wrap items-center gap-1.5 sm:mb-4">
+          <span className="rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white backdrop-blur-md sm:px-2.5 sm:py-1 sm:text-[10px]">
             {CONDITIONS[shoe.condition]}
           </span>
           {(shoe.size_eu || shoe.size_us || shoe.size_cm) && (
-            <span className="rounded-full backdrop-blur-md bg-white/10 border border-white/20 px-2.5 py-1 text-[10px] font-mono text-white tabular-nums">
+            <span className="rounded-full border border-white/20 bg-white/10 px-2 py-0.5 font-mono text-[9px] tabular-nums text-white backdrop-blur-md sm:px-2.5 sm:py-1 sm:text-[10px]">
               {formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}
             </span>
           )}
           {shoe.mileage_km != null && (
-            <span className="rounded-full backdrop-blur-md bg-white/10 border border-white/20 px-2.5 py-1 text-[10px] font-mono text-white tabular-nums">
+            <span className="rounded-full border border-white/20 bg-white/10 px-2 py-0.5 font-mono text-[9px] tabular-nums text-white backdrop-blur-md sm:px-2.5 sm:py-1 sm:text-[10px]">
               {shoe.mileage_km.toLocaleString()} km
             </span>
           )}
@@ -116,21 +116,21 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
           <div className="min-w-0">
             {shoe.listing_type === 'for_sale' && shoe.price_php ? (
               <>
-                <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-stone-400">
+                <div className="font-mono text-[9px] uppercase tracking-[0.26em] text-stone-400 sm:text-[10px] sm:tracking-[0.3em]">
                   {shoe.is_negotiable ? 'From' : 'Asking'}
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-[44px] font-black text-white leading-none tabular-nums tracking-tight">
+                  <span className="text-[34px] font-black leading-none tracking-tight text-white tabular-nums sm:text-[44px]">
                     {formatPrice(shoe.price_php)}
                   </span>
                 </div>
               </>
             ) : shoe.listing_type === 'donate' ? (
               <>
-                <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-green-300">
+                <div className="font-mono text-[9px] uppercase tracking-[0.26em] text-green-300 sm:text-[10px] sm:tracking-[0.3em]">
                   Donation
                 </div>
-                <div className="text-[40px] font-black text-white leading-none tracking-tight">
+                <div className="text-[34px] font-black leading-none tracking-tight text-white sm:text-[40px]">
                   Free
                 </div>
               </>
@@ -138,7 +138,7 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
               <div className="text-2xl font-black text-white">Open to offers</div>
             )}
             {seller?.display_name && (
-              <div className="text-[11px] text-stone-300 mt-1 truncate">
+              <div className="mt-1 truncate text-[10px] text-stone-300 sm:text-[11px]">
                 Listed by{' '}
                 <span className="font-semibold text-white">{seller.display_name}</span>
               </div>
@@ -146,11 +146,11 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
           </div>
 
           {/* CTA */}
-          <span className="flex-none flex items-center gap-2 rounded-full bg-teal-400 group-hover:bg-teal-300 text-gray-900 px-5 py-3 text-sm font-black uppercase tracking-wider transition-all group-hover:scale-[1.03]">
+          <span className="flex-none flex min-h-10 items-center gap-1.5 rounded-full bg-teal-400 px-3.5 py-2 text-xs font-black uppercase tracking-wide text-gray-900 transition-all group-hover:scale-[1.03] group-hover:bg-teal-300 sm:gap-2 sm:px-5 sm:py-3 sm:text-sm sm:tracking-wider">
             View Pair
             <svg
-              width="14"
-              height="14"
+              width="13"
+              height="13"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -165,11 +165,11 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
 
       {/* Decorative racing stripes */}
       <div
-        className="absolute top-0 right-12 w-1.5 h-20 bg-teal-400"
+        className="absolute right-10 top-0 h-16 w-1.5 bg-teal-400 sm:right-12 sm:h-20"
         aria-hidden="true"
       />
       <div
-        className="absolute top-0 right-16 w-1 h-12 bg-orange-400"
+        className="absolute right-14 top-0 h-10 w-1 bg-orange-400 sm:right-16 sm:h-12"
         aria-hidden="true"
       />
     </article>
