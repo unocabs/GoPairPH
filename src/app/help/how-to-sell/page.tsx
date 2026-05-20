@@ -167,7 +167,7 @@ const iconPaths: Record<IconName, React.ReactNode> = {
 
 export default function HowToSellPage() {
   return (
-    <PageShell contentClassName="py-8 sm:py-10 lg:py-12">
+    <PageShell contentClassName="py-6 sm:py-10 lg:py-12">
       <HeroSection />
 
       <SellerBenefitsSection />
@@ -189,50 +189,50 @@ export default function HowToSellPage() {
 
 function SellerBenefitsSection() {
   return (
-    <SurfaceCard as="section" glow className="relative mt-8 overflow-hidden p-5 sm:mt-10 sm:p-6">
+    <SurfaceCard as="section" glow className="relative mt-6 overflow-hidden p-4 sm:mt-10 sm:p-6">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(20,184,166,0.12),transparent_34%)]" />
       <div className="relative">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-300 sm:text-xs sm:tracking-[0.2em]">
               Seller benefits
             </p>
-            <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-gray-100 sm:text-3xl">
+            <h2 className="mt-2 text-xl font-extrabold leading-snug tracking-tight text-gray-100 sm:mt-3 sm:text-3xl sm:leading-tight">
               Why add your running shoes on Go Pair PH?
             </h2>
-            <p className="mt-3 text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
+            <p className="mt-2 text-sm leading-5 text-gray-400 sm:mt-3 sm:text-base sm:leading-7">
               Use Go Pair PH as a clean seller page, then keep sharing your pair wherever your buyers already are.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row lg:shrink-0">
             <Link
               href="/listings/new"
-              className="inline-flex items-center justify-center rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-teal-500 px-3.5 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400 sm:px-4 sm:py-2.5"
             >
               List Your Running Shoes
             </Link>
             <Link
               href="/browse"
-              className="inline-flex items-center justify-center rounded-lg border border-gray-700 bg-slate-950/60 px-4 py-2.5 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-800 hover:text-gray-100"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 bg-slate-950/60 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-800 hover:text-gray-100 sm:px-4 sm:py-2.5"
             >
               See Marketplace
             </Link>
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-4 grid gap-2.5 sm:mt-6 sm:grid-cols-2 sm:gap-3 xl:grid-cols-3">
           {sellerBenefits.map((benefit) => (
             <div
               key={benefit.title}
-              className="rounded-xl border border-white/[0.08] bg-slate-950/45 p-4 transition-colors hover:border-teal-400/30 hover:bg-slate-950/65"
+              className="rounded-xl border border-white/[0.08] bg-slate-950/45 p-3 transition-colors hover:border-teal-400/30 hover:bg-slate-950/65 sm:p-4"
             >
-              <div className="flex gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-teal-400/30 bg-teal-400/10 text-teal-300">
-                  <Icon name={benefit.icon} className="h-5 w-5" />
+              <div className="flex gap-2.5 sm:gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-teal-400/30 bg-teal-400/10 text-teal-300 sm:h-10 sm:w-10">
+                  <Icon name={benefit.icon} className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-gray-100">{benefit.title}</h3>
-                  <p className="mt-1.5 text-sm leading-6 text-gray-400">{benefit.text}</p>
+                  <h3 className="text-[13px] font-bold leading-snug text-gray-100 sm:text-sm">{benefit.title}</h3>
+                  <p className="mt-1 text-[13px] leading-5 text-gray-400 sm:mt-1.5 sm:text-sm sm:leading-6">{benefit.text}</p>
                 </div>
               </div>
             </div>
@@ -245,25 +245,25 @@ function SellerBenefitsSection() {
 
 function HeroSection() {
   return (
-    <section className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.72fr)] lg:items-center">
+    <section className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.72fr)] lg:items-center">
       <div>
         <Logo size="lg" />
-        <h1 className="mt-8 max-w-3xl text-4xl font-extrabold tracking-tight text-gray-100 sm:text-5xl lg:text-6xl">
+        <h1 className="mt-5 max-w-3xl text-3xl font-extrabold leading-tight tracking-tight text-gray-100 sm:mt-8 sm:text-5xl lg:text-6xl">
           How to Sell on <span className="text-teal-300">Go Pair PH</span>
         </h1>
-        <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-300">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300 sm:mt-5 sm:text-lg sm:leading-8">
           List your running shoes in minutes and connect with runners in Pampanga.
         </p>
-        <div className="mt-7 flex flex-wrap gap-3">
+        <div className="mt-5 flex flex-wrap gap-2.5 sm:mt-7 sm:gap-3">
           <Link
             href="/listings/new"
-            className="inline-flex items-center justify-center rounded-lg bg-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400"
+            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400 sm:px-5 sm:py-3"
           >
             + List a Shoe
           </Link>
           <Link
             href="/browse"
-            className="inline-flex items-center justify-center rounded-lg border border-gray-700 bg-slate-900/60 px-5 py-3 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-800 hover:text-gray-100"
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 bg-slate-900/60 px-4 py-2 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-800 hover:text-gray-100 sm:px-5 sm:py-3"
           >
             See Marketplace
           </Link>

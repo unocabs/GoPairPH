@@ -218,23 +218,23 @@ export default async function HomePage() {
                   Pampanga Running Shoe Marketplace
                 </span>
               </div>
-              <h1 className="text-4xl font-extrabold tracking-tight text-gray-100 drop-shadow-[0_16px_36px_rgba(0,0,0,0.45)] sm:text-5xl">
+              <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-gray-100 drop-shadow-[0_16px_36px_rgba(0,0,0,0.45)] sm:text-5xl">
                 Find Your Next<br />
                 <span className="text-teal-300">Running Pair in Pampanga</span>
               </h1>
-              <p className="mt-4 max-w-lg text-lg leading-8 text-gray-300/85">
+              <p className="mt-3 max-w-lg text-sm leading-6 text-gray-300/85 sm:mt-4 sm:text-lg sm:leading-8">
                 Buy from Pampanga runners and shops, or list once and share your clean
                 Go Pair PH listing anywhere your buyers already are.
               </p>
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-6 flex flex-wrap gap-2.5 sm:mt-8 sm:gap-3">
                 <Link href="/browse">
-                  <Button size="lg" variant="secondary">Browse Marketplace</Button>
+                  <Button size="lg" variant="secondary" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">Browse Marketplace</Button>
                 </Link>
                 <Link href="/listings/new">
-                  <Button size="lg">List Your Shoes</Button>
+                  <Button size="lg" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">List Your Shoes</Button>
                 </Link>
                 <Link href="/shop">
-                  <Button size="lg" variant="outline">Browse Shops</Button>
+                  <Button size="lg" variant="outline" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">Browse Shops</Button>
                 </Link>
               </div>
               <p className="mt-4 text-xs font-medium uppercase tracking-[0.18em] text-teal-300/80">
@@ -297,51 +297,51 @@ export default async function HomePage() {
       <FirstListingNudge />
 
       {/* Seller benefits */}
-      <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
-        <SurfaceCard glow className="relative overflow-hidden border-teal-500/20 bg-slate-950/70 p-5 sm:p-7">
+      <section className="mx-auto max-w-7xl px-4 pt-7 sm:px-6 sm:pt-10 lg:px-8">
+        <SurfaceCard glow className="relative overflow-hidden border-teal-500/20 bg-slate-950/70 p-4 sm:p-7">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(20,184,166,0.12),transparent_34%)]" />
           <div className="relative">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-2xl">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-300 sm:text-xs sm:tracking-[0.2em]">
                   Seller benefits
                 </p>
-                <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-gray-100 sm:text-3xl">
+                <h2 className="mt-2 text-xl font-extrabold leading-snug tracking-tight text-gray-100 sm:mt-3 sm:text-3xl sm:leading-tight">
                   Why add your running shoes on Go Pair PH?
                 </h2>
-                <p className="mt-3 text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
+                <p className="mt-2 text-sm leading-5 text-gray-400 sm:mt-3 sm:text-base sm:leading-7">
                   Use Go Pair PH as a clean seller page, then keep sharing your pair wherever your buyers already are.
                 </p>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row lg:shrink-0">
                 <Link
                   href="/listings/new"
-                  className="inline-flex items-center justify-center rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400"
+                  className="inline-flex min-h-10 items-center justify-center rounded-lg bg-teal-500 px-3.5 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400 sm:px-4 sm:py-2.5"
                 >
                   List Your Running Shoes
                 </Link>
                 <Link
                   href="/browse"
-                  className="inline-flex items-center justify-center rounded-lg border border-gray-700 bg-slate-950/60 px-4 py-2.5 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-800 hover:text-gray-100"
+                  className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 bg-slate-950/60 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-800 hover:text-gray-100 sm:px-4 sm:py-2.5"
                 >
                   See Marketplace
                 </Link>
               </div>
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-4 grid gap-2.5 sm:mt-6 sm:grid-cols-2 sm:gap-3 xl:grid-cols-3">
               {sellerBenefits.map((benefit) => (
                 <div
                   key={benefit.title}
-                  className="rounded-xl border border-white/[0.08] bg-slate-950/45 p-4 transition-colors hover:border-teal-400/30 hover:bg-slate-950/65"
+                  className="rounded-xl border border-white/[0.08] bg-slate-950/45 p-3 transition-colors hover:border-teal-400/30 hover:bg-slate-950/65 sm:p-4"
                 >
-                  <div className="flex gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-teal-400/30 bg-teal-400/10 text-teal-300">
-                      <SellerBenefitIcon name={benefit.icon} className="h-5 w-5" />
+                  <div className="flex gap-2.5 sm:gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-teal-400/30 bg-teal-400/10 text-teal-300 sm:h-10 sm:w-10">
+                      <SellerBenefitIcon name={benefit.icon} className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-sm font-bold text-gray-100">{benefit.title}</h3>
-                      <p className="mt-1.5 text-sm leading-6 text-gray-400">{benefit.text}</p>
+                      <h3 className="text-[13px] font-bold leading-snug text-gray-100 sm:text-sm">{benefit.title}</h3>
+                      <p className="mt-1 text-[13px] leading-5 text-gray-400 sm:mt-1.5 sm:text-sm sm:leading-6">{benefit.text}</p>
                     </div>
                   </div>
                 </div>
