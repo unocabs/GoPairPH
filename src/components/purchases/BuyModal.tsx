@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
+import { Avatar } from '@/components/ui/Avatar';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import { VariantSelector } from '@/components/listings/VariantSelector';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
@@ -101,7 +101,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/70"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="w-full max-w-md rounded-2xl bg-gray-900 border border-gray-700 shadow-2xl flex flex-col max-h-[90vh]">
@@ -160,13 +160,12 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
               <p className="text-xs text-gray-500 mb-2">Seller</p>
               <div className="flex items-center gap-3">
                 <Link href={`/profile/${seller.id}`} className="shrink-0" onClick={onClose}>
-                  {seller.avatar_url ? (
-                    <Image src={seller.avatar_url} alt={seller.display_name} width={40} height={40} className="rounded-full border border-gray-600" />
-                  ) : (
-                    <div className="h-10 w-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-sm">
-                      {seller.display_name[0]?.toUpperCase() ?? 'U'}
-                    </div>
-                  )}
+                  <Avatar
+                    src={seller.avatar_url}
+                    alt={seller.display_name}
+                    size={40}
+                    className="border border-gray-600"
+                  />
                 </Link>
                 <div className="flex-1 min-w-0">
                   <Link href={`/profile/${seller.id}`} onClick={onClose} className="inline-flex items-center gap-1.5 font-semibold text-sm text-gray-200 hover:text-teal-400 transition-colors">

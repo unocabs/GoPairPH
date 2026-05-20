@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { createPortal } from 'react-dom';
 import { BuyModal } from './BuyModal';
 import type { Profile, ShoeVariant, Shop } from '@/types';
 
@@ -59,7 +60,7 @@ export function BuyButton({ listingId, listingSlug, listingName, priceFormatted,
           )}
         </p>
       )}
-      {open && (
+      {open && typeof window !== 'undefined' && createPortal(
         <BuyModal
           listingId={listingId}
           listingSlug={listingSlug}
@@ -75,7 +76,8 @@ export function BuyButton({ listingId, listingSlug, listingName, priceFormatted,
           buyerFbUsername={buyerFbUsername}
           onClose={() => setOpen(false)}
           onSubmitted={() => { setOpen(false); setSubmitted(true); }}
-        />
+        />,
+        document.body
       )}
     </>
   );

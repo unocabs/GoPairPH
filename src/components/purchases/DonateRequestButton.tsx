@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { DonateRequestModal } from './DonateRequestModal';
 
 interface DonateRequestButtonProps {
@@ -33,7 +34,7 @@ export function DonateRequestButton({ listingId, listingName, requesterId, reque
       >
         Request this Pair — Free
       </button>
-      {open && (
+      {open && typeof window !== 'undefined' && createPortal(
         <DonateRequestModal
           listingId={listingId}
           listingName={listingName}
@@ -41,7 +42,8 @@ export function DonateRequestButton({ listingId, listingName, requesterId, reque
           requesterFbUsername={requesterFbUsername}
           onClose={() => setOpen(false)}
           onSubmitted={() => { setOpen(false); setSubmitted(true); }}
-        />
+        />,
+        document.body
       )}
     </>
   );
