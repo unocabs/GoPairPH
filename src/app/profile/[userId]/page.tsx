@@ -37,12 +37,12 @@ async function getPublicProfile(userId: string) {
   };
 }
 
-async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean } | null> {
+async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean; fbUsername: string | null } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data } = await supabase.from('profiles').select('id, is_admin').eq('user_id', user.id).single();
-  return data ? { id: data.id, isAdmin: !!data.is_admin } : null;
+  const { data } = await supabase.from('profiles').select('id, is_admin, fb_username').eq('user_id', user.id).single();
+  return data ? { id: data.id, isAdmin: !!data.is_admin, fbUsername: data.fb_username ?? null } : null;
 }
 
 export default async function PublicProfilePage({ params }: { params: { userId: string } }) {
@@ -72,6 +72,7 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
           shoes={shoes}
           currentProfileId={currentProfile?.id}
           currentProfileIsAdmin={currentProfile?.isAdmin}
+          currentProfileFbUsername={currentProfile?.fbUsername}
           savedListingIds={savedListingIds}
           emptyMessage="No active listings."
         />

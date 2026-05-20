@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { BuyModal } from './BuyModal';
 import type { Profile, ShoeVariant, Shop } from '@/types';
 
@@ -16,19 +17,24 @@ interface BuyButtonProps {
   offerCount?: number;
   variants?: ShoeVariant[];
   initialVariantId?: string | null;
+  buyerProfileId?: string | null;
+  buyerFbUsername?: string | null;
   /** Override the default "Request to Buy" label (used by per-size buttons). */
   label?: string;
   className?: string;
 }
 
-export function BuyButton({ listingId, listingSlug, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, offerCount = 0, variants, initialVariantId, label, className }: BuyButtonProps) {
+export function BuyButton({ listingId, listingSlug, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, offerCount = 0, variants, initialVariantId, buyerProfileId, buyerFbUsername, label, className }: BuyButtonProps) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   if (submitted) {
     return (
-      <div className="mt-4 rounded-xl border border-teal-800 bg-teal-950 px-4 py-3 text-sm text-teal-400">
-        {shop ? 'Order placed! The shop will review and confirm availability.' : 'Purchase request sent! The seller will review and respond.'}
+      <div className="mt-4 rounded-xl border border-teal-800 bg-teal-950 px-4 py-3 text-sm text-teal-300">
+        <p>{shop ? 'Order placed. Track it in Sent Offers.' : 'Request sent. Track it in Sent Offers.'}</p>
+        <Link href="/profile?tab=offers" className="mt-2 inline-flex text-xs font-semibold text-teal-100 underline underline-offset-2 hover:text-white">
+          View Sent Offers
+        </Link>
       </div>
     );
   }
@@ -65,6 +71,8 @@ export function BuyButton({ listingId, listingSlug, listingName, priceFormatted,
           shop={shop}
           variants={variants}
           initialVariantId={initialVariantId}
+          buyerProfileId={buyerProfileId}
+          buyerFbUsername={buyerFbUsername}
           onClose={() => setOpen(false)}
           onSubmitted={() => { setOpen(false); setSubmitted(true); }}
         />

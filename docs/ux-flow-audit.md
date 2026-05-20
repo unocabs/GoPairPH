@@ -22,7 +22,7 @@ This is the living place to track buyer/seller workflow findings, pain points, p
 
 ## Run 1: Actual Flow Audit
 
-Status: started
+Status: implemented first fix pass
 
 ### What Already Exists
 
@@ -76,11 +76,28 @@ Send request first -> Seller accepts -> Coordinate on Messenger -> Seller marks 
 
 ### First Fix Candidates
 
-1. Add logged-out CTAs: "Sign in to Send Offer", "Sign in to Save Pair", and return to the listing after sign-in.
-2. After buyer submits an offer, show "Request sent. Track it in Sent Offers."
-3. Add a visible Share/Create Share Post action from seller My Listings cards.
-4. Add "Share again" next to seller view stats when a listing has views.
-5. Ask buyers for Messenger/contact info before sending a request if their profile has no Messenger username.
+1. Add logged-out CTAs: "Sign in to Send Offer", "Sign in to Save Pair", and return to the listing after sign-in. Implemented.
+2. After buyer submits an offer, show "Request sent. Track it in Sent Offers." Implemented.
+3. Add a visible Share/Create Share Post action from seller My Listings cards. Implemented as a `Share Post` action using the existing share-post modal.
+4. Add "Share again" next to seller view stats when a listing has views. Implemented.
+5. Ask buyers for Messenger/contact info before sending a request if their profile has no Messenger username. Implemented as an optional prompt.
+
+### Implementation Notes
+
+- Logged-out listing detail actions now use stronger marketplace CTAs and return to the current listing through `/auth/sign-in?next=...`.
+- Offer/order/donation success states now point buyers to Profile > Sent Offers.
+- Buyer offer/order/donation modals include an optional Messenger prompt when the buyer has no Messenger username.
+- The offer modal keeps the request as the primary path and treats Messenger as a coordination signal, not the main conversion action.
+- Seller-owned listing cards use the action slot for `Share Post`, while the existing image overlay remains the quick copy-link action.
+- Profile > My Listings shows a compact "Share again" nudge when listings have views.
+
+### Remaining After First Fix Pass
+
+- Measure whether logged-out CTAs increase sign-in and offer starts.
+- Decide whether seller cards should later expose "Create Share Post" directly, or whether linking to detail remains enough.
+- Decide whether Messenger should become required for sellers if non-Messenger listings underperform.
+- Review mobile screenshots for card height, modal density, and whether the buyer contact prompt feels helpful or heavy.
+- Continue with Run 2: Buyer Friction Audit.
 
 ## Psychology Notes To Revisit
 

@@ -7,9 +7,9 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
-import { ContactSellerButtons } from '@/components/listings/ContactSellerButtons';
 import { VariantSelector } from '@/components/listings/VariantSelector';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
+import { BuyerContactPrompt } from './BuyerContactPrompt';
 import { getPublicUrl } from '@/lib/utils';
 import type { Profile, ShoeVariant, Shop } from '@/types';
 
@@ -26,11 +26,13 @@ interface BuyModalProps {
   variants?: ShoeVariant[];
   /** Pre-selected variant id (e.g. user clicked "Buy this size" on the detail page). */
   initialVariantId?: string | null;
+  buyerProfileId?: string | null;
+  buyerFbUsername?: string | null;
   onClose: () => void;
   onSubmitted: () => void;
 }
 
-export function BuyModal({ listingId, listingSlug, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, variants, initialVariantId, onClose, onSubmitted }: BuyModalProps) {
+export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, variants, initialVariantId, buyerProfileId, buyerFbUsername, onClose, onSubmitted }: BuyModalProps) {
   const [message, setMessage] = useState('');
   const [bestOffer, setBestOffer] = useState('');
   const [variantId, setVariantId] = useState<string | null>(initialVariantId ?? null);
@@ -175,7 +177,9 @@ export function BuyModal({ listingId, listingSlug, listingName, priceFormatted, 
                 </div>
               </div>
               {seller.fb_username && (
-                <ContactSellerButtons fbUsername={seller.fb_username} listingId={listingId} listingSlug={listingSlug} />
+                <div className="mt-3 rounded-lg border border-blue-500/20 bg-blue-500/[0.06] px-3 py-2 text-xs leading-5 text-blue-100">
+                  Messenger is available for coordination after you send a Go Pair PH request.
+                </div>
               )}
             </div>
           )}
@@ -216,6 +220,8 @@ export function BuyModal({ listingId, listingSlug, listingName, priceFormatted, 
               </p>
             )}
           </div>
+
+          <BuyerContactPrompt profileId={buyerProfileId} initialFbUsername={buyerFbUsername} />
 
           <Textarea
             label={isShopOrder ? 'Order details' : 'Message to the seller (optional)'}

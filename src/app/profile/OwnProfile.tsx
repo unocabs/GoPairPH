@@ -9,7 +9,7 @@ import { PurchaseRequestCard } from '@/components/purchases/PurchaseRequestCard'
 import { PurchaseHistoryCard } from '@/components/purchases/PurchaseHistoryCard';
 import { SentOfferCard } from '@/components/purchases/SentOfferCard';
 import { RequestVerificationButton } from '@/components/profile/RequestVerificationButton';
-import { formatPrice, formatListingName } from '@/lib/utils';
+import { formatPrice, formatListingName, getListingPath } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest } from '@/types';
@@ -76,6 +76,8 @@ export function OwnProfile({
   const totalListingViews = listingViewSummaries.reduce((sum, item) => sum + item.total, 0);
   const viewsThisWeek = listingViewSummaries.reduce((sum, item) => sum + item.last7d, 0);
   const activeListings = shoes.filter((shoe) => shoe.status === 'active').length;
+  const shareTarget = shoes.find((shoe) => shoe.status === 'active' && (viewCounts?.[shoe.id]?.total ?? 0) > 0)
+    ?? shoes.find((shoe) => shoe.status === 'active');
 
   return (
     <div>
@@ -165,11 +167,24 @@ export function OwnProfile({
                 {purchaseRequests.length} active buyer request{purchaseRequests.length !== 1 ? 's' : ''} waiting for your response.
               </p>
             )}
+            {totalListingViews > 0 && shareTarget && (
+              <div className="mt-4 flex flex-col gap-3 rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs leading-5 text-gray-400">
+                  People are checking your pairs. Share again while there&apos;s momentum.
+                </p>
+                <Link href={getListingPath(shareTarget)} className="sm:shrink-0">
+                  <Button size="sm" variant="outline" className="w-full sm:w-auto">
+                    Share again
+                  </Button>
+                </Link>
+              </div>
+            )}
           </SurfaceCard>
           <ListingGrid
             shoes={shoes}
             currentProfileId={profile.id}
             currentProfileIsAdmin={profile.is_admin}
+            currentProfileFbUsername={profile.fb_username}
             viewCounts={viewCounts}
             emptyMessage="You haven't listed any shoes yet."
           />
@@ -260,6 +275,7 @@ export function OwnProfile({
               shoes={savedListings}
               currentProfileId={profile.id}
               currentProfileIsAdmin={profile.is_admin}
+              currentProfileFbUsername={profile.fb_username}
               savedListingIds={new Set(savedListings.map(shoe => shoe.id))}
               onSavedChange={handleSavedListingChanged}
               emptyMessage="No saved pairs yet. Save pairs you like and come back before they sell."

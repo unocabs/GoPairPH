@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { type Shoe } from '@/types';
@@ -23,11 +24,16 @@ import { SaveListingButton } from './SaveListingButton';
 import { type ShopTheme } from '@/lib/shopTheme';
 
 const NEW_PILL_WINDOW_MS = 24 * 60 * 60 * 1000;
+const SharePostModal = dynamic(
+  () => import('./SharePostModal').then(mod => mod.SharePostModal),
+  { ssr: false }
+);
 
 interface ListingCardProps {
   shoe: Shoe;
   currentProfileId?: string;
   currentProfileIsAdmin?: boolean;
+  currentProfileFbUsername?: string | null;
   hasExistingRequest?: boolean;
   offerCount?: number;
   /** Owner-only: total + last-7-days view counts. Rendered as a pill on the card. */
@@ -37,9 +43,10 @@ interface ListingCardProps {
   theme?: ShopTheme;
 }
 
-export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = false, hasExistingRequest = false, offerCount = 0, viewSummary, isSaved = false, onSavedChange, theme }: ListingCardProps) {
+export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = false, currentProfileFbUsername, hasExistingRequest = false, offerCount = 0, viewSummary, isSaved = false, onSavedChange, theme }: ListingCardProps) {
   const [buyOpen, setBuyOpen] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
+  const [sharePostOpen, setSharePostOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -267,15 +274,23 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
       {(isOwner || showBuy || showDonate || showPlaceOrder) && (
         <div className="px-3.5 pb-3.5">
           {isOwner ? (
-            <div className="flex w-full items-center justify-center gap-1 rounded-lg border border-teal-800 bg-teal-950/70 px-3 py-2 text-sm font-semibold text-teal-300" style={theme ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.accent } : undefined}>
-              <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+            <button
+              type="button"
+              onClick={() => setSharePostOpen(true)}
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-800 bg-teal-950/70 px-3 py-2 text-sm font-semibold text-teal-300 transition-colors hover:border-teal-500 hover:bg-teal-900/70 hover:text-teal-100"
+              style={theme ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.accent } : undefined}
+            >
+              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              My Listing
-            </div>
+              Share Post
+            </button>
           ) : submitted ? (
             <div className="rounded-lg border border-teal-800 bg-teal-950 px-3 py-2 text-xs text-teal-400 text-center" style={theme ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.accent } : undefined}>
-              ✓ Request sent!
+              <p>{showDonate ? 'Request sent. Track it in Sent Offers.' : 'Request sent. Track it in Sent Offers.'}</p>
+              <Link href="/profile?tab=offers" className="mt-1 inline-flex font-semibold text-teal-100 underline underline-offset-2 hover:text-white">
+                View Sent Offers
+              </Link>
             </div>
           ) : hasExistingRequest ? (
             <div className="rounded-lg border border-amber-800 bg-amber-950 px-3 py-2 text-xs text-amber-400 text-center">
@@ -318,8 +333,19 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
           isNegotiable={shoe.is_negotiable}
           seller={shoe.profiles}
           shop={shoe.shops}
+          buyerProfileId={currentProfileId}
+          buyerFbUsername={currentProfileFbUsername}
           onClose={() => setBuyOpen(false)}
           onSubmitted={() => { setBuyOpen(false); setSubmitted(true); }}
+        />,
+        document.body
+      )}
+      {sharePostOpen && isOwner && typeof window !== 'undefined' && createPortal(
+        <SharePostModal
+          shoe={shoe}
+          seller={shoe.profiles ?? null}
+          onClose={() => setSharePostOpen(false)}
+          onDownloaded={() => setSharePostOpen(false)}
         />,
         document.body
       )}
@@ -328,6 +354,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
           listingId={shoe.id}
           listingName={formatListingName(shoe.brand, shoe.model)}
           requesterId={currentProfileId}
+          requesterFbUsername={currentProfileFbUsername}
           onClose={() => setDonateOpen(false)}
           onSubmitted={() => { setDonateOpen(false); setSubmitted(true); }}
         />,

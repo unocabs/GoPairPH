@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -9,6 +10,7 @@ interface SaveListingButtonProps {
   canSave: boolean;
   variant?: 'icon' | 'button';
   className?: string;
+  signInHref?: string;
   onSavedChange?: (listingId: string, saved: boolean) => void;
 }
 
@@ -18,6 +20,7 @@ export function SaveListingButton({
   canSave,
   variant = 'icon',
   className,
+  signInHref,
   onSavedChange,
 }: SaveListingButtonProps) {
   const [saved, setSaved] = useState(initialSaved);
@@ -57,6 +60,21 @@ export function SaveListingButton({
     : 'Sign in to save';
 
   if (variant === 'button') {
+    if (!canSave && signInHref) {
+      return (
+        <Link
+          href={signInHref}
+          className={cn(
+            'inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-700 bg-slate-950/40 px-4 py-2 text-sm font-semibold text-gray-300 transition-colors hover:bg-slate-900 hover:text-gray-100',
+            className,
+          )}
+        >
+          <HeartIcon filled={false} />
+          Sign in to Save Pair
+        </Link>
+      );
+    }
+
     return (
       <div>
         <button

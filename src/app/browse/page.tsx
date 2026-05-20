@@ -160,11 +160,11 @@ function SearchBar({ defaultValue }: { defaultValue?: string }) {
   );
 }
 
-async function getCurrentProfileAndRequests(listingIds: string[]): Promise<{ profileId: string; isAdmin: boolean; requestListingIds: Set<string>; savedListingIds: Set<string> } | null> {
+async function getCurrentProfileAndRequests(listingIds: string[]): Promise<{ profileId: string; isAdmin: boolean; fbUsername: string | null; requestListingIds: Set<string>; savedListingIds: Set<string> } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data: profile } = await supabase.from('profiles').select('id, is_admin').eq('user_id', user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('id, is_admin, fb_username').eq('user_id', user.id).single();
   if (!profile) return null;
 
   const { data: requests } = await supabase
@@ -175,7 +175,7 @@ async function getCurrentProfileAndRequests(listingIds: string[]): Promise<{ pro
 
   const requestListingIds = new Set((requests ?? []).map((r: { listing_id: string }) => r.listing_id));
   const savedListingIds = await getSavedListingIds(profile.id, listingIds);
-  return { profileId: profile.id, isAdmin: !!profile.is_admin, requestListingIds, savedListingIds };
+  return { profileId: profile.id, isAdmin: !!profile.is_admin, fbUsername: profile.fb_username ?? null, requestListingIds, savedListingIds };
 }
 
 export default async function BrowsePage({ searchParams }: BrowsePageProps) {
@@ -213,6 +213,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
               shoes={shoes}
               currentProfileId={userContext?.profileId}
               currentProfileIsAdmin={userContext?.isAdmin}
+              currentProfileFbUsername={userContext?.fbUsername}
               myRequestListingIds={userContext?.requestListingIds}
               savedListingIds={userContext?.savedListingIds}
               offerCounts={offerCounts}

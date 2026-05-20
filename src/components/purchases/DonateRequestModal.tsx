@@ -3,17 +3,19 @@
 import { useState } from 'react';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
+import { BuyerContactPrompt } from './BuyerContactPrompt';
 
 interface DonateRequestModalProps {
   listingId: string;
   listingName: string;
   /** Kept for backwards compatibility; the API now resolves the buyer from the session. */
   requesterId?: string;
+  requesterFbUsername?: string | null;
   onClose: () => void;
   onSubmitted: () => void;
 }
 
-export function DonateRequestModal({ listingId, listingName, onClose, onSubmitted }: DonateRequestModalProps) {
+export function DonateRequestModal({ listingId, listingName, requesterId, requesterFbUsername, onClose, onSubmitted }: DonateRequestModalProps) {
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +69,8 @@ export function DonateRequestModal({ listingId, listingName, onClose, onSubmitte
               The donor will review your request and reach out to arrange a pickup. Be respectful — donations are a gift from a fellow runner!
             </p>
           </div>
+
+          <BuyerContactPrompt profileId={requesterId} initialFbUsername={requesterFbUsername} />
 
           <Textarea
             label="Message to the donor (optional)"

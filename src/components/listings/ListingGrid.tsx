@@ -8,6 +8,7 @@ interface ListingGridProps {
   emptyMessage?: string;
   currentProfileId?: string;
   currentProfileIsAdmin?: boolean;
+  currentProfileFbUsername?: string | null;
   myRequestListingIds?: Set<string>;
   offerCounts?: Record<string, number>;
   viewCounts?: Record<string, { total: number; last7d: number }>;
@@ -16,7 +17,7 @@ interface ListingGridProps {
   theme?: ShopTheme;
 }
 
-export function ListingGrid({ shoes, emptyMessage = 'No listings found.', currentProfileId, currentProfileIsAdmin = false, myRequestListingIds, offerCounts, viewCounts, savedListingIds, onSavedChange, theme }: ListingGridProps) {
+export function ListingGrid({ shoes, emptyMessage = 'No listings found.', currentProfileId, currentProfileIsAdmin = false, currentProfileFbUsername, myRequestListingIds, offerCounts, viewCounts, savedListingIds, onSavedChange, theme }: ListingGridProps) {
   if (shoes.length === 0) {
     return (
       <SurfaceCard className="flex flex-col items-center justify-center border-dashed py-16 text-center">
@@ -34,6 +35,7 @@ export function ListingGrid({ shoes, emptyMessage = 'No listings found.', curren
           shoe={shoe}
           currentProfileId={currentProfileId}
           currentProfileIsAdmin={currentProfileIsAdmin}
+          currentProfileFbUsername={currentProfileFbUsername}
           hasExistingRequest={myRequestListingIds?.has(shoe.id) ?? false}
           offerCount={offerCounts?.[shoe.id] ?? 0}
           viewSummary={viewCounts?.[shoe.id]}

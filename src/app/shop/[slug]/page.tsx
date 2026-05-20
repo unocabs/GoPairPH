@@ -108,17 +108,17 @@ async function getCarouselListings(listingIds: string[]): Promise<Array<Pick<Sho
   return (data as Array<Pick<Shoe, 'id' | 'slug' | 'brand' | 'model'>>) ?? [];
 }
 
-async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean } | null> {
+async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean; fbUsername: string | null } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data } = await supabase
     .from('profiles')
-    .select('id, is_admin')
+    .select('id, is_admin, fb_username')
     .eq('user_id', user.id)
     .maybeSingle();
-  return data ? { id: data.id, isAdmin: !!data.is_admin } : null;
+  return data ? { id: data.id, isAdmin: !!data.is_admin, fbUsername: data.fb_username ?? null } : null;
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
@@ -213,6 +213,7 @@ export default async function ShopLandingPage({ params, searchParams }: ShopLand
               offerCounts={offerCounts}
               currentProfileId={currentProfile?.id}
               currentProfileIsAdmin={currentProfile?.isAdmin}
+              currentProfileFbUsername={currentProfile?.fbUsername}
               savedListingIds={savedListingIds}
               emptyMessage="No shop listings match these filters yet."
               theme={theme}

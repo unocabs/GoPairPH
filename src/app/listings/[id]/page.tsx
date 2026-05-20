@@ -107,17 +107,17 @@ async function getShoeByRouteParam(id: string): Promise<Shoe | null> {
   return shoe;
 }
 
-async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean; isVerified: boolean } | null> {
+async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean; isVerified: boolean; fbUsername: string | null } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   const { data } = await supabase
     .from('profiles')
-    .select('id, is_admin, is_verified')
+    .select('id, is_admin, is_verified, fb_username')
     .eq('user_id', user.id)
     .single();
   if (!data) return null;
-  return { id: data.id, isAdmin: !!data.is_admin, isVerified: !!data.is_verified };
+  return { id: data.id, isAdmin: !!data.is_admin, isVerified: !!data.is_verified, fbUsername: data.fb_username ?? null };
 }
 
 type PurchaseContext =
@@ -174,6 +174,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   if (!shoe) notFound();
 
   const currentProfileId = currentProfile?.id ?? null;
+  const currentProfileFbUsername = currentProfile?.fbUsername ?? null;
   const isAdmin = currentProfile?.isAdmin ?? false;
   const isVerified = currentProfile?.isVerified ?? false;
   const isOwner = currentProfileId === shoe.seller_id;
@@ -193,6 +194,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const listingName = formatListingName(shoe.brand, shoe.model);
   const listingUrl = getAbsoluteListingUrl(SITE_URL, shoe);
   const justListed = isOwner && searchParams?.listed === '1';
+  const signInHref = `/auth/sign-in?next=${encodeURIComponent(getListingPath(shoe))}`;
   const shareSizeLabel = shoe.shop_id
     ? 'See listing for available sizes'
     : formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm);
@@ -488,6 +490,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 initialSaved={isSaved}
                 canSave={!!currentProfileId}
                 variant="button"
+                signInHref={signInHref}
               />
               {!currentProfileId && (
                 <p className="mt-2 text-xs text-gray-500">
@@ -571,6 +574,8 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               isNegotiable={shoe.is_negotiable}
               seller={seller ?? undefined}
               offerCount={offerCount}
+              buyerProfileId={currentProfileId}
+              buyerFbUsername={currentProfileFbUsername}
             />
           )}
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && shoe.shop_id && shoe.has_stock && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
@@ -585,10 +590,17 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               shop={shoe.shops}
               variants={shoe.shoe_variants}
               label="Place Order"
+              buyerProfileId={currentProfileId}
+              buyerFbUsername={currentProfileFbUsername}
             />
           )}
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && !currentProfileId && (
-            <p className="mt-4 text-sm text-gray-500">Sign in to buy this listing.</p>
+            <Link
+              href={signInHref}
+              className="mt-4 flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
+            >
+              {shoe.shop_id ? 'Sign in to Place Order' : 'Sign in to Send Offer'}
+            </Link>
           )}
 
           {shoe.listing_type === 'donate' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && (
@@ -596,10 +608,16 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               listingId={shoe.id}
               listingName={listingName}
               requesterId={currentProfileId}
+              requesterFbUsername={currentProfileFbUsername}
             />
           )}
           {shoe.listing_type === 'donate' && shoe.status === 'active' && !isOwner && !currentProfileId && (
-            <p className="mt-4 text-sm text-gray-500">Sign in to request this donation.</p>
+            <Link
+              href={signInHref}
+              className="mt-4 flex w-full items-center justify-center rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-500"
+            >
+              Sign in to Request Donation
+            </Link>
           )}
 
           {/* Owner actions */}

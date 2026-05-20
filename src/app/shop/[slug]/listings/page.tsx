@@ -40,18 +40,18 @@ async function getShopListings(shopId: string): Promise<Shoe[]> {
   });
 }
 
-async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean } | null> {
+async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean; fbUsername: string | null } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data } = await supabase
     .from('profiles')
-    .select('id, is_admin')
+    .select('id, is_admin, fb_username')
     .eq('user_id', user.id)
     .maybeSingle();
 
-  return data ? { id: data.id, isAdmin: !!data.is_admin } : null;
+  return data ? { id: data.id, isAdmin: !!data.is_admin, fbUsername: data.fb_username ?? null } : null;
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
@@ -86,6 +86,7 @@ export default async function ShopListingsPage({ params }: { params: { slug: str
         offerCounts={offerCounts}
         currentProfileId={currentProfile?.id}
         currentProfileIsAdmin={currentProfile?.isAdmin}
+        currentProfileFbUsername={currentProfile?.fbUsername}
         savedListingIds={savedListingIds}
         emptyMessage="This shop hasn't posted any listings yet."
       />
