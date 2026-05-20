@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { listingSchema, type ListingFormData } from '@/lib/validations';
 import { BRANDS, CONDITIONS, SIZE_CONVERSIONS } from '@/lib/constants';
@@ -22,14 +22,16 @@ const LISTING_TYPE_OPTIONS = [
   { value: 'for_sale', label: 'For Sale' },
   { value: 'donate', label: 'Donate (Free)' },
 ];
+const LISTING_DRAFT_KEY = 'gopairph:new-listing-draft:v1';
 
 interface ListingFormProps {
-  profileId: string;
+  profileId?: string | null;
   shop?: Shop | null;
 }
 
 export function ListingForm({ profileId, shop = null }: ListingFormProps) {
   const isShop = !!shop;
+  const isGuest = !profileId;
 
   const [step, setStep] = useState<1 | 2>(1);
   const [shoeId, setShoeId] = useState<string | null>(null);
@@ -40,9 +42,10 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ListingFormData>({
+  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<ListingFormData>({
     resolver: zodResolver(listingSchema) as Resolver<ListingFormData>,
     defaultValues: isShop
       ? { listing_type: 'for_sale', condition: 'new', is_negotiable: false, size_eu: 99 /* placeholder; overridden to NULL on insert */ }
@@ -59,6 +62,25 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
       setValue('is_negotiable', false);
     }
   }, [isShop, setValue]);
+
+  useEffect(() => {
+    if (!profileId || searchParams.get('resume') !== 'draft') return;
+
+    const rawDraft = window.localStorage.getItem(LISTING_DRAFT_KEY);
+    if (!rawDraft) return;
+
+    try {
+      const parsed = JSON.parse(rawDraft) as { details?: ListingFormData };
+      if (!parsed.details) return;
+      reset(parsed.details);
+      setDetails(parsed.details);
+      setShoeId(crypto.randomUUID());
+      setStep(2);
+      setError(null);
+    } catch {
+      window.localStorage.removeItem(LISTING_DRAFT_KEY);
+    }
+  }, [profileId, reset, searchParams]);
 
   const listingType = watch('listing_type');
   const condition = watch('condition');
@@ -87,6 +109,16 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
 
   function onDetailsSubmit(data: ListingFormData) {
     setError(null);
+    if (isGuest) {
+      try {
+        window.localStorage.setItem(LISTING_DRAFT_KEY, JSON.stringify({ details: data, savedAt: Date.now() }));
+        router.push(`/auth/sign-in?next=${encodeURIComponent('/listings/new?resume=draft')}`);
+      } catch {
+        setError('Could not save your draft in this browser. Please sign in first, then list your shoe.');
+      }
+      return;
+    }
+
     if (isShop) {
       const cleaned = variants
         .map(v => ({
@@ -118,6 +150,11 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
   }
 
   async function onPhotosSubmit() {
+    if (!profileId) {
+      setError('Please sign in before uploading photos and publishing your listing.');
+      router.push(`/auth/sign-in?next=${encodeURIComponent('/listings/new?resume=draft')}`);
+      return;
+    }
     if (!shoeId || !details) return;
     const hasTop = photos.some(p => p.viewType === 'top');
     const hasSole = photos.some(p => p.viewType === 'sole');
@@ -178,6 +215,7 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
       }));
       const { error: imgError } = await supabase.from('shoe_images').insert(imageRows);
       if (imgError) throw imgError;
+      window.localStorage.removeItem(LISTING_DRAFT_KEY);
       router.push(`${getListingPath(insertedShoe ?? { id: shoeId })}?listed=1`);
     } catch (err) {
       const msg = (err as { message?: string })?.message ?? 'Failed to publish listing';
@@ -310,6 +348,11 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
           <Button type="submit" size="lg" loading={submitting} className="w-full">
             Continue to Photos →
           </Button>
+          {isGuest && (
+            <p className="-mt-2 text-center text-xs leading-5 text-gray-500">
+              You can start now. We&apos;ll ask you to sign in before photo upload so the listing saves to your profile.
+            </p>
+          )}
         </form>
       )}
 
