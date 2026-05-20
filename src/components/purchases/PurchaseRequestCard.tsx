@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/client';
 import { formatRelativeDate, formatPrice, formatSize, getPublicUrl, getListingPath } from '@/lib/utils';
 import type { PurchaseRequest, PurchaseRequestStatus, Shoe } from '@/types';
 
+type ConfirmAction = 'accept' | 'complete' | 'cancel';
+
 interface PurchaseRequestCardProps {
   request: PurchaseRequest;
   listingName: string;
@@ -30,6 +32,7 @@ export function PurchaseRequestCard({
   const [status, setStatus] = useState<PurchaseRequestStatus>(request.status);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
 
   // Resolve a thumbnail from whichever listing reference we have.
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -63,16 +66,15 @@ export function PurchaseRequestCard({
   }
 
   async function handleAccept() {
-    if (!confirm('Accept this purchase request? Your listing will be reserved for this buyer until you mark it sold.')) return;
-    await changeStatus('accepted');
+    setConfirmAction('accept');
   }
 
   async function handleDecline() {
+    setConfirmAction(null);
     await changeStatus('declined');
   }
 
-  async function handleCompleteSale() {
-    if (!confirm('Mark this sale as complete? The listing will become Sold and cannot be relisted.')) return;
+  async function completeSale() {
     setLoading(true);
     setError(null);
     const { error: err } = await createClient().rpc('complete_purchase', { p_request_id: request.id });
@@ -80,14 +82,26 @@ export function PurchaseRequestCard({
     onChanged(request.id);
   }
 
-  async function handleCancelSale() {
-    if (!confirm('Cancel this sale? The listing will go back to Active and the buyer can be notified.')) return;
+  async function cancelSale() {
     setLoading(true);
     setError(null);
     const { error: err } = await createClient().rpc('cancel_purchase_acceptance', { p_request_id: request.id });
     if (err) { setError(err.message); setLoading(false); return; }
     setStatus('pending');
     setLoading(false);
+  }
+
+  async function confirmSelectedAction() {
+    if (!confirmAction) return;
+    const selectedAction = confirmAction;
+    setConfirmAction(null);
+    if (selectedAction === 'accept') {
+      await changeStatus('accepted');
+    } else if (selectedAction === 'complete') {
+      await completeSale();
+    } else {
+      await cancelSale();
+    }
   }
 
   const isReservedForOther = status === 'declined' && listingStatus === 'reserved';
@@ -202,14 +216,14 @@ export function PurchaseRequestCard({
           </div>
           <div className="flex gap-2">
             <button
-              onClick={handleCancelSale}
+              onClick={() => setConfirmAction('cancel')}
               disabled={loading}
               className="flex-1 rounded-lg border border-gray-700 px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-colors disabled:opacity-50"
             >
               Cancel &amp; Reopen
             </button>
             <button
-              onClick={handleCompleteSale}
+              onClick={() => setConfirmAction('complete')}
               disabled={loading}
               className="flex-1 rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-500 transition-colors disabled:opacity-50"
             >
@@ -225,7 +239,77 @@ export function PurchaseRequestCard({
         </div>
       )}
 
+      {confirmAction && (
+        <RequestConfirmPanel
+          action={confirmAction}
+          buyerName={request.profiles?.display_name ?? 'the buyer'}
+          loading={loading}
+          onCancel={() => setConfirmAction(null)}
+          onConfirm={confirmSelectedAction}
+        />
+      )}
+
       {error && <p className="text-xs text-red-400">{error}</p>}
+    </div>
+  );
+}
+
+function RequestConfirmPanel({
+  action,
+  buyerName,
+  loading,
+  onCancel,
+  onConfirm,
+}: {
+  action: ConfirmAction;
+  buyerName: string;
+  loading: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const copy = {
+    accept: {
+      title: `Reserve for ${buyerName}?`,
+      body: 'The listing will be reserved while you coordinate the deal. You can reopen it if the buyer backs out.',
+      confirmLabel: 'Accept request',
+      confirmClass: 'bg-teal-600 hover:bg-teal-500',
+    },
+    complete: {
+      title: 'Mark this pair as sold?',
+      body: 'This completes the sale, closes the request, and marks the listing as Sold.',
+      confirmLabel: 'Mark as sold',
+      confirmClass: 'bg-green-600 hover:bg-green-500',
+    },
+    cancel: {
+      title: 'Reopen this listing?',
+      body: 'The accepted request will be cancelled and the listing will become active again for other buyers.',
+      confirmLabel: 'Reopen listing',
+      confirmClass: 'bg-amber-600 hover:bg-amber-500',
+    },
+  }[action];
+
+  return (
+    <div className="rounded-xl border border-white/[0.08] bg-slate-950/80 p-3 shadow-lg shadow-black/20">
+      <p className="text-sm font-semibold text-gray-100">{copy.title}</p>
+      <p className="mt-1 text-xs leading-5 text-gray-400">{copy.body}</p>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={loading}
+          className="rounded-lg border border-gray-700 px-3 py-2 text-xs font-semibold text-gray-300 transition-colors hover:bg-gray-800 disabled:opacity-50"
+        >
+          Not yet
+        </button>
+        <button
+          type="button"
+          onClick={onConfirm}
+          disabled={loading}
+          className={`rounded-lg px-3 py-2 text-xs font-semibold text-white transition-colors disabled:opacity-50 ${copy.confirmClass}`}
+        >
+          {loading ? 'Working...' : copy.confirmLabel}
+        </button>
+      </div>
     </div>
   );
 }

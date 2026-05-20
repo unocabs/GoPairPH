@@ -296,6 +296,64 @@ Checked: May 21, 2026
 3. Add analytics later for off-site click exits: Messenger, shop Facebook, FB group, and copy-link.
 4. Decide whether accepted requests should show a stronger "coordinate now" state before Messenger.
 
+## Run 5: Fix Priority Map
+
+Status: first priority pass implemented
+
+Checked: May 21, 2026
+
+### Ranking Lens
+
+- Conversion impact: how much the fix can improve listing, request, sale, or sharing behavior.
+- Mobile risk: whether the change can crowd small screens or add scroll.
+- Speed impact: whether the change adds routes, bundles, database work, or slow UI.
+- Trust impact: whether the change makes the marketplace feel safer and more familiar.
+- Implementation effort: how much code and QA surface the fix needs.
+
+### Highest Priority Fixes
+
+1. Replace native purchase request confirmations.
+   - Impact: high for sellers because accept, reopen, and mark sold are core closing moments.
+   - Risk: low when done inline; no schema or heavy UI needed.
+   - Fix: implemented in-card confirmation panels for accepting, reopening, and marking sold.
+
+2. Keep reducing modal density on mobile.
+   - Impact: high for buyers because request submission should feel quick.
+   - Risk: medium because removing too much trust copy can reduce confidence.
+   - Next step: QA offer/order/donation modals on common mobile heights and compress only repeated copy.
+
+3. Polish post-publish seller sharing into a short checklist.
+   - Impact: high for marketplace supply discovery.
+   - Risk: medium because too many share actions can feel like work after listing.
+   - Next step: make the post-publish section show copy link, create share post, and FB group as a compact sequence.
+
+4. Revisit seller Messenger gate weight.
+   - Impact: medium/high because seller contact quality affects completed deals.
+   - Risk: medium because a heavy gate can reduce listing completion.
+   - Next step: keep it recommended, but test whether it should appear after details instead of before the form.
+
+5. Add lightweight analytics for off-site exits and funnel events.
+   - Impact: high for decision-making, lower immediate UX impact.
+   - Risk: medium because tracking should not slow the page or add privacy confusion.
+   - Next step: define events first: listing view, save click, request start, request sent, share post opened, copy link, Messenger click, shop Facebook click.
+
+### Lower Priority / Watch List
+
+- Move buyer copy-link actions lower if they still distract from request/order CTAs.
+- Add stronger accepted-request coordination state before Messenger.
+- Decide whether fixed-price community listings should say "Request to Buy" everywhere.
+- Measure whether quieter shop Facebook links hurt shop trust.
+- Review dark theme weight and mobile typography after conversion-critical flows settle.
+
+### Run 5 Implementation Notes
+
+- Purchase request cards now use in-card confirmation panels instead of native browser confirm dialogs.
+- Seller action consequences are visible in context:
+  - accepting reserves the listing for that buyer;
+  - marking sold completes the sale and closes the request;
+  - reopening cancels the accepted request and makes the listing active again.
+- This keeps the seller inside the profile flow and avoids abrupt browser UI on mobile.
+
 ## Psychology Notes To Revisit
 
 - Does the dark, high-contrast style feel premium and focused, or too heavy for casual first-time buyers?
