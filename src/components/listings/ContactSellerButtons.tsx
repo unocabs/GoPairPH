@@ -68,12 +68,12 @@ export function ContactSellerButtons({ fbUsername, listingId, listingSlug, isOwn
     openFbPrompt();
   }
 
-  const copyLabel = isOwner ? 'Share to Facebook & other marketplaces' : 'Copy & Share Link';
+  const copyLabel = isOwner ? 'Share to Facebook & other marketplaces' : 'Copy listing link';
   const copiedToast = isOwner
     ? '✅ Listing link copied. You are ready to share your listing!'
     : '✅ Listing link copied!';
 
-  const showShare = !!shoe;
+  const showShare = isOwner && !!shoe;
 
   return (
     <div className="mt-3 space-y-2">

@@ -253,6 +253,49 @@ Checked: May 20, 2026
 3. Polish post-publish sharing into a compact checklist.
 4. Review mobile density for profile seller stats and purchase request cards.
 
+## Run 4: Leakage Audit
+
+Status: first fixes implemented
+
+Checked: May 21, 2026
+
+### Scope Checked
+
+- Listing detail seller/shop contact areas.
+- Buyer offer/order/donation request modals.
+- Seller share actions from cards, detail pages, and profile stats.
+- Post-request Messenger paths in Sent Offers and Purchase Requests.
+- Shop Facebook links before and during order intent.
+
+### Top Leakage Findings
+
+1. Buyer-facing Share Post could compete with buyer intent.
+   - Risk: "Share Post" is a seller growth tool, but showing it to non-owners on listing detail can distract buyers from saving, signing in, or sending a request.
+   - Fix: Share Post is now owner-only in the listing detail contact area.
+
+2. Non-owner copy/share language felt too growth-oriented.
+   - Risk: "Copy & Share Link" can subtly invite buyers to leave the buying path or send the listing elsewhere before acting.
+   - Fix: changed the non-owner label to "Copy listing link" so it remains useful without sounding like the main action.
+
+3. Shop Facebook links were visually competing with Place Order.
+   - Risk: a full blue Facebook button can pull buyers off-site before creating a tracked Go Pair PH order.
+   - Fix: shop Facebook links in the detail contact area and order modal are now quieter "Verify shop on Facebook" links.
+
+4. Messenger links after a request exists are useful, not harmful.
+   - Buyer/seller moment: once a request is sent or accepted, Messenger supports coordination.
+   - Decision: keep post-request Messenger links visible in Sent Offers and Purchase Requests.
+
+5. Seller sharing remains a positive off-site loop.
+   - Seller moment: sellers need Facebook groups, Marketplace, and Messenger to bring buyers back to the listing.
+   - Decision: keep owner Share Post, copy-link overlays, profile share nudges, and FB group prompts.
+
+### Run 4 Remaining Priorities
+
+1. Watch whether quieter shop Facebook links reduce trust for shop listings.
+2. Consider moving buyer copy-link actions lower if they still distract from request/order CTAs.
+3. Add analytics later for off-site click exits: Messenger, shop Facebook, FB group, and copy-link.
+4. Decide whether accepted requests should show a stronger "coordinate now" state before Messenger.
+
 ## Psychology Notes To Revisit
 
 - Does the dark, high-contrast style feel premium and focused, or too heavy for casual first-time buyers?
