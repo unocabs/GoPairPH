@@ -237,26 +237,25 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
         </Link>
       )}
 
-      {/* Copy-link overlay — owner only, positioned over the bottom-right of the image */}
-      {isOwner && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square">
-          <button
-            onClick={handleCopy}
-            aria-label="Copy listing link"
-            className="pointer-events-auto absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 backdrop-blur-sm border border-white/15 text-white hover:bg-black/80 transition-colors"
-          >
-            {copied ? (
-              <svg className="h-4 w-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-              </svg>
-            ) : (
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-              </svg>
-            )}
-          </button>
-        </div>
-      )}
+      {/* Copy-link overlay, positioned over the bottom-right of the image. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square">
+        <button
+          onClick={handleCopy}
+          aria-label="Copy listing URL"
+          title="Copy listing URL"
+          className="pointer-events-auto absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 backdrop-blur-sm border border-white/15 text-white hover:bg-black/80 transition-colors"
+        >
+          {copied ? (
+            <svg className="h-4 w-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+            </svg>
+          )}
+        </button>
+      </div>
 
       {!isOwner && (
         <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square">

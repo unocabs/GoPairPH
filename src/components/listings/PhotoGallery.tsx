@@ -10,14 +10,36 @@ import { getPublicUrl } from '@/lib/utils';
 interface PhotoGalleryProps {
   images: ShoeImage[];
   isOwner?: boolean;
+  listingPath?: string;
   /** Optional overlay node (e.g. shop logo) rendered on top of the hero image. */
   overlay?: React.ReactNode;
 }
 
-export function PhotoGallery({ images, isOwner = false, overlay }: PhotoGalleryProps) {
+export function PhotoGallery({ images, isOwner = false, listingPath, overlay }: PhotoGalleryProps) {
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [copied, setCopied] = useState(false);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+
+  async function handleCopyUrl(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!listingPath) return;
+
+    const url = `${window.location.origin}${listingPath}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   // Dedupe by view_type — the DB lacks a UNIQUE(shoe_id, view_type) constraint,
   // so historical duplicates exist. Keep the highest `order` (most recently added).
@@ -58,6 +80,9 @@ export function PhotoGallery({ images, isOwner = false, overlay }: PhotoGalleryP
           </div>
         )}
         {overlay}
+        {listingPath && (
+          <CopyUrlOverlayButton copied={copied} onClick={handleCopyUrl} />
+        )}
       </div>
     );
   }
@@ -82,6 +107,9 @@ export function PhotoGallery({ images, isOwner = false, overlay }: PhotoGalleryP
           />
         </button>
         {overlay}
+        {listingPath && (
+          <CopyUrlOverlayButton copied={copied} onClick={handleCopyUrl} />
+        )}
       </div>
 
       {sorted.length > 1 && (
@@ -120,5 +148,33 @@ export function PhotoGallery({ images, isOwner = false, overlay }: PhotoGalleryP
         on={{ view: ({ index }) => setSelectedIndex(index) }}
       />
     </div>
+  );
+}
+
+function CopyUrlOverlayButton({
+  copied,
+  onClick,
+}: {
+  copied: boolean;
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Copy listing URL"
+      title="Copy listing URL"
+      className="absolute bottom-3 right-3 z-10 flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-black/60 text-white shadow-lg shadow-black/30 backdrop-blur-sm transition-colors hover:bg-black/80 sm:h-11 sm:w-11"
+    >
+      {copied ? (
+        <svg className="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+        </svg>
+      ) : (
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+        </svg>
+      )}
+    </button>
   );
 }

@@ -305,6 +305,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           <PhotoGallery
             images={shoe.shoe_images ?? []}
             isOwner={isOwner}
+            listingPath={getListingPath(shoe)}
             overlay={galleryOverlay}
           />
         </div>
