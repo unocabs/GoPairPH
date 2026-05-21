@@ -273,9 +273,8 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
       )}
 
       {/* Action buttons — outside Link to avoid nested interactive elements */}
-      {(isOwner || showBuy || showDonate || showPlaceOrder) && (
-        <div className="px-3.5 pb-3.5">
-          {isOwner ? (
+      <div className="mt-auto space-y-2 px-3.5 pb-3.5">
+        {isOwner ? (
             <button
               type="button"
               onClick={() => setSharePostOpen(true)}
@@ -283,11 +282,11 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
               style={theme ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.accent } : undefined}
             >
               <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
               </svg>
               Share Post
             </button>
-          ) : submitted ? (
+        ) : submitted ? (
             <div className="rounded-lg border border-teal-800 bg-teal-950 px-3 py-2 text-xs text-teal-400 text-center" style={theme ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.accent } : undefined}>
               <p>{showDonate ? 'Request sent. Track it in Sent Offers.' : shoe.is_negotiable ? 'Offer sent. Track it in Sent Offers.' : 'Request sent. Track it in Sent Offers.'}</p>
               <Link href="/profile?tab=offers" className="mt-1 inline-flex font-semibold text-teal-100 underline underline-offset-2 hover:text-white">
@@ -314,16 +313,16 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
             >
               Place Order
             </Link>
-          ) : (
+          ) : showDonate ? (
             <button
               onClick={() => setDonateOpen(true)}
               className="w-full rounded-lg bg-green-700 px-3 py-2 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
             >
               Request Pair
             </button>
-          )}
-        </div>
-      )}
+          ) : null}
+
+      </div>
 
       {buyOpen && currentProfileId && shoe.price_php && createPortal(
         <BuyModal

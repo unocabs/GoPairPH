@@ -4,6 +4,14 @@ import Link from 'next/link';
 
 const guides = [
   {
+    href: '/best-running-shoes-ph',
+    title: 'Best Running Shoes in the Philippines (2026)',
+    description:
+      'Compare daily trainers, max-cushion shoes, race-day pairs, stability options, and pre-loved buying checks for PH runners.',
+    category: 'Shoe Roundup',
+    image: '/og-image.png',
+  },
+  {
     href: '/best-places-to-run-clark-pampanga',
     title: 'Best Places to Run in Clark, Pampanga',
     description:
