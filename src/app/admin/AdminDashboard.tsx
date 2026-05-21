@@ -78,18 +78,18 @@ async function convertLogoToWebP(file: File): Promise<Blob> {
 }
 
 export function AdminDashboard({ pending, recent, verified, shops, profiles, listingViews, leadReports, viewWindow }: AdminDashboardProps) {
-  const [tab, setTab] = useState<Tab>('pending');
+  const [tab, setTab] = useState<Tab>('views');
 
   return (
     <div>
       {/* Tabs */}
       <div className="mb-6 flex gap-1 overflow-x-auto border-b border-gray-800">
         {([
+          { key: 'views', label: `Listing views (${listingViews.length})` },
           { key: 'pending', label: `Pending (${pending.length})` },
           { key: 'recent', label: `Recent reviews` },
           { key: 'verified', label: `Verified users (${verified.length})` },
           { key: 'shops', label: `Shops (${shops.length})` },
-          { key: 'views', label: `Listing views (${listingViews.length})` },
           { key: 'leadReports', label: `Lead reports (${leadReports.length})` },
         ] as const).map(({ key, label }) => (
           <button
