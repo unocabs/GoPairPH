@@ -32,24 +32,6 @@ export default function NewLookingForPage() {
             </svg>
           </button>
 
-          <div className="absolute bottom-full left-1/2 z-10 mb-2 hidden w-72 -translate-x-1/2 group-hover:block">
-            <div className="rounded-lg border border-gray-700 bg-gray-800 p-4 text-sm text-gray-200 shadow-xl">
-              <p className="mb-3">
-                Not sure what to post? Check out this quick video guide:
-              </p>
-              <a
-                href="https://www.youtube.com/watch?v=kUzKTKVJ6G0"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-blue-400 transition-colors hover:text-blue-300"
-              >
-                Watch the tutorial on YouTube
-                <span className="text-xs opacity-75">↗</span>
-              </a>
-            </div>
-
-            <div className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-8 border-t-8 border-x-transparent border-t-gray-800" />
-          </div>
         </div>
       </div>
 
