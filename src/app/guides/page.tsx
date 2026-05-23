@@ -4,6 +4,14 @@ import Link from 'next/link';
 
 const guides = [
   {
+    href: '/official-running-shoe-brand-links-ph',
+    title: 'Official Running Shoe Brand Links',
+    description:
+      'Use official brand category pages to compare retail prices before buying pre-loved running shoes on Go Pair PH.',
+    category: 'Price Check',
+    image: '/og-image.png',
+  },
+  {
     href: '/best-running-shoes-ph',
     title: 'Best Running Shoes in the Philippines (2026)',
     description:
