@@ -170,10 +170,10 @@ function HeroSection() {
             Browse Pairs
           </Link>
           <Link
-            href="/find-my-pair"
+            href="/looking-for"
             className="inline-flex items-center justify-center rounded-lg border border-gray-700 bg-slate-900/60 px-5 py-3 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-800 hover:text-gray-100"
           >
-            Find My Pair
+            Looking For
           </Link>
         </div>
       </div>
@@ -265,7 +265,7 @@ function MockTopBar() {
       <div className="hidden items-center gap-4 text-[11px] font-medium text-gray-500 sm:flex">
         <span>Browse</span>
         <span>Shops</span>
-        <span>Find My Pair</span>
+        <span>Looking For</span>
       </div>
       <span className="rounded-lg bg-teal-500 px-2.5 py-1 text-[10px] font-bold text-white">Browse</span>
     </div>

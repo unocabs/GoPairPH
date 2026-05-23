@@ -63,10 +63,10 @@ export default function NotFound() {
                 Still chasing a specific pair?
               </p>
               <Link
-                href="/find-my-pair"
+                href="/looking-for"
                 className="mt-2 inline-flex text-sm font-semibold text-teal-300 transition-colors hover:text-teal-200"
               >
-                Post or browse pair requests
+                Post or browse what runners are looking for
               </Link>
             </div>
           </div>

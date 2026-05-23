@@ -80,7 +80,7 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
                       return (
                         <Link
                           key={item.id}
-                          href={`/find-my-pair?item=${item.id}`}
+                          href={`/looking-for?item=${item.id}`}
                           className="block rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 transition-colors hover:border-teal-400/35 hover:bg-slate-900/70"
                         >
                           <p className="text-sm font-semibold text-gray-100">{item.brand} {item.model}</p>
@@ -96,11 +96,11 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
                   </div>
                 ) : (
                   <div className="mt-4 rounded-xl border border-dashed border-white/[0.1] bg-slate-950/40 p-4 text-sm text-gray-500">
-                    No active pair requests yet.
+                    No one&apos;s looking for shoes yet.
                   </div>
                 )}
 
-                <Link href="/find-my-pair" className="mt-4 block">
+                <Link href="/looking-for" className="mt-4 block">
                   <Button variant="outline" size="sm" className="w-full">View Demand Board</Button>
                 </Link>
               </SurfaceCard>
@@ -136,7 +136,7 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
                     return (
                       <Link
                         key={item.id}
-                        href={`/find-my-pair?item=${item.id}`}
+                        href={`/looking-for?item=${item.id}`}
                         className="block rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 transition-colors hover:border-teal-400/35 hover:bg-slate-900/70"
                       >
                         <p className="text-sm font-semibold text-gray-100">{item.brand} {item.model}</p>
@@ -152,11 +152,11 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
                 </div>
               ) : (
                 <div className="mt-4 rounded-xl border border-dashed border-white/[0.1] bg-slate-950/40 p-4 text-sm text-gray-500">
-                  No active pair requests yet.
+                  No one&apos;s looking for shoes yet.
                 </div>
               )}
 
-              <Link href="/find-my-pair" className="mt-4 block">
+              <Link href="/looking-for" className="mt-4 block">
                 <Button variant="outline" size="sm" className="w-full">View Demand Board</Button>
               </Link>
             </SurfaceCard>

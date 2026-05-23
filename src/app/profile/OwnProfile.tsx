@@ -80,7 +80,7 @@ export function OwnProfile({
     { key: 'purchases', label: 'Purchase Requests', count: purchaseRequests.length, badgeTone: 'attention' },
     { key: 'offers', label: 'Sent Offers', count: sentOffers.length, badgeTone: 'attention' },
     { key: 'saved', label: 'Saved Pairs', count: savedListings.length },
-    { key: 'wishlist', label: 'Find My Pair', count: wishlist.length },
+    { key: 'wishlist', label: 'Looking For', count: wishlist.length },
     { key: 'sales', label: 'Purchase History', count: purchaseHistory.length + manualSaleListings.length },
   ];
   const listingViewSummaries = Object.values(viewCounts ?? {});
@@ -255,13 +255,13 @@ export function OwnProfile({
         <div>
           <div className="flex justify-between items-center mb-4">
             <p className="text-sm text-gray-500">Pair requests you&apos;ve posted</p>
-            <Link href="/find-my-pair/new">
-              <Button size="sm">+ Post Pair Request</Button>
+            <Link href="/looking-for/new">
+              <Button size="sm">+ Looking For...</Button>
             </Link>
           </div>
           {wishlist.length === 0 ? (
             <SurfaceCard className="border-dashed p-8 text-center text-gray-500">
-              You haven&apos;t posted any pair requests yet.
+              You haven&apos;t posted anything you&apos;re looking for yet.
             </SurfaceCard>
           ) : (
             <WishlistDeepLinkGrid items={wishlist} />

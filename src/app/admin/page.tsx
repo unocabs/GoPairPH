@@ -18,7 +18,7 @@ async function loadOpenLeadReports(): Promise<WishlistOfferReport[]> {
     .limit(100);
 
   if (error) {
-    console.warn('[admin] could not load Find My Pair lead reports:', error.message);
+    console.warn('[admin] could not load Looking For lead reports:', error.message);
     return [];
   }
 

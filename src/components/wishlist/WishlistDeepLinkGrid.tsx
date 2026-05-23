@@ -18,9 +18,9 @@ interface WishlistDeepLinkGridProps {
   items: WishlistItem[];
 }
 
-// Renders request cards that route to /find-my-pair?item=<id> on click — for use
-// in places like profile pages where we want to surface pair requests but
-// hand the user off to the canonical Find My Pair modal.
+// Renders request cards that route to /looking-for?item=<id> on click — for use
+// in places like profile pages where we want to surface what runners are looking for
+// but hand the user off to the canonical Looking For modal.
 export function WishlistDeepLinkGrid({ items }: WishlistDeepLinkGridProps) {
   const router = useRouter();
   return (
@@ -30,7 +30,7 @@ export function WishlistDeepLinkGrid({ items }: WishlistDeepLinkGridProps) {
           key={item.id}
           item={item}
           offerCount={getOfferCount(item)}
-          onOpen={(it) => router.push(`/find-my-pair?item=${it.id}`)}
+          onOpen={(it) => router.push(`/looking-for?item=${it.id}`)}
         />
       ))}
     </div>

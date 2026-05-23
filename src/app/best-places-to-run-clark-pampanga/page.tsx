@@ -85,8 +85,8 @@ const shoeLinks = [
     description: 'Learn when carbon shoes make sense for tempo sessions and races.',
   },
   {
-    href: '/find-my-pair/new',
-    title: 'Post a pair request',
+    href: '/looking-for/new',
+    title: 'Post what you\'re looking for',
     description: 'Tell local runners what model and size you are looking for.',
   },
 ];
@@ -118,7 +118,7 @@ const faqs = [
   {
     question: 'Can I find running shoes for Clark training on Go Pair PH?',
     answer:
-      'Yes. Go Pair PH has local listings from community sellers and shops, plus Find My Pair requests if you are searching for a specific model or size.',
+      'Yes. Go Pair PH has local listings from community sellers and shops, plus a Looking For board if you are searching for a specific model or size.',
   },
 ];
 
@@ -347,9 +347,9 @@ export default function BestPlacesToRunClarkPampangaPage() {
                       Browse Marketplace
                     </Button>
                   </Link>
-                  <Link href="/find-my-pair/new">
+                  <Link href="/looking-for/new">
                     <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-                      Post a Pair Request
+                      Post what you&apos;re looking for
                     </Button>
                   </Link>
                   <Link href="/listings/new">
@@ -397,8 +397,8 @@ export default function BestPlacesToRunClarkPampangaPage() {
                 <p className="mt-2 text-sm leading-6 text-gray-400">
                   Looking for a specific pair for Clark training? Post the model and size.
                 </p>
-                <Link href="/find-my-pair/new" className="mt-4 block">
-                  <Button className="w-full">Post a Pair Request</Button>
+                <Link href="/looking-for/new" className="mt-4 block">
+                  <Button className="w-full">Post what you&apos;re looking for</Button>
                 </Link>
               </div>
             </aside>

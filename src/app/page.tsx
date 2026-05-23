@@ -277,7 +277,7 @@ export default async function HomePage() {
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {[
             { label: 'New listings this week', value: activity.newListingsThisWeek },
-            { label: 'Active pair requests', value: activity.activePairRequests },
+            { label: 'Looking for shoes', value: activity.activePairRequests },
             { label: 'Sold, reserved, or donated', value: activity.soldOrReservedPairs },
             { label: 'Recent active sellers', value: activity.recentSellers },
           ].map((stat) => (
@@ -372,9 +372,9 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
         <div className="rounded-2xl bg-teal-500/5 border border-teal-500/20 p-8 text-center">
           <h3 className="text-xl font-bold text-gray-100">Can&apos;t find the right pair?</h3>
-          <p className="text-gray-400 mt-1 text-sm">Post a pair request and let the community drop available links.</p>
-          <Link href="/find-my-pair/new" className="mt-4 inline-block">
-            <Button>Post a Pair Request</Button>
+          <p className="text-gray-400 mt-1 text-sm">Post what you&apos;re looking for and let the community drop available links.</p>
+          <Link href="/looking-for/new" className="mt-4 inline-block">
+            <Button>Post what you&apos;re looking for</Button>
           </Link>
         </div>
       </section>

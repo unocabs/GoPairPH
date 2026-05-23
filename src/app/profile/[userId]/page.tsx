@@ -80,7 +80,7 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
 
       {wishlist.length > 0 && (
         <section>
-          <h2 className="text-xl font-bold text-gray-100 mb-4">Find My Pair ({wishlist.length})</h2>
+          <h2 className="text-xl font-bold text-gray-100 mb-4">Looking For ({wishlist.length})</h2>
           <WishlistDeepLinkGrid items={wishlist} />
         </section>
       )}

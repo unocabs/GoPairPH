@@ -90,7 +90,7 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
   }, [onClose]);
 
   async function handleCopy() {
-    const url = `${window.location.origin}/find-my-pair?item=${item.id}`;
+    const url = `${window.location.origin}/looking-for?item=${item.id}`;
     try {
       await navigator.clipboard.writeText(url);
     } catch {
@@ -107,7 +107,7 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
 
   async function handleDelete() {
     if (!isOwner) return;
-    if (!confirm('Remove this pair request? All leads on it will also be removed.')) return;
+    if (!confirm('Remove this Looking For post? All leads on it will also be removed.')) return;
     setDeleting(true);
     const supabase = createClient();
     const { error } = await supabase.from('wishlist_items').delete().eq('id', item.id);
@@ -330,7 +330,7 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
                 loading={deleting}
                 className="border-red-800 text-red-400 hover:bg-red-950 hover:text-red-300"
               >
-                Remove this pair request
+                Remove this post
               </Button>
             </div>
           )}

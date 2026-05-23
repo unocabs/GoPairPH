@@ -515,10 +515,10 @@ export default function BestRunningShoesPhPage() {
                     Browse Listings
                   </Link>
                   <Link
-                    href="/find-my-pair"
+                    href="/looking-for"
                     className="rounded-lg border border-gray-700 px-4 py-2 text-center text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
                   >
-                    Find My Pair
+                    Looking For
                   </Link>
                   <Link
                     href="/listings/new"

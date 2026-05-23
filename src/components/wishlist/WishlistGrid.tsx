@@ -50,18 +50,18 @@ export function WishlistGrid({ items }: WishlistGridProps) {
   }, [activeId, items]);
 
   function handleOpen(item: WishlistItem) {
-    router.replace(`/find-my-pair?item=${item.id}`, { scroll: false });
+    router.replace(`/looking-for?item=${item.id}`, { scroll: false });
   }
 
   function handleClose() {
-    router.replace('/find-my-pair', { scroll: false });
+    router.replace('/looking-for', { scroll: false });
   }
 
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
         <span className="text-4xl opacity-50">🔍</span>
-        <p className="mt-3 text-gray-500">No pair requests yet. Be the first to post what you&apos;re looking for!</p>
+        <p className="mt-3 text-gray-500">No one&apos;s looking for running shoes yet. Be the first to post!</p>
       </div>
     );
   }

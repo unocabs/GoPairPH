@@ -233,7 +233,7 @@ function LeadReportsPanel({ reports }: { reports: WishlistOfferReport[] }) {
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
-        <p className="text-sm font-semibold text-gray-100">Find My Pair lead reports</p>
+        <p className="text-sm font-semibold text-gray-100">Looking For lead reports</p>
         <p className="mt-1 text-xs text-gray-500">
           Reports do not change the public lead display. Dismiss valid links or delete bad leads after review.
         </p>
@@ -252,11 +252,11 @@ function LeadReportsPanel({ reports }: { reports: WishlistOfferReport[] }) {
                 </div>
 
                 <Link
-                  href={`/find-my-pair?item=${report.wishlist_id}`}
+                  href={`/looking-for?item=${report.wishlist_id}`}
                   target="_blank"
                   className="mt-2 block font-semibold text-gray-100 hover:text-teal-400"
                 >
-                  {report.item ? `${report.item.brand} ${report.item.model}` : 'Pair request'}
+                  {report.item ? `${report.item.brand} ${report.item.model}` : 'Looking For post'}
                 </Link>
 
                 {report.offer ? (

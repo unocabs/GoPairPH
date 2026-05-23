@@ -1,86 +1,14 @@
-export const dynamic = 'force-dynamic';
+import { permanentRedirect } from 'next/navigation';
 
-import Link from 'next/link';
-import type { Metadata } from 'next';
-import { createClient } from '@/lib/supabase/server';
-import { WishlistGrid } from '@/components/wishlist/WishlistGrid';
-import { Button } from '@/components/ui/Button';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { PageShell } from '@/components/layout/PageShell';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import type { WishlistItem } from '@/types';
-
-export const metadata: Metadata = {
-  title: 'Find My Pair',
-  description: 'Looking for a specific running shoe? Post it here and let the community drop available links from Go Pair PH, Facebook Marketplace, shop pages, and more.',
-  alternates: { canonical: '/find-my-pair' },
-};
-
-async function getPairRequests(): Promise<WishlistItem[]> {
-  const supabase = createClient();
-  const { data } = await supabase
-    .from('wishlist_items')
-    .select('*, wishlist_images(*), wishlist_offers(count)')
-    .order('created_at', { ascending: false })
-    .limit(60);
-  return (data as WishlistItem[]) ?? [];
+// Permanent redirect — feature renamed from "Find My Pair" to "Looking For".
+// Preserves shared deep-links (FB groups, Messenger) of the form ?item=<id>.
+interface PageProps {
+  searchParams: { item?: string } & Record<string, string | string[] | undefined>;
 }
 
-export default async function FindMyPairPage() {
-  const items = await getPairRequests();
-
-  return (
-    <PageShell>
-      <PageHeader
-        eyebrow="Demand board"
-        title="Find My Pair"
-        subtitle="Looking for a specific running shoe? Post it here and let the community drop available links."
-        actions={
-          <Link href="/find-my-pair/new">
-            <Button>Post a Pair Request</Button>
-          </Link>
-        }
-      />
-
-      <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <SurfaceCard glow className="p-6 lg:sticky lg:top-24 lg:self-start">
-          <div className="mb-6">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-teal-300">
-              How it works
-            </p>
-            <h2 className="mt-2 text-2xl font-bold text-gray-100">
-              Tell local sellers what you need.
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-gray-400">
-              Pair requests create demand signals, so sellers and shops know what to list next.
-            </p>
-          </div>
-          <div className="space-y-4">
-            {[
-              ['1', 'Post your request', 'Share the model, size, budget, and location.'],
-              ['2', 'Sellers reach out', 'The community can drop available links or offers.'],
-              ['3', 'Meet, deal, run', 'Coordinate safely and complete the deal directly.'],
-            ].map(([step, title, body]) => (
-              <div key={step} className="flex gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-500/15 text-xs font-bold text-teal-300 ring-1 ring-teal-400/25">
-                  {step}
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-gray-100">{title}</p>
-                  <p className="mt-1 text-xs leading-5 text-gray-500">{body}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <Link href="/find-my-pair/new" className="mt-6 block">
-            <Button className="w-full">Create a Request</Button>
-          </Link>
-        </SurfaceCard>
-
-        <div className="min-w-0">
-          <WishlistGrid items={items} />
-        </div>
-      </div>
-    </PageShell>
-  );
+export default function FindMyPairRedirect({ searchParams }: PageProps) {
+  const target = searchParams.item
+    ? `/looking-for?item=${encodeURIComponent(searchParams.item)}`
+    : '/looking-for';
+  permanentRedirect(target);
 }

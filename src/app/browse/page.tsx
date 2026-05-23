@@ -229,7 +229,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
           </div>
         </div>
 
-        {/* Find My Pair CTA — full width below on desktop, last on mobile */}
+        {/* Looking For CTA — full width below on desktop, last on mobile */}
         <section className="w-full">
           <SurfaceCard glow className="border-teal-500/20 bg-teal-500/5 p-6 text-center">
             <h3 className="text-lg font-bold text-gray-100">
@@ -237,16 +237,16 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
             </h3>
 
             <p className="mt-2 text-sm text-gray-400">
-              Post a pair request and let the community drop available
+              Post what you&apos;re looking for and let the community drop available
               links.
             </p>
 
             <Link
-              href="/find-my-pair/new"
+              href="/looking-for/new"
               className="mt-4 inline-block w-full"
             >
               <Button className="w-full sm:w-auto">
-                Post a Pair Request
+                Post what you&apos;re looking for
               </Button>
             </Link>
           </SurfaceCard>

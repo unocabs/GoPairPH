@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/profile', '/listings/new', '/listings/*/edit', '/find-my-pair/new', '/wishlist/new'],
+        disallow: ['/api/', '/profile', '/listings/new', '/listings/*/edit', '/looking-for/new', '/find-my-pair/new', '/wishlist/new'],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`, 

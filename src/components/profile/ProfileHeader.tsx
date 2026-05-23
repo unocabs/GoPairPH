@@ -67,7 +67,7 @@ export function ProfileHeader({ profile, listingCount, wishlistCount, completedS
         )}
         <div className="flex gap-4 mt-3 justify-center sm:justify-start text-sm">
           <span><strong className="text-gray-100">{listingCount}</strong> <span className="text-gray-500">listings</span></span>
-          <span><strong className="text-gray-100">{wishlistCount}</strong> <span className="text-gray-500">pair requests</span></span>
+          <span><strong className="text-gray-100">{wishlistCount}</strong> <span className="text-gray-500">looking for</span></span>
         </div>
         {isOwnProfile && (
           <p className="mt-2 max-w-xl text-xs leading-5 text-gray-500">

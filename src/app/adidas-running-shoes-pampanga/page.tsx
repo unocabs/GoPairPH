@@ -367,9 +367,9 @@ export default function AdidasRunningShoesPampangaPage() {
                       Browse Adidas Listings
                     </Button>
                   </Link>
-                  <Link href="/find-my-pair/new">
+                  <Link href="/looking-for/new">
                     <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                      Post an Adidas Pair Request
+                      Post the Adidas you&apos;re looking for
                     </Button>
                   </Link>
                 </div>

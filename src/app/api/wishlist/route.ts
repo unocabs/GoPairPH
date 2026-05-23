@@ -104,7 +104,7 @@ export async function POST(request: Request) {
     .single();
 
   if (insertErr || !inserted) {
-    return NextResponse.json({ error: insertErr?.message ?? 'Failed to create pair request' }, { status: 400 });
+    return NextResponse.json({ error: insertErr?.message ?? 'Failed to create your Looking For post' }, { status: 400 });
   }
 
   if (uploadedImages.length > 0) {

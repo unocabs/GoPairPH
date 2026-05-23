@@ -500,9 +500,9 @@ export default function CarbonPlatedRunningShoesPage() {
                       Browse Carbon Shoes
                     </Button>
                   </Link>
-                  <Link href="/find-my-pair/new">
+                  <Link href="/looking-for/new">
                     <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                      Post a Pair Request
+                      Post what you&apos;re looking for
                     </Button>
                   </Link>
                 </div>

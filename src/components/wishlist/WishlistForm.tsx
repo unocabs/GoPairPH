@@ -91,7 +91,7 @@ export function WishlistForm() {
         throw new Error(body.error ?? 'Failed to save');
       }
 
-      router.push('/find-my-pair');
+      router.push('/looking-for');
       router.refresh();
     } catch (err) {
       const msg = (err as { message?: string })?.message ?? 'Failed to save';
@@ -144,7 +144,7 @@ export function WishlistForm() {
       <TurnstileWidget onToken={setTurnstileToken} onExpire={() => setTurnstileToken(null)} />
 
       <Button type="submit" size="lg" loading={submitting} disabled={!turnstileToken || submitting} className="w-full">
-        Post Pair Request
+        Post what you&apos;re looking for
       </Button>
     </form>
   );
