@@ -67,6 +67,12 @@ async function getOwnProfileData() {
     ...((boughtRes.data as PurchaseRequest[]) ?? []),
     ...((soldRes.data as PurchaseRequest[]) ?? []),
   ].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const completedOwnListingIds = new Set(
+    ((soldRes.data as PurchaseRequest[]) ?? []).map(request => request.listing_id)
+  );
+  const manualSaleListings = allShoes
+    .filter(shoe => (shoe.status === 'sold' || shoe.status === 'donated') && !completedOwnListingIds.has(shoe.id))
+    .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
   const sentOffers = (sentOffersRes.data as PurchaseRequest[]) ?? [];
 
   // Most recent verification request (if any)
@@ -87,6 +93,7 @@ async function getOwnProfileData() {
     purchaseRequests,
     sentOffers,
     purchaseHistory,
+    manualSaleListings,
     latestVerification,
     viewCounts,
     completedSales,

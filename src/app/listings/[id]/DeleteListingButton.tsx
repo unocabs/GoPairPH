@@ -6,9 +6,10 @@ import { createClient } from '@/lib/supabase/client';
 
 interface DeleteListingButtonProps {
   shoeId: string;
+  compact?: boolean;
 }
 
-export function DeleteListingButton({ shoeId }: DeleteListingButtonProps) {
+export function DeleteListingButton({ shoeId, compact = false }: DeleteListingButtonProps) {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -55,7 +56,9 @@ export function DeleteListingButton({ shoeId }: DeleteListingButtonProps) {
       <button
         onClick={handleDelete}
         disabled={deleting}
-        className="rounded-lg border border-red-800 bg-transparent px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-950 hover:text-red-300 transition-colors disabled:opacity-50"
+        className={compact
+          ? 'flex w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-300 transition-colors hover:bg-red-950/70 disabled:opacity-50'
+          : 'rounded-lg border border-red-800 bg-transparent px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-950 hover:text-red-300 transition-colors disabled:opacity-50'}
       >
         {deleting ? 'Deleting…' : 'Delete Listing'}
       </button>

@@ -16,11 +16,11 @@ import { cn } from '@/lib/utils';
 import type { Shoe, PurchaseRequest } from '@/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { StatusButton } from './StatusButton';
-import { DeleteListingButton } from './DeleteListingButton';
 import { CompleteSaleButtons } from './CompleteSaleButtons';
 import { FeatureToggleButton } from './FeatureToggleButton';
 import { SponsoredAdminToggle } from './SponsoredAdminToggle';
 import { QualityFlagAdminPanel } from './QualityFlagAdminPanel';
+import { OwnerMoreActions } from './OwnerMoreActions';
 import { BuyButton } from '@/components/purchases/BuyButton';
 import { DonateRequestButton } from '@/components/purchases/DonateRequestButton';
 import { ContactSellerButtons } from '@/components/listings/ContactSellerButtons';
@@ -644,7 +644,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               )}
               {/* StatusButton returns null for reserved (handled by CompleteSaleButtons above) */}
               <StatusButton shoeId={shoe.id} currentStatus={shoe.status} listingType={shoe.listing_type} />
-              <DeleteListingButton shoeId={shoe.id} />
+              <OwnerMoreActions shoeId={shoe.id} listingType={shoe.listing_type} status={shoe.status} />
             </div>
           )}
 

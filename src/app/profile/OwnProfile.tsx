@@ -9,6 +9,7 @@ import { ListingGrid } from '@/components/listings/ListingGrid';
 import { WishlistDeepLinkGrid } from '@/components/wishlist/WishlistDeepLinkGrid';
 import { PurchaseRequestCard } from '@/components/purchases/PurchaseRequestCard';
 import { PurchaseHistoryCard } from '@/components/purchases/PurchaseHistoryCard';
+import { ManualSaleHistoryCard } from '@/components/purchases/ManualSaleHistoryCard';
 import { SentOfferCard } from '@/components/purchases/SentOfferCard';
 import { RequestVerificationButton } from '@/components/profile/RequestVerificationButton';
 import { formatPrice, formatListingName } from '@/lib/utils';
@@ -32,6 +33,7 @@ interface OwnProfileProps {
   purchaseRequests: PurchaseRequest[];
   sentOffers: PurchaseRequest[];
   purchaseHistory: PurchaseRequest[];
+  manualSaleListings: Shoe[];
   latestVerification: VerificationRequest | null;
   viewCounts?: Record<string, { total: number; last7d: number }>;
   completedSales?: number;
@@ -46,6 +48,7 @@ export function OwnProfile({
   purchaseRequests: initialPurchaseRequests,
   sentOffers: initialSentOffers,
   purchaseHistory,
+  manualSaleListings,
   latestVerification,
   viewCounts,
   completedSales,
@@ -78,7 +81,7 @@ export function OwnProfile({
     { key: 'offers', label: 'Sent Offers', count: sentOffers.length, badgeTone: 'attention' },
     { key: 'saved', label: 'Saved Pairs', count: savedListings.length },
     { key: 'wishlist', label: 'Find My Pair', count: wishlist.length },
-    { key: 'sales', label: 'Purchase History', count: purchaseHistory.length },
+    { key: 'sales', label: 'Purchase History', count: purchaseHistory.length + manualSaleListings.length },
   ];
   const listingViewSummaries = Object.values(viewCounts ?? {});
   const totalListingViews = listingViewSummaries.reduce((sum, item) => sum + item.total, 0);
@@ -295,13 +298,16 @@ export function OwnProfile({
       {tab === 'sales' && (
         <div>
           <p className="text-sm text-gray-500 mb-4">Items you&apos;ve bought or sold</p>
-          {purchaseHistory.length === 0 ? (
+          {purchaseHistory.length === 0 && manualSaleListings.length === 0 ? (
             <SurfaceCard className="flex flex-col items-center justify-center border-dashed py-16 text-center">
               <span className="text-4xl opacity-50">💰</span>
               <p className="mt-3 text-gray-500">No completed purchases yet.</p>
             </SurfaceCard>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {manualSaleListings.map(shoe => (
+                <ManualSaleHistoryCard key={shoe.id} shoe={shoe} />
+              ))}
               {purchaseHistory.map(req => (
                 <PurchaseHistoryCard key={req.id} request={req} currentProfileId={profile.id} />
               ))}
