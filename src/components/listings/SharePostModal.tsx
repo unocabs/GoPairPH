@@ -743,10 +743,10 @@ function VerticalPriceRibbon({ shoe }: { shoe: Shoe }) {
 }
 
 const conditionStripDetails: Record<Condition, { body: string; color: string }> = {
-  new: { body: 'Brand-new pair, ready for first run.', color: '#16a34a' },
-  like_new: { body: 'Excellent condition, well cared for.', color: '#0f766e' },
-  good: { body: 'Solid pair with normal running wear.', color: '#a16207' },
-  fair: { body: 'Budget pair with visible wear.', color: '#c2410c' },
+  new: { body: 'Brand-new pair, ready for first run.', color: '#059669' },
+  like_new: { body: 'Excellent condition, well cared for.', color: '#0284c7' },
+  good: { body: 'Solid pair with normal running wear.', color: '#475569' },
+  fair: { body: 'Budget pair with visible wear.', color: '#a16207' },
 };
 
 function ConditionInfoStrip({ condition }: { condition: Condition }) {
@@ -976,10 +976,10 @@ const listingBadgeTones: Record<ListingType, { background: string; border: strin
 };
 
 const conditionBadgeTones: Record<Condition, { background: string; border: string; color: string }> = {
-  new: { background: 'rgba(20, 83, 45, 0.35)', border: 'rgba(22, 101, 52, 0.7)', color: '#86efac' },
-  like_new: { background: 'rgba(30, 58, 138, 0.35)', border: 'rgba(30, 64, 175, 0.75)', color: '#93c5fd' },
-  good: { background: 'rgba(113, 63, 18, 0.35)', border: 'rgba(161, 98, 7, 0.75)', color: '#fde047' },
-  fair: { background: 'rgba(124, 45, 18, 0.35)', border: 'rgba(194, 65, 12, 0.75)', color: '#fdba74' },
+  new: { background: 'rgba(16, 185, 129, 0.16)', border: 'rgba(16, 185, 129, 0.5)', color: '#a7f3d0' },
+  like_new: { background: 'rgba(14, 165, 233, 0.16)', border: 'rgba(14, 165, 233, 0.5)', color: '#bae6fd' },
+  good: { background: 'rgba(148, 163, 184, 0.16)', border: 'rgba(203, 213, 225, 0.45)', color: '#f1f5f9' },
+  fair: { background: 'rgba(245, 158, 11, 0.16)', border: 'rgba(252, 211, 77, 0.45)', color: '#fef3c7' },
 };
 
 function BadgeRow({ shoe, isFeatured, isSponsored, size = 'sm' }: { shoe: Shoe; isFeatured: boolean; isSponsored: boolean; size?: 'sm' | 'lg' }) {

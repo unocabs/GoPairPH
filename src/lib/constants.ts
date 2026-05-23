@@ -5,7 +5,7 @@ export const BRANDS = [
 ];
 
 export const CONDITIONS: Record<string, string> = {
-  new: 'New',
+  new: 'Brand New',
   like_new: 'Like New',
   good: 'Good',
   fair: 'Fair',
@@ -17,10 +17,10 @@ export const LISTING_TYPE_LABELS: Record<string, string> = {
 };
 
 export const CONDITION_COLORS: Record<string, string> = {
-  new: 'bg-green-950 text-green-400 border border-green-800',
-  like_new: 'bg-blue-950 text-blue-400 border border-blue-800',
-  good: 'bg-yellow-950 text-yellow-400 border border-yellow-800',
-  fair: 'bg-orange-950 text-orange-400 border border-orange-800',
+  new: 'border border-emerald-500/45 bg-emerald-500/12 text-emerald-200',
+  like_new: 'border border-sky-400/45 bg-sky-400/12 text-sky-200',
+  good: 'border border-slate-300/45 bg-slate-300/10 text-slate-100',
+  fair: 'border border-amber-300/45 bg-amber-300/12 text-amber-100',
 };
 
 export const LISTING_TYPE_COLORS: Record<string, string> = {
