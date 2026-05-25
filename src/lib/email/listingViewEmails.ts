@@ -92,9 +92,9 @@ interface LifetimeMilestoneEmailArgs {
   listingUrl: string;
 }
 
-// One-time celebration email when a listing crosses a lifetime view threshold
-// (currently 20). Distinct from the daily milestone — different copy emphasizes
-// the cumulative achievement, not today's activity.
+// One-time celebration email when a listing crosses a lifetime view threshold.
+// Distinct from the daily milestone — different copy emphasizes the cumulative
+// achievement, not today's activity.
 export function renderListingViewLifetimeMilestoneEmail({
   sellerName,
   brand,

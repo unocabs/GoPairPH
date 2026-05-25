@@ -19,7 +19,7 @@ interface RecordViewResult {
   total_views: number;
   /** Daily-tier crossed today; 0 when no tier crossed. */
   new_milestone: number;
-  /** One-time lifetime milestone crossed; 0 when not applicable. */
+  /** One-time lifetime tier crossed; 0 when not applicable. */
   lifetime_milestone: number;
 }
 
@@ -107,8 +107,8 @@ export async function POST(request: Request) {
             });
           }
 
-          // Lifetime milestone is one-time (currently 20). Sent separately so the
-          // copy can lean into the cumulative achievement, not today's activity.
+          // Lifetime milestone tiers are one-time per threshold. Sent separately
+          // so the copy can lean into the cumulative achievement, not today's activity.
           if (result.lifetime_milestone > 0) {
             await sendEmail({
               to: sellerEmail,
