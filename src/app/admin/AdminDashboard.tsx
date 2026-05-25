@@ -121,6 +121,17 @@ function formatAdminDate(dateString: string): string {
   });
 }
 
+function getManilaDateString(date = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const value = (type: string) => parts.find(part => part.type === type)?.value ?? '';
+  return `${value('year')}-${value('month')}-${value('day')}`;
+}
+
 function ListingViewsPanel({
   listings,
   viewWindow,
@@ -128,6 +139,8 @@ function ListingViewsPanel({
   listings: ListingViewSummary[];
   viewWindow: { startDate: string; endDate: string };
 }) {
+  const today = getManilaDateString();
+
   if (listings.length === 0) {
     return (
       <div className="rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
@@ -171,12 +184,23 @@ function ListingViewsPanel({
                 </p>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  {listing.dailyViews.map(day => (
-                    <span key={`${listing.listingId}-${day.date}`} className="rounded-lg border border-gray-800 bg-gray-950 px-3 py-2 text-xs text-gray-300">
-                      <span className="text-gray-500">{formatAdminDate(day.date)}</span>{' '}
-                      <span className="font-semibold text-gray-100">{day.views.toLocaleString('en-PH')}</span>
+                  {listing.dailyViews.map(day => {
+                    const isToday = day.date === today;
+                    return (
+                    <span
+                      key={`${listing.listingId}-${day.date}`}
+                      className={[
+                        'rounded-lg border px-3 py-2 text-xs transition-colors',
+                        isToday
+                          ? 'border-teal-400/60 bg-teal-500/15 text-teal-100 shadow-[0_0_20px_rgba(20,184,166,0.12)]'
+                          : 'border-gray-800 bg-gray-950 text-gray-300',
+                      ].join(' ')}
+                    >
+                      <span className={isToday ? 'text-teal-200' : 'text-gray-500'}>{formatAdminDate(day.date)}</span>{' '}
+                      <span className={isToday ? 'font-semibold text-teal-50' : 'font-semibold text-gray-100'}>{day.views.toLocaleString('en-PH')}</span>
                     </span>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
