@@ -223,8 +223,8 @@ export default async function HomePage() {
                 <span className="text-teal-300">Running Pair in Pampanga</span>
               </h1>
               <p className="mt-3 max-w-lg text-sm leading-6 text-gray-300/85 sm:mt-4 sm:text-lg sm:leading-8">
-                Buy from Pampanga runners and shops, or list once and share your clean
-                Go Pair PH listing anywhere your buyers already are.
+                Buy brand-new or pre-loved pairs from Pampanga runners and nearby
+                sellers, or list once and share your clean Go Pair PH listing anywhere.
               </p>
               <div className="mt-6 flex flex-wrap gap-2.5 sm:mt-8 sm:gap-3">
                 <Link href="/browse">
@@ -232,9 +232,6 @@ export default async function HomePage() {
                 </Link>
                 <Link href="/listings/new">
                   <Button size="lg" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">List Your Shoes</Button>
-                </Link>
-                <Link href="/shop">
-                  <Button size="lg" variant="outline" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">Browse Shops</Button>
                 </Link>
               </div>
               <p className="mt-4 text-xs font-medium uppercase tracking-[0.18em] text-teal-300/80">
@@ -257,7 +254,7 @@ export default async function HomePage() {
           <div className="grid grid-cols-3 gap-2 divide-x divide-white/[0.08] rounded-xl border border-white/[0.08] bg-slate-900/45 p-2 shadow-[0_14px_50px_rgba(0,0,0,0.24)] backdrop-blur-sm sm:gap-0 sm:p-3">
             {[
               { icon: '💰', label: 'Community', desc: 'Buy, sell, or donate with local runners' },
-              { icon: '🏬', label: 'Shops', desc: 'Browse independent running-shoe resellers' },
+              { icon: '👟', label: 'Running shoes', desc: 'Brand-new and pre-loved pairs in one focused place' },
               { icon: '📍', label: 'Pampanga & nearby', desc: 'Focused on Pampanga buyers, open to nearby sellers' },
             ].map(f => (
               <div key={f.label} className="flex items-center justify-center gap-2 px-2 py-1.5 sm:gap-3">

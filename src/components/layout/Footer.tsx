@@ -40,8 +40,8 @@ export function Footer() {
           <div className="col-span-2 sm:col-span-1">
             <Logo size="sm" />
             <p className="mt-3 text-xs text-gray-500 leading-relaxed">
-              A Pampanga-focused running shoe marketplace for community sellers, shop sellers,
-              nearby sellers, new pairs, pre-loved pairs, and donations.
+              A Pampanga-focused running shoe marketplace for runners, nearby sellers,
+              brand-new pairs, pre-loved pairs, and donations.
             </p>
           </div>
 

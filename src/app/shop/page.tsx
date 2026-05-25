@@ -5,7 +5,6 @@ import Image from 'next/image';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { getPublicUrl } from '@/lib/utils';
-import { ApplyShopModalTrigger } from './ApplyShopModalTrigger';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageShell } from '@/components/layout/PageShell';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
@@ -13,7 +12,7 @@ import type { Shop } from '@/types';
 
 export const metadata: Metadata = {
   title: 'Shops — Go Pair PH',
-  description: 'Browse running shoe shops and independent resellers that serve Pampanga buyers on Go Pair PH.',
+  description: 'Browse selected running shoe sellers with dedicated Go Pair PH pages.',
   alternates: { canonical: '/shop' },
 };
 
@@ -34,18 +33,14 @@ export default async function ShopsIndexPage() {
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Storefronts"
+        eyebrow="Selected sellers"
         title="Shops"
-        subtitle="Running shoe shops and independent resellers that serve Pampanga buyers."
-        actions={<ApplyShopModalTrigger />}
+        subtitle="Some approved sellers may have dedicated Go Pair PH pages, while the marketplace stays focused on clean running shoe listings."
       />
 
       {shops.length === 0 ? (
         <SurfaceCard className="border-dashed p-10 text-center">
-          <p className="text-sm text-gray-400">No shops yet — be the first.</p>
-          <div className="mt-4">
-            <ApplyShopModalTrigger />
-          </div>
+          <p className="text-sm text-gray-400">No selected seller pages are public yet.</p>
         </SurfaceCard>
       ) : (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -81,29 +76,6 @@ export default async function ShopsIndexPage() {
           })}
         </ul>
       )}
-
-      <SurfaceCard className="mt-8 border-teal-500/20 bg-teal-500/[0.04] p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
-              Price Check
-            </p>
-            <h2 className="mt-1 text-lg font-semibold text-gray-100">
-              Checking retail prices?
-            </h2>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-400">
-              Compare official brand running shoe pages before buying pre-loved pairs
-              from Go Pair PH sellers.
-            </p>
-          </div>
-          <Link
-            href="/official-running-shoe-brand-links-ph"
-            className="inline-flex w-full items-center justify-center rounded-lg border border-teal-400/35 px-4 py-2 text-sm font-semibold text-teal-200 transition-colors hover:bg-teal-500/10 sm:w-auto"
-          >
-            View official brand links
-          </Link>
-        </div>
-      </SurfaceCard>
     </PageShell>
   );
 }

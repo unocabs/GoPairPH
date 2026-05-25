@@ -52,7 +52,7 @@ export default async function LookingForPage() {
               Tell local sellers what you need.
             </h2>
             <p className="mt-3 text-sm leading-6 text-gray-400">
-              Posting what you&apos;re looking for creates demand signals, so sellers and shops know what to list next.
+              Posting what you&apos;re looking for creates demand signals, so runners and nearby sellers know what to list next.
             </p>
           </div>
           <div className="space-y-4">

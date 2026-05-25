@@ -19,7 +19,7 @@ import type { Shoe } from '@/types';
 export const metadata: Metadata = {
   title: 'Marketplace',
   description:
-    'Shop the Go Pair PH marketplace for new and pre-loved running shoes from community sellers, shop sellers, and nearby sellers who serve Pampanga buyers.',
+    'Shop the Go Pair PH marketplace for brand-new and pre-loved running shoes from runners and nearby sellers who serve Pampanga buyers.',
   alternates: { canonical: '/browse' },
 };
 
@@ -188,7 +188,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
       <FirstListingNudge />
       <PageHeader
         title="Marketplace"
-        subtitle="Find running shoes from community sellers, independent shop sellers, and nearby sellers who can meet, deliver, or ship to Pampanga buyers."
+        subtitle="Find brand-new and pre-loved running shoes from Pampanga runners and nearby sellers who can meet, deliver, or ship to local buyers."
       >
         <SurfaceCard className="p-3 sm:p-4">
           <SearchBar defaultValue={searchParams.q} />
@@ -251,6 +251,29 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
             </Link>
           </SurfaceCard>
         </section>
+
+        <SurfaceCard className="border-teal-500/20 bg-teal-500/[0.04] p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
+                Price Check
+              </p>
+              <h2 className="mt-1 text-lg font-semibold text-gray-100">
+                Checking retail prices?
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-400">
+                Compare official brand running shoe pages before buying pre-loved pairs
+                from Go Pair PH sellers.
+              </p>
+            </div>
+            <Link
+              href="/official-running-shoe-brand-links-ph"
+              className="inline-flex w-full items-center justify-center rounded-lg border border-teal-400/35 px-4 py-2 text-sm font-semibold text-teal-200 transition-colors hover:bg-teal-500/10 sm:w-auto"
+            >
+              View official brand links
+            </Link>
+          </div>
+        </SurfaceCard>
       </div>
     </PageShell>
   );

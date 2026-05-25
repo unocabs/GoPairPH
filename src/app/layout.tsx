@@ -14,7 +14,7 @@ const inter = Inter({ subsets: ['latin'] });
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
 const SITE_NAME = 'Go Pair PH';
 const SITE_DESCRIPTION =
-  'A Pampanga-focused running shoe marketplace for community sellers, shop sellers, nearby sellers, new pairs, pre-loved pairs, and donations.';
+  'A Pampanga-focused running shoe marketplace for runners, nearby sellers, brand-new pairs, pre-loved pairs, and donations.';
 
 const siteJsonLd = [
   {
@@ -62,12 +62,12 @@ export const metadata: Metadata = {
     'pre-loved running shoes',
     'second hand running shoes',
     'used running shoes',
-    'running shoe shops',
-    'running shoe resellers',
+    'running shoe deals',
+    'running shoe sellers',
     'nearby running shoe sellers',
     'serve pampanga buyers',
-    'shop sellers',
-    'community sellers',
+    'local sellers',
+    'runner sellers',
     'local running shoe marketplace',
     'angeles city',
     'san fernando pampanga',

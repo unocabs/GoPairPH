@@ -5,7 +5,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'Go Pair PH is a Pampanga-focused running shoe marketplace and shop storefront platform for runners, local sellers, and nearby sellers who serve Pampanga buyers.',
+    'Go Pair PH is a Pampanga-focused running shoe marketplace for runners, nearby sellers, brand-new pairs, pre-loved pairs, and donations.',
   alternates: { canonical: '/about' },
 };
 
@@ -13,31 +13,23 @@ export default function AboutPage() {
   return (
     <InfoPage
       title="About Go Pair PH"
-      subtitle="A marketplace and storefront home built around Pampanga runners and sellers who serve them."
+      subtitle="A focused marketplace built around Pampanga runners and sellers who serve them."
     >
       <section>
         <h2 className="text-xl font-semibold text-gray-100">What we do</h2>
         <p>
-          Go Pair PH connects Pampanga runners with running shoes from both community sellers
-          and shop sellers. Nearby sellers are welcome too, as long as they can meet, deliver,
-          or ship to Pampanga buyers.
+          Go Pair PH helps runners find and share running shoe listings in one focused place.
+          Brand-new or pre-loved, for sale or donation, listings are organized around the
+          details runners actually care about.
         </p>
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold text-gray-100">Shops on Go Pair PH</h2>
+        <h2 className="text-xl font-semibold text-gray-100">Selected seller pages</h2>
         <p>
-          Go Pair PH also gives running shoe resellers a simple online storefront, especially
-          shops that sell through Facebook but do not have their own website yet. A shop can
-          have its own public page, logo, banner, colors, carousel, about section, location,
-          Facebook link, and listings, so it feels like their own place while still being part
-          of the Go Pair PH marketplace.
-        </p>
-        <p>
-          Shop owners can update their public shop details and design, while Go Pair PH keeps
-          important controls like shop creation, ownership, URL slugs, and shop status under
-          admin review. This helps shops present their brand professionally without making the
-          marketplace confusing or unsafe for buyers.
+          Some approved sellers may have dedicated Go Pair PH pages, but the marketplace is
+          built first around helping runners find and share running shoe listings in one
+          focused place.
         </p>
       </section>
 
@@ -58,9 +50,8 @@ export default function AboutPage() {
           <li>Sign in with your Google account.</li>
           <li>Go to your Profile and add your Facebook username.</li>
           <li>List a pair (with photos, size, mileage, and condition) for sale or donation.</li>
-          <li>Browse shop storefronts and order directly from active shop listings.</li>
           <li>
-            Browse listings from community sellers, shops, and nearby sellers who serve
+            Browse listings from runners and nearby sellers who serve
             Pampanga buyers, then coordinate the deal directly with the seller.
           </li>
           <li>The seller marks the listing as sold once the exchange is complete.</li>

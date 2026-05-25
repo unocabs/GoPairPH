@@ -9,11 +9,11 @@ interface ApplyShopModalProps {
 const ADMIN_EMAIL = 'rgiancabrera@gmail.com';
 
 const PITCH = [
-  { title: 'Free storefront, no tech setup', body: 'Logo, listings page, and a vanity URL — ready in a day.' },
-  { title: 'Automatic exposure on /browse', body: "Every listing you post shows up in the marketplace's main feed and on your own page. Toggle off per-listing if you want it shop-only." },
-  { title: 'Multi-stock built in', body: "One listing covers all the pairs you have on hand — no relisting after each sale." },
-  { title: 'Trusted Pampanga running audience', body: 'Your listings reach buyers already looking for running shoes on Go Pair PH.' },
-  { title: 'Verified shop badge', body: 'A trust signal for buyers — included once your application is approved.' },
+  { title: 'Dedicated seller page', body: 'Approved sellers can have a simple Go Pair PH page with their logo, listings, and public URL.' },
+  { title: 'Marketplace-first visibility', body: 'Listings can still appear in /browse when they fit the main running shoe marketplace.' },
+  { title: 'Multi-stock built in', body: 'One listing can cover multiple available sizes or quantities when needed.' },
+  { title: 'Trusted Pampanga running audience', body: 'Listings reach buyers already looking for running shoes on Go Pair PH.' },
+  { title: 'Manual approval', body: 'Seller pages are reviewed manually so the marketplace stays focused and trustworthy.' },
 ];
 
 export function ApplyShopModal({ onClose }: ApplyShopModalProps) {
@@ -54,9 +54,9 @@ export function ApplyShopModal({ onClose }: ApplyShopModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
           <div>
-            <h2 className="text-base font-bold text-gray-100">Open your shop on Go Pair PH</h2>
+            <h2 className="text-base font-bold text-gray-100">Selected seller pages</h2>
             <p className="mt-0.5 text-xs text-gray-500">
-              For Pampanga and nearby running shoe resellers who serve Pampanga buyers. Free during early onboarding.
+              Shop pages are currently opened manually for selected running shoe sellers.
             </p>
           </div>
           <button
@@ -89,9 +89,9 @@ export function ApplyShopModal({ onClose }: ApplyShopModalProps) {
           </ul>
 
           <div className="rounded-xl border border-gray-800 bg-gray-950 p-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">How to apply</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">How review works</p>
             <ol className="space-y-1.5 text-sm text-gray-300 list-decimal list-inside">
-              <li>Email your application to{' '}
+              <li>Email your seller page request to{' '}
                 <button
                   onClick={handleCopyEmail}
                   className="font-mono text-teal-400 hover:text-teal-300 underline-offset-2 hover:underline"
@@ -101,8 +101,8 @@ export function ApplyShopModal({ onClose }: ApplyShopModalProps) {
                 </button>
                 {copied && <span className="ml-2 text-xs text-green-400">Copied</span>}
               </li>
-              <li>Include shop name, FB page or business proof, Pampanga location or service area, preferred URL slug, and your logo file.</li>
-              <li>We&apos;ll get back to you within a few days. Once approved, your shop is live at <span className="font-mono text-gray-400">/shop/your-slug</span>.</li>
+              <li>Include seller name, FB page or proof of activity, Pampanga location or service area, preferred URL slug, and your logo file.</li>
+              <li>We&apos;ll review manually. Once approved, your page can go live at <span className="font-mono text-gray-400">/shop/your-slug</span>.</li>
             </ol>
           </div>
         </div>

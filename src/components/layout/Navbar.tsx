@@ -9,7 +9,6 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { useRouter, usePathname } from 'next/navigation';
 import { Logo } from '@/components/brand/Logo';
-import { ShopsDropdown } from '@/components/layout/ShopsDropdown';
 
 export function Navbar() {
   const { user, profile, loading } = useSession();
@@ -111,7 +110,6 @@ export function Navbar() {
             <Link href="/browse" className="rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors">
               Marketplace
             </Link>
-            <ShopsDropdown />
             <Link href="/guides" className="rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors">
               Guides
             </Link>
@@ -294,7 +292,6 @@ export function Navbar() {
         {mobileOpen && (
           <div className="md:hidden border-t border-gray-800 py-3 flex flex-col gap-1">
             <Link href="/browse" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Marketplace</Link>
-            <Link href="/shop" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Shops</Link>
             <Link href="/guides" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Guides</Link>
             <Link href="/looking-for" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Looking For</Link>
             {user && (

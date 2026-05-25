@@ -5,14 +5,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { getPublicUrl } from '@/lib/utils';
-import { ApplyShopModal } from '@/components/shop/ApplyShopModal';
 import type { Shop } from '@/types';
 
 type ShopLite = Pick<Shop, 'id' | 'slug' | 'name' | 'logo_storage_path'>;
 
 export function ShopsDropdown() {
   const [open, setOpen] = useState(false);
-  const [applyOpen, setApplyOpen] = useState(false);
   const [shops, setShops] = useState<ShopLite[] | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -61,7 +59,7 @@ export function ShopsDropdown() {
             {shops === null ? (
               <p className="px-3 py-2 text-xs text-gray-500">Loading…</p>
             ) : shops.length === 0 ? (
-              <p className="px-3 py-2 text-xs text-gray-500">No shops yet — be the first.</p>
+              <p className="px-3 py-2 text-xs text-gray-500">No selected seller pages are public yet.</p>
             ) : (
               <ul className="max-h-80 overflow-y-auto">
                 {shops.map(shop => {
@@ -94,25 +92,9 @@ export function ShopsDropdown() {
                 })}
               </ul>
             )}
-
-            <div className="my-1 border-t border-gray-800" />
-            <button
-              onClick={() => {
-                setOpen(false);
-                setApplyOpen(true);
-              }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm font-semibold text-teal-400 hover:bg-gray-800 transition-colors"
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Register your shop
-            </button>
           </div>
         )}
       </div>
-
-      {applyOpen && <ApplyShopModal onClose={() => setApplyOpen(false)} />}
     </>
   );
 }
