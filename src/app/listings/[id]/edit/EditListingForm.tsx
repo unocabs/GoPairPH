@@ -17,10 +17,22 @@ import type { Shoe } from '@/types';
 
 const BRAND_OPTIONS = BRANDS.map(b => ({ value: b, label: b }));
 const CONDITION_OPTIONS = Object.entries(CONDITIONS).map(([v, l]) => ({ value: v, label: l }));
+const CONDITION_HELPERS = [
+  { value: 'new', label: 'Brand New', helper: 'Unused, box or tags ready.' },
+  { value: 'like_new', label: 'Like New', helper: 'Tried or lightly used.' },
+  { value: 'good', label: 'Good', helper: 'Normal wear, still solid.' },
+  { value: 'fair', label: 'Fair', helper: 'Visible wear, price honestly.' },
+] as const;
 const LISTING_TYPE_OPTIONS = [
   { value: 'for_sale', label: 'For Sale' },
   { value: 'donate', label: 'Donate (Free)' },
 ];
+
+function toOptionalNumber(value: unknown): number | null {
+  if (value === '' || value == null) return null;
+  const next = Number(value);
+  return Number.isFinite(next) ? next : null;
+}
 
 export function EditListingForm({ shoe }: { shoe: Shoe }) {
   const [submitting, setSubmitting] = useState(false);
@@ -76,7 +88,21 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
 
   const listingType = watch('listing_type');
   const condition = watch('condition');
+  const description = watch('description') ?? '';
+  const mileageKm = toOptionalNumber(watch('mileage_km'));
   const isNew = condition === 'new';
+  const suggestedNote = (() => {
+    if (listingType === 'donate') {
+      return 'Available for donation. See top and sole photos for condition.\nMeetup around Pampanga preferred.';
+    }
+    if (condition === 'new') {
+      return 'Brand new pair. See photos for box, tags, and condition.\nMeetup around Pampanga preferred.';
+    }
+    const usageLine = mileageKm
+      ? `Used for approximately ${mileageKm.toLocaleString()} km.`
+      : 'Used for running.';
+    return `${usageLine} See top and sole photos for condition.\nMeetup around Pampanga preferred.`;
+  })();
 
   function handleSizeEuChange(val: string) {
     const num = parseFloat(val);
@@ -171,7 +197,7 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
         }
       }
 
-      router.push(getListingPath(shoe));
+      router.push(`${getListingPath(shoe)}?updated=1`);
       router.refresh();
     } catch (err) {
       const msg = (err as { message?: string })?.message ?? 'Failed to update';
@@ -185,51 +211,131 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
     <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl space-y-5">
       {error && <div className="rounded-lg bg-red-950 border border-red-800 p-3 text-sm text-red-400">{error}</div>}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Select label="Brand" required options={BRAND_OPTIONS} error={errors.brand?.message} {...register('brand')} />
-        <Input label="Model" required error={errors.model?.message} {...register('model')} />
+      <div className="rounded-xl border border-teal-500/20 bg-teal-500/[0.04] p-4">
+        <p className="text-sm font-semibold text-gray-100">Update the details buyers scan first.</p>
+        <p className="mt-1 text-xs leading-5 text-gray-500">
+          Keep price, condition, sizes, and notes accurate. If you changed something important, share the listing again after saving.
+        </p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Input label="Color" required error={errors.color?.message} {...register('color')} />
-        <Select label="Condition" required options={CONDITION_OPTIONS} error={errors.condition?.message} {...register('condition')} />
+
+      <div className="space-y-4 rounded-xl border border-white/[0.08] bg-slate-950/45 p-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-300">Main details</p>
+          <p className="mt-1 text-xs text-gray-500">Keep the listing easy to scan.</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Select label="Brand" required options={BRAND_OPTIONS} error={errors.brand?.message} {...register('brand')} />
+          <Input label="Model" required error={errors.model?.message} {...register('model')} />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input label="Color" required error={errors.color?.message} {...register('color')} />
+          <div className="space-y-2">
+            <Select label="Condition" required options={CONDITION_OPTIONS} error={errors.condition?.message} {...register('condition')} />
+            <div className="grid grid-cols-2 gap-2">
+              {CONDITION_HELPERS.map((option) => {
+                const active = condition === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setValue('condition', option.value, { shouldDirty: true, shouldValidate: true })}
+                    className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                      active
+                        ? 'border-teal-400/50 bg-teal-400/10 text-teal-100'
+                        : 'border-white/[0.08] bg-slate-950/45 text-gray-400 hover:border-teal-400/30 hover:text-gray-200'
+                    }`}
+                  >
+                    <span className="block text-xs font-semibold">{option.label}</span>
+                    <span className="mt-0.5 block text-[11px] leading-4 text-gray-500">{option.helper}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
-      {isNew ? (
-        <div className="rounded-lg border border-gray-800 bg-gray-800/50 px-4 py-3">
-          <p className="text-sm font-medium text-gray-400">Mileage (km)</p>
-          <p className="text-sm text-gray-500 mt-0.5">Automatically set to <span className="text-gray-300 font-medium">0 km</span> for new shoes.</p>
+
+      <div className="space-y-4 rounded-xl border border-white/[0.08] bg-slate-950/45 p-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-300">Size and price</p>
+          <p className="mt-1 text-xs text-gray-500">Update what buyers filter and compare.</p>
         </div>
-      ) : (
-        <Input label="Mileage (km)" type="number" min={0} placeholder="e.g. 350" hint="Optional — leave blank if unknown." error={errors.mileage_km?.message} {...register('mileage_km')} />
-      )}
-      {!isShopListing && (
-        <div className="grid grid-cols-3 gap-3">
-          <Input label="EU" type="number" step={0.5} error={errors.size_eu?.message}
-            {...register('size_eu', { onChange: e => handleSizeEuChange(e.target.value) })} />
-          <Input label="US" type="number" step={0.5} error={errors.size_us?.message}
-            {...register('size_us', { onChange: e => handleSizeUsChange(e.target.value) })} />
-          <Input label="CM" type="number" step={0.5} error={errors.size_cm?.message}
-            {...register('size_cm', { onChange: e => handleSizeCmChange(e.target.value) })} />
+
+        {!isShopListing && (
+          <div>
+            <p className="text-sm font-medium text-gray-300 mb-1">
+              Size <span className="text-teal-400">*</span>
+              <span className="ml-1 text-xs text-gray-500 font-normal">(fill one; EU, US, or CM)</span>
+            </p>
+            <div className="grid grid-cols-3 gap-3">
+              <Input label="EU" type="number" step={0.5} error={errors.size_eu?.message}
+                {...register('size_eu', { onChange: e => handleSizeEuChange(e.target.value) })} />
+              <Input label="US" type="number" step={0.5} error={errors.size_us?.message}
+                {...register('size_us', { onChange: e => handleSizeUsChange(e.target.value) })} />
+              <Input label="CM" type="number" step={0.5} error={errors.size_cm?.message}
+                {...register('size_cm', { onChange: e => handleSizeCmChange(e.target.value) })} />
+            </div>
+          </div>
+        )}
+        {!isShopListing && (
+          <Select label="Listing Type" required options={LISTING_TYPE_OPTIONS} error={errors.listing_type?.message} {...register('listing_type')} />
+        )}
+        {(isShopListing || listingType === 'for_sale') && (
+          <div className="space-y-2">
+            <Input label="Price (PHP)" type="number" min={0} required error={errors.price_php?.message} {...register('price_php')} />
+            <div className="rounded-lg border border-white/[0.08] bg-slate-950/40 px-3 py-2 text-xs leading-5 text-gray-500">
+              If you lowered the price or clarified condition, share the listing again so buyers see the update.
+              <a
+                href="/official-running-shoe-brand-links-ph"
+                className="ml-1 font-medium text-teal-300 hover:text-teal-200"
+              >
+                Check retail links
+              </a>
+            </div>
+            {!isShopListing && (
+              <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-700 bg-gray-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-gray-900"
+                  {...register('is_negotiable')}
+                />
+                <span>Negotiable <span className="text-gray-500">(buyers can suggest a different price)</span></span>
+              </label>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-4 rounded-xl border border-white/[0.08] bg-slate-950/45 p-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-300">Extra notes</p>
+          <p className="mt-1 text-xs text-gray-500">Keep notes honest and short.</p>
         </div>
-      )}
-      {!isShopListing && (
-        <Select label="Listing Type" required options={LISTING_TYPE_OPTIONS} error={errors.listing_type?.message} {...register('listing_type')} />
-      )}
-      {(isShopListing || listingType === 'for_sale') && (
-        <div className="space-y-2">
-          <Input label="Price (PHP)" type="number" min={0} required error={errors.price_php?.message} {...register('price_php')} />
-          {!isShopListing && (
-            <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-gray-700 bg-gray-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-gray-900"
-                {...register('is_negotiable')}
-              />
-              <span>Negotiable <span className="text-gray-500">(buyers can suggest a different price)</span></span>
-            </label>
-          )}
+        {isNew ? (
+          <div className="rounded-lg border border-gray-800 bg-gray-800/50 px-4 py-3">
+            <p className="text-sm font-medium text-gray-400">Mileage (km)</p>
+            <p className="text-sm text-gray-500 mt-0.5">Automatically set to <span className="text-gray-300 font-medium">0 km</span> for new shoes.</p>
+          </div>
+        ) : (
+          <Input label="Mileage (km)" type="number" min={0} placeholder="e.g. 350" hint="Optional — leave blank if unknown." error={errors.mileage_km?.message} {...register('mileage_km')} />
+        )}
+        <Textarea label="Description (optional)" rows={3} {...register('description')} />
+        <div className="rounded-lg border border-white/[0.08] bg-slate-950/45 p-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-gray-200">Need a cleaner note?</p>
+              <p className="mt-1 whitespace-pre-line text-xs leading-5 text-gray-500">{suggestedNote}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setValue('description', suggestedNote, { shouldDirty: true, shouldValidate: true })}
+              className="inline-flex shrink-0 items-center justify-center rounded-lg border border-teal-400/25 bg-teal-400/10 px-3 py-2 text-xs font-semibold text-teal-200 transition-colors hover:border-teal-400/45 hover:bg-teal-400/15"
+            >
+              {description ? 'Replace note' : 'Use suggested note'}
+            </button>
+          </div>
         </div>
-      )}
-      <Textarea label="Description (optional)" rows={3} {...register('description')} />
+      </div>
 
       {isShopListing && (
         <div id="variants" className="space-y-4 rounded-xl border border-teal-500/30 bg-teal-500/5 p-4 scroll-mt-24">

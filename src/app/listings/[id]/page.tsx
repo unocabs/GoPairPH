@@ -165,7 +165,7 @@ async function getPurchaseContext(shoeId: string, profileId: string | null, isOw
   return null;
 }
 
-export default async function ListingDetailPage({ params, searchParams }: { params: { id: string }; searchParams?: { listed?: string } }) {
+export default async function ListingDetailPage({ params, searchParams }: { params: { id: string }; searchParams?: { listed?: string; updated?: string } }) {
   const [shoe, currentProfile] = await Promise.all([
     getShoeByRouteParam(params.id),
     getCurrentProfile(),
@@ -198,6 +198,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const slotInfo = isOwner ? await getSponsoredSlotInfo() : null;
   const listingName = formatListingName(shoe.brand, shoe.model);
   const justListed = isOwner && searchParams?.listed === '1';
+  const justUpdated = isOwner && searchParams?.updated === '1';
   const signInHref = `/auth/sign-in?next=${encodeURIComponent(getListingPath(shoe))}`;
   const signedOutForSaleCtaLabel = shoe.shop_id
     ? 'Sign in to Place Order'
@@ -282,6 +283,23 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 <span className="font-medium text-gray-300">{title}</span>
               </div>
             ))}
+          </div>
+        </SurfaceCard>
+      )}
+
+      {justUpdated && !justListed && (
+        <SurfaceCard glow className="mb-6 border-teal-500/25 bg-teal-500/[0.05] p-4 sm:p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">Listing updated</p>
+              <h2 className="mt-2 text-xl font-bold text-gray-100">Your changes are live.</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
+                If you changed price, condition, sizes, or notes, share it again so runners see the latest details.
+              </p>
+            </div>
+            <div className="shrink-0 rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 lg:w-[460px]">
+              <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner />
+            </div>
           </div>
         </SurfaceCard>
       )}
