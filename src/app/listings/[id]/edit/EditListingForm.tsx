@@ -12,8 +12,9 @@ import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { VariantsEditor, type VariantRow } from '@/components/listings/VariantsEditor';
-import { getListingPath } from '@/lib/utils';
-import type { Shoe } from '@/types';
+import { PhotoUploader, type UploadedPhoto } from '@/components/listings/PhotoUploader';
+import { getListingPath, getPublicUrl } from '@/lib/utils';
+import type { Shoe, ViewType } from '@/types';
 
 const BRAND_OPTIONS = BRANDS.map(b => ({ value: b, label: b }));
 const CONDITION_OPTIONS = Object.entries(CONDITIONS).map(([v, l]) => ({ value: v, label: l }));
@@ -27,12 +28,17 @@ const LISTING_TYPE_OPTIONS = [
   { value: 'for_sale', label: 'For Sale' },
   { value: 'donate', label: 'Donate (Free)' },
 ];
+const VIEW_ORDER: ViewType[] = ['top', 'sole', 'front', 'left', 'right', 'back'];
 
 function toOptionalNumber(value: unknown): number | null {
   if (value === '' || value == null) return null;
   const next = Number(value);
   return Number.isFinite(next) ? next : null;
 }
+
+type EditablePhoto = UploadedPhoto & {
+  id?: string;
+};
 
 export function EditListingForm({ shoe }: { shoe: Shoe }) {
   const [submitting, setSubmitting] = useState(false);
@@ -42,6 +48,18 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
 
   const [listedInMainFeed, setListedInMainFeed] = useState<boolean>(shoe.listed_in_main_feed ?? true);
   const isShopListing = !!shoe.shop_id;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+  const [photos, setPhotos] = useState<EditablePhoto[]>(() =>
+    (shoe.shoe_images ?? [])
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((image) => ({
+        id: image.id,
+        storagePath: image.storage_path,
+        publicUrl: getPublicUrl(supabaseUrl, image.storage_path),
+        viewType: image.view_type,
+      }))
+  );
 
   const [variants, setVariants] = useState<VariantRow[]>(() =>
     isShopListing
@@ -91,6 +109,8 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
   const description = watch('description') ?? '';
   const mileageKm = toOptionalNumber(watch('mileage_km'));
   const isNew = condition === 'new';
+  const hasTopPhoto = photos.some(photo => photo.viewType === 'top');
+  const hasSolePhoto = photos.some(photo => photo.viewType === 'sole');
   const suggestedNote = (() => {
     if (listingType === 'donate') {
       return 'Available for donation. See top and sole photos for condition.\nMeetup around Pampanga preferred.';
@@ -130,6 +150,38 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
     setError(null);
     try {
       // Validate variants for shop listings up-front.
+      if (!hasTopPhoto || !hasSolePhoto) {
+        throw new Error('Top and sole photos are required before saving.');
+      }
+
+      const originalImageIds = new Set((shoe.shoe_images ?? []).map(image => image.id));
+      const currentImageIds = new Set(photos.map(photo => photo.id).filter(Boolean) as string[]);
+      const removedImages = (shoe.shoe_images ?? []).filter(image => !currentImageIds.has(image.id));
+      const imageRows = photos.map((photo, index) => ({
+        id: photo.id,
+        shoe_id: shoe.id,
+        storage_path: photo.storagePath,
+        view_type: photo.viewType,
+        order: VIEW_ORDER.indexOf(photo.viewType) >= 0 ? VIEW_ORDER.indexOf(photo.viewType) : index,
+      }));
+      const existingImageRows = imageRows
+        .filter(row => row.id && originalImageIds.has(row.id))
+        .map(row => ({
+          id: row.id as string,
+          shoe_id: row.shoe_id,
+          storage_path: row.storage_path,
+          view_type: row.view_type,
+          order: row.order,
+        }));
+      const newImageRows = imageRows
+        .filter(row => !row.id || !originalImageIds.has(row.id))
+        .map(row => ({
+          shoe_id: row.shoe_id,
+          storage_path: row.storage_path,
+          view_type: row.view_type,
+          order: row.order,
+        }));
+
       if (isShopListing) {
         const seen = new Set<number>();
         for (const v of variants) {
@@ -195,6 +247,30 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
           const { error: varErr } = await supabase.from('shoe_variants').insert(newRows);
           if (varErr) throw varErr;
         }
+      }
+
+      if (removedImages.length > 0) {
+        const { error: imgDeleteErr } = await supabase
+          .from('shoe_images')
+          .delete()
+          .in('id', removedImages.map(image => image.id));
+        if (imgDeleteErr) throw imgDeleteErr;
+      }
+
+      if (existingImageRows.length > 0) {
+        const { error: imgUpdateErr } = await supabase.from('shoe_images').upsert(existingImageRows);
+        if (imgUpdateErr) throw imgUpdateErr;
+      }
+
+      if (newImageRows.length > 0) {
+        const { error: imgInsertErr } = await supabase.from('shoe_images').insert(newImageRows);
+        if (imgInsertErr) throw imgInsertErr;
+      }
+
+      if (removedImages.length > 0) {
+        await supabase.storage
+          .from('shoe-images')
+          .remove(removedImages.map(image => image.storage_path));
       }
 
       router.push(`${getListingPath(shoe)}?updated=1`);
@@ -358,6 +434,23 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
           </label>
         </div>
       )}
+
+      <div className="space-y-4 rounded-xl border border-white/[0.08] bg-slate-950/45 p-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-300">Photos</p>
+          <p className="mt-1 text-xs text-gray-500">
+            Replace weak photos or add extra angles. Top + sole stay required so buyers can check condition quickly.
+          </p>
+        </div>
+        <PhotoUploader
+          shoeId={shoe.id}
+          photos={photos}
+          onChange={(nextPhotos) => {
+            setPhotos(nextPhotos as EditablePhoto[]);
+            setError(null);
+          }}
+        />
+      </div>
 
       <div className="flex gap-3">
         <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>

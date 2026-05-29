@@ -15,7 +15,7 @@ async function getShoeForEdit(id: string): Promise<{ shoe: Shoe; profileId: stri
 
   const { data: shoe } = await supabase
     .from('shoes')
-    .select('*, shoe_variants(*)')
+    .select('*, shoe_variants(*), shoe_images(*)')
     .eq('id', id)
     .eq('seller_id', profile.id)
     .single();
