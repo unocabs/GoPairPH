@@ -506,35 +506,6 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
       {/* Step 2 */}
       {step === 2 && shoeId && (
         <div className="space-y-6">
-          <div className="rounded-xl border border-teal-500/20 bg-teal-500/[0.04] p-4">
-            <p className="text-sm font-semibold text-gray-100">Step 2: upload the photos buyers trust most.</p>
-            <p className="mt-1 text-xs leading-5 text-gray-500">
-              Top and sole photos are required. Use bright light, avoid heavy filters, and add extra angles if you want buyers to decide faster.
-            </p>
-            <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-              {[
-                ['Top photo', hasTopPhoto],
-                ['Sole photo', hasSolePhoto],
-              ].map(([label, done]) => (
-                <div
-                  key={label as string}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${
-                    done
-                      ? 'border-teal-400/25 bg-teal-400/10 text-teal-200'
-                      : 'border-white/[0.08] bg-slate-950/45 text-gray-500'
-                  }`}
-                >
-                  <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${
-                    done ? 'bg-teal-400 text-slate-950' : 'bg-gray-800 text-gray-500'
-                  }`}>
-                    {done ? '✓' : '•'}
-                  </span>
-                  <span className="font-medium">{label as string}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
           <div className="rounded-xl border border-white/[0.08] bg-slate-950/55 p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -570,6 +541,14 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
               setError(null);
             }}
           />
+          {canPublishPhotos && (
+            <div className="rounded-xl border border-teal-400/25 bg-teal-400/10 p-3 text-sm text-teal-100">
+              <p className="font-semibold">Ready to publish.</p>
+              <p className="mt-1 text-xs leading-5 text-teal-100/80">
+                Your listing has the required trust photos. After publishing, share it where runners already are.
+              </p>
+            </div>
+          )}
           <Button
             onClick={onPhotosSubmit}
             size="lg"
