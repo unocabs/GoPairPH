@@ -18,6 +18,12 @@ import type { Shop } from '@/types';
 
 const BRAND_OPTIONS = BRANDS.map(b => ({ value: b, label: b }));
 const CONDITION_OPTIONS = Object.entries(CONDITIONS).map(([v, l]) => ({ value: v, label: l }));
+const CONDITION_HELPERS = [
+  { value: 'new', label: 'Brand New', helper: 'Unused, box or tags ready.' },
+  { value: 'like_new', label: 'Like New', helper: 'Tried or lightly used.' },
+  { value: 'good', label: 'Good', helper: 'Normal wear, still solid.' },
+  { value: 'fair', label: 'Fair', helper: 'Visible wear, price honestly.' },
+] as const;
 const LISTING_TYPE_OPTIONS = [
   { value: 'for_sale', label: 'For Sale' },
   { value: 'donate', label: 'Donate (Free)' },
@@ -293,7 +299,29 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Input label="Colorway" placeholder="e.g. Black/White" required hint="A simple color is enough if you do not know the official colorway." error={errors.color?.message} {...register('color')} />
-              <Select label="Condition" required options={CONDITION_OPTIONS} hint="Pick the closest match. Photos will do the rest." error={errors.condition?.message} {...register('condition')} />
+              <div className="space-y-2">
+                <Select label="Condition" required options={CONDITION_OPTIONS} hint="Pick the closest match. Photos will do the rest." error={errors.condition?.message} {...register('condition')} />
+                <div className="grid grid-cols-2 gap-2">
+                  {CONDITION_HELPERS.map((option) => {
+                    const active = condition === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setValue('condition', option.value, { shouldDirty: true, shouldValidate: true })}
+                        className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                          active
+                            ? 'border-teal-400/50 bg-teal-400/10 text-teal-100'
+                            : 'border-white/[0.08] bg-slate-950/45 text-gray-400 hover:border-teal-400/30 hover:text-gray-200'
+                        }`}
+                      >
+                        <span className="block text-xs font-semibold">{option.label}</span>
+                        <span className="mt-0.5 block text-[11px] leading-4 text-gray-500">{option.helper}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
 
