@@ -100,6 +100,8 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
   const brand = watch('brand') ?? '';
   const model = watch('model') ?? '';
   const color = watch('color') ?? '';
+  const description = watch('description') ?? '';
+  const mileageKm = toOptionalNumber(watch('mileage_km'));
   const pricePhp = toOptionalNumber(watch('price_php'));
   const sizeEu = toOptionalNumber(watch('size_eu'));
   const sizeUs = toOptionalNumber(watch('size_us'));
@@ -128,6 +130,18 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
     : pricePhp
       ? formatPrice(pricePhp)
       : 'Add price';
+  const suggestedNote = (() => {
+    if (listingType === 'donate') {
+      return 'Available for donation. See top and sole photos for condition.\nMeetup around Pampanga preferred.';
+    }
+    if (condition === 'new') {
+      return 'Brand new pair. See photos for box, tags, and condition.\nMeetup around Pampanga preferred.';
+    }
+    const usageLine = mileageKm
+      ? `Used for approximately ${mileageKm.toLocaleString()} km.`
+      : 'Used for running.';
+    return `${usageLine} See top and sole photos for condition.\nMeetup around Pampanga preferred.`;
+  })();
   const readinessItems = [
     { label: 'Details', done: hasCoreDetails },
     { label: 'Size', done: hasSize },
@@ -468,6 +482,21 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
               />
             )}
             <Textarea label="Description (optional)" rows={3} placeholder="Add any other details about the shoes..." {...register('description')} />
+            <div className="rounded-lg border border-white/[0.08] bg-slate-950/45 p-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-gray-200">Need a quick note?</p>
+                  <p className="mt-1 whitespace-pre-line text-xs leading-5 text-gray-500">{suggestedNote}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setValue('description', suggestedNote, { shouldDirty: true, shouldValidate: true })}
+                  className="inline-flex shrink-0 items-center justify-center rounded-lg border border-teal-400/25 bg-teal-400/10 px-3 py-2 text-xs font-semibold text-teal-200 transition-colors hover:border-teal-400/45 hover:bg-teal-400/15"
+                >
+                  {description ? 'Replace note' : 'Use suggested note'}
+                </button>
+              </div>
+            </div>
           </div>
 
           {isShop && shop && (
