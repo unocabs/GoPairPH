@@ -38,6 +38,7 @@ import { SafeShopImage } from '@/components/shop/SafeShopImage';
 import { PageShell } from '@/components/layout/PageShell';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { isListingSaved } from '@/lib/savedListings';
+import { getViewSummariesForListings } from '@/lib/listingViews';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -187,6 +188,9 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const productImageUrl = topImage ? getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, topImage.storage_path) : null;
   const purchaseContext = await getPurchaseContext(shoe.id, currentProfileId, isOwner, shoe.status);
   const isSaved = await isListingSaved(currentProfileId, shoe.id);
+  const viewSummary = isOwner
+    ? (await getViewSummariesForListings([shoe.id])).get(shoe.id) ?? { total: 0, last7d: 0 }
+    : null;
 
   const now = new Date();
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > now;
@@ -597,28 +601,47 @@ export default async function ListingDetailPage({ params, searchParams }: { para
 
           {/* Owner actions */}
           {isOwner && (
-            <div className="mt-4 flex flex-wrap items-start gap-2 max-sm:[&>a]:w-full max-sm:[&>a>button]:w-full max-sm:[&>button]:w-full">
-              {shoe.status === 'active' && (
-                <Link href={`/listings/${shoe.id}/edit`}>
-                  <button className="rounded-lg border border-gray-700 bg-transparent px-4 py-2 text-base font-medium text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors sm:text-sm">
-                    Edit Listing
-                  </button>
-                </Link>
+            <div className="mt-5 space-y-4">
+              {viewSummary && viewSummary.total > 0 && (
+                <div className="rounded-xl border border-white/[0.08] bg-slate-950/45 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">Seller momentum</p>
+                  <h3 className="mt-2 text-sm font-semibold text-gray-100">Your listing is getting seen.</h3>
+                  <p className="mt-1 text-xs leading-5 text-gray-400">
+                    Fresh shares can bring it back to Facebook groups, Marketplace, Messenger, and running chats.
+                  </p>
+                  <div className="mt-3 rounded-lg border border-teal-400/20 bg-teal-400/[0.06] px-3 py-2">
+                    <p className="text-xs font-semibold text-teal-100">Share again when you want another push.</p>
+                    <p className="mt-1 text-xs leading-5 text-gray-400">
+                      Keep the exact view counts private for now. The important thing is keeping the listing moving.
+                    </p>
+                  </div>
+                  <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner className="mt-3" />
+                </div>
               )}
-              {shoe.status === 'active' && slotInfo && (
-                <PromoteListingButton
-                  listingId={shoe.id}
-                  listingName={listingName}
-                  isVerified={isVerified}
-                  slotsAvailable={slotInfo.slotsAvailable || isSponsored}
-                  nextSlotOpensAt={slotInfo.nextSlotOpensAt}
-                  ownListingAlreadySponsored={isSponsored}
-                  ownSponsoredUntil={shoe.sponsored_until}
-                />
-              )}
-              {/* StatusButton returns null for reserved (handled by CompleteSaleButtons above) */}
-              <StatusButton shoeId={shoe.id} currentStatus={shoe.status} listingType={shoe.listing_type} />
-              <OwnerMoreActions shoeId={shoe.id} listingType={shoe.listing_type} status={shoe.status} />
+
+              <div className="flex flex-wrap items-start gap-2 max-sm:[&>a]:w-full max-sm:[&>a>button]:w-full max-sm:[&>button]:w-full">
+                {shoe.status === 'active' && (
+                  <Link href={`/listings/${shoe.id}/edit`}>
+                    <button className="rounded-lg border border-gray-700 bg-transparent px-4 py-2 text-base font-medium text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors sm:text-sm">
+                      Edit Listing
+                    </button>
+                  </Link>
+                )}
+                {shoe.status === 'active' && slotInfo && (
+                  <PromoteListingButton
+                    listingId={shoe.id}
+                    listingName={listingName}
+                    isVerified={isVerified}
+                    slotsAvailable={slotInfo.slotsAvailable || isSponsored}
+                    nextSlotOpensAt={slotInfo.nextSlotOpensAt}
+                    ownListingAlreadySponsored={isSponsored}
+                    ownSponsoredUntil={shoe.sponsored_until}
+                  />
+                )}
+                {/* StatusButton returns null for reserved (handled by CompleteSaleButtons above) */}
+                <StatusButton shoeId={shoe.id} currentStatus={shoe.status} listingType={shoe.listing_type} />
+                <OwnerMoreActions shoeId={shoe.id} listingType={shoe.listing_type} status={shoe.status} />
+              </div>
             </div>
           )}
 

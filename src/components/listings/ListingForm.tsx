@@ -446,6 +446,15 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
             {(isShop || listingType === 'for_sale') && (
               <div className="space-y-2">
                 <Input label="Price (PHP)" type="number" min={0} required placeholder="e.g. 2500" error={errors.price_php?.message} {...register('price_php')} />
+                <div className="rounded-lg border border-white/[0.08] bg-slate-950/40 px-3 py-2 text-xs leading-5 text-gray-500">
+                  Price clearly so buyers can decide faster. Check official retail first, then price pre-loved pairs honestly.
+                  <a
+                    href="/official-running-shoe-brand-links-ph"
+                    className="ml-1 font-medium text-teal-300 hover:text-teal-200"
+                  >
+                    View official brand links
+                  </a>
+                </div>
                 {!isShop && (
                   <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
                     <input
