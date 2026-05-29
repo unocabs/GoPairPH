@@ -5,8 +5,6 @@ import { createClient } from '@/lib/supabase/server';
 import { ListingForm } from '@/components/listings/ListingForm';
 import { SellerContactGate } from '@/components/listings/SellerContactGate';
 import { CanListWidget } from '@/components/listings/CanListWidget';
-import { Button } from '@/components/ui/Button';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { formatPrice, formatRelativeDate, formatSize } from '@/lib/utils';
 import type { Shop, WishlistItem } from '@/types';
 
@@ -72,44 +70,41 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
             <aside className="space-y-4 lg:sticky lg:top-24 lg:pt-[100px]">
               <CanListWidget compact />
 
-              <SurfaceCard glow className="p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">Buyer demand</p>
-                <h2 className="mt-2 text-lg font-bold text-gray-100">Runners are looking for these pairs</h2>
-                <p className="mt-2 text-sm leading-6 text-gray-400">
-                  If you have a match, list it and share the clean link. Pair requests help sellers see what buyers already want.
-                </p>
+              <div className="rounded-xl border border-white/[0.08] bg-slate-950/35 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Buyer demand</p>
+                <h2 className="mt-2 text-sm font-semibold text-gray-100">Recent pair requests</h2>
 
                 {demandSignals.length > 0 ? (
-                  <div className="mt-4 space-y-3">
-                    {demandSignals.map((item) => {
+                  <div className="mt-3 space-y-2">
+                    {demandSignals.slice(0, 3).map((item) => {
                       const size = formatSize(item.size_eu, item.size_us, item.size_cm);
                       return (
                         <Link
                           key={item.id}
                           href={`/looking-for?item=${item.id}`}
-                          className="block rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 transition-colors hover:border-teal-400/35 hover:bg-slate-900/70"
+                          className="block rounded-lg border border-white/[0.08] bg-slate-950/45 px-3 py-2 transition-colors hover:border-teal-400/25 hover:bg-slate-900/60"
                         >
-                          <p className="text-sm font-semibold text-gray-100">{item.brand} {item.model}</p>
-                          <p className="mt-1 text-xs text-gray-500">
+                          <p className="truncate text-xs font-semibold text-gray-200">{item.brand} {item.model}</p>
+                          <p className="mt-0.5 truncate text-[11px] text-gray-500">
                             {size || 'Any size'}
                             {item.price_max_php ? ` · up to ${formatPrice(item.price_max_php)}` : ''}
                             {item.location ? ` · ${item.location}` : ''}
                           </p>
-                          <p className="mt-1 text-[11px] text-gray-600">{formatRelativeDate(item.created_at)}</p>
+                          <p className="mt-0.5 text-[10px] text-gray-600">{formatRelativeDate(item.created_at)}</p>
                         </Link>
                       );
                     })}
                   </div>
                 ) : (
-                  <div className="mt-4 rounded-xl border border-dashed border-white/[0.1] bg-slate-950/40 p-4 text-sm text-gray-500">
+                  <div className="mt-3 rounded-lg border border-dashed border-white/[0.1] bg-slate-950/35 p-3 text-xs text-gray-500">
                     No one&apos;s looking for shoes yet.
                   </div>
                 )}
 
-                <Link href="/looking-for" className="mt-4 block">
-                  <Button variant="outline" size="sm" className="w-full">View Demand Board</Button>
+                <Link href="/looking-for" className="mt-3 inline-flex text-xs font-medium text-teal-300 hover:text-teal-200">
+                  View demand board
                 </Link>
-              </SurfaceCard>
+              </div>
             </aside>
           </div>
         </SellerContactGate>
@@ -120,52 +115,49 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
           <aside className="space-y-4 lg:sticky lg:top-24 lg:pt-[100px]">
             <CanListWidget compact />
 
-            <SurfaceCard glow className="border-teal-500/20 bg-teal-500/[0.04] p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">No account needed yet</p>
-              <h2 className="mt-2 text-lg font-bold text-gray-100">Start with the shoe details.</h2>
+            <div className="rounded-xl border border-teal-500/20 bg-teal-500/[0.04] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">No account needed yet</p>
+              <h2 className="mt-2 text-sm font-semibold text-gray-100">Start with the shoe details.</h2>
               <p className="mt-2 text-sm leading-6 text-gray-400">
                 You can fill this out first. We&apos;ll ask you to sign in before photos so your listing draft can be safely published under your profile.
               </p>
-            </SurfaceCard>
+            </div>
 
-            <SurfaceCard glow className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">Buyer demand</p>
-              <h2 className="mt-2 text-lg font-bold text-gray-100">Runners are looking for these pairs</h2>
-              <p className="mt-2 text-sm leading-6 text-gray-400">
-                If you have a match, list it and share the clean link. Pair requests help sellers see what buyers already want.
-              </p>
+            <div className="rounded-xl border border-white/[0.08] bg-slate-950/35 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Buyer demand</p>
+              <h2 className="mt-2 text-sm font-semibold text-gray-100">Recent pair requests</h2>
 
               {demandSignals.length > 0 ? (
-                <div className="mt-4 space-y-3">
-                  {demandSignals.map((item) => {
+                <div className="mt-3 space-y-2">
+                  {demandSignals.slice(0, 3).map((item) => {
                     const size = formatSize(item.size_eu, item.size_us, item.size_cm);
                     return (
                       <Link
                         key={item.id}
                         href={`/looking-for?item=${item.id}`}
-                        className="block rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 transition-colors hover:border-teal-400/35 hover:bg-slate-900/70"
+                        className="block rounded-lg border border-white/[0.08] bg-slate-950/45 px-3 py-2 transition-colors hover:border-teal-400/25 hover:bg-slate-900/60"
                       >
-                        <p className="text-sm font-semibold text-gray-100">{item.brand} {item.model}</p>
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="truncate text-xs font-semibold text-gray-200">{item.brand} {item.model}</p>
+                        <p className="mt-0.5 truncate text-[11px] text-gray-500">
                           {size || 'Any size'}
                           {item.price_max_php ? ` · up to ${formatPrice(item.price_max_php)}` : ''}
                           {item.location ? ` · ${item.location}` : ''}
                         </p>
-                        <p className="mt-1 text-[11px] text-gray-600">{formatRelativeDate(item.created_at)}</p>
+                        <p className="mt-0.5 text-[10px] text-gray-600">{formatRelativeDate(item.created_at)}</p>
                       </Link>
                     );
                   })}
                 </div>
               ) : (
-                <div className="mt-4 rounded-xl border border-dashed border-white/[0.1] bg-slate-950/40 p-4 text-sm text-gray-500">
+                <div className="mt-3 rounded-lg border border-dashed border-white/[0.1] bg-slate-950/35 p-3 text-xs text-gray-500">
                   No one&apos;s looking for shoes yet.
                 </div>
               )}
 
-              <Link href="/looking-for" className="mt-4 block">
-                <Button variant="outline" size="sm" className="w-full">View Demand Board</Button>
+              <Link href="/looking-for" className="mt-3 inline-flex text-xs font-medium text-teal-300 hover:text-teal-200">
+                View demand board
               </Link>
-            </SurfaceCard>
+            </div>
           </aside>
         </div>
       )}

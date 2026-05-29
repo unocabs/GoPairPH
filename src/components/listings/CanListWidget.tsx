@@ -67,14 +67,28 @@ export function CanListWidget({ showCta = false, compact = false }: CanListWidge
     );
   }
 
+  if (compact) {
+    return (
+      <div className="rounded-xl border border-white/[0.08] bg-slate-950/35 p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">
+          Pampanga-first
+        </p>
+        <h2 className="mt-2 text-sm font-semibold text-gray-100">Nearby sellers are welcome.</h2>
+        <p className="mt-1 text-xs leading-5 text-gray-500">
+          List if Pampanga buyers can meet up, receive delivery, or arrange shipping with you.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <SurfaceCard glow className={cn('relative overflow-hidden p-5', compact && 'p-4')}>
+    <SurfaceCard glow className="relative overflow-hidden p-5">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_10%,rgba(20,184,166,0.13),transparent_36%)]" />
       <div className="relative">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
           Pampanga-first, not Pampanga-only
         </p>
-        <h2 className={cn('mt-2 font-bold text-gray-100', compact ? 'text-lg' : 'text-xl sm:text-2xl')}>
+        <h2 className="mt-2 text-xl font-bold text-gray-100 sm:text-2xl">
           Can I list on Go Pair PH?
         </h2>
         <p className="mt-2 text-sm leading-6 text-gray-400">
@@ -86,7 +100,7 @@ export function CanListWidget({ showCta = false, compact = false }: CanListWidge
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
               Where are you selling from?
             </p>
-            <div className={cn('mt-2 grid gap-2', compact ? 'grid-cols-1' : 'sm:grid-cols-3')}>
+            <div className="mt-2 grid gap-2 sm:grid-cols-3">
               {locationChoices.map((choice) => (
                 <button
                   key={choice.value}

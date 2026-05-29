@@ -19,7 +19,7 @@ interface ListingShareActionsProps {
 }
 
 export function ListingShareActions({ shoe, seller, isOwner = false, className = '' }: ListingShareActionsProps) {
-  const [copied, setCopied] = useState(false);
+  const [copiedMessage, setCopiedMessage] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [fbPromptOpen, setFbPromptOpen] = useState(false);
   const listingPath = getListingPath(shoe);
@@ -49,9 +49,7 @@ export function ListingShareActions({ shoe, seller, isOwner = false, className =
     openFbPrompt();
   }
 
-  async function handleCopy() {
-    const url = `${window.location.origin}${listingPath}`;
-    const textToCopy = buildListingCaption(shoe, url);
+  async function copyText(textToCopy: string, successMessage: string) {
     try {
       await navigator.clipboard.writeText(textToCopy);
     } catch {
@@ -62,17 +60,31 @@ export function ListingShareActions({ shoe, seller, isOwner = false, className =
       document.execCommand('copy');
       document.body.removeChild(ta);
     }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 3000);
+    setCopiedMessage(successMessage);
+    setTimeout(() => setCopiedMessage(null), 3000);
+  }
+
+  async function handleCopyCaption() {
+    const url = `${window.location.origin}${listingPath}`;
+    await copyText(
+      buildListingCaption(shoe, url),
+      isOwner ? 'Caption copied. Paste it on Facebook, Marketplace, or Messenger.' : 'Caption copied.'
+    );
+    openFbPrompt();
+  }
+
+  async function handleCopyLink() {
+    const url = `${window.location.origin}${listingPath}`;
+    await copyText(url, 'Listing link copied.');
     openFbPrompt();
   }
 
   return (
     <div className={`space-y-2 ${className}`}>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <button
           type="button"
-          onClick={handleCopy}
+          onClick={handleCopyCaption}
           className="inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-gray-700 bg-gray-800 px-2.5 py-2 text-xs font-medium text-gray-200 transition-colors hover:bg-gray-700 sm:px-3"
         >
           <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,13 +101,24 @@ export function ListingShareActions({ shoe, seller, isOwner = false, className =
           <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <span className="truncate">{isOwner ? 'Download image' : 'Share Post'}</span>
+          <span className="truncate">Share Post</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleCopyLink}
+          className="inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-gray-700 bg-gray-800 px-2.5 py-2 text-xs font-medium text-gray-200 transition-colors hover:bg-gray-700 sm:px-3"
+        >
+          <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 010 5.656l-1.414 1.414a4 4 0 01-5.657-5.657l1.414-1.414m7.657 3.657l1.414-1.414a4 4 0 00-5.657-5.657l-1.414 1.414" />
+          </svg>
+          <span className="truncate">Copy Link</span>
         </button>
       </div>
 
-      {copied && (
+      {copiedMessage && (
         <p className="rounded-lg border border-green-800 bg-green-950 px-3 py-2 text-xs text-green-300">
-          {isOwner ? 'Caption copied. Paste it on Facebook, Marketplace, or Messenger.' : 'Caption copied.'}
+          {copiedMessage}
         </p>
       )}
 

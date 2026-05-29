@@ -193,27 +193,11 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const isFeatured = !!shoe.featured_until && new Date(shoe.featured_until) > now;
   const slotInfo = isOwner ? await getSponsoredSlotInfo() : null;
   const listingName = formatListingName(shoe.brand, shoe.model);
-  const listingUrl = getAbsoluteListingUrl(SITE_URL, shoe);
   const justListed = isOwner && searchParams?.listed === '1';
   const signInHref = `/auth/sign-in?next=${encodeURIComponent(getListingPath(shoe))}`;
   const signedOutForSaleCtaLabel = shoe.shop_id
     ? 'Sign in to Place Order'
     : shoe.is_negotiable ? 'Sign in to Send Offer' : 'Sign in to Request to Buy';
-  const shareSizeLabel = shoe.shop_id
-    ? 'See listing for available sizes'
-    : formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm);
-  const sharePriceLabel = shoe.listing_type === 'for_sale' && shoe.price_php
-    ? `${formatPrice(shoe.price_php)}${shoe.is_negotiable ? ' negotiable' : ''}`
-    : 'Free donation';
-  const shareLocationLabel = shop?.location ?? seller?.location ?? 'Pampanga';
-  const suggestedCaption = [
-    `Selling my ${listingName} on Go Pair PH.`,
-    `Size: ${shareSizeLabel || 'See listing'}`,
-    `Condition: ${CONDITIONS[shoe.condition]}`,
-    `Price: ${sharePriceLabel}`,
-    `Location: ${shareLocationLabel}`,
-    `Full details and photos: ${listingUrl}`,
-  ].join('\n');
   const productJsonLd = shoe.listing_type === 'for_sale' && shoe.price_php && productImageUrl ? {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -267,51 +251,33 @@ export default async function ListingDetailPage({ params, searchParams }: { para
 
       {justListed && (
         <SurfaceCard glow className="mb-6 border-teal-500/25 bg-teal-500/[0.05] p-4 sm:p-5">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.5fr)] lg:items-center">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">Your Share Kit is ready</p>
-              <h2 className="mt-2 text-xl font-bold text-gray-100">Post this to Facebook while the listing is fresh.</h2>
-              <p className="mt-2 text-sm leading-6 text-gray-400">
-                Copy the caption, download the share image, then paste both into Facebook Marketplace,
-                running groups, or Messenger. The Go Pair PH page keeps the price, size, condition,
-                mileage, photos, and seller details in one clean place.
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">Your listing is live</p>
+              <h2 className="mt-2 text-xl font-bold text-gray-100">Share it where runners already are.</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
+                Copy the caption, create the share image, or send the listing link to Facebook groups,
+                Marketplace, Messenger, and running chats.
               </p>
             </div>
-            <div className="rounded-xl border border-white/[0.08] bg-slate-950/55 p-3">
+            <div className="shrink-0 rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 lg:w-[460px]">
               <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner />
             </div>
           </div>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          <div className="mt-4 grid gap-2 text-xs sm:grid-cols-3">
             {[
-              ['1', 'Copy caption', 'Use the ready-made text below for Facebook or Messenger.'],
-              ['2', 'Download image', 'Tap Download image and save the Go Pair PH image.'],
-              ['3', 'Post anywhere', 'Upload the image, paste the caption, and publish.'],
-            ].map(([step, title, body]) => (
-              <div key={step} className="rounded-xl border border-white/[0.08] bg-slate-950/45 p-3">
-                <div className="flex items-start gap-3">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-500/15 text-xs font-bold text-teal-300 ring-1 ring-teal-400/25">
-                    {step}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-100">{title}</p>
-                    <p className="mt-1 text-xs leading-5 text-gray-500">{body}</p>
-                  </div>
-                </div>
+              ['1', 'Copy FB caption'],
+              ['2', 'Share Post image'],
+              ['3', 'Paste anywhere'],
+            ].map(([step, title]) => (
+              <div key={step} className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-slate-950/45 px-3 py-2 text-gray-400">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-500/15 text-[11px] font-bold text-teal-300 ring-1 ring-teal-400/25">
+                  {step}
+                </span>
+                <span className="font-medium text-gray-300">{title}</span>
               </div>
             ))}
-          </div>
-
-          <div className="mt-4 rounded-xl border border-white/[0.08] bg-slate-950/55 p-3">
-            <label htmlFor="suggested-share-caption" className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
-              Suggested Facebook caption
-            </label>
-            <textarea
-              id="suggested-share-caption"
-              readOnly
-              value={suggestedCaption}
-              className="mt-2 min-h-[150px] w-full resize-none rounded-lg border border-gray-800 bg-slate-950 px-3 py-2 text-sm leading-6 text-gray-300 outline-none"
-            />
           </div>
         </SurfaceCard>
       )}
