@@ -87,6 +87,9 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
   const showBuy = canAct && shoe.listing_type === 'for_sale' && !!shoe.price_php && !shoe.shop_id;
   const showDonate = canAct && shoe.listing_type === 'donate';
   const showPlaceOrder = canAct && shoe.listing_type === 'for_sale' && !!shoe.shop_id && shoe.has_stock;
+  const hasTopPhoto = shoe.shoe_images?.some(img => img.view_type === 'top') ?? false;
+  const hasSolePhoto = shoe.shoe_images?.some(img => img.view_type === 'sole') ?? false;
+  const needsPhotoHelp = shoe.status === 'active' && (!hasTopPhoto || !hasSolePhoto);
 
   return (
     <div className={cn(
@@ -212,16 +215,14 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
 
           <p className="mt-1.5 text-xs text-gray-600" style={themedMutedStyle}>{formatRelativeDate(shoe.created_at)}</p>
 
-          {isOwner && viewSummary && (
-            <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-slate-800/70 border border-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-gray-300" title="Total views · last 7 days (only you can see this)">
+          {isOwner && shoe.status === 'active' && viewSummary && viewSummary.total > 0 && (
+            <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-slate-800/70 border border-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-gray-300" title="Only you can see this">
               <svg className="h-3 w-3 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              {viewSummary.total} view{viewSummary.total === 1 ? '' : 's'}
-              {viewSummary.last7d > 0 && (
-                <span className="text-teal-300"> · {viewSummary.last7d} this week</span>
-              )}
+              Getting seen
+              {viewSummary.last7d > 0 && <span className="text-teal-300"> · active this week</span>}
             </p>
           )}
         </div>
@@ -274,6 +275,25 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
       {/* Action buttons — outside Link to avoid nested interactive elements */}
       <div className="mt-auto space-y-2 px-3.5 pb-3.5">
         {isOwner ? (
+          shoe.status !== 'active' ? (
+            <div className="rounded-lg border border-white/[0.08] bg-slate-950/55 px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">
+              Closed
+            </div>
+          ) : offerCount > 0 ? (
+            <Link
+              href="/profile?tab=purchases"
+              className="flex w-full items-center justify-center rounded-lg border border-sky-700 bg-sky-950/70 px-3 py-2 text-sm font-semibold text-sky-200 transition-colors hover:border-sky-500 hover:bg-sky-900/70"
+            >
+              Review request
+            </Link>
+          ) : needsPhotoHelp ? (
+            <Link
+              href={`/listings/${shoe.id}/edit#photos`}
+              className="flex w-full items-center justify-center rounded-lg border border-amber-700 bg-amber-950/60 px-3 py-2 text-sm font-semibold text-amber-200 transition-colors hover:border-amber-500 hover:bg-amber-900/60"
+            >
+              Improve photos
+            </Link>
+          ) : (
             <button
               type="button"
               onClick={() => setSharePostOpen(true)}
@@ -283,8 +303,9 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
               <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
               </svg>
-              Share Post
+              {viewSummary && viewSummary.total > 0 ? 'Share again' : 'Share Post'}
             </button>
+          )
         ) : submitted ? (
             <div className="rounded-lg border border-teal-800 bg-teal-950 px-3 py-2 text-xs text-teal-400 text-center" style={theme ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.accent } : undefined}>
               <p>{showDonate ? 'Request sent. Track it in Sent Offers.' : shoe.is_negotiable ? 'Offer sent. Track it in Sent Offers.' : 'Request sent. Track it in Sent Offers.'}</p>

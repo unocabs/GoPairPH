@@ -89,10 +89,23 @@ export function OwnProfile({
   ];
   const listingViewSummaries = Object.values(viewCounts ?? {});
   const totalListingViews = listingViewSummaries.reduce((sum, item) => sum + item.total, 0);
-  const viewsThisWeek = listingViewSummaries.reduce((sum, item) => sum + item.last7d, 0);
-  const activeListings = shoes.filter((shoe) => shoe.status === 'active').length;
-  const shareTarget = shoes.find((shoe) => shoe.status === 'active' && (viewCounts?.[shoe.id]?.total ?? 0) > 0)
-    ?? shoes.find((shoe) => shoe.status === 'active');
+  const activeShoes = shoes.filter((shoe) => shoe.status === 'active');
+  const closedShoes = shoes.filter((shoe) => shoe.status !== 'active');
+  const orderedShoes = [...activeShoes, ...closedShoes];
+  const activeListings = activeShoes.length;
+  const requestCountsByListing = purchaseRequests.reduce<Record<string, number>>((counts, request) => {
+    counts[request.listing_id] = (counts[request.listing_id] ?? 0) + 1;
+    return counts;
+  }, {});
+  const photoReadyCount = activeShoes.filter((shoe) => {
+    const images = shoe.shoe_images ?? [];
+    return images.some(image => image.view_type === 'top') && images.some(image => image.view_type === 'sole');
+  }).length;
+  const shareReadyCount = activeShoes.filter((shoe) => {
+    const images = shoe.shoe_images ?? [];
+    return images.some(image => image.view_type === 'top') && images.some(image => image.view_type === 'sole');
+  }).length;
+  const shareTarget = activeShoes.find((shoe) => (viewCounts?.[shoe.id]?.total ?? 0) > 0) ?? activeShoes[0];
 
   return (
     <div>
@@ -152,12 +165,12 @@ export function OwnProfile({
           <SurfaceCard className="mb-4 border-teal-500/20 bg-teal-500/[0.04] p-4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex gap-3">
-                <span className="text-xl leading-none mt-0.5" aria-hidden>👟</span>
                 <div>
-                  <p className="text-sm font-semibold text-gray-100">Your pair is being seen.</p>
+                  <p className="text-sm font-semibold text-gray-100">
+                    {activeListings > 0 ? 'Your active listings are ready to share.' : 'Your closed listings are saved here.'}
+                  </p>
                   <p className="mt-1 text-sm text-gray-300 leading-relaxed">
-                    Keep one clean listing link for each pair, then share it on Facebook Marketplace,
-                    groups, Messenger, or anywhere else while managing everything here.
+                    Active pairs stay first. Closed pairs are kept lower so your next sale stays easy to manage.
                   </p>
                 </div>
               </div>
@@ -165,11 +178,13 @@ export function OwnProfile({
                 <Button size="sm" className="w-full lg:w-auto">+ List a Shoe</Button>
               </Link>
             </div>
-            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+
+            <div className="mt-4 grid gap-2 sm:grid-cols-4">
               {[
-                { label: 'Active listings', value: activeListings.toLocaleString() },
-                { label: 'Total listing views', value: totalListingViews.toLocaleString() },
-                { label: 'Views this week', value: viewsThisWeek.toLocaleString() },
+                { label: 'Active', value: activeListings.toLocaleString() },
+                { label: 'Photo-ready', value: photoReadyCount.toLocaleString() },
+                { label: 'Buyer requests', value: purchaseRequests.length.toLocaleString() },
+                { label: 'Closed', value: closedShoes.length.toLocaleString() },
               ].map((stat) => (
                 <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-slate-950/55 px-4 py-3">
                   <p className="text-lg font-bold text-gray-100">{stat.value}</p>
@@ -177,6 +192,34 @@ export function OwnProfile({
                 </div>
               ))}
             </div>
+
+            <div className="mt-4 grid gap-2 text-xs sm:grid-cols-4">
+              {[
+                { label: 'Active listing live', done: activeListings > 0 },
+                { label: 'Top + sole photos', done: activeListings === 0 || photoReadyCount === activeListings },
+                { label: 'Contact ready', done: !!profile.fb_username },
+                { label: 'Ready to share', done: activeListings > 0 && shareReadyCount > 0 },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className={[
+                    'flex items-center gap-2 rounded-lg border px-3 py-2',
+                    item.done
+                      ? 'border-teal-400/20 bg-teal-400/[0.06] text-teal-100'
+                      : 'border-white/[0.08] bg-slate-950/45 text-gray-400',
+                  ].join(' ')}
+                >
+                  <span className={[
+                    'flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
+                    item.done ? 'bg-teal-400/15 text-teal-200' : 'bg-gray-800 text-gray-500',
+                  ].join(' ')}>
+                    {item.done ? '✓' : '•'}
+                  </span>
+                  <span className="font-medium">{item.label}</span>
+                </div>
+              ))}
+            </div>
+
             {purchaseRequests.length > 0 && (
               <p className="mt-3 text-xs font-medium text-sky-300">
                 {purchaseRequests.length} active buyer request{purchaseRequests.length !== 1 ? 's' : ''} waiting for your response.
@@ -196,10 +239,11 @@ export function OwnProfile({
             )}
           </SurfaceCard>
           <ListingGrid
-            shoes={shoes}
+            shoes={orderedShoes}
             currentProfileId={profile.id}
             currentProfileIsAdmin={profile.is_admin}
             currentProfileFbUsername={profile.fb_username}
+            offerCounts={requestCountsByListing}
             viewCounts={viewCounts}
             emptyMessage="You haven't listed any shoes yet."
           />
