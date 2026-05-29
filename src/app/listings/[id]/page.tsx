@@ -694,16 +694,13 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             <div className="mt-5 space-y-4">
               {shoe.status === 'active' && viewSummary && viewSummary.total > 0 && (
                 <div className="rounded-xl border border-white/[0.08] bg-slate-950/45 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">Seller momentum</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">Find more offers</p>
                   <h3 className="mt-2 text-sm font-semibold text-gray-100">Your listing is getting seen.</h3>
                   <p className="mt-1 text-xs leading-5 text-gray-400">
                     Fresh shares can bring it back to Facebook groups, Marketplace, Messenger, and running chats.
                   </p>
                   <div className="mt-3 rounded-lg border border-teal-400/20 bg-teal-400/[0.06] px-3 py-2">
                     <p className="text-xs font-semibold text-teal-100">Share again when you want another push.</p>
-                    <p className="mt-1 text-xs leading-5 text-gray-400">
-                      Keep the exact view counts private for now. The important thing is keeping the listing moving.
-                    </p>
                   </div>
                   <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner className="mt-3" />
                 </div>
