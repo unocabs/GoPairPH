@@ -165,7 +165,7 @@ async function getPurchaseContext(shoeId: string, profileId: string | null, isOw
   return null;
 }
 
-export default async function ListingDetailPage({ params, searchParams }: { params: { id: string }; searchParams?: { listed?: string; updated?: string } }) {
+export default async function ListingDetailPage({ params, searchParams }: { params: { id: string }; searchParams?: { listed?: string; updated?: string; closed?: string } }) {
   const [shoe, currentProfile] = await Promise.all([
     getShoeByRouteParam(params.id),
     getCurrentProfile(),
@@ -199,6 +199,9 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const listingName = formatListingName(shoe.brand, shoe.model);
   const justListed = isOwner && searchParams?.listed === '1';
   const justUpdated = isOwner && searchParams?.updated === '1';
+  const justClosedStatus = isOwner && (searchParams?.closed === 'sold' || searchParams?.closed === 'donated')
+    ? searchParams.closed
+    : null;
   const signInHref = `/auth/sign-in?next=${encodeURIComponent(getListingPath(shoe))}`;
   const signedOutForSaleCtaLabel = shoe.shop_id
     ? 'Sign in to Place Order'
@@ -299,6 +302,29 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             </div>
             <div className="shrink-0 rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 lg:w-[460px]">
               <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner />
+            </div>
+          </div>
+        </SurfaceCard>
+      )}
+
+      {justClosedStatus && !justListed && !justUpdated && (
+        <SurfaceCard glow className="mb-6 border-teal-500/25 bg-teal-500/[0.05] p-4 sm:p-5">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-500/15 text-sm font-bold text-teal-200 ring-1 ring-teal-400/25">
+              ✓
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
+                {justClosedStatus === 'sold' ? 'Listing marked sold' : 'Listing marked donated'}
+              </p>
+              <h2 className="mt-2 text-xl font-bold text-gray-100">
+                {justClosedStatus === 'sold'
+                  ? 'Nice, your running shoes found their next runner.'
+                  : 'Nice, your pair found a new runner.'}
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
+                This listing is now closed, so buyers will no longer see it as available in the marketplace.
+              </p>
             </div>
           </div>
         </SurfaceCard>

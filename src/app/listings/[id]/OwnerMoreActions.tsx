@@ -18,10 +18,11 @@ export function OwnerMoreActions({ shoeId, listingType, status }: OwnerMoreActio
   const router = useRouter();
   const canMarkDone = status === 'active' && (listingType === 'for_sale' || listingType === 'donate');
   const doneStatus = listingType === 'donate' ? 'donated' : 'sold';
-  const doneLabel = listingType === 'donate' ? 'Mark as Donated' : 'Mark as Sold';
+  const doneLabel = listingType === 'donate' ? 'Mark as Donated' : 'Mark Sold Outside Go Pair PH';
+  const doneHint = listingType === 'donate' ? 'Pair has been claimed' : 'Pair found its next runner';
   const confirmCopy = listingType === 'donate'
-    ? 'Use this if the pair has already been given away. This will remove it from the active marketplace.'
-    : 'Use this if the pair was sold outside Go Pair PH, such as on Facebook, Messenger, Marketplace, or in person. This will remove it from the active marketplace.';
+    ? 'This closes the listing and stops new donation requests. Nice, your pair found a new runner.'
+    : 'This closes the listing and stops new buyer requests. Nice, your running shoes found their next runner.';
 
   async function handleMarkDone() {
     if (!confirm(`${doneLabel}?\n\n${confirmCopy}`)) return;
@@ -46,7 +47,7 @@ export function OwnerMoreActions({ shoeId, listingType, status }: OwnerMoreActio
       .eq('listing_id', shoeId)
       .in('status', ['pending', 'accepted']);
 
-    router.push('/profile?tab=sales');
+    router.push(`/listings/${shoeId}?closed=${doneStatus}`);
     router.refresh();
   }
 
@@ -64,7 +65,7 @@ export function OwnerMoreActions({ shoeId, listingType, status }: OwnerMoreActio
             className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-3 text-left text-base font-medium text-gray-200 transition-colors hover:bg-gray-900 disabled:opacity-50 sm:py-2 sm:text-sm"
           >
             <span>{saving ? 'Saving...' : doneLabel}</span>
-            <span className="text-xs text-gray-500">{listingType === 'donate' ? 'Given away' : 'Outside sale'}</span>
+            <span className="text-xs text-gray-500">{doneHint}</span>
           </button>
         )}
         <div className="my-2 h-px bg-gray-800" />

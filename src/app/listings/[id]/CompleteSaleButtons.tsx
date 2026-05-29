@@ -14,11 +14,12 @@ export function CompleteSaleButtons({ requestId }: CompleteSaleButtonsProps) {
   const router = useRouter();
 
   async function handleComplete() {
-    if (!confirm('Mark this sale as complete? The listing will become Sold and cannot be relisted.')) return;
+    if (!confirm('Complete this sale?\n\nThis marks the listing as sold. Nice, your running shoes found their next runner.')) return;
     setLoading(true);
     setError(null);
     const { error: err } = await createClient().rpc('complete_purchase', { p_request_id: requestId });
     if (err) { setError(err.message); setLoading(false); return; }
+    router.push(`${window.location.pathname}?closed=sold`);
     router.refresh();
   }
 
