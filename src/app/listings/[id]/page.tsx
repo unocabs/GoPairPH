@@ -202,6 +202,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const justClosedStatus = isOwner && (searchParams?.closed === 'sold' || searchParams?.closed === 'donated')
     ? searchParams.closed
     : null;
+  const showUnavailablePanel = !isOwner && (shoe.status === 'sold' || shoe.status === 'donated' || shoe.status === 'archived');
   const signInHref = `/auth/sign-in?next=${encodeURIComponent(getListingPath(shoe))}`;
   const signedOutForSaleCtaLabel = shoe.shop_id
     ? 'Sign in to Place Order'
@@ -388,6 +389,35 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 reasons={shoe.quality_flag_reasons}
                 note={shoe.quality_flag_note}
               />
+            </div>
+          )}
+
+          {showUnavailablePanel && (
+            <div className="mt-4 rounded-xl border border-white/[0.08] bg-slate-950/55 p-4">
+              <p className="text-sm font-semibold text-gray-100">
+                {shoe.status === 'sold'
+                  ? 'This pair has already found its next runner.'
+                  : shoe.status === 'donated'
+                    ? 'This donated pair has already been claimed.'
+                    : 'This listing is no longer available.'}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-gray-400">
+                You can keep browsing active running shoes or post what you&apos;re looking for so sellers can find you.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <Link
+                  href="/browse"
+                  className="inline-flex items-center justify-center rounded-lg bg-teal-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
+                >
+                  Browse active pairs
+                </Link>
+                <Link
+                  href="/looking-for/new"
+                  className="inline-flex items-center justify-center rounded-lg border border-white/[0.1] bg-slate-950/45 px-3 py-2 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-900"
+                >
+                  Post Looking For
+                </Link>
+              </div>
             </div>
           )}
 
