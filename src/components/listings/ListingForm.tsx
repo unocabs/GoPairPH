@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { PhotoUploader, type UploadedPhoto } from './PhotoUploader';
 import { VariantsEditor, type VariantRow } from './VariantsEditor';
-import { getListingPath } from '@/lib/utils';
+import { formatPrice, formatSize, getListingPath } from '@/lib/utils';
 import type { Shop } from '@/types';
 
 const BRAND_OPTIONS = BRANDS.map(b => ({ value: b, label: b }));
@@ -29,6 +29,12 @@ const LISTING_TYPE_OPTIONS = [
   { value: 'donate', label: 'Donate (Free)' },
 ];
 const LISTING_DRAFT_KEY = 'gopairph:new-listing-draft:v1';
+
+function toOptionalNumber(value: unknown): number | null {
+  if (value === '' || value == null) return null;
+  const next = Number(value);
+  return Number.isFinite(next) ? next : null;
+}
 
 interface ListingFormProps {
   profileId?: string | null;
@@ -91,11 +97,43 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
 
   const listingType = watch('listing_type');
   const condition = watch('condition');
+  const brand = watch('brand') ?? '';
+  const model = watch('model') ?? '';
+  const color = watch('color') ?? '';
+  const pricePhp = toOptionalNumber(watch('price_php'));
+  const sizeEu = toOptionalNumber(watch('size_eu'));
+  const sizeUs = toOptionalNumber(watch('size_us'));
+  const sizeCm = toOptionalNumber(watch('size_cm'));
   const isNew = condition === 'new';
   const hasTopPhoto = photos.some(p => p.viewType === 'top');
   const hasSolePhoto = photos.some(p => p.viewType === 'sole');
   const hasExtraPhoto = photos.some(p => p.viewType !== 'top' && p.viewType !== 'sole');
   const canPublishPhotos = hasTopPhoto && hasSolePhoto;
+  const hasCoreDetails = !!brand && !!model && !!color && !!condition;
+  const validVariants = variants.filter(v => typeof v.size_eu === 'number' && typeof v.quantity === 'number' && v.quantity >= 1);
+  const hasSize = isShop ? validVariants.length > 0 : !!(sizeEu || sizeUs || sizeCm);
+  const hasPrice = listingType === 'donate' || !!pricePhp;
+  const previewTitle = brand || model
+    ? `${brand}${brand && model ? ' ' : ''}${model}`.trim()
+    : 'Your running shoe listing';
+  const previewSize = isShop
+    ? validVariants.length > 1
+      ? `EU ${validVariants[0].size_eu} + ${validVariants.length - 1} more`
+      : validVariants[0]?.size_eu
+        ? `EU ${validVariants[0].size_eu}`
+        : 'Add sizes'
+    : formatSize(sizeEu, sizeUs, sizeCm) || 'Add size';
+  const previewPrice = listingType === 'donate'
+    ? 'Donation'
+    : pricePhp
+      ? formatPrice(pricePhp)
+      : 'Add price';
+  const readinessItems = [
+    { label: 'Details', done: hasCoreDetails },
+    { label: 'Size', done: hasSize },
+    { label: 'Price', done: hasPrice },
+    { label: 'Photos', done: false },
+  ];
   const strengthItems = [
     { label: 'Shoe details added', done: !!details },
     { label: 'Top photo uploaded', done: hasTopPhoto },
@@ -280,6 +318,45 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
       {/* Step 1 */}
       {step === 1 && (
         <form onSubmit={handleSubmit(onDetailsSubmit)} className="space-y-5">
+          <div className="rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 sm:p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-300">Live preview</p>
+                <h2 className="mt-1 truncate text-base font-bold text-gray-100">{previewTitle}</h2>
+                <p className="mt-0.5 truncate text-xs text-gray-500">{color || 'Add colorway'}</p>
+              </div>
+              <div className="rounded-lg bg-teal-400/10 px-3 py-2 sm:shrink-0 sm:text-right">
+                <p className="text-[11px] uppercase tracking-[0.12em] text-teal-200">Price</p>
+                <p className="text-sm font-bold text-teal-100">{previewPrice}</p>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full border border-white/[0.08] bg-slate-900/70 px-2.5 py-1 text-gray-300">
+                {CONDITIONS[condition] ?? 'Condition'}
+              </span>
+              <span className="rounded-full border border-white/[0.08] bg-slate-900/70 px-2.5 py-1 text-gray-300">
+                {previewSize}
+              </span>
+              <span className="rounded-full border border-white/[0.08] bg-slate-900/70 px-2.5 py-1 text-gray-300">
+                {listingType === 'donate' ? 'Donate' : 'For Sale'}
+              </span>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              {readinessItems.map((item) => (
+                <div
+                  key={item.label}
+                  className={`rounded-lg border px-2 py-1.5 text-center text-[11px] font-medium ${
+                    item.done
+                      ? 'border-teal-400/25 bg-teal-400/10 text-teal-100'
+                      : 'border-white/[0.08] bg-slate-950/45 text-gray-500'
+                  }`}
+                >
+                  {item.label}
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="rounded-xl border border-teal-500/20 bg-teal-500/[0.04] p-4">
             <p className="text-sm font-semibold text-gray-100">Step 1: add the details buyers need first.</p>
             <p className="mt-1 text-xs leading-5 text-gray-500">
