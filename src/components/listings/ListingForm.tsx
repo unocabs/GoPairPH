@@ -85,6 +85,9 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
   const listingType = watch('listing_type');
   const condition = watch('condition');
   const isNew = condition === 'new';
+  const hasTopPhoto = photos.some(p => p.viewType === 'top');
+  const hasSolePhoto = photos.some(p => p.viewType === 'sole');
+  const canPublishPhotos = hasTopPhoto && hasSolePhoto;
 
   function handleSizeEuChange(val: string) {
     const num = parseFloat(val);
@@ -257,14 +260,21 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
       {/* Step 1 */}
       {step === 1 && (
         <form onSubmit={handleSubmit(onDetailsSubmit)} className="space-y-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Select label="Brand" required options={BRAND_OPTIONS} placeholder="Select brand" error={errors.brand?.message} {...register('brand')} />
-            <Input label="Model" placeholder="e.g. Pegasus 40" required error={errors.model?.message} {...register('model')} />
+          <div className="rounded-xl border border-teal-500/20 bg-teal-500/[0.04] p-4">
+            <p className="text-sm font-semibold text-gray-100">Step 1: add the details buyers need first.</p>
+            <p className="mt-1 text-xs leading-5 text-gray-500">
+              Keep it simple: brand, model, size, condition, price, then photos. Extra notes help, but they should not slow you down.
+            </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Color" placeholder="e.g. Black/White" required error={errors.color?.message} {...register('color')} />
-            <Select label="Condition" required options={CONDITION_OPTIONS} error={errors.condition?.message} {...register('condition')} />
+            <Select label="Brand" required options={BRAND_OPTIONS} placeholder="Select brand" error={errors.brand?.message} {...register('brand')} />
+            <Input label="Model" placeholder="e.g. Pegasus 40" required hint="Use the box label or what buyers would search." error={errors.model?.message} {...register('model')} />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input label="Colorway" placeholder="e.g. Black/White" required hint="A simple color is enough if you do not know the official colorway." error={errors.color?.message} {...register('color')} />
+            <Select label="Condition" required options={CONDITION_OPTIONS} hint="Pick the closest match. Photos will do the rest." error={errors.condition?.message} {...register('condition')} />
           </div>
 
           {isNew ? (
@@ -274,7 +284,7 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
             </div>
           ) : (
             <Input
-              label="Mileage (km)"
+              label="Mileage (km, optional)"
               type="number"
               min={0}
               placeholder="e.g. 350"
@@ -288,7 +298,7 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
             <div>
               <p className="text-sm font-medium text-gray-300 mb-1">
                 Size <span className="text-teal-400">*</span>
-                <span className="ml-1 text-xs text-gray-500 font-normal">(fill any one — the others auto-fill)</span>
+                <span className="ml-1 text-xs text-gray-500 font-normal">(fill one; EU, US, or CM)</span>
               </p>
               <div className="grid grid-cols-3 gap-3">
                 <Input label="EU" type="number" step={0.5} min={35} max={48} error={errors.size_eu?.message}
@@ -346,11 +356,11 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
           )}
 
           <Button type="submit" size="lg" loading={submitting} className="w-full">
-            Continue to Photos →
+            {isGuest ? 'Save details and sign in →' : 'Continue to Photos →'}
           </Button>
           {isGuest && (
             <p className="-mt-2 text-center text-xs leading-5 text-gray-500">
-              You can start now. We&apos;ll ask you to sign in before photo upload so the listing saves to your profile.
+              Your details stay in this browser. After sign-in, you&apos;ll continue with photo upload.
             </p>
           )}
         </form>
@@ -359,9 +369,50 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
       {/* Step 2 */}
       {step === 2 && shoeId && (
         <div className="space-y-6">
-          <PhotoUploader shoeId={shoeId} photos={photos} onChange={setPhotos} />
-          <Button onClick={onPhotosSubmit} size="lg" loading={submitting} className="w-full">
-            Publish Listing
+          <div className="rounded-xl border border-teal-500/20 bg-teal-500/[0.04] p-4">
+            <p className="text-sm font-semibold text-gray-100">Step 2: upload the photos buyers trust most.</p>
+            <p className="mt-1 text-xs leading-5 text-gray-500">
+              Top and sole photos are required. Use bright light, avoid heavy filters, and add extra angles if you want buyers to decide faster.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+              {[
+                ['Top photo', hasTopPhoto],
+                ['Sole photo', hasSolePhoto],
+              ].map(([label, done]) => (
+                <div
+                  key={label as string}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${
+                    done
+                      ? 'border-teal-400/25 bg-teal-400/10 text-teal-200'
+                      : 'border-white/[0.08] bg-slate-950/45 text-gray-500'
+                  }`}
+                >
+                  <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${
+                    done ? 'bg-teal-400 text-slate-950' : 'bg-gray-800 text-gray-500'
+                  }`}>
+                    {done ? '✓' : '•'}
+                  </span>
+                  <span className="font-medium">{label as string}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <PhotoUploader
+            shoeId={shoeId}
+            photos={photos}
+            onChange={(nextPhotos) => {
+              setPhotos(nextPhotos);
+              setError(null);
+            }}
+          />
+          <Button
+            onClick={onPhotosSubmit}
+            size="lg"
+            loading={submitting}
+            disabled={!canPublishPhotos}
+            className="w-full"
+          >
+            {canPublishPhotos ? 'Publish Listing' : 'Add top + sole photos to publish'}
           </Button>
         </div>
       )}

@@ -12,10 +12,11 @@ import { PurchaseHistoryCard } from '@/components/purchases/PurchaseHistoryCard'
 import { ManualSaleHistoryCard } from '@/components/purchases/ManualSaleHistoryCard';
 import { SentOfferCard } from '@/components/purchases/SentOfferCard';
 import { RequestVerificationButton } from '@/components/profile/RequestVerificationButton';
+import { SavedSearchesPanel } from '@/components/profile/SavedSearchesPanel';
 import { formatPrice, formatListingName } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest } from '@/types';
+import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest, SavedSearch } from '@/types';
 import Link from 'next/link';
 
 const SharePostModal = dynamic(
@@ -23,12 +24,13 @@ const SharePostModal = dynamic(
   { ssr: false },
 );
 
-type ProfileTab = 'listings' | 'purchases' | 'offers' | 'wishlist' | 'saved' | 'sales';
+type ProfileTab = 'listings' | 'purchases' | 'offers' | 'wishlist' | 'saved' | 'searches' | 'sales';
 
 interface OwnProfileProps {
   profile: Profile;
   shoes: Shoe[];
   wishlist: WishlistItem[];
+  savedSearches: SavedSearch[];
   savedListings: Shoe[];
   purchaseRequests: PurchaseRequest[];
   sentOffers: PurchaseRequest[];
@@ -44,6 +46,7 @@ export function OwnProfile({
   profile: initialProfile,
   shoes,
   wishlist: initialWishlist,
+  savedSearches,
   savedListings: initialSavedListings,
   purchaseRequests: initialPurchaseRequests,
   sentOffers: initialSentOffers,
@@ -80,6 +83,7 @@ export function OwnProfile({
     { key: 'purchases', label: 'Purchase Requests', count: purchaseRequests.length, badgeTone: 'attention' },
     { key: 'offers', label: 'Sent Offers', count: sentOffers.length, badgeTone: 'attention' },
     { key: 'saved', label: 'Saved Pairs', count: savedListings.length },
+    { key: 'searches', label: 'Saved Searches', count: savedSearches.length },
     { key: 'wishlist', label: 'Looking For', count: wishlist.length },
     { key: 'sales', label: 'Purchase History', count: purchaseHistory.length + manualSaleListings.length },
   ];
@@ -293,6 +297,10 @@ export function OwnProfile({
             />
           )}
         </div>
+      )}
+
+      {tab === 'searches' && (
+        <SavedSearchesPanel initialSearches={savedSearches} />
       )}
 
       {tab === 'sales' && (

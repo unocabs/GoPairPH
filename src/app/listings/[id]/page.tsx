@@ -24,6 +24,7 @@ import { OwnerMoreActions } from './OwnerMoreActions';
 import { BuyButton } from '@/components/purchases/BuyButton';
 import { DonateRequestButton } from '@/components/purchases/DonateRequestButton';
 import { ContactSellerButtons } from '@/components/listings/ContactSellerButtons';
+import { ListingShareActions } from '@/components/listings/ListingShareActions';
 import { SaveListingButton } from '@/components/listings/SaveListingButton';
 import { ListingViewTracker } from '@/components/listings/ListingViewTracker';
 import { PromoteListingButton } from '@/components/listings/PromoteListingButton';
@@ -268,26 +269,42 @@ export default async function ListingDetailPage({ params, searchParams }: { para
         <SurfaceCard glow className="mb-6 border-teal-500/25 bg-teal-500/[0.05] p-4 sm:p-5">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.5fr)] lg:items-center">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">Your listing is live</p>
-              <h2 className="mt-2 text-xl font-bold text-gray-100">Share it anywhere buyers already are.</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">Your Share Kit is ready</p>
+              <h2 className="mt-2 text-xl font-bold text-gray-100">Post this to Facebook while the listing is fresh.</h2>
               <p className="mt-2 text-sm leading-6 text-gray-400">
-                Copy the Go Pair PH link for Facebook groups, Marketplace, Messenger, or your shop page.
-                This clean page keeps the price, size, condition, mileage, photos, and seller details in one place.
+                Copy the caption, download the share image, then paste both into Facebook Marketplace,
+                running groups, or Messenger. The Go Pair PH page keeps the price, size, condition,
+                mileage, photos, and seller details in one clean place.
               </p>
             </div>
             <div className="rounded-xl border border-white/[0.08] bg-slate-950/55 p-3">
-              <ContactSellerButtons
-                fbUsername={null}
-                listingId={shoe.id}
-                isOwner
-                shoe={shoe}
-                seller={seller ?? null}
-              />
+              <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner />
             </div>
           </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            {[
+              ['1', 'Copy caption', 'Use the ready-made text below for Facebook or Messenger.'],
+              ['2', 'Download image', 'Tap Download image and save the Go Pair PH image.'],
+              ['3', 'Post anywhere', 'Upload the image, paste the caption, and publish.'],
+            ].map(([step, title, body]) => (
+              <div key={step} className="rounded-xl border border-white/[0.08] bg-slate-950/45 p-3">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-500/15 text-xs font-bold text-teal-300 ring-1 ring-teal-400/25">
+                    {step}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-100">{title}</p>
+                    <p className="mt-1 text-xs leading-5 text-gray-500">{body}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
           <div className="mt-4 rounded-xl border border-white/[0.08] bg-slate-950/55 p-3">
             <label htmlFor="suggested-share-caption" className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
-              Suggested FB caption
+              Suggested Facebook caption
             </label>
             <textarea
               id="suggested-share-caption"
@@ -441,13 +458,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 </Link>
               </div>
               <div className="mt-3 space-y-2">
-                <ContactSellerButtons
-                  fbUsername={null}
-                  listingId={shoe.id}
-                  isOwner={isOwner}
-                  shoe={shoe}
-                  seller={seller ?? null}
-                />
+                <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner={isOwner} />
                 {!isOwner && shop.fb_page_url && (
                   <a
                     href={shop.fb_page_url}
@@ -486,13 +497,10 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                   View Profile
                 </Link>
               </div>
-              <ContactSellerButtons
-                fbUsername={!isOwner ? seller.fb_username : null}
-                listingId={shoe.id}
-                isOwner={isOwner}
-                shoe={shoe}
-                seller={seller}
-              />
+              <ListingShareActions shoe={shoe} seller={seller} isOwner={isOwner} className="mt-3" />
+              {!isOwner && (
+                <ContactSellerButtons fbUsername={seller.fb_username} />
+              )}
               {!isOwner && !seller.fb_username && (
                 <div className="mt-3 rounded-lg border border-white/[0.08] bg-slate-950/45 px-3 py-2 text-xs leading-5 text-gray-400">
                   This seller has not added a Messenger button yet. You can still send an offer through Go Pair PH, and they can reply from their profile.
@@ -623,10 +631,10 @@ export default async function ListingDetailPage({ params, searchParams }: { para
 
           {/* Owner actions */}
           {isOwner && (
-            <div className="mt-4 flex flex-wrap items-start gap-2">
+            <div className="mt-4 flex flex-wrap items-start gap-2 max-sm:[&>a]:w-full max-sm:[&>a>button]:w-full max-sm:[&>button]:w-full">
               {shoe.status === 'active' && (
                 <Link href={`/listings/${shoe.id}/edit`}>
-                  <button className="rounded-lg border border-gray-700 bg-transparent px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors">
+                  <button className="rounded-lg border border-gray-700 bg-transparent px-4 py-2 text-base font-medium text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors sm:text-sm">
                     Edit Listing
                   </button>
                 </Link>

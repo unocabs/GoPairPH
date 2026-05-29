@@ -28,7 +28,7 @@ export default function PrivacyPage() {
           <li><strong>Account information:</strong> your name, email address, and profile picture from Google sign-in.</li>
           <li><strong>Profile information:</strong> display name, location, optional Facebook Messenger username or profile link, verification status, and seller or shop details you provide.</li>
           <li><strong>Listings and shop content:</strong> shoe photos, brand, model, size, condition, mileage, price, description, location, availability, shop logos, shop pages, and related listing details.</li>
-          <li><strong>Marketplace activity:</strong> offers, purchase requests, donation requests, saved pairs, Looking For posts, buyer demand signals, listing status updates, seller actions, and admin review activity.</li>
+          <li><strong>Marketplace activity:</strong> offers, purchase requests, donation requests, saved pairs, saved searches, Looking For posts, buyer demand signals, listing status updates, seller actions, and admin review activity.</li>
           <li><strong>Communications:</strong> messages or notes submitted through offer, order, donation, support, shop application, verification, and contact forms.</li>
           <li><strong>Listing analytics:</strong> listing views, daily view totals, unique view counts, timestamps, and limited technical identifiers used to count views and reduce duplicate or abusive activity.</li>
           <li><strong>Technical information:</strong> IP address, browser, device, pages visited, referring pages, cookies, session data, and server logs needed to operate, secure, measure, and improve the site.</li>
@@ -39,9 +39,9 @@ export default function PrivacyPage() {
         <h2 className="text-xl font-semibold text-gray-100">3. How we use it</h2>
         <ul className="list-disc list-inside space-y-1.5">
           <li>To create and maintain your account and authenticate sign-ins.</li>
-          <li>To display listings, seller profiles, shop pages, Looking For posts, saved pairs, and public marketplace content.</li>
+          <li>To display listings, seller profiles, shop pages, Looking For posts, saved pairs, saved searches, and public marketplace content.</li>
           <li>To connect buyers and sellers through offers, orders, donation requests, and contact options such as Messenger links when provided.</li>
-          <li>To send transactional emails, marketplace notifications, listing-view milestones, shop/order notices, and support replies.</li>
+          <li>To send transactional emails, marketplace notifications, saved-search match alerts, listing-view milestones, shop/order notices, and support replies.</li>
           <li>To measure marketplace activity, improve search and ranking, highlight active listings, and help sellers understand listing performance.</li>
           <li>To review, flag, promote, demote, remove, or moderate listings and accounts for quality, safety, trust, or policy reasons.</li>
           <li>To prevent abuse, spam, fraud, scams, and unsafe behavior on the platform.</li>

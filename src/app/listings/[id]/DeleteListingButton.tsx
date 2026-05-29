@@ -57,7 +57,7 @@ export function DeleteListingButton({ shoeId, compact = false }: DeleteListingBu
         onClick={handleDelete}
         disabled={deleting}
         className={compact
-          ? 'flex w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-300 transition-colors hover:bg-red-950/70 disabled:opacity-50'
+          ? 'flex w-full rounded-lg px-3 py-3 text-left text-base font-medium text-red-300 transition-colors hover:bg-red-950/70 disabled:opacity-50 sm:py-2 sm:text-sm'
           : 'rounded-lg border border-red-800 bg-transparent px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-950 hover:text-red-300 transition-colors disabled:opacity-50'}
       >
         {deleting ? 'Deleting…' : 'Delete Listing'}

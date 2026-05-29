@@ -136,6 +136,21 @@ export interface SavedListing {
   listing?: Shoe | null;
 }
 
+export interface SavedSearch {
+  id: string;
+  user_id: string;
+  keyword: string;
+  brand: string | null;
+  size_eu: number | null;
+  size_us: number | null;
+  size_cm: number | null;
+  condition: Condition | null;
+  max_price_php: number | null;
+  email_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface WishlistImage {
   id: string;
   wishlist_id: string;

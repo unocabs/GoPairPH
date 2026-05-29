@@ -51,17 +51,17 @@ export function OwnerMoreActions({ shoeId, listingType, status }: OwnerMoreActio
   }
 
   return (
-    <details className="relative">
-      <summary className="list-none rounded-lg border border-gray-700 bg-transparent px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer [&::-webkit-details-marker]:hidden">
+    <details className="relative w-full sm:w-auto">
+      <summary className="list-none rounded-lg border border-gray-700 bg-transparent px-4 py-2 text-center text-base font-medium text-gray-300 transition-colors cursor-pointer hover:bg-gray-800 hover:text-gray-100 sm:text-left sm:text-sm [&::-webkit-details-marker]:hidden">
         More Actions
       </summary>
-      <div className="absolute right-0 z-20 mt-2 w-64 rounded-xl border border-gray-800 bg-slate-950 p-2 shadow-2xl shadow-black/40">
+      <div className="mt-2 w-full rounded-xl border border-gray-800 bg-slate-950 p-2 shadow-2xl shadow-black/40 sm:absolute sm:right-0 sm:z-20 sm:w-64">
         {canMarkDone && (
           <button
             type="button"
             onClick={handleMarkDone}
             disabled={saving}
-            className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-200 transition-colors hover:bg-gray-900 disabled:opacity-50"
+            className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-3 text-left text-base font-medium text-gray-200 transition-colors hover:bg-gray-900 disabled:opacity-50 sm:py-2 sm:text-sm"
           >
             <span>{saving ? 'Saving...' : doneLabel}</span>
             <span className="text-xs text-gray-500">{listingType === 'donate' ? 'Given away' : 'Outside sale'}</span>

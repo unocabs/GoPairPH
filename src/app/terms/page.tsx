@@ -98,11 +98,12 @@ export default function TermsPage() {
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold text-gray-100">8. Saved pairs, Looking For posts, and demand signals</h2>
+        <h2 className="text-xl font-semibold text-gray-100">8. Saved pairs, saved searches, Looking For posts, and demand signals</h2>
         <p>
-          Features such as Saved Pairs, Looking For posts, listing views, buyer requests,
-          and demand signals are provided to help users organize and discover pairs. They
-          do not guarantee availability, seller response, buyer intent, or completed sales.
+          Features such as Saved Pairs, Saved Searches, Looking For posts, listing views,
+          buyer requests, and demand signals are provided to help users organize and
+          discover pairs. They do not guarantee availability, seller response, buyer intent,
+          accurate matching, or completed sales.
         </p>
       </section>
 
@@ -156,8 +157,9 @@ export default function TermsPage() {
         <p>
           By using Go Pair PH, you agree that we may send transactional and service-related
           messages, including sign-in/account messages, offers, orders, donation requests,
-          shop updates, listing-view milestones, safety notices, and support replies. You
-          may opt out of non-essential marketing messages where that option is available.
+          shop updates, saved-search alerts, listing-view milestones, safety notices, and
+          support replies. You may opt out of non-essential marketing messages where that
+          option is available.
         </p>
       </section>
 

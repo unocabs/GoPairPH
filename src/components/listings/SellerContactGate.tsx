@@ -56,14 +56,14 @@ export function SellerContactGate({ profileId, initialFbUsername, hasShopContact
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.82fr)_minmax(320px,0.48fr)]">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-300">
-              Recommended before listing
+              Optional contact boost
             </p>
             <h2 className="mt-2 text-xl font-bold text-gray-100">
-              Add Messenger so buyers can reach you faster.
+              Add Messenger now, or skip and list first.
             </h2>
             <p className="mt-2 text-sm leading-6 text-gray-400">
-              Buyers can still send a request on Go Pair PH, but without Messenger they may have a hard time
-              asking questions, confirming meetup details, or closing the deal quickly.
+              Messenger makes it easier for buyers to ask questions and close the deal, but you can
+              publish your listing first and add it later from your profile.
             </p>
 
             <div className="mt-5 max-w-md space-y-3">
@@ -77,14 +77,14 @@ export function SellerContactGate({ profileId, initialFbUsername, hasShopContact
               />
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button type="button" onClick={handleSave} loading={saving} className="sm:flex-1">
-                  Save and Continue
+                  Add Messenger
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setReady(true)} className="sm:flex-1">
-                  Continue Without Messenger
+                  Skip and List First
                 </Button>
               </div>
               <p className="text-xs text-gray-500">
-                You can skip this now, but adding Messenger makes your listing easier to trust and easier to buy from.
+                Good listings can still receive requests on Go Pair PH. Messenger just removes extra back-and-forth.
               </p>
             </div>
           </div>

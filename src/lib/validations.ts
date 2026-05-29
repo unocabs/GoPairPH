@@ -61,6 +61,30 @@ export const offerSchema = z.object({
   shoe_id: z.string().uuid().optional().nullable(),
 });
 
+const optionalNumber = z.preprocess(
+  val => (val === '' || val == null ? null : Number(val)),
+  z.number().min(0).nullable().optional()
+);
+
+const optionalString = z.preprocess(
+  val => (typeof val === 'string' && val.trim() === '' ? null : val),
+  z.string().trim().min(1).nullable().optional()
+);
+
+export const savedSearchSchema = z.object({
+  keyword: z.string().trim().min(2, 'Keyword must be at least 2 characters').max(80, 'Keyword is too long'),
+  brand: optionalString,
+  size_eu: optionalNumber,
+  size_us: optionalNumber,
+  size_cm: optionalNumber,
+  condition: z.preprocess(
+    val => (val === '' || val == null ? null : val),
+    z.enum(['new', 'like_new', 'good', 'fair']).nullable().optional()
+  ),
+  max_price_php: optionalNumber,
+  email_enabled: z.boolean().optional().default(true),
+});
+
 export const profileSchema = z.object({
   display_name: z.string().min(1, 'Display name is required').max(50),
   location: z.string().optional().nullable(),
@@ -73,4 +97,5 @@ export const profileSchema = z.object({
 export type ListingFormData = z.infer<typeof listingSchema>;
 export type WishlistFormData = z.infer<typeof wishlistSchema>;
 export type OfferFormData = z.infer<typeof offerSchema>;
+export type SavedSearchFormData = z.infer<typeof savedSearchSchema>;
 export type ProfileFormData = z.infer<typeof profileSchema>;

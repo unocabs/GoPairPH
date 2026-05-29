@@ -48,12 +48,17 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-bold text-gray-100 mb-1">List a Shoe</h1>
-      <p className="text-sm text-gray-500 mb-8">
+      <h1 className="text-2xl font-bold text-gray-100 mb-1">Sell your running shoes with one clean listing</h1>
+      <p className="max-w-2xl text-sm leading-6 text-gray-500 mb-3">
         {formShop
           ? `Posting as ${formShop.name}.`
-          : 'Share your running shoes with Pampanga buyers. Nearby sellers are welcome if they can meet, deliver, or ship.'}
+          : 'Add the important details, upload top and sole photos, then share your Go Pair PH listing to Facebook, Messenger, or running groups.'}
       </p>
+      <div className="mb-8 flex flex-wrap gap-2 text-xs text-gray-400">
+        <span className="rounded-full border border-teal-400/25 bg-teal-400/10 px-3 py-1 text-teal-200">About 2-3 minutes</span>
+        <span className="rounded-full border border-white/[0.08] bg-slate-900/70 px-3 py-1">Clean share link</span>
+        <span className="rounded-full border border-white/[0.08] bg-slate-900/70 px-3 py-1">FB-ready share image</span>
+      </div>
       {result ? (
         <SellerContactGate
           profileId={result.profileId}

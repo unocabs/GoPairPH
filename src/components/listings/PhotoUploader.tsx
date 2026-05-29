@@ -172,6 +172,9 @@ export function PhotoUploader({ shoeId, photos, onChange }: PhotoUploaderProps) 
         <p className="text-sm font-medium text-gray-300 mb-2">
           Required Photos <span className="text-teal-500 font-normal text-xs">(Top + Sole)</span>
         </p>
+        <p className="-mt-1 mb-3 text-xs leading-5 text-gray-500">
+          These two shots prove the pair and wear level. Tap each box to upload from your phone.
+        </p>
         <div className="grid grid-cols-2 gap-3">
           {REQUIRED_VIEWS.map(({ viewType, label }) => (
             <PhotoSlot
@@ -191,6 +194,9 @@ export function PhotoUploader({ shoeId, photos, onChange }: PhotoUploaderProps) 
       <div>
         <p className="text-sm font-medium text-gray-300 mb-2">
           Optional Photos <span className="text-gray-500 font-normal text-xs">(more angles = faster sale)</span>
+        </p>
+        <p className="-mt-1 mb-3 text-xs leading-5 text-gray-500">
+          Front, side, and heel photos help buyers feel confident before messaging.
         </p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {OPTIONAL_VIEWS.map(({ viewType, label }) => (

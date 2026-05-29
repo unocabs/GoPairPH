@@ -46,7 +46,7 @@ export function PromoteListingButton({
     <button
       type="button"
       onClick={handleClick}
-      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+      className={`inline-flex w-full items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-base font-medium transition-colors sm:w-auto sm:text-sm ${
         isVerified
           ? 'border-amber-600/50 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
           : 'border-gray-700 bg-gray-800/50 text-gray-500 cursor-help'
