@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, useTransition } from 'react';
+import { useCallback, useEffect, useState, useTransition, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BRANDS, CONDITIONS, LISTING_TYPE_LABELS } from '@/lib/constants';
 
@@ -10,10 +10,14 @@ const SIZE_UNITS = [
   { value: 'cm', label: 'CM', placeholder: '27', min: 22, max: 31 },
 ];
 
-export function FilterPanel() {
+export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
   const router = useRouter();
   const params = useSearchParams();
   const paramsString = params.toString();
+  const hasActiveControls = params.has('type') || params.has('brand') || params.has('condition') || params.has('size') || params.has('size_eu') || params.has('q') || params.has('sort');
+  const currentQuery = params.get('q') ?? '';
+  const [isOpen, setIsOpen] = useState(hasActiveControls);
+  const [query, setQuery] = useState(currentQuery);
   const currentSize = params.get('size') ?? params.get('size_eu') ?? '';
   const currentSizeUnit = SIZE_UNITS.some(unit => unit.value === params.get('size_unit'))
     ? params.get('size_unit') ?? 'eu'
@@ -39,8 +43,26 @@ export function FilterPanel() {
 
   function clearAll() {
     setSize('');
+    setQuery('');
     startTransition(() => {
       router.replace('/browse', { scroll: false });
+    });
+  }
+
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    startTransition(() => {
+      const next = new URLSearchParams(paramsString);
+      const nextQuery = query.trim();
+      if (nextQuery) {
+        next.set('q', nextQuery);
+      } else {
+        next.delete('q');
+      }
+      next.delete('page');
+
+      const search = next.toString();
+      router.replace(search ? `/browse?${search}` : '/browse', { scroll: false });
     });
   }
 
@@ -62,6 +84,10 @@ export function FilterPanel() {
   useEffect(() => {
     setSize(currentSize);
   }, [currentSize]);
+
+  useEffect(() => {
+    setQuery(currentQuery);
+  }, [currentQuery]);
 
   useEffect(() => {
     const nextSize = size.trim();
@@ -88,49 +114,85 @@ export function FilterPanel() {
     return () => window.clearTimeout(timeout);
   }, [currentSize, currentSizeUnit, paramsString, router, size]);
 
-  const hasFilters = params.has('type') || params.has('brand') || params.has('condition') || params.has('size') || params.has('size_eu') || params.has('q');
+  const hasFilters = hasActiveControls;
+  const currentSort = params.get('sort') === 'price_asc' || params.get('sort') === 'price_desc'
+    ? params.get('sort') ?? 'mixed'
+    : 'mixed';
+  const listingLabel = `${listingCount} listing${listingCount !== 1 ? 's' : ''} found`;
+  const typeOptions = [{ value: '', label: 'All' }, ...Object.entries(LISTING_TYPE_LABELS).map(([value, label]) => ({ value, label }))];
 
   return (
-    <aside className="w-full lg:w-56 shrink-0">
-      <div className="sticky top-20 rounded-xl border border-white/[0.08] bg-slate-900/72 p-4 shadow-[0_16px_50px_rgba(0,0,0,0.24)] backdrop-blur-sm">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="font-semibold text-gray-200 text-sm">Filters</h2>
-            {isPending && (
-              <p className="mt-0.5 text-[11px] text-teal-400">Updating...</p>
-            )}
-          </div>
+    <div className="rounded-xl border border-white/[0.08] bg-slate-900/72 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.24)] backdrop-blur-sm sm:p-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <form onSubmit={submitSearch} className="flex flex-col gap-2 sm:flex-row lg:flex-1">
+          <input
+            id="browse-search"
+            value={query}
+            onChange={event => setQuery(event.target.value)}
+            placeholder="Search brand or model..."
+            className="min-w-0 flex-1 rounded-lg border border-white/[0.08] bg-slate-950/70 px-4 py-2.5 text-sm text-gray-200 placeholder-gray-600 shadow-inner shadow-black/20 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+          />
+          <button
+            type="submit"
+            className="rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-500/15 transition-colors hover:bg-teal-400"
+          >
+            Search
+          </button>
+        </form>
+
+        <div className="hidden items-center gap-3 lg:flex">
+          <p className="text-xs text-gray-500">{listingLabel}</p>
+          {isPending && <p className="text-[11px] text-teal-400">Updating...</p>}
           {hasFilters && (
-            <button onClick={clearAll} className="text-xs text-teal-400 hover:text-teal-300 transition-colors">
+            <button onClick={clearAll} className="text-xs text-teal-400 transition-colors hover:text-teal-300">
               Clear all
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => setIsOpen(open => !open)}
+            className="rounded-lg border border-white/[0.08] bg-slate-950/70 px-3 py-2 text-xs font-semibold text-gray-200 transition-colors hover:border-teal-400/35 hover:text-teal-200"
+            aria-expanded={isOpen}
+          >
+            {isOpen ? 'Hide filters' : '↓ Filter'}
+          </button>
         </div>
+      </div>
 
-        <div className="space-y-5">
-          {/* Listing Type */}
+      <div className="mt-3 flex items-center justify-between gap-3 lg:hidden">
+        <div>
+          <p className="text-xs text-gray-500">{listingLabel}</p>
+          {isPending && <p className="mt-0.5 text-[11px] text-teal-400">Updating...</p>}
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsOpen(open => !open)}
+          className="rounded-lg border border-white/[0.08] bg-slate-950/70 px-3 py-2 text-xs font-semibold text-gray-200 transition-colors hover:border-teal-400/35 hover:text-teal-200"
+          aria-expanded={isOpen}
+        >
+          {isOpen ? 'Hide filters' : '↓ Filter'}
+        </button>
+      </div>
+
+      <div className={`${isOpen ? 'block' : 'hidden'} mt-4`}>
+        <div className="grid gap-4 lg:grid-cols-[140px_minmax(150px,1fr)_minmax(150px,1fr)_minmax(160px,1fr)_220px] lg:items-end">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Type</p>
-            <div className="space-y-0.5">
-              {[{ value: '', label: 'All' }, ...Object.entries(LISTING_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l }))].map(opt => (
-                <button
-                  key={opt.value}
-                  onClick={() => updateParam('type', opt.value)}
-                  className={`block w-full text-left px-2 py-1.5 text-sm rounded-lg transition-colors ${
-                    params.get('type') === opt.value || (!params.get('type') && opt.value === '')
-                      ? 'bg-teal-500/10 text-teal-300 font-medium ring-1 ring-teal-400/15'
-                      : 'text-gray-400 hover:bg-slate-800/70 hover:text-gray-200'
-                  }`}
-                >
-                  {opt.label}
-                </button>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Type</p>
+            <select
+              value={params.get('type') ?? ''}
+              onChange={e => updateParam('type', e.target.value)}
+              className="w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-sm text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            >
+              {typeOptions.map(option => (
+                <option key={option.value} value={option.value} className="bg-gray-800">
+                  {option.label}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
-          {/* Brand */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Brand</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Brand</p>
             <select
               value={params.get('brand') ?? ''}
               onChange={e => updateParam('brand', e.target.value)}
@@ -141,9 +203,8 @@ export function FilterPanel() {
             </select>
           </div>
 
-          {/* Condition */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Condition</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Condition</p>
             <select
               value={params.get('condition') ?? ''}
               onChange={e => updateParam('condition', e.target.value)}
@@ -154,9 +215,21 @@ export function FilterPanel() {
             </select>
           </div>
 
-          {/* Size */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Size</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Sort</p>
+            <select
+              value={currentSort}
+              onChange={e => updateParam('sort', e.target.value === 'mixed' ? '' : e.target.value)}
+              className="w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-sm text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            >
+              <option value="mixed" className="bg-gray-800">Default</option>
+              <option value="price_asc" className="bg-gray-800">Price: Ascending</option>
+              <option value="price_desc" className="bg-gray-800">Price: Descending</option>
+            </select>
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Size</p>
             <div className="flex gap-2">
               <select
                 value={currentSizeUnit}
@@ -182,7 +255,13 @@ export function FilterPanel() {
             </div>
           </div>
         </div>
+
+        {hasFilters && (
+          <button onClick={clearAll} className="mt-4 w-full rounded-lg border border-teal-400/25 px-3 py-2 text-sm font-semibold text-teal-300 transition-colors hover:bg-teal-500/10 lg:hidden">
+            Clear all
+          </button>
+        )}
       </div>
-    </aside>
+    </div>
   );
 }

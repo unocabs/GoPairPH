@@ -2,13 +2,12 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-type SortKey = 'mixed' | 'newest' | 'price_asc' | 'price_desc';
+type SortKey = 'mixed' | 'price_asc' | 'price_desc';
 
 const OPTIONS: { value: SortKey; label: string }[] = [
-  { value: 'mixed', label: 'Mixed (default)' },
-  { value: 'newest', label: 'Newest first' },
-  { value: 'price_asc', label: 'Price: low → high' },
-  { value: 'price_desc', label: 'Price: high → low' },
+  { value: 'mixed', label: 'Default' },
+  { value: 'price_asc', label: 'Price: Ascending' },
+  { value: 'price_desc', label: 'Price: Descending' },
 ];
 
 export function SortSelector() {

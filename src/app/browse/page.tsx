@@ -9,7 +9,6 @@ import { getOfferCounts } from '@/lib/offers';
 import { FirstListingNudge } from '@/components/listings/FirstListingNudge';
 import { ListingGrid } from '@/components/listings/ListingGrid';
 import { FilterPanel } from '@/components/listings/FilterPanel';
-import { SortSelector } from '@/components/listings/SortSelector';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageShell } from '@/components/layout/PageShell';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
@@ -37,11 +36,11 @@ interface BrowsePageProps {
 }
 
 type SizeUnit = 'eu' | 'us' | 'cm';
-type SortKey = 'mixed' | 'newest' | 'price_asc' | 'price_desc';
+type SortKey = 'mixed' | 'price_asc' | 'price_desc';
 const FRESH_LISTING_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 function parseSort(raw: string | undefined): SortKey {
-  if (raw === 'newest' || raw === 'price_asc' || raw === 'price_desc') return raw;
+  if (raw === 'price_asc' || raw === 'price_desc') return raw;
   return 'mixed';
 }
 
@@ -56,9 +55,6 @@ function sortListings(listings: Shoe[], key: SortKey): Shoe[] {
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     return arr;
-  }
-  if (key === 'newest') {
-    return arr.sort((a, b) => b.created_at.localeCompare(a.created_at));
   }
   if (key === 'price_asc') {
     return arr.sort((a, b) => (a.price_php ?? Number.POSITIVE_INFINITY) - (b.price_php ?? Number.POSITIVE_INFINITY));
@@ -139,27 +135,6 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
   ];
 }
 
-function SearchBar({ defaultValue }: { defaultValue?: string }) {
-  return (
-    <form method="GET" action="/browse">
-      <div className="flex gap-2">
-        <input
-          name="q"
-          defaultValue={defaultValue}
-          placeholder="Search brand or model..."
-          className="flex-1 rounded-lg border border-white/[0.08] bg-slate-950/70 px-4 py-2.5 text-sm text-gray-100 placeholder-gray-500 shadow-inner shadow-black/20 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-        />
-        <button
-          type="submit"
-          className="rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-500/15 transition-colors hover:bg-teal-400"
-        >
-          Search
-        </button>
-      </div>
-    </form>
-  );
-}
-
 async function getCurrentProfileAndRequests(listingIds: string[]): Promise<{ profileId: string; isAdmin: boolean; fbUsername: string | null; requestListingIds: Set<string>; savedListingIds: Set<string> } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -190,44 +165,22 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
         title="Marketplace"
         subtitle="Find brand-new and pre-loved running shoes from Pampanga runners and nearby sellers who can meet, deliver, or ship to local buyers."
       >
-        <SurfaceCard className="p-3 sm:p-4">
-          <SearchBar defaultValue={searchParams.q} />
-        </SurfaceCard>
+        <Suspense>
+          <FilterPanel listingCount={shoes.length} />
+        </Suspense>
       </PageHeader>
 
       <div className="flex flex-col gap-6">
-        {/* Filter + Listings row */}
-        <div className="flex flex-col gap-6 lg:flex-row">
-          {/* Listings — first on mobile, right side on desktop */}
-          <div className="order-1 lg:order-2 flex-1 min-w-0">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-gray-500">
-                {shoes.length} listing{shoes.length !== 1 ? "s" : ""} found
-              </p>
-              <Suspense>
-                <SortSelector />
-              </Suspense>
-            </div>
-
-            <ListingGrid
-              shoes={shoes}
-              currentProfileId={userContext?.profileId}
-              currentProfileIsAdmin={userContext?.isAdmin}
-              currentProfileFbUsername={userContext?.fbUsername}
-              myRequestListingIds={userContext?.requestListingIds}
-              savedListingIds={userContext?.savedListingIds}
-              offerCounts={offerCounts}
-              emptyMessage="No listings match your filters. Try adjusting them."
-            />
-          </div>
-
-          {/* Filter Panel — second on mobile, left sidebar on desktop */}
-          <div className="order-2 lg:order-1 lg:shrink-0 lg:w-fit">
-            <Suspense>
-              <FilterPanel />
-            </Suspense>
-          </div>
-        </div>
+        <ListingGrid
+          shoes={shoes}
+          currentProfileId={userContext?.profileId}
+          currentProfileIsAdmin={userContext?.isAdmin}
+          currentProfileFbUsername={userContext?.fbUsername}
+          myRequestListingIds={userContext?.requestListingIds}
+          savedListingIds={userContext?.savedListingIds}
+          offerCounts={offerCounts}
+          emptyMessage="No listings match your filters. Try adjusting them."
+        />
 
         {/* Looking For CTA — full width below on desktop, last on mobile */}
         <section className="w-full">

@@ -157,6 +157,12 @@ const OPTIONAL_VIEWS: { viewType: ViewType; label: string }[] = [
   { viewType: 'back', label: 'Back View' },
 ];
 
+const PHOTO_EXAMPLES = [
+  { label: 'Top', body: 'Full pair visible from above.', src: '/guides/listing-photo-example-top.png' },
+  { label: 'Sole', body: 'Show outsole wear clearly.', src: '/guides/listing-photo-example-sole.png' },
+  { label: 'Extra', body: 'Front, side, heel, or flaws.', src: '/guides/listing-photo-example-extra.png' },
+];
+
 export function PhotoUploader({ shoeId, photos, onChange }: PhotoUploaderProps) {
   function handleUploaded(photo: UploadedPhoto) {
     onChange([...photos.filter(p => p.viewType !== photo.viewType), photo]);
@@ -168,6 +174,23 @@ export function PhotoUploader({ shoeId, photos, onChange }: PhotoUploaderProps) 
 
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-2">
+        {PHOTO_EXAMPLES.map((example) => (
+          <div key={example.label} className="rounded-lg border border-white/[0.08] bg-slate-950/45 p-2">
+            <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-teal-400/20 bg-slate-950">
+              <Image
+                src={example.src}
+                alt={`${example.label} photo example`}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 30vw, 180px"
+              />
+            </div>
+            <p className="mt-1.5 text-[11px] leading-4 text-gray-500">{example.body}</p>
+          </div>
+        ))}
+      </div>
+
       <div>
         <p className="text-sm font-medium text-gray-300 mb-2">
           Required Photos <span className="text-teal-500 font-normal text-xs">(Top + Sole)</span>

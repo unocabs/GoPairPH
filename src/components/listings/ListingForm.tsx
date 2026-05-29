@@ -27,9 +27,10 @@ const LISTING_DRAFT_KEY = 'gopairph:new-listing-draft:v1';
 interface ListingFormProps {
   profileId?: string | null;
   shop?: Shop | null;
+  hasMessengerContact?: boolean;
 }
 
-export function ListingForm({ profileId, shop = null }: ListingFormProps) {
+export function ListingForm({ profileId, shop = null, hasMessengerContact = false }: ListingFormProps) {
   const isShop = !!shop;
   const isGuest = !profileId;
 
@@ -87,7 +88,20 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
   const isNew = condition === 'new';
   const hasTopPhoto = photos.some(p => p.viewType === 'top');
   const hasSolePhoto = photos.some(p => p.viewType === 'sole');
+  const hasExtraPhoto = photos.some(p => p.viewType !== 'top' && p.viewType !== 'sole');
   const canPublishPhotos = hasTopPhoto && hasSolePhoto;
+  const strengthItems = [
+    { label: 'Shoe details added', done: !!details },
+    { label: 'Top photo uploaded', done: hasTopPhoto },
+    { label: 'Sole photo uploaded', done: hasSolePhoto },
+    { label: 'Extra angle added', done: hasExtraPhoto, optional: true },
+    { label: 'Messenger contact added', done: hasMessengerContact, optional: true },
+  ];
+  const requiredStrengthDone = strengthItems.filter(item => !item.optional).every(item => item.done);
+  const strengthScore = strengthItems.filter(item => item.done).length;
+  const strengthLabel = !requiredStrengthDone
+    ? 'Basic'
+    : strengthScore >= 5 ? 'Ready to share' : strengthScore >= 4 ? 'Strong' : 'Good';
 
   function handleSizeEuChange(val: string) {
     const num = parseFloat(val);
@@ -229,7 +243,7 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="w-full">
       {/* Stepper */}
       <div className="flex items-center gap-3 mb-8">
         {[1, 2].map((s, i) => (
@@ -263,75 +277,93 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
           <div className="rounded-xl border border-teal-500/20 bg-teal-500/[0.04] p-4">
             <p className="text-sm font-semibold text-gray-100">Step 1: add the details buyers need first.</p>
             <p className="mt-1 text-xs leading-5 text-gray-500">
-              Keep it simple: brand, model, size, condition, price, then photos. Extra notes help, but they should not slow you down.
+              Most sellers finish this part in under a minute. Start with the basics, then add photos.
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Select label="Brand" required options={BRAND_OPTIONS} placeholder="Select brand" error={errors.brand?.message} {...register('brand')} />
-            <Input label="Model" placeholder="e.g. Pegasus 40" required hint="Use the box label or what buyers would search." error={errors.model?.message} {...register('model')} />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Colorway" placeholder="e.g. Black/White" required hint="A simple color is enough if you do not know the official colorway." error={errors.color?.message} {...register('color')} />
-            <Select label="Condition" required options={CONDITION_OPTIONS} hint="Pick the closest match. Photos will do the rest." error={errors.condition?.message} {...register('condition')} />
-          </div>
-
-          {isNew ? (
-            <div className="rounded-lg border border-gray-800 bg-gray-800/50 px-4 py-3">
-              <p className="text-sm font-medium text-gray-400">Mileage (km)</p>
-              <p className="text-sm text-gray-500 mt-0.5">Automatically set to <span className="text-gray-300 font-medium">0 km</span> for new shoes.</p>
-            </div>
-          ) : (
-            <Input
-              label="Mileage (km, optional)"
-              type="number"
-              min={0}
-              placeholder="e.g. 350"
-              hint="Optional — leave blank if unknown."
-              error={errors.mileage_km?.message}
-              {...register('mileage_km')}
-            />
-          )}
-
-          {!isShop && (
+          <div className="space-y-4 rounded-xl border border-white/[0.08] bg-slate-950/45 p-4">
             <div>
-              <p className="text-sm font-medium text-gray-300 mb-1">
-                Size <span className="text-teal-400">*</span>
-                <span className="ml-1 text-xs text-gray-500 font-normal">(fill one; EU, US, or CM)</span>
-              </p>
-              <div className="grid grid-cols-3 gap-3">
-                <Input label="EU" type="number" step={0.5} min={35} max={48} error={errors.size_eu?.message}
-                  {...register('size_eu', { onChange: e => handleSizeEuChange(e.target.value) })} />
-                <Input label="US" type="number" step={0.5} error={errors.size_us?.message}
-                  {...register('size_us', { onChange: e => handleSizeUsChange(e.target.value) })} />
-                <Input label="CM" type="number" step={0.5} error={errors.size_cm?.message}
-                  {...register('size_cm', { onChange: e => handleSizeCmChange(e.target.value) })} />
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-300">Main details</p>
+              <p className="mt-1 text-xs text-gray-500">What buyers scan first.</p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Select label="Brand" required options={BRAND_OPTIONS} placeholder="Select brand" error={errors.brand?.message} {...register('brand')} />
+              <Input label="Model" placeholder="e.g. Pegasus 40" required hint="Use the box label or what buyers would search." error={errors.model?.message} {...register('model')} />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input label="Colorway" placeholder="e.g. Black/White" required hint="A simple color is enough if you do not know the official colorway." error={errors.color?.message} {...register('color')} />
+              <Select label="Condition" required options={CONDITION_OPTIONS} hint="Pick the closest match. Photos will do the rest." error={errors.condition?.message} {...register('condition')} />
+            </div>
+          </div>
+
+          <div className="space-y-4 rounded-xl border border-white/[0.08] bg-slate-950/45 p-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-300">Size and price</p>
+              <p className="mt-1 text-xs text-gray-500">The fastest buyer filters.</p>
+            </div>
+
+            {!isShop && (
+              <div>
+                <p className="text-sm font-medium text-gray-300 mb-1">
+                  Size <span className="text-teal-400">*</span>
+                  <span className="ml-1 text-xs text-gray-500 font-normal">(fill one; EU, US, or CM)</span>
+                </p>
+                <div className="grid grid-cols-3 gap-3">
+                  <Input label="EU" type="number" step={0.5} min={35} max={48} error={errors.size_eu?.message}
+                    {...register('size_eu', { onChange: e => handleSizeEuChange(e.target.value) })} />
+                  <Input label="US" type="number" step={0.5} error={errors.size_us?.message}
+                    {...register('size_us', { onChange: e => handleSizeUsChange(e.target.value) })} />
+                  <Input label="CM" type="number" step={0.5} error={errors.size_cm?.message}
+                    {...register('size_cm', { onChange: e => handleSizeCmChange(e.target.value) })} />
+                </div>
               </div>
+            )}
+
+            {!isShop && (
+              <Select label="Listing Type" required options={LISTING_TYPE_OPTIONS} error={errors.listing_type?.message} {...register('listing_type')} />
+            )}
+
+            {(isShop || listingType === 'for_sale') && (
+              <div className="space-y-2">
+                <Input label="Price (PHP)" type="number" min={0} required placeholder="e.g. 2500" error={errors.price_php?.message} {...register('price_php')} />
+                {!isShop && (
+                  <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-700 bg-gray-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-gray-900"
+                      {...register('is_negotiable')}
+                    />
+                    <span>Negotiable <span className="text-gray-500">(buyers can suggest a different price)</span></span>
+                  </label>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4 rounded-xl border border-white/[0.08] bg-slate-950/45 p-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-300">Extra notes</p>
+              <p className="mt-1 text-xs text-gray-500">Helpful, but do not overthink this part.</p>
             </div>
-          )}
-
-          {!isShop && (
-            <Select label="Listing Type" required options={LISTING_TYPE_OPTIONS} error={errors.listing_type?.message} {...register('listing_type')} />
-          )}
-
-          {(isShop || listingType === 'for_sale') && (
-            <div className="space-y-2">
-              <Input label="Price (PHP)" type="number" min={0} required placeholder="e.g. 2500" error={errors.price_php?.message} {...register('price_php')} />
-              {!isShop && (
-                <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-gray-700 bg-gray-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-gray-900"
-                    {...register('is_negotiable')}
-                  />
-                  <span>Negotiable <span className="text-gray-500">(buyers can suggest a different price)</span></span>
-                </label>
-              )}
-            </div>
-          )}
-
-          <Textarea label="Description (optional)" rows={3} placeholder="Add any other details about the shoes..." {...register('description')} />
+            {isNew ? (
+              <div className="rounded-lg border border-gray-800 bg-gray-800/50 px-4 py-3">
+                <p className="text-sm font-medium text-gray-400">Mileage (km)</p>
+                <p className="text-sm text-gray-500 mt-0.5">Automatically set to <span className="text-gray-300 font-medium">0 km</span> for new shoes.</p>
+              </div>
+            ) : (
+              <Input
+                label="Mileage (km, optional)"
+                type="number"
+                min={0}
+                placeholder="e.g. 350"
+                hint="Optional — leave blank if unknown."
+                error={errors.mileage_km?.message}
+                {...register('mileage_km')}
+              />
+            )}
+            <Textarea label="Description (optional)" rows={3} placeholder="Add any other details about the shoes..." {...register('description')} />
+          </div>
 
           {isShop && shop && (
             <div className="space-y-4 rounded-xl border border-teal-500/30 bg-teal-500/5 p-4">
@@ -397,6 +429,34 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
               ))}
             </div>
           </div>
+
+          <div className="rounded-xl border border-white/[0.08] bg-slate-950/55 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-300">Listing strength</p>
+                <p className="mt-1 text-sm font-semibold text-gray-100">{strengthLabel}</p>
+              </div>
+              <div className="text-right text-xs text-gray-500">
+                {strengthScore}/{strengthItems.length}
+              </div>
+            </div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {strengthItems.map((item) => (
+                <div key={item.label} className="flex items-center gap-2 text-xs">
+                  <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${
+                    item.done ? 'bg-teal-400 text-slate-950' : 'bg-gray-800 text-gray-500'
+                  }`}>
+                    {item.done ? '✓' : '•'}
+                  </span>
+                  <span className={item.done ? 'text-gray-200' : 'text-gray-500'}>
+                    {item.label}
+                    {item.optional && <span className="text-gray-600"> optional</span>}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <PhotoUploader
             shoeId={shoeId}
             photos={photos}
@@ -414,6 +474,11 @@ export function ListingForm({ profileId, shop = null }: ListingFormProps) {
           >
             {canPublishPhotos ? 'Publish Listing' : 'Add top + sole photos to publish'}
           </Button>
+          {!canPublishPhotos && (
+            <p className="-mt-3 text-center text-xs leading-5 text-gray-500">
+              Buyers trust listings faster when they can see the pair from above and the outsole wear.
+            </p>
+          )}
         </div>
       )}
     </div>

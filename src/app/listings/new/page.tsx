@@ -48,6 +48,7 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl">
       <h1 className="text-2xl font-bold text-gray-100 mb-1">Sell your running shoes with one clean listing</h1>
       <p className="max-w-2xl text-sm leading-6 text-gray-500 mb-3">
         {formShop
@@ -66,9 +67,9 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
           hasShopContact={!!formShop?.fb_page_url}
         >
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-            <ListingForm profileId={result.profileId} shop={formShop} />
+            <ListingForm profileId={result.profileId} shop={formShop} hasMessengerContact={!!result.fbUsername || !!formShop?.fb_page_url} />
 
-            <aside className="space-y-4 lg:sticky lg:top-24">
+            <aside className="space-y-4 lg:sticky lg:top-24 lg:pt-[100px]">
               <CanListWidget compact />
 
               <SurfaceCard glow className="p-5">
@@ -116,7 +117,7 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <ListingForm profileId={null} shop={null} />
 
-          <aside className="space-y-4 lg:sticky lg:top-24">
+          <aside className="space-y-4 lg:sticky lg:top-24 lg:pt-[100px]">
             <CanListWidget compact />
 
             <SurfaceCard glow className="border-teal-500/20 bg-teal-500/[0.04] p-5">
@@ -168,6 +169,7 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
           </aside>
         </div>
       )}
+      </div>
     </div>
   );
 }
