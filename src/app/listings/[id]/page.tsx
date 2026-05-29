@@ -309,7 +309,8 @@ export default async function ListingDetailPage({ params, searchParams }: { para
 
       {justClosedStatus && !justListed && !justUpdated && (
         <SurfaceCard glow className="mb-6 border-teal-500/25 bg-teal-500/[0.05] p-4 sm:p-5">
-          <div className="flex items-start gap-3">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
             <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-500/15 text-sm font-bold text-teal-200 ring-1 ring-teal-400/25">
               ✓
             </span>
@@ -325,6 +326,21 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
                 This listing is now closed, so buyers will no longer see it as available in the marketplace.
               </p>
+            </div>
+            </div>
+            <div className="grid shrink-0 gap-2 sm:w-[220px]">
+              <Link
+                href="/listings/new"
+                className="inline-flex items-center justify-center rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
+              >
+                List another pair
+              </Link>
+              <Link
+                href="/profile?tab=listings"
+                className="inline-flex items-center justify-center rounded-lg border border-white/[0.1] bg-slate-950/45 px-4 py-2.5 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-900"
+              >
+                View my listings
+              </Link>
             </div>
           </div>
         </SurfaceCard>
@@ -646,7 +662,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           {/* Owner actions */}
           {isOwner && (
             <div className="mt-5 space-y-4">
-              {viewSummary && viewSummary.total > 0 && (
+              {shoe.status === 'active' && viewSummary && viewSummary.total > 0 && (
                 <div className="rounded-xl border border-white/[0.08] bg-slate-950/45 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">Seller momentum</p>
                   <h3 className="mt-2 text-sm font-semibold text-gray-100">Your listing is getting seen.</h3>
