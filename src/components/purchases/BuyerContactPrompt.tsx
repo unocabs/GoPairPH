@@ -72,9 +72,9 @@ export function BuyerContactPrompt({ profileId, initialFbUsername }: BuyerContac
       ) : (
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-gray-200">Messenger contact optional</p>
+            <p className="text-xs font-semibold text-gray-200">Where should the seller reply?</p>
             <p className="mt-0.5 text-xs leading-5 text-gray-500">
-              Add it if you want the seller to reply faster after they accept.
+              Add Messenger if you want them to reach you faster after accepting.
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">

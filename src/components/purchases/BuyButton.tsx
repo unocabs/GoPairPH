@@ -34,7 +34,12 @@ export function BuyButton({ listingId, listingSlug, listingName, priceFormatted,
   if (submitted) {
     return (
       <div className="mt-4 rounded-xl border border-teal-800 bg-teal-950 px-4 py-3 text-sm text-teal-300">
-        <p>{shop ? 'Order placed. Track it in Sent Offers.' : 'Offer sent. Track it in Sent Offers.'}</p>
+        <p className="font-semibold text-teal-200">{shop ? 'Order sent to the shop.' : 'Offer sent to the seller.'}</p>
+        <p className="mt-1 text-xs leading-5 text-teal-300/80">
+          {shop
+            ? 'They review it first. Track it in Sent Offers, then coordinate payment or delivery after confirmation.'
+            : 'They review it first. Track it in Sent Offers, then coordinate meetup, payment, or shipping if accepted.'}
+        </p>
         <Link href="/profile?tab=offers" className="mt-2 inline-flex text-xs font-semibold text-teal-100 underline underline-offset-2 hover:text-white">
           View Sent Offers
         </Link>

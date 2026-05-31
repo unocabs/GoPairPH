@@ -14,6 +14,20 @@ import { getPublicUrl } from '@/lib/utils';
 import { getFacebookContactUrl } from '@/lib/facebook';
 import type { Profile, ShoeVariant, Shop } from '@/types';
 
+const OFFER_MESSAGE_CHIPS = [
+  'Is this still available?',
+  'Can meet in Pampanga',
+  'Can ship?',
+  'Price negotiable?',
+];
+
+const ORDER_MESSAGE_CHIPS = [
+  'Is this size available?',
+  'Can pick up',
+  'Can deliver?',
+  'How do I pay?',
+];
+
 interface BuyModalProps {
   listingId: string;
   listingSlug?: string | null;
@@ -50,9 +64,11 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
   const shopFacebookUrl = getFacebookContactUrl(shop?.fb_page_url);
   const submitDisabled = showVariantSelector && availableVariants.length === 0;
   const actionLabel = isShopOrder ? 'Place Order' : 'Send Offer';
+  const titleLabel = isShopOrder ? 'Place your order' : 'Send your offer';
   const summaryLabel = isShopOrder
-    ? "You're buying"
-    : "You're sending an offer for";
+    ? 'Order request'
+    : 'Offer request';
+  const messageChips = isShopOrder ? ORDER_MESSAGE_CHIPS : OFFER_MESSAGE_CHIPS;
 
   useEffect(() => {
     if (!showVariantSelector) return;
@@ -112,7 +128,12 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
     >
       <div className="w-full max-w-md rounded-2xl bg-gray-900 border border-gray-700 shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800 shrink-0">
-          <h2 className="font-semibold text-gray-100">{actionLabel}</h2>
+          <div className="min-w-0">
+            <h2 className="font-semibold text-gray-100">{titleLabel}</h2>
+            <p className="mt-0.5 text-xs text-gray-500">
+              {isShopOrder ? 'The shop confirms first. No payment happens here.' : 'The seller reviews first. No payment happens here.'}
+            </p>
+          </div>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-300 transition-colors">
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -193,12 +214,12 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
           {/* Best offer (only when negotiable) */}
           {isNegotiable && (
             <Input
-              label="Your best offer (PHP)"
+              label="Offer price (PHP)"
               type="number"
               min={1}
               step="any"
               placeholder={`e.g. ${Math.max(1, Math.round(pricePhp * 0.9))}`}
-              hint="Optional — leave blank to offer the listed price. The seller will see your offer alongside their list price."
+              hint="Optional. Leave blank if you want to offer the listed price."
               value={bestOffer}
               onChange={e => setBestOffer(e.target.value)}
             />
@@ -208,7 +229,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
           <div className="rounded-lg border border-sky-800/60 bg-sky-950/55 px-3 py-2.5">
             <p className="text-xs leading-5 text-sky-300">
               {isShopOrder
-                ? 'The shop reviews your order first. Pay only after they confirm availability and payment/delivery details.'
+                ? 'The shop reviews your order first. Pay only after they confirm stock, payment, and delivery details.'
                 : 'The seller reviews your offer first. Coordinate meetup, payment, or shipping only after they accept.'}
             </p>
             {isShopOrder && (
@@ -223,15 +244,29 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
 
           <BuyerContactPrompt profileId={buyerProfileId} initialFbUsername={buyerFbUsername} />
 
-          <Textarea
-            label={isShopOrder ? 'Order details' : 'Message to the seller (optional)'}
-            rows={3}
-            placeholder={isShopOrder
-              ? 'Add your details here: preferred payment method, delivery address, shipping or meetup preference, and any notes for the shop.'
-              : "Hi! I'd like to buy these. Are you open to a meetup, or would you prefer to ship?"}
-            value={message}
-            onChange={e => setMessage(e.target.value)}
-          />
+          <div className="space-y-2">
+            <Textarea
+              label={isShopOrder ? 'Notes for the shop (optional)' : 'Message to seller (optional)'}
+              rows={3}
+              placeholder={isShopOrder
+                ? 'Preferred payment, pickup, delivery, or shipping details.'
+                : 'Ask about availability, meetup, shipping, or condition.'}
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+            />
+            <div className="flex flex-wrap gap-2">
+              {messageChips.map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => setMessage(chip)}
+                  className="rounded-full border border-white/[0.08] bg-slate-950/45 px-2.5 py-1 text-[11px] font-medium text-gray-300 transition-colors hover:border-teal-400/35 hover:text-teal-200"
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+          </div>
           {error && <p className="text-sm text-red-400">{error}</p>}
         </div>
         <div className="flex gap-3 px-5 py-4 border-t border-gray-800 shrink-0">
