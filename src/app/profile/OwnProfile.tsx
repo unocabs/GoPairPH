@@ -227,11 +227,11 @@ export function OwnProfile({
 
       {tab === 'purchases' && (
         <div>
-          <p className="text-sm text-gray-500 mb-4">Active purchase requests on your for-sale listings</p>
+          <p className="text-sm text-gray-500 mb-4">Active offers on your for-sale listings</p>
           {purchaseRequests.length === 0 ? (
             <SurfaceCard className="flex flex-col items-center justify-center border-dashed py-16 text-center">
               <span className="text-4xl opacity-50">🛒</span>
-              <p className="mt-3 text-gray-500">No pending purchase requests.</p>
+              <p className="mt-3 text-gray-500">No pending offers.</p>
             </SurfaceCard>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

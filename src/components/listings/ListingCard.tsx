@@ -90,10 +90,39 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
   const showDonate = canAct && shoe.listing_type === 'donate';
   const showPlaceOrder = canAct && shoe.listing_type === 'for_sale' && !!shoe.shop_id && shoe.has_stock;
   const askSellerHref = getFacebookContactUrl(shoe.shops?.fb_page_url ?? null) ?? buildMessengerUrl(shoe.profiles?.fb_username ?? null);
-  const canAskSeller = shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && !!askSellerHref;
+  const showSaleActions = !isOwner && shoe.status === 'active' && shoe.listing_type === 'for_sale' && !!shoe.price_php && (!shoe.shop_id || shoe.has_stock);
+  const buyerHasMessenger = !!buildMessengerUrl(currentProfileFbUsername);
   const hasTopPhoto = shoe.shoe_images?.some(img => img.view_type === 'top') ?? false;
   const hasSolePhoto = shoe.shoe_images?.some(img => img.view_type === 'sole') ?? false;
   const needsPhotoHelp = shoe.status === 'active' && (!hasTopPhoto || !hasSolePhoto);
+
+  function renderChatAction(sendOfferLabel: string, action: { onSendOffer?: () => void; sendOfferHref?: string }) {
+    return (
+      <AskSellerButton
+        contactUrl={askSellerHref}
+        listingName={formatListingName(shoe.brand, shoe.model)}
+        listingHref={listingPath}
+        sellerName={shoe.shops?.name ?? shoe.profiles?.display_name}
+        isShop={!!shoe.shop_id}
+        buyerNeedsMessenger={!!currentProfileId && !buyerHasMessenger}
+        sendOfferLabel={sendOfferLabel}
+        sendOfferHref={action.sendOfferHref}
+        onSendOffer={action.onSendOffer}
+        ariaLabel={askSellerHref ? 'Ask seller on Messenger' : 'Seller has not added Messenger'}
+        className={cn(
+          'flex h-9 w-10 shrink-0 items-center justify-center rounded-lg border text-gray-200 transition-colors',
+          askSellerHref
+            ? 'border-white/[0.12] bg-slate-950/65 hover:border-teal-400/45 hover:bg-slate-900 hover:text-teal-100'
+            : 'border-white/[0.08] bg-slate-950/45 text-gray-500 hover:border-amber-400/35 hover:text-amber-100',
+        )}
+        style={theme ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: askSellerHref ? theme.text : theme.mutedText } : undefined}
+      >
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72A7.49 7.49 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      </AskSellerButton>
+    );
+  }
 
   return (
     <div className={cn(
@@ -312,7 +341,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
           )
         ) : submitted ? (
             <div className="rounded-lg border border-teal-800 bg-teal-950 px-3 py-2 text-xs text-teal-400 text-center" style={theme ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.accent } : undefined}>
-              <p>{showDonate ? 'Request sent. Track it in Sent Offers.' : shoe.is_negotiable ? 'Offer sent. Track it in Sent Offers.' : 'Request sent. Track it in Sent Offers.'}</p>
+              <p>{showDonate ? 'Request sent. Track it in Sent Offers.' : 'Offer sent. Track it in Sent Offers.'}</p>
               <Link href="/profile?tab=offers" className="mt-1 inline-flex font-semibold text-teal-100 underline underline-offset-2 hover:text-white">
                 View Sent Offers
               </Link>
@@ -321,63 +350,38 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
             <div className="rounded-lg border border-amber-800 bg-amber-950 px-3 py-2 text-xs text-amber-400 text-center">
               Waiting for confirmation
             </div>
+          ) : showSaleActions && !currentProfileId ? (
+            <div className="flex gap-2">
+              <Link
+                href={signInHref}
+                className="flex h-9 min-w-0 flex-1 items-center justify-center rounded-lg bg-teal-600 px-2 text-center text-[13px] font-semibold text-white transition-colors hover:bg-teal-500"
+                style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
+              >
+                {shoe.shop_id ? 'Place Order' : 'Send Offer'}
+              </Link>
+              {renderChatAction(shoe.shop_id ? 'Place Order' : 'Send Offer', { sendOfferHref: signInHref })}
+            </div>
           ) : showBuy ? (
-            <div className={cn('grid gap-2', canAskSeller && 'grid-cols-2')}>
-              {canAskSeller && askSellerHref && (
-                <AskSellerButton
-                  contactUrl={askSellerHref}
-                  listingName={formatListingName(shoe.brand, shoe.model)}
-                  sellerName={shoe.shops?.name ?? shoe.profiles?.display_name}
-                  isShop={!!shoe.shop_id}
-                  className="flex w-full items-center justify-center rounded-lg bg-teal-600 px-2 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-teal-500"
-                  style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
-                />
-              )}
+            <div className="flex gap-2">
               <button
                 onClick={() => setBuyOpen(true)}
-                className={cn(
-                  'w-full rounded-lg px-2 py-2 text-[13px] font-semibold transition-colors',
-                  canAskSeller
-                    ? 'border border-white/[0.1] bg-slate-950/60 text-gray-100 hover:bg-slate-900'
-                    : 'bg-teal-600 text-white hover:bg-teal-500',
-                )}
-                style={theme
-                  ? canAskSeller
-                    ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.text }
-                    : { backgroundColor: theme.accent, color: theme.accentText }
-                  : undefined}
+                className="flex h-9 min-w-0 flex-1 items-center justify-center rounded-lg bg-teal-600 px-2 text-center text-[13px] font-semibold text-white transition-colors hover:bg-teal-500"
+                style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
               >
-                {shoe.is_negotiable ? 'Send Offer' : 'Request to Buy'}
+                Send Offer
               </button>
+              {renderChatAction('Send Offer', { onSendOffer: () => setBuyOpen(true) })}
             </div>
           ) : showPlaceOrder ? (
-            <div className={cn('grid gap-2', canAskSeller && 'grid-cols-2')}>
-              {canAskSeller && askSellerHref && (
-                <AskSellerButton
-                  contactUrl={askSellerHref}
-                  listingName={formatListingName(shoe.brand, shoe.model)}
-                  sellerName={shoe.shops?.name ?? shoe.profiles?.display_name}
-                  isShop={!!shoe.shop_id}
-                  className="flex w-full items-center justify-center rounded-lg bg-teal-600 px-2 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-teal-500"
-                  style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
-                />
-              )}
+            <div className="flex gap-2">
               <Link
                 href={listingPath}
-                className={cn(
-                  'block w-full rounded-lg px-2 py-2 text-center text-[13px] font-semibold transition-colors',
-                  canAskSeller
-                    ? 'border border-white/[0.1] bg-slate-950/60 text-gray-100 hover:bg-slate-900'
-                    : 'bg-teal-600 text-white hover:bg-teal-500',
-                )}
-                style={theme
-                  ? canAskSeller
-                    ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.text }
-                    : { backgroundColor: theme.accent, color: theme.accentText }
-                  : undefined}
+                className="flex h-9 min-w-0 flex-1 items-center justify-center rounded-lg bg-teal-600 px-2 text-center text-[13px] font-semibold text-white transition-colors hover:bg-teal-500"
+                style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
               >
                 Place Order
               </Link>
+              {renderChatAction('Place Order', { sendOfferHref: listingPath })}
             </div>
           ) : showDonate ? (
             <button
@@ -386,15 +390,6 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
             >
               Request Pair
             </button>
-          ) : canAskSeller && askSellerHref ? (
-            <AskSellerButton
-              contactUrl={askSellerHref}
-              listingName={formatListingName(shoe.brand, shoe.model)}
-              sellerName={shoe.shops?.name ?? shoe.profiles?.display_name}
-              isShop={!!shoe.shop_id}
-              className="flex w-full items-center justify-center rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-500"
-              style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
-            />
           ) : null}
 
       </div>

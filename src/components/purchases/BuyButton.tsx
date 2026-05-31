@@ -20,7 +20,7 @@ interface BuyButtonProps {
   initialVariantId?: string | null;
   buyerProfileId?: string | null;
   buyerFbUsername?: string | null;
-  /** Override the default "Request to Buy" label (used by per-size buttons). */
+  /** Override the default action label. */
   label?: string;
   className?: string;
   showOfferCount?: boolean;
@@ -29,12 +29,12 @@ interface BuyButtonProps {
 export function BuyButton({ listingId, listingSlug, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, offerCount = 0, variants, initialVariantId, buyerProfileId, buyerFbUsername, label, className, showOfferCount = true }: BuyButtonProps) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const actionLabel = label ?? (shop ? 'Place Order' : isNegotiable ? 'Send Offer' : 'Request to Buy');
+  const actionLabel = label ?? (shop ? 'Place Order' : 'Send Offer');
 
   if (submitted) {
     return (
       <div className="mt-4 rounded-xl border border-teal-800 bg-teal-950 px-4 py-3 text-sm text-teal-300">
-        <p>{shop ? 'Order placed. Track it in Sent Offers.' : isNegotiable ? 'Offer sent. Track it in Sent Offers.' : 'Request sent. Track it in Sent Offers.'}</p>
+        <p>{shop ? 'Order placed. Track it in Sent Offers.' : 'Offer sent. Track it in Sent Offers.'}</p>
         <Link href="/profile?tab=offers" className="mt-2 inline-flex text-xs font-semibold text-teal-100 underline underline-offset-2 hover:text-white">
           View Sent Offers
         </Link>

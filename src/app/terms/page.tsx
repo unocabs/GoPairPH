@@ -75,7 +75,7 @@ export default function TermsPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">6. Transactions between users</h2>
         <p>
-          Once a seller accepts a purchase request, the buyer and seller arrange the
+          Once a seller accepts an offer, order, or donation request, the buyer and seller arrange the
           transaction directly — by meetup, online payment, shipping, or any combination.
           Go Pair PH is not a party to these transactions and is not responsible for
           payment, delivery, item condition, authenticity, warranty, refunds, returns,

@@ -130,7 +130,7 @@ export function PurchaseRequestCard({
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] uppercase tracking-wide text-gray-500">Purchase request</p>
+          <p className="text-[11px] uppercase tracking-wide text-gray-500">Buyer offer</p>
           <p className="text-sm font-semibold text-gray-100 group-hover:text-teal-400 transition-colors line-clamp-2 leading-tight">
             {listingName}
           </p>

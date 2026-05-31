@@ -212,7 +212,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const canAskSeller = shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && !!askSellerHref;
   const signedOutForSaleCtaLabel = shoe.shop_id
     ? 'Sign in to Place Order'
-    : shoe.is_negotiable ? 'Sign in to Send Offer' : 'Sign in to Request to Buy';
+    : 'Sign in to Send Offer';
   const productJsonLd = shoe.listing_type === 'for_sale' && shoe.price_php && productImageUrl ? {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -578,14 +578,14 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           {/* Purchase context — for_sale listings */}
           {purchaseContext?.type === 'my_request_pending' && (
             <div className="mt-4 rounded-xl border border-amber-800 bg-amber-950 p-4">
-              <p className="text-sm font-semibold text-amber-300">Your purchase request is pending</p>
+              <p className="text-sm font-semibold text-amber-300">Your offer is pending</p>
               <p className="text-xs text-amber-400 mt-1">Waiting for the seller to accept or decline.</p>
             </div>
           )}
 
           {purchaseContext?.type === 'my_request_accepted' && (
             <div className="mt-4 rounded-xl border border-teal-700 bg-teal-950 p-4">
-              <p className="text-sm font-semibold text-teal-300">Your purchase request was accepted!</p>
+              <p className="text-sm font-semibold text-teal-300">Your offer was accepted!</p>
               <p className="text-xs text-teal-400 mt-1">
                 Coordinate with the seller for a meetup. They&apos;ll mark this as sold once you&apos;ve completed the exchange in person.
               </p>
@@ -627,7 +627,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           {purchaseContext?.type === 'incoming_pending' && (
             <div className="mt-4 rounded-xl border border-sky-700 bg-sky-950 p-4 flex items-center justify-between gap-3">
               <p className="text-sm text-sky-300">
-                <span className="font-semibold">{purchaseContext.count}</span> pending purchase request{purchaseContext.count !== 1 ? 's' : ''} on this listing
+                <span className="font-semibold">{purchaseContext.count}</span> pending offer{purchaseContext.count !== 1 ? 's' : ''} on this listing
               </p>
               <Link
                 href="/profile?tab=purchases"
@@ -646,6 +646,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                   <AskSellerButton
                     contactUrl={askSellerHref}
                     listingName={listingName}
+                    listingHref={getListingPath(shoe)}
                     sellerName={shop?.name ?? seller?.display_name}
                     isShop={!!shop}
                     className="flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
@@ -685,6 +686,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                   <AskSellerButton
                     contactUrl={askSellerHref}
                     listingName={listingName}
+                    listingHref={getListingPath(shoe)}
                     sellerName={shop?.name ?? seller?.display_name}
                     isShop={!!shop}
                     className="flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
@@ -725,6 +727,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                   <AskSellerButton
                     contactUrl={askSellerHref}
                     listingName={listingName}
+                    listingHref={getListingPath(shoe)}
                     sellerName={shop?.name ?? seller?.display_name}
                     isShop={!!shop}
                     className="flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
@@ -778,9 +781,8 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                     Fresh shares can bring it back to Facebook groups, Facebook Marketplace, Messenger, and running chats.
                   </p>
                   <div className="mt-3 rounded-lg border border-teal-400/20 bg-teal-400/[0.06] px-3 py-2">
-                    <p className="text-xs font-semibold text-teal-100">Share again when you want another push.</p>
+                    <p className="text-xs font-semibold text-teal-100">Re-share your running shoes with the Share Post Kit to find more offers.</p>
                   </div>
-                  <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner className="mt-3" />
                 </div>
               )}
 
