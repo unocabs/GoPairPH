@@ -183,15 +183,6 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
         view_type: photo.viewType,
         order: VIEW_ORDER.indexOf(photo.viewType) >= 0 ? VIEW_ORDER.indexOf(photo.viewType) : index,
       }));
-      const existingImageRows = imageRows
-        .filter(row => row.id && originalImageIds.has(row.id))
-        .map(row => ({
-          id: row.id as string,
-          shoe_id: row.shoe_id,
-          storage_path: row.storage_path,
-          view_type: row.view_type,
-          order: row.order,
-        }));
       const newImageRows = imageRows
         .filter(row => !row.id || !originalImageIds.has(row.id))
         .map(row => ({
@@ -277,11 +268,6 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
           .delete()
           .in('id', removedImages.map(image => image.id));
         if (imgDeleteErr) throw imgDeleteErr;
-      }
-
-      if (existingImageRows.length > 0) {
-        const { error: imgUpdateErr } = await supabase.from('shoe_images').upsert(existingImageRows);
-        if (imgUpdateErr) throw imgUpdateErr;
       }
 
       if (newImageRows.length > 0) {
