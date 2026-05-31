@@ -249,6 +249,166 @@ export default async function ListingDetailPage({ params, searchParams }: { para
       )}
     </>
   );
+  const renderBuyerCtas = (className = '') => (
+    <div className={className}>
+      {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && !shoe.shop_id && (
+        <div className="mt-4 space-y-2">
+          <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
+            {canAskSeller && (
+              <AskSellerButton
+                contactUrl={askSellerHref}
+                listingName={listingName}
+                listingHref={getListingPath(shoe)}
+                sellerName={shop?.name ?? seller?.display_name}
+                isShop={!!shop}
+                buyerNeedsMessenger={!currentProfileFbUsername}
+                ariaLabel={askSellerHref ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
+                className={cn(
+                  'flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
+                  askSellerHref
+                    ? 'bg-blue-600 text-white hover:bg-blue-500'
+                    : 'border border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50',
+                )}
+              >
+                <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
+                </svg>
+                Message Seller
+              </AskSellerButton>
+            )}
+            <BuyButton
+              listingId={shoe.id}
+              listingSlug={shoe.slug}
+              listingName={listingName}
+              priceFormatted={formatPrice(shoe.price_php)}
+              pricePhp={shoe.price_php}
+              isNegotiable={shoe.is_negotiable}
+              seller={seller ?? undefined}
+              offerCount={offerCount}
+              buyerProfileId={currentProfileId}
+              buyerFbUsername={currentProfileFbUsername}
+              showOfferCount={false}
+              className="w-full rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
+            />
+          </div>
+          {canAskSeller && (
+            <p className="text-center text-xs leading-5 text-gray-500">
+              Not ready to offer yet? Ask about condition, meetup, or extra photos first.
+            </p>
+          )}
+        </div>
+      )}
+      {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && shoe.shop_id && shoe.has_stock && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
+            {canAskSeller && (
+              <AskSellerButton
+                contactUrl={askSellerHref}
+                listingName={listingName}
+                listingHref={getListingPath(shoe)}
+                sellerName={shop?.name ?? seller?.display_name}
+                isShop={!!shop}
+                buyerNeedsMessenger={!currentProfileFbUsername}
+                ariaLabel={askSellerHref ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
+                className={cn(
+                  'flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
+                  askSellerHref
+                    ? 'bg-blue-600 text-white hover:bg-blue-500'
+                    : 'border border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50',
+                )}
+              >
+                <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
+                </svg>
+                Message Seller
+              </AskSellerButton>
+            )}
+            <BuyButton
+              listingId={shoe.id}
+              listingSlug={shoe.slug}
+              listingName={listingName}
+              priceFormatted={formatPrice(shoe.price_php)}
+              pricePhp={shoe.price_php}
+              isNegotiable={shoe.is_negotiable}
+              seller={seller ?? undefined}
+              shop={shoe.shops}
+              variants={shoe.shoe_variants}
+              label="Place Order"
+              buyerProfileId={currentProfileId}
+              buyerFbUsername={currentProfileFbUsername}
+              className="w-full rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
+            />
+          </div>
+          {canAskSeller && (
+            <p className="text-center text-xs leading-5 text-gray-500">
+              Not ready to order yet? Ask about stock, pickup, or delivery first.
+            </p>
+          )}
+        </div>
+      )}
+      {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && !currentProfileId && (
+        <div className="mt-4 space-y-2">
+          <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
+            {canAskSeller && (
+              <AskSellerButton
+                contactUrl={askSellerHref}
+                listingName={listingName}
+                listingHref={getListingPath(shoe)}
+                sellerName={shop?.name ?? seller?.display_name}
+                isShop={!!shop}
+                sendOfferLabel={signedOutForSaleCtaLabel}
+                sendOfferHref={signInHref}
+                ariaLabel={askSellerHref ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
+                className={cn(
+                  'flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
+                  askSellerHref
+                    ? 'bg-blue-600 text-white hover:bg-blue-500'
+                    : 'border border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50',
+                )}
+              >
+                <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
+                </svg>
+                Message Seller
+              </AskSellerButton>
+            )}
+            <Link
+              href={signInHref}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
+            >
+              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L3 13V3h10l7.59 7.59a2 2 0 010 2.82z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01" />
+              </svg>
+              {signedOutForSaleCtaLabel}
+            </Link>
+          </div>
+          {canAskSeller && (
+            <p className="text-center text-xs leading-5 text-gray-500">
+              Ask first if you need condition, meetup, or extra photo details.
+            </p>
+          )}
+        </div>
+      )}
+
+      {shoe.listing_type === 'donate' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && (
+        <DonateRequestButton
+          listingId={shoe.id}
+          listingName={listingName}
+          requesterId={currentProfileId}
+          requesterFbUsername={currentProfileFbUsername}
+        />
+      )}
+      {shoe.listing_type === 'donate' && shoe.status === 'active' && !isOwner && !currentProfileId && (
+        <Link
+          href={signInHref}
+          className="mt-4 flex w-full items-center justify-center rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-500"
+        >
+          Sign in to Request Donation
+        </Link>
+      )}
+    </div>
+  );
 
   return (
     <PageShell>
@@ -361,6 +521,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             listingPath={getListingPath(shoe)}
             overlay={galleryOverlay}
           />
+          {renderBuyerCtas('mt-1 lg:hidden')}
         </div>
 
         {/* Details */}
@@ -629,163 +790,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             </div>
           )}
 
-          {/* Buy button — for_sale, active, non-owners only, no existing request. */}
-          {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && !shoe.shop_id && (
-            <div className="mt-4 space-y-2">
-              <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
-                {canAskSeller && (
-                  <AskSellerButton
-                    contactUrl={askSellerHref}
-                    listingName={listingName}
-                    listingHref={getListingPath(shoe)}
-                    sellerName={shop?.name ?? seller?.display_name}
-                    isShop={!!shop}
-                    buyerNeedsMessenger={!currentProfileFbUsername}
-                    ariaLabel={askSellerHref ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
-                    className={cn(
-                      'flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
-                      askSellerHref
-                        ? 'bg-blue-600 text-white hover:bg-blue-500'
-                        : 'border border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50',
-                    )}
-                  >
-                    <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
-                    </svg>
-                    Message Seller
-                  </AskSellerButton>
-                )}
-                <BuyButton
-                  listingId={shoe.id}
-                  listingSlug={shoe.slug}
-                  listingName={listingName}
-                  priceFormatted={formatPrice(shoe.price_php)}
-                  pricePhp={shoe.price_php}
-                  isNegotiable={shoe.is_negotiable}
-                  seller={seller ?? undefined}
-                  offerCount={offerCount}
-                  buyerProfileId={currentProfileId}
-                  buyerFbUsername={currentProfileFbUsername}
-                  showOfferCount={false}
-                  className="w-full rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
-                />
-              </div>
-              {canAskSeller && (
-                <p className="text-center text-xs leading-5 text-gray-500">
-                  Not ready to offer yet? Ask about condition, meetup, or extra photos first.
-                </p>
-              )}
-            </div>
-          )}
-          {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && shoe.shop_id && shoe.has_stock && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
-            <div className="mt-4 space-y-2">
-              <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
-                {canAskSeller && (
-                  <AskSellerButton
-                    contactUrl={askSellerHref}
-                    listingName={listingName}
-                    listingHref={getListingPath(shoe)}
-                    sellerName={shop?.name ?? seller?.display_name}
-                    isShop={!!shop}
-                    buyerNeedsMessenger={!currentProfileFbUsername}
-                    ariaLabel={askSellerHref ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
-                    className={cn(
-                      'flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
-                      askSellerHref
-                        ? 'bg-blue-600 text-white hover:bg-blue-500'
-                        : 'border border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50',
-                    )}
-                  >
-                    <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
-                    </svg>
-                    Message Seller
-                  </AskSellerButton>
-                )}
-                <BuyButton
-                  listingId={shoe.id}
-                  listingSlug={shoe.slug}
-                  listingName={listingName}
-                  priceFormatted={formatPrice(shoe.price_php)}
-                  pricePhp={shoe.price_php}
-                  isNegotiable={shoe.is_negotiable}
-                  seller={seller ?? undefined}
-                  shop={shoe.shops}
-                  variants={shoe.shoe_variants}
-                  label="Place Order"
-                  buyerProfileId={currentProfileId}
-                  buyerFbUsername={currentProfileFbUsername}
-                  className="w-full rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
-                />
-              </div>
-              {canAskSeller && (
-                <p className="text-center text-xs leading-5 text-gray-500">
-                  Not ready to order yet? Ask about stock, pickup, or delivery first.
-                </p>
-              )}
-            </div>
-          )}
-          {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && !currentProfileId && (
-            <div className="mt-4 space-y-2">
-              <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
-                {canAskSeller && (
-                  <AskSellerButton
-                    contactUrl={askSellerHref}
-                    listingName={listingName}
-                    listingHref={getListingPath(shoe)}
-                    sellerName={shop?.name ?? seller?.display_name}
-                    isShop={!!shop}
-                    sendOfferLabel={signedOutForSaleCtaLabel}
-                    sendOfferHref={signInHref}
-                    ariaLabel={askSellerHref ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
-                    className={cn(
-                      'flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
-                      askSellerHref
-                        ? 'bg-blue-600 text-white hover:bg-blue-500'
-                        : 'border border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50',
-                    )}
-                  >
-                    <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
-                    </svg>
-                    Message Seller
-                  </AskSellerButton>
-                )}
-                <Link
-                  href={signInHref}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
-                >
-                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L3 13V3h10l7.59 7.59a2 2 0 010 2.82z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01" />
-                  </svg>
-                  {signedOutForSaleCtaLabel}
-                </Link>
-              </div>
-              {canAskSeller && (
-                <p className="text-center text-xs leading-5 text-gray-500">
-                  Ask first if you need condition, meetup, or extra photo details.
-                </p>
-              )}
-            </div>
-          )}
-
-          {shoe.listing_type === 'donate' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && (
-            <DonateRequestButton
-              listingId={shoe.id}
-              listingName={listingName}
-              requesterId={currentProfileId}
-              requesterFbUsername={currentProfileFbUsername}
-            />
-          )}
-          {shoe.listing_type === 'donate' && shoe.status === 'active' && !isOwner && !currentProfileId && (
-            <Link
-              href={signInHref}
-              className="mt-4 flex w-full items-center justify-center rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-500"
-            >
-              Sign in to Request Donation
-            </Link>
-          )}
+          {renderBuyerCtas('hidden lg:block')}
 
           {/* Owner actions */}
           {isOwner && (
