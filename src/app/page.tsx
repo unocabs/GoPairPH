@@ -21,7 +21,7 @@ const sellerBenefits: ReadonlyArray<{
 }> = [
   {
     title: 'List once, share anywhere',
-    text: 'Create one clean pair link, then share it to FB groups, Marketplace, Messenger, or friends.',
+    text: 'Create one clean pair link, then share it to FB groups, Facebook Marketplace, Messenger, or friends.',
     icon: 'send',
   },
   {
@@ -215,7 +215,7 @@ export default async function HomePage() {
               <div className="flex items-center gap-2 mb-4">
                 <LogoMark size={40} />
                 <span className="rounded-full border border-teal-400/30 bg-teal-400/10 px-3 py-1 text-xs font-semibold text-teal-300 shadow-[0_0_28px_rgba(20,184,166,0.12)] backdrop-blur-sm">
-                  Pampanga Running Shoe Marketplace
+                  GP Marketplace for running shoes
                 </span>
               </div>
               <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-gray-100 drop-shadow-[0_16px_36px_rgba(0,0,0,0.45)] sm:text-5xl">
@@ -223,12 +223,12 @@ export default async function HomePage() {
                 <span className="text-teal-300">Running Pair in Pampanga</span>
               </h1>
               <p className="mt-3 max-w-lg text-sm leading-6 text-gray-300/85 sm:mt-4 sm:text-lg sm:leading-8">
-                Buy brand-new or pre-loved pairs from Pampanga runners and nearby
-                sellers, or list once and share your clean Go Pair PH listing anywhere.
+                Buy brand-new or pre-loved pairs from Pampanga runners, plus Central
+                Luzon and NCR sellers who can serve Pampanga buyers.
               </p>
               <div className="mt-6 flex flex-wrap gap-2.5 sm:mt-8 sm:gap-3">
                 <Link href="/browse">
-                  <Button size="lg" variant="secondary" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">Browse Marketplace</Button>
+                  <Button size="lg" variant="secondary" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">Browse GP Marketplace</Button>
                 </Link>
                 <Link href="/listings/new">
                   <Button size="lg" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">List Your Shoes</Button>
@@ -255,7 +255,7 @@ export default async function HomePage() {
             {[
               { icon: '💰', label: 'Community', desc: 'Buy, sell, or donate with local runners' },
               { icon: '👟', label: 'Running shoes', desc: 'Brand-new and pre-loved pairs in one focused place' },
-              { icon: '📍', label: 'Pampanga & nearby', desc: 'Focused on Pampanga buyers, open to nearby sellers' },
+              { icon: '📍', label: 'Pampanga-first', desc: 'Open to Central Luzon and NCR sellers who serve Pampanga buyers' },
             ].map(f => (
               <div key={f.label} className="flex items-center justify-center gap-2 px-2 py-1.5 sm:gap-3">
                 <span className="text-xl sm:text-2xl shrink-0" aria-hidden="true">{f.icon}</span>
@@ -321,7 +321,7 @@ export default async function HomePage() {
                   href="/browse"
                   className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 bg-slate-950/60 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-800 hover:text-gray-100 sm:px-4 sm:py-2.5"
                 >
-                  See Marketplace
+                  See GP Marketplace
                 </Link>
               </div>
             </div>

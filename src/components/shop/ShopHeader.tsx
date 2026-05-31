@@ -1,5 +1,6 @@
 import { getPublicUrl } from '@/lib/utils';
 import { getShopTheme } from '@/lib/shopTheme';
+import { getFacebookContactUrl } from '@/lib/facebook';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
 import type { Shop } from '@/types';
 
@@ -14,6 +15,7 @@ export function ShopHeader({ shop, listingCount }: ShopHeaderProps) {
   const headerUrl = shop.header_image_storage_path ? getPublicUrl(supabaseUrl, shop.header_image_storage_path, 'shop-logos') : null;
   const hasCustomHeader = Boolean(headerUrl);
   const theme = getShopTheme(shop.background_color, shop.accent_color);
+  const facebookUrl = getFacebookContactUrl(shop.fb_page_url);
 
   return (
     <section
@@ -74,9 +76,9 @@ export function ShopHeader({ shop, listingCount }: ShopHeaderProps) {
             {shop.about && (
               <p className="mt-4 max-w-2xl text-sm leading-relaxed whitespace-pre-wrap" style={{ color: theme.text }}>{shop.about}</p>
             )}
-            {shop.fb_page_url && (
+            {facebookUrl && (
               <a
-                href={shop.fb_page_url}
+                href={facebookUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-4 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-opacity hover:opacity-90"

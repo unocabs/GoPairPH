@@ -116,7 +116,7 @@ export async function HeroFallback() {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-400" />
           </span>
           <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-300">
-            Marketplace Pulse
+            GP Marketplace Pulse
           </span>
         </div>
         <span className="text-[11px] text-gray-500 font-mono">Live · Pampanga</span>

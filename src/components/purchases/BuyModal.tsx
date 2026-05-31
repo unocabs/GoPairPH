@@ -11,6 +11,7 @@ import { VariantSelector } from '@/components/listings/VariantSelector';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
 import { BuyerContactPrompt } from './BuyerContactPrompt';
 import { getPublicUrl } from '@/lib/utils';
+import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
 import type { Profile, ShoeVariant, Shop } from '@/types';
 
 interface BuyModalProps {
@@ -46,6 +47,8 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
   const isShopOrder = !!shop;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const shopLogoUrl = shop?.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
+  const shopFacebookUrl = getFacebookContactUrl(shop?.fb_page_url);
+  const sellerMessengerUrl = buildMessengerUrl(seller?.fb_username);
   const submitDisabled = showVariantSelector && availableVariants.length === 0;
   const actionLabel = isShopOrder ? 'Place Order' : isNegotiable ? 'Send Offer' : 'Request to Buy';
   const requestLabel = isNegotiable ? 'offer' : 'request';
@@ -146,9 +149,9 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
                   {shop.location && <p className="text-xs text-gray-500">{shop.location}</p>}
                 </div>
               </div>
-              {shop.fb_page_url && (
+              {shopFacebookUrl && (
                 <a
-                  href={shop.fb_page_url}
+                  href={shopFacebookUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-blue-300 hover:text-blue-200 transition-colors"
@@ -180,7 +183,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
                   {seller.location && <p className="text-xs text-gray-500">{seller.location}</p>}
                 </div>
               </div>
-              {seller.fb_username && (
+              {sellerMessengerUrl && (
                 <p className="mt-2 text-xs leading-5 text-gray-500">
                   Messenger available after the seller accepts.
                 </p>

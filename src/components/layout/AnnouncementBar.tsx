@@ -1,5 +1,5 @@
 export function AnnouncementBar() {
-  const message = "Pampanga's running shoe hub — open to local and nearby sellers who serve Pampanga runners.";
+  const message = "Pampanga's running shoe hub — open to Central Luzon and NCR sellers who serve Pampanga runners.";
 
   return (
     <div className="overflow-hidden border-b border-gray-800 bg-black">

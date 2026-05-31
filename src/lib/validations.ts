@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { normalizeFacebookUsername } from '@/lib/facebook';
 
 export const listingSchema = z.object({
   brand: z.string().min(1, 'Brand is required'),
@@ -90,8 +91,16 @@ export const profileSchema = z.object({
   location: z.string().optional().nullable(),
   fb_username: z.string()
     .min(1, 'Facebook username is required')
-    .regex(/^[a-zA-Z0-9.]+$/, 'Username can only contain letters, numbers, and dots')
-    .max(50),
+    .max(120)
+    .superRefine((value, ctx) => {
+      const normalized = normalizeFacebookUsername(value);
+      if (normalized.error) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: normalized.error,
+        });
+      }
+    }),
 });
 
 export type ListingFormData = z.infer<typeof listingSchema>;

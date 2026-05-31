@@ -22,6 +22,8 @@ import { FlaggedPill } from './FlaggedPill';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import { SaveListingButton } from './SaveListingButton';
 import { type ShopTheme } from '@/lib/shopTheme';
+import { AskSellerButton } from './AskSellerButton';
+import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
 
 const NEW_PILL_WINDOW_MS = 24 * 60 * 60 * 1000;
 const SharePostModal = dynamic(
@@ -87,6 +89,8 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
   const showBuy = canAct && shoe.listing_type === 'for_sale' && !!shoe.price_php && !shoe.shop_id;
   const showDonate = canAct && shoe.listing_type === 'donate';
   const showPlaceOrder = canAct && shoe.listing_type === 'for_sale' && !!shoe.shop_id && shoe.has_stock;
+  const askSellerHref = getFacebookContactUrl(shoe.shops?.fb_page_url ?? null) ?? buildMessengerUrl(shoe.profiles?.fb_username ?? null);
+  const canAskSeller = shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && !!askSellerHref;
   const hasTopPhoto = shoe.shoe_images?.some(img => img.view_type === 'top') ?? false;
   const hasSolePhoto = shoe.shoe_images?.some(img => img.view_type === 'sole') ?? false;
   const needsPhotoHelp = shoe.status === 'active' && (!hasTopPhoto || !hasSolePhoto);
@@ -318,21 +322,63 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
               Waiting for confirmation
             </div>
           ) : showBuy ? (
-            <button
-              onClick={() => setBuyOpen(true)}
-              className="w-full rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-500 transition-colors"
-              style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
-            >
-              {shoe.is_negotiable ? 'Send Offer' : 'Request to Buy'}
-            </button>
+            <div className={cn('grid gap-2', canAskSeller && 'grid-cols-2')}>
+              {canAskSeller && askSellerHref && (
+                <AskSellerButton
+                  contactUrl={askSellerHref}
+                  listingName={formatListingName(shoe.brand, shoe.model)}
+                  sellerName={shoe.shops?.name ?? shoe.profiles?.display_name}
+                  isShop={!!shoe.shop_id}
+                  className="flex w-full items-center justify-center rounded-lg bg-teal-600 px-2 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-teal-500"
+                  style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
+                />
+              )}
+              <button
+                onClick={() => setBuyOpen(true)}
+                className={cn(
+                  'w-full rounded-lg px-2 py-2 text-[13px] font-semibold transition-colors',
+                  canAskSeller
+                    ? 'border border-white/[0.1] bg-slate-950/60 text-gray-100 hover:bg-slate-900'
+                    : 'bg-teal-600 text-white hover:bg-teal-500',
+                )}
+                style={theme
+                  ? canAskSeller
+                    ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.text }
+                    : { backgroundColor: theme.accent, color: theme.accentText }
+                  : undefined}
+              >
+                {shoe.is_negotiable ? 'Send Offer' : 'Request to Buy'}
+              </button>
+            </div>
           ) : showPlaceOrder ? (
-            <Link
-              href={listingPath}
-              className="block w-full rounded-lg bg-teal-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-teal-500 transition-colors"
-              style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
-            >
-              Place Order
-            </Link>
+            <div className={cn('grid gap-2', canAskSeller && 'grid-cols-2')}>
+              {canAskSeller && askSellerHref && (
+                <AskSellerButton
+                  contactUrl={askSellerHref}
+                  listingName={formatListingName(shoe.brand, shoe.model)}
+                  sellerName={shoe.shops?.name ?? shoe.profiles?.display_name}
+                  isShop={!!shoe.shop_id}
+                  className="flex w-full items-center justify-center rounded-lg bg-teal-600 px-2 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-teal-500"
+                  style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
+                />
+              )}
+              <Link
+                href={listingPath}
+                className={cn(
+                  'block w-full rounded-lg px-2 py-2 text-center text-[13px] font-semibold transition-colors',
+                  canAskSeller
+                    ? 'border border-white/[0.1] bg-slate-950/60 text-gray-100 hover:bg-slate-900'
+                    : 'bg-teal-600 text-white hover:bg-teal-500',
+                )}
+                style={theme
+                  ? canAskSeller
+                    ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.text }
+                    : { backgroundColor: theme.accent, color: theme.accentText }
+                  : undefined}
+              >
+                Place Order
+              </Link>
+            </div>
           ) : showDonate ? (
             <button
               onClick={() => setDonateOpen(true)}
@@ -340,6 +386,15 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
             >
               Request Pair
             </button>
+          ) : canAskSeller && askSellerHref ? (
+            <AskSellerButton
+              contactUrl={askSellerHref}
+              listingName={formatListingName(shoe.brand, shoe.model)}
+              sellerName={shoe.shops?.name ?? shoe.profiles?.display_name}
+              isShop={!!shoe.shop_id}
+              className="flex w-full items-center justify-center rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-500"
+              style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
+            />
           ) : null}
 
       </div>

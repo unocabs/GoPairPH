@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { formatRelativeDate, formatPrice, formatSize, getPublicUrl, getListingPath } from '@/lib/utils';
+import { buildMessengerUrl } from '@/lib/facebook';
 import type { PurchaseRequest, PurchaseRequestStatus, Shoe } from '@/types';
 
 type ConfirmAction = 'accept' | 'complete' | 'cancel';
@@ -38,6 +39,7 @@ export function PurchaseRequestCard({
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const resolvedListing = listing ?? (request.listing as Shoe | undefined);
   const listingPath = resolvedListing ? getListingPath(resolvedListing) : `/listings/${listingId}`;
+  const buyerMessengerUrl = buildMessengerUrl(request.profiles?.fb_username);
   const topImg =
     resolvedListing?.shoe_images?.find(i => i.view_type === 'top') ??
     resolvedListing?.shoe_images?.[0];
@@ -163,11 +165,11 @@ export function PurchaseRequestCard({
         <Link href={`/profile/${request.buyer_id}`} className="text-teal-400 hover:text-teal-300">
           {request.profiles?.display_name ?? 'Unknown'}
         </Link>
-        {request.profiles?.fb_username && (
+        {buyerMessengerUrl && (
           <>
             <span className="text-gray-700">·</span>
             <a
-              href={`https://m.me/${request.profiles.fb_username}`}
+              href={buyerMessengerUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
@@ -180,9 +182,9 @@ export function PurchaseRequestCard({
           </>
         )}
       </div>
-      {!request.profiles?.fb_username && (
+      {!buyerMessengerUrl && (
         <p className="rounded-lg border border-white/[0.08] bg-slate-950/45 px-3 py-2 text-xs leading-5 text-gray-400">
-          Buyer has not added Messenger. Use their message or profile to coordinate after accepting.
+          Buyer has not added a valid Messenger link. Use their message or profile to coordinate after accepting.
         </p>
       )}
 

@@ -6,6 +6,7 @@ import { ListingForm } from '@/components/listings/ListingForm';
 import { SellerContactGate } from '@/components/listings/SellerContactGate';
 import { CanListWidget } from '@/components/listings/CanListWidget';
 import { formatPrice, formatRelativeDate, formatSize } from '@/lib/utils';
+import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
 import type { Shop, WishlistItem } from '@/types';
 
 type DemandSignal = Pick<WishlistItem, 'id' | 'brand' | 'model' | 'size_eu' | 'size_us' | 'size_cm' | 'price_max_php' | 'location' | 'created_at'>;
@@ -43,6 +44,7 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
   ]);
   const isResumingGuestDraft = searchParams?.resume === 'draft';
   const formShop = isResumingGuestDraft ? null : result?.shop ?? null;
+  const hasValidSellerContact = !!buildMessengerUrl(result?.fbUsername) || !!getFacebookContactUrl(formShop?.fb_page_url);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -62,10 +64,10 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
         <SellerContactGate
           profileId={result.profileId}
           initialFbUsername={result.fbUsername}
-          hasShopContact={!!formShop?.fb_page_url}
+          hasShopContact={!!getFacebookContactUrl(formShop?.fb_page_url)}
         >
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-            <ListingForm profileId={result.profileId} shop={formShop} hasMessengerContact={!!result.fbUsername || !!formShop?.fb_page_url} />
+            <ListingForm profileId={result.profileId} shop={formShop} hasMessengerContact={hasValidSellerContact} />
 
             <aside className="space-y-4 lg:sticky lg:top-24 lg:pt-[100px]">
               <CanListWidget compact />

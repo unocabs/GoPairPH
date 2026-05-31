@@ -337,7 +337,7 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
           </div>
 
           <p className="mt-2 text-[11px] leading-4 text-gray-500 sm:mt-3 sm:text-xs">
-            <strong className="text-gray-300">Tip: Share it to your Facebook post or Marketplace listing.</strong> On mobile, long-press the image to save it. If the preview looks wrong, tap <strong className="text-gray-300">Reload</strong>.
+            <strong className="text-gray-300">Tip: Share it to your Facebook post or Facebook Marketplace listing.</strong> On mobile, long-press the image to save it. If the preview looks wrong, tap <strong className="text-gray-300">Reload</strong>.
           </p>
 
           {/* Hidden source for html-to-image — rendered offscreen at native size. */}

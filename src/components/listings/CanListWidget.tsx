@@ -18,7 +18,7 @@ const locationChoices: ReadonlyArray<{
   label: string;
 }> = [
   { value: 'pampanga', label: "I'm in Pampanga" },
-  { value: 'nearby', label: "I'm nearby (Central Luzon & NCR)" },
+  { value: 'nearby', label: "I'm in Central Luzon or NCR" },
   { value: 'farther', label: "I'm farther away" },
 ];
 
@@ -73,7 +73,7 @@ export function CanListWidget({ showCta = false, compact = false }: CanListWidge
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">
           Pampanga-first
         </p>
-        <h2 className="mt-2 text-sm font-semibold text-gray-100">Nearby sellers are welcome.</h2>
+        <h2 className="mt-2 text-sm font-semibold text-gray-100">Central Luzon and NCR sellers are welcome.</h2>
         <p className="mt-1 text-xs leading-5 text-gray-500">
           List if Pampanga buyers can meet up, receive delivery, or arrange shipping with you.
         </p>
@@ -92,7 +92,7 @@ export function CanListWidget({ showCta = false, compact = false }: CanListWidge
           Can I list on Go Pair PH?
         </h2>
         <p className="mt-2 text-sm leading-6 text-gray-400">
-          Local sellers are ideal. Nearby sellers are welcome if they can serve Pampanga buyers.
+          Pampanga sellers are ideal. Central Luzon and NCR sellers are welcome if they can serve Pampanga buyers.
         </p>
 
         <div className="mt-5 space-y-4">
@@ -173,7 +173,7 @@ export function CanListWidget({ showCta = false, compact = false }: CanListWidge
               href="/browse"
               className="inline-flex items-center justify-center rounded-lg border border-gray-700 bg-slate-950/60 px-4 py-2.5 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-800 hover:text-gray-100"
             >
-              See Marketplace
+              See GP Marketplace
             </Link>
           </div>
         )}

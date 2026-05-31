@@ -4,7 +4,7 @@ import { SOCIAL_LINKS } from '@/lib/socialLinks';
 
 const FOOTER_GROUPS = [
   {
-    heading: 'Marketplace',
+    heading: 'GP Marketplace',
     links: [
       { href: '/browse', label: 'All Listings' },
       { href: '/shop', label: 'Shops' },
@@ -40,8 +40,8 @@ export function Footer() {
           <div className="col-span-2 sm:col-span-1">
             <Logo size="sm" />
             <p className="mt-3 text-xs text-gray-500 leading-relaxed">
-              A Pampanga-focused running shoe marketplace for runners, nearby sellers,
-              brand-new pairs, pre-loved pairs, and donations.
+              GP Marketplace is a Pampanga-focused running shoe marketplace for runners,
+              Central Luzon and NCR sellers, brand-new pairs, pre-loved pairs, and donations.
             </p>
           </div>
 

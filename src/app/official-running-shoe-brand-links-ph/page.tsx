@@ -100,7 +100,7 @@ export default function OfficialRunningShoeBrandLinksPage() {
                 href="/browse"
                 className="inline-flex items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
               >
-                Browse Marketplace
+                Browse GP Marketplace
               </Link>
               <Link
                 href="/listings/new"

@@ -68,7 +68,7 @@ export function ListingShareActions({ shoe, seller, isOwner = false, className =
     const url = `${window.location.origin}${listingPath}`;
     await copyText(
       buildListingCaption(shoe, url),
-      isOwner ? 'Caption copied. Paste it on Facebook, Marketplace, or Messenger.' : 'Caption copied.'
+      isOwner ? 'Caption copied. Paste it on Facebook groups, Facebook Marketplace, or Messenger.' : 'Caption copied.'
     );
     openFbPrompt();
   }

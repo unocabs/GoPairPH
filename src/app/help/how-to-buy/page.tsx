@@ -6,7 +6,7 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard';
 
 export const metadata: Metadata = {
   title: 'How to Buy on Go Pair PH',
-  description: 'Find running shoes from local sellers, nearby shops, and runners who serve Pampanga buyers.',
+  description: 'Find running shoes from Pampanga runners, plus Central Luzon and NCR sellers who serve Pampanga buyers.',
   alternates: { canonical: '/help/how-to-buy' },
 };
 
@@ -21,8 +21,8 @@ const steps: ReadonlyArray<{
 }> = [
   {
     number: '1',
-    title: 'Browse Marketplace',
-    text: 'Explore running shoes listed by community sellers and shops.',
+    title: 'Browse GP Marketplace',
+    text: 'Explore running shoes listed by community sellers and selected sellers.',
     icon: 'search',
     visual: 'browse',
   },
@@ -160,7 +160,7 @@ function HeroSection() {
           How to Buy on <span className="text-teal-300">Go Pair PH</span>
         </h1>
         <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-300">
-          Find running shoes from local sellers, nearby shops, and runners who serve Pampanga buyers.
+          Find running shoes from Pampanga runners, plus Central Luzon and NCR sellers who serve Pampanga buyers.
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
           <Link
@@ -275,7 +275,7 @@ function MockTopBar() {
 function BrowseMock() {
   return (
     <div>
-      <h3 className="text-sm font-semibold text-gray-100">Browse Marketplace</h3>
+      <h3 className="text-sm font-semibold text-gray-100">Browse GP Marketplace</h3>
       <div className="mt-4 grid gap-2 sm:grid-cols-4">
         {['Search', 'Brand', 'Size', 'Condition'].map((filter) => (
           <div key={filter} className="rounded-lg border border-white/[0.08] bg-slate-900 px-3 py-2 text-xs text-gray-500">

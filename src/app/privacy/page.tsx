@@ -28,7 +28,7 @@ export default function PrivacyPage() {
           <li><strong>Account information:</strong> your name, email address, and profile picture from Google sign-in.</li>
           <li><strong>Profile information:</strong> display name, location, optional Facebook Messenger username or profile link, verification status, and seller or shop details you provide.</li>
           <li><strong>Listings and shop content:</strong> shoe photos, brand, model, size, condition, mileage, price, description, location, availability, shop logos, shop pages, and related listing details.</li>
-          <li><strong>Marketplace activity:</strong> offers, purchase requests, donation requests, saved pairs, saved searches, Looking For posts, buyer demand signals, listing status updates, seller actions, and admin review activity.</li>
+          <li><strong>GP Marketplace activity:</strong> offers, purchase requests, donation requests, saved pairs, saved searches, Looking For posts, buyer demand signals, listing status updates, seller actions, and admin review activity.</li>
           <li><strong>Communications:</strong> messages or notes submitted through offer, order, donation, support, shop application, verification, and contact forms.</li>
           <li><strong>Listing analytics:</strong> listing views, daily view totals, unique view counts, timestamps, and limited technical identifiers used to count views and reduce duplicate or abusive activity.</li>
           <li><strong>Technical information:</strong> IP address, browser, device, pages visited, referring pages, cookies, session data, and server logs needed to operate, secure, measure, and improve the site.</li>

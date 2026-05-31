@@ -43,7 +43,7 @@ export default function NotFound() {
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link href="/browse">
                 <Button size="lg" className="w-full sm:w-auto">
-                  Browse Marketplace
+                  Browse GP Marketplace
                 </Button>
               </Link>
               <Link href="/help/how-to-buy">

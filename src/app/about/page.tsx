@@ -5,7 +5,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'Go Pair PH is a Pampanga-focused running shoe marketplace for runners, nearby sellers, brand-new pairs, pre-loved pairs, and donations.',
+    'Go Pair PH is a Pampanga-first running shoe marketplace for runners, Central Luzon and NCR sellers, brand-new pairs, pre-loved pairs, and donations.',
   alternates: { canonical: '/about' },
 };
 
@@ -13,7 +13,7 @@ export default function AboutPage() {
   return (
     <InfoPage
       title="About Go Pair PH"
-      subtitle="A focused marketplace built around Pampanga runners and sellers who serve them."
+      subtitle="A focused marketplace built around Pampanga runners, with Central Luzon and NCR sellers welcome if they can serve Pampanga buyers."
     >
       <section>
         <h2 className="text-xl font-semibold text-gray-100">What we do</h2>
@@ -51,7 +51,7 @@ export default function AboutPage() {
           <li>Go to your Profile and add your Facebook username.</li>
           <li>List a pair (with photos, size, mileage, and condition) for sale or donation.</li>
           <li>
-            Browse listings from runners and nearby sellers who serve
+            Browse listings from runners and Central Luzon or NCR sellers who serve
             Pampanga buyers, then coordinate the deal directly with the seller.
           </li>
           <li>The seller marks the listing as sold once the exchange is complete.</li>
@@ -63,7 +63,8 @@ export default function AboutPage() {
         <p>
           Go Pair PH is intentionally Pampanga-focused — listings are aimed at buyers in
           Pampanga and sellers who can serve them through meetup, delivery, or shipping.
-          This keeps the community trustworthy while still welcoming nearby sellers.
+          This keeps the community trustworthy while still welcoming Central Luzon and
+          NCR sellers who can complete deals with Pampanga buyers.
         </p>
         <p>
           Our goal is to help individual runners and small local resellers share better,

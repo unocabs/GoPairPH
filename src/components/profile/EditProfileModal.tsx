@@ -8,6 +8,7 @@ import { profileSchema, type ProfileFormData } from '@/lib/validations';
 import { type Profile } from '@/types';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { normalizeFacebookUsername } from '@/lib/facebook';
 
 interface EditProfileModalProps {
   profile: Profile;
@@ -34,12 +35,19 @@ export function EditProfileModal({ profile, onClose, onUpdated }: EditProfileMod
     setSubmitting(true);
     setError(null);
     try {
+      const normalized = normalizeFacebookUsername(data.fb_username);
+      if (normalized.error) {
+        setError(normalized.error);
+        setSubmitting(false);
+        return;
+      }
+
       const { data: updated, error: err } = await supabase
         .from('profiles')
         .update({
           display_name: data.display_name,
           location: data.location,
-          fb_username: data.fb_username.trim(),
+          fb_username: normalized.value,
         })
         .eq('id', profile.id)
         .select()

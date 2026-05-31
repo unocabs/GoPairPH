@@ -25,6 +25,7 @@ import { BuyButton } from '@/components/purchases/BuyButton';
 import { DonateRequestButton } from '@/components/purchases/DonateRequestButton';
 import { ContactSellerButtons } from '@/components/listings/ContactSellerButtons';
 import { ListingShareActions } from '@/components/listings/ListingShareActions';
+import { AskSellerButton } from '@/components/listings/AskSellerButton';
 import { SaveListingButton } from '@/components/listings/SaveListingButton';
 import { ListingViewTracker } from '@/components/listings/ListingViewTracker';
 import { PromoteListingButton } from '@/components/listings/PromoteListingButton';
@@ -39,6 +40,7 @@ import { PageShell } from '@/components/layout/PageShell';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { isListingSaved } from '@/lib/savedListings';
 import { getViewSummariesForListings } from '@/lib/listingViews';
+import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -204,6 +206,10 @@ export default async function ListingDetailPage({ params, searchParams }: { para
     : null;
   const showUnavailablePanel = !isOwner && (shoe.status === 'sold' || shoe.status === 'donated' || shoe.status === 'archived');
   const signInHref = `/auth/sign-in?next=${encodeURIComponent(getListingPath(shoe))}`;
+  const shopContactHref = getFacebookContactUrl(shop?.fb_page_url ?? null);
+  const sellerMessengerHref = buildMessengerUrl(seller?.fb_username ?? null);
+  const askSellerHref = shopContactHref ?? sellerMessengerHref;
+  const canAskSeller = shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && !!askSellerHref;
   const signedOutForSaleCtaLabel = shoe.shop_id
     ? 'Sign in to Place Order'
     : shoe.is_negotiable ? 'Sign in to Send Offer' : 'Sign in to Request to Buy';
@@ -255,7 +261,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
         />
       )}
       <Link href="/browse" className="mb-6 inline-flex items-center gap-1 text-sm text-teal-400 hover:text-teal-300 transition-colors">
-        ← Back to Marketplace
+        ← Back to GP Marketplace
       </Link>
 
       {justListed && (
@@ -266,7 +272,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               <h2 className="mt-2 text-xl font-bold text-gray-100">Share it where runners already are.</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
                 Copy the caption, create the share image, or send the listing link to Facebook groups,
-                Marketplace, Messenger, and running chats.
+                Facebook Marketplace, Messenger, and running chats.
               </p>
             </div>
             <div className="shrink-0 rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 lg:w-[460px]">
@@ -409,7 +415,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                   href="/browse"
                   className="inline-flex items-center justify-center rounded-lg bg-teal-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
                 >
-                  Browse active pairs
+                  Browse GP Marketplace
                 </Link>
                 <Link
                   href="/looking-for/new"
@@ -519,9 +525,9 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               </div>
               <div className="mt-3 space-y-2">
                 <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner={isOwner} />
-                {!isOwner && shop.fb_page_url && (
+                {!isOwner && shopContactHref && (
                   <a
-                    href={shop.fb_page_url}
+                    href={shopContactHref}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-300 hover:text-blue-200 transition-colors"
@@ -561,7 +567,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               {!isOwner && (
                 <ContactSellerButtons fbUsername={seller.fb_username} />
               )}
-              {!isOwner && !seller.fb_username && (
+              {!isOwner && !sellerMessengerHref && (
                 <div className="mt-3 rounded-lg border border-white/[0.08] bg-slate-950/45 px-3 py-2 text-xs leading-5 text-gray-400">
                   This seller has not added a Messenger button yet. You can still send an offer through Go Pair PH, and they can reply from their profile.
                 </div>
@@ -634,42 +640,114 @@ export default async function ListingDetailPage({ params, searchParams }: { para
 
           {/* Buy button — for_sale, active, non-owners only, no existing request. */}
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && !shoe.shop_id && (
-            <BuyButton
-              listingId={shoe.id}
-              listingSlug={shoe.slug}
-              listingName={listingName}
-              priceFormatted={formatPrice(shoe.price_php)}
-              pricePhp={shoe.price_php}
-              isNegotiable={shoe.is_negotiable}
-              seller={seller ?? undefined}
-              offerCount={offerCount}
-              buyerProfileId={currentProfileId}
-              buyerFbUsername={currentProfileFbUsername}
-            />
+            <div className="mt-4 space-y-2">
+              <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
+                {canAskSeller && askSellerHref && (
+                  <AskSellerButton
+                    contactUrl={askSellerHref}
+                    listingName={listingName}
+                    sellerName={shop?.name ?? seller?.display_name}
+                    isShop={!!shop}
+                    className="flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
+                  />
+                )}
+                <BuyButton
+                  listingId={shoe.id}
+                  listingSlug={shoe.slug}
+                  listingName={listingName}
+                  priceFormatted={formatPrice(shoe.price_php)}
+                  pricePhp={shoe.price_php}
+                  isNegotiable={shoe.is_negotiable}
+                  seller={seller ?? undefined}
+                  offerCount={offerCount}
+                  buyerProfileId={currentProfileId}
+                  buyerFbUsername={currentProfileFbUsername}
+                  showOfferCount={false}
+                  className={cn(
+                    'w-full rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
+                    canAskSeller
+                      ? 'border border-white/[0.12] bg-slate-950/55 text-gray-100 hover:bg-slate-900'
+                      : 'bg-teal-500 text-white hover:bg-teal-400',
+                  )}
+                />
+              </div>
+              {canAskSeller && (
+                <p className="text-center text-xs leading-5 text-gray-500">
+                  Not ready to offer yet? Ask about condition, meetup, or extra photos first.
+                </p>
+              )}
+            </div>
           )}
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && shoe.shop_id && shoe.has_stock && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
-            <BuyButton
-              listingId={shoe.id}
-              listingSlug={shoe.slug}
-              listingName={listingName}
-              priceFormatted={formatPrice(shoe.price_php)}
-              pricePhp={shoe.price_php}
-              isNegotiable={shoe.is_negotiable}
-              seller={seller ?? undefined}
-              shop={shoe.shops}
-              variants={shoe.shoe_variants}
-              label="Place Order"
-              buyerProfileId={currentProfileId}
-              buyerFbUsername={currentProfileFbUsername}
-            />
+            <div className="mt-4 space-y-2">
+              <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
+                {canAskSeller && askSellerHref && (
+                  <AskSellerButton
+                    contactUrl={askSellerHref}
+                    listingName={listingName}
+                    sellerName={shop?.name ?? seller?.display_name}
+                    isShop={!!shop}
+                    className="flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
+                  />
+                )}
+                <BuyButton
+                  listingId={shoe.id}
+                  listingSlug={shoe.slug}
+                  listingName={listingName}
+                  priceFormatted={formatPrice(shoe.price_php)}
+                  pricePhp={shoe.price_php}
+                  isNegotiable={shoe.is_negotiable}
+                  seller={seller ?? undefined}
+                  shop={shoe.shops}
+                  variants={shoe.shoe_variants}
+                  label="Place Order"
+                  buyerProfileId={currentProfileId}
+                  buyerFbUsername={currentProfileFbUsername}
+                  className={cn(
+                    'w-full rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
+                    canAskSeller
+                      ? 'border border-white/[0.12] bg-slate-950/55 text-gray-100 hover:bg-slate-900'
+                      : 'bg-teal-500 text-white hover:bg-teal-400',
+                  )}
+                />
+              </div>
+              {canAskSeller && (
+                <p className="text-center text-xs leading-5 text-gray-500">
+                  Not ready to order yet? Ask about stock, pickup, or delivery first.
+                </p>
+              )}
+            </div>
           )}
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && !currentProfileId && (
-            <Link
-              href={signInHref}
-              className="mt-4 flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
-            >
-              {signedOutForSaleCtaLabel}
-            </Link>
+            <div className="mt-4 space-y-2">
+              <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
+                {canAskSeller && askSellerHref && (
+                  <AskSellerButton
+                    contactUrl={askSellerHref}
+                    listingName={listingName}
+                    sellerName={shop?.name ?? seller?.display_name}
+                    isShop={!!shop}
+                    className="flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
+                  />
+                )}
+                <Link
+                  href={signInHref}
+                  className={cn(
+                    'flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
+                    canAskSeller
+                      ? 'border border-white/[0.12] bg-slate-950/55 text-gray-100 hover:bg-slate-900'
+                      : 'bg-teal-500 text-white hover:bg-teal-400',
+                  )}
+                >
+                  {signedOutForSaleCtaLabel}
+                </Link>
+              </div>
+              {canAskSeller && (
+                <p className="text-center text-xs leading-5 text-gray-500">
+                  Ask first if you need condition, meetup, or extra photo details.
+                </p>
+              )}
+            </div>
           )}
 
           {shoe.listing_type === 'donate' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && (
@@ -697,7 +775,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">Find more offers</p>
                   <h3 className="mt-2 text-sm font-semibold text-gray-100">Your listing is getting seen.</h3>
                   <p className="mt-1 text-xs leading-5 text-gray-400">
-                    Fresh shares can bring it back to Facebook groups, Marketplace, Messenger, and running chats.
+                    Fresh shares can bring it back to Facebook groups, Facebook Marketplace, Messenger, and running chats.
                   </p>
                   <div className="mt-3 rounded-lg border border-teal-400/20 bg-teal-400/[0.06] px-3 py-2">
                     <p className="text-xs font-semibold text-teal-100">Share again when you want another push.</p>

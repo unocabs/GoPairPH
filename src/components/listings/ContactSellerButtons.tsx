@@ -1,15 +1,18 @@
 'use client';
 
+import { buildMessengerUrl } from '@/lib/facebook';
+
 interface ContactSellerButtonsProps {
   fbUsername?: string | null;
 }
 
 export function ContactSellerButtons({ fbUsername }: ContactSellerButtonsProps) {
-  if (!fbUsername) return null;
+  const messengerUrl = buildMessengerUrl(fbUsername);
+  if (!messengerUrl) return null;
 
   return (
     <a
-      href={`https://m.me/${fbUsername}`}
+      href={messengerUrl}
       target="_blank"
       rel="noopener noreferrer"
       className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-500"

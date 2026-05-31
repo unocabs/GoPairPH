@@ -108,7 +108,7 @@ export function Navbar() {
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-1">
             <Link href="/browse" className="rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors">
-              Marketplace
+              GP Marketplace
             </Link>
             <Link href="/guides" className="rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors">
               Guides
@@ -291,7 +291,7 @@ export function Navbar() {
         {/* Mobile menu */}
         {mobileOpen && (
           <div className="md:hidden border-t border-gray-800 py-3 flex flex-col gap-1">
-            <Link href="/browse" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Marketplace</Link>
+            <Link href="/browse" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">GP Marketplace</Link>
             <Link href="/guides" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Guides</Link>
             <Link href="/looking-for" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Looking For</Link>
             {user && (

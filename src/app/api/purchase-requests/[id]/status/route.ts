@@ -4,6 +4,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { renderRequestStatusChangeEmail } from '@/lib/email/offerNotification';
 import { sendOfferEmail } from '@/lib/email/resend';
 import { formatListingName, formatPrice, getListingPath } from '@/lib/utils';
+import { buildMessengerUrl } from '@/lib/facebook';
 
 const bodySchema = z.object({
   status: z.enum(['accepted', 'declined']),
@@ -94,9 +95,7 @@ export async function POST(request: Request, { params }: RouteContext) {
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? '';
     const requestLink = `${siteUrl}${getListingPath({ id: listing.id, slug: listing.slug })}`;
-    const messengerLink = parsed.status === 'accepted' && fbUsername
-      ? `https://m.me/${fbUsername}`
-      : null;
+    const messengerLink = parsed.status === 'accepted' ? buildMessengerUrl(fbUsername) : null;
 
     const html = renderRequestStatusChangeEmail({
       buyer_name: buyerProfile.display_name ?? 'Runner',

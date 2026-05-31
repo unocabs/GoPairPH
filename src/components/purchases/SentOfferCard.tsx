@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { formatRelativeDate, formatPrice, getPublicUrl, formatListingName, getListingPath } from '@/lib/utils';
+import { buildMessengerUrl } from '@/lib/facebook';
 import type { PurchaseRequest, PurchaseRequestStatus, Shoe } from '@/types';
 
 interface SentOfferCardProps {
@@ -20,6 +21,7 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const shoe = request.listing as Shoe | undefined;
   const seller = shoe?.profiles;
+  const sellerMessengerUrl = buildMessengerUrl(seller?.fb_username);
   const topImg = shoe?.shoe_images?.find(i => i.view_type === 'top') ?? shoe?.shoe_images?.[0];
   const thumbUrl = topImg && supabaseUrl ? getPublicUrl(supabaseUrl, topImg.storage_path) : null;
   const listingName = shoe ? formatListingName(shoe.brand, shoe.model) : 'Listing';
@@ -101,11 +103,11 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
         ) : (
           <span>Unknown</span>
         )}
-        {seller?.fb_username && (
+        {sellerMessengerUrl && (
           <>
             <span className="text-gray-700">·</span>
             <a
-              href={`https://m.me/${seller.fb_username}`}
+              href={sellerMessengerUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"

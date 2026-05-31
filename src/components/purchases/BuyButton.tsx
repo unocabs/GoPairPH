@@ -23,9 +23,10 @@ interface BuyButtonProps {
   /** Override the default "Request to Buy" label (used by per-size buttons). */
   label?: string;
   className?: string;
+  showOfferCount?: boolean;
 }
 
-export function BuyButton({ listingId, listingSlug, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, offerCount = 0, variants, initialVariantId, buyerProfileId, buyerFbUsername, label, className }: BuyButtonProps) {
+export function BuyButton({ listingId, listingSlug, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, offerCount = 0, variants, initialVariantId, buyerProfileId, buyerFbUsername, label, className, showOfferCount = true }: BuyButtonProps) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const actionLabel = label ?? (shop ? 'Place Order' : isNegotiable ? 'Send Offer' : 'Request to Buy');
@@ -49,7 +50,7 @@ export function BuyButton({ listingId, listingSlug, listingName, priceFormatted,
       >
         {actionLabel}
       </button>
-      {!label && (
+      {!label && showOfferCount && (
         <p className="mt-2 text-xs text-center">
           {offerCount === 0 ? (
             <span></span>

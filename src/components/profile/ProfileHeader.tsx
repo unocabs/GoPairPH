@@ -2,6 +2,7 @@
 
 import { type Profile } from '@/types';
 import { formatRelativeDate } from '@/lib/utils';
+import { getFacebookContactUrl } from '@/lib/facebook';
 import { Avatar } from '@/components/ui/Avatar';
 import { VerifiedBadge } from './VerifiedBadge';
 
@@ -15,6 +16,8 @@ interface ProfileHeaderProps {
 }
 
 export function ProfileHeader({ profile, listingCount, wishlistCount, completedSales, isOwnProfile }: ProfileHeaderProps) {
+  const facebookUrl = getFacebookContactUrl(profile.fb_username);
+
   return (
     // Center on mobile, left-align from sm+
     <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left gap-5">
@@ -40,9 +43,9 @@ export function ProfileHeader({ profile, listingCount, wishlistCount, completedS
             {profile.location}
           </p>
         )}
-        {profile.fb_username ? (
+        {facebookUrl ? (
           <a
-            href={`https://www.facebook.com/${profile.fb_username}`}
+            href={facebookUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-1 inline-flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 transition-colors"

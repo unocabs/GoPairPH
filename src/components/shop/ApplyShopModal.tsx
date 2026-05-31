@@ -10,7 +10,7 @@ const ADMIN_EMAIL = 'rgiancabrera@gmail.com';
 
 const PITCH = [
   { title: 'Dedicated seller page', body: 'Approved sellers can have a simple Go Pair PH page with their logo, listings, and public URL.' },
-  { title: 'Marketplace-first visibility', body: 'Listings can still appear in /browse when they fit the main running shoe marketplace.' },
+  { title: 'GP Marketplace-first visibility', body: 'Listings can still appear in /browse when they fit the main running shoe marketplace.' },
   { title: 'Multi-stock built in', body: 'One listing can cover multiple available sizes or quantities when needed.' },
   { title: 'Trusted Pampanga running audience', body: 'Listings reach buyers already looking for running shoes on Go Pair PH.' },
   { title: 'Manual approval', body: 'Seller pages are reviewed manually so the marketplace stays focused and trustworthy.' },

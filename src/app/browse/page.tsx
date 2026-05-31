@@ -16,9 +16,9 @@ import { getSavedListingIds } from '@/lib/savedListings';
 import type { Shoe } from '@/types';
 
 export const metadata: Metadata = {
-  title: 'Marketplace',
+  title: 'GP Marketplace',
   description:
-    'Shop the Go Pair PH marketplace for brand-new and pre-loved running shoes from runners and nearby sellers who serve Pampanga buyers.',
+    'Browse GP Marketplace for brand-new and pre-loved running shoes from Pampanga runners, plus Central Luzon and NCR sellers who serve Pampanga buyers.',
   alternates: { canonical: '/browse' },
 };
 
@@ -162,8 +162,8 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
     <PageShell>
       <FirstListingNudge />
       <PageHeader
-        title="Marketplace"
-        subtitle="Find brand-new and pre-loved running shoes from Pampanga runners and nearby sellers who can meet, deliver, or ship to local buyers."
+        title="GP Marketplace"
+        subtitle="Running shoes for sale, donation, and local deals in one focused place for Pampanga runners, with Central Luzon and NCR sellers welcome if they serve Pampanga buyers."
       >
         <Suspense>
           <FilterPanel listingCount={shoes.length} />

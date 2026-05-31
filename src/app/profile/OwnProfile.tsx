@@ -14,6 +14,7 @@ import { SentOfferCard } from '@/components/purchases/SentOfferCard';
 import { RequestVerificationButton } from '@/components/profile/RequestVerificationButton';
 import { SavedSearchesPanel } from '@/components/profile/SavedSearchesPanel';
 import { formatPrice, formatListingName } from '@/lib/utils';
+import { buildMessengerUrl } from '@/lib/facebook';
 import { Button } from '@/components/ui/Button';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest, SavedSearch } from '@/types';
@@ -101,11 +102,8 @@ export function OwnProfile({
     const images = shoe.shoe_images ?? [];
     return images.some(image => image.view_type === 'top') && images.some(image => image.view_type === 'sole');
   }).length;
-  const shareReadyCount = activeShoes.filter((shoe) => {
-    const images = shoe.shoe_images ?? [];
-    return images.some(image => image.view_type === 'top') && images.some(image => image.view_type === 'sole');
-  }).length;
   const shareTarget = activeShoes.find((shoe) => (viewCounts?.[shoe.id]?.total ?? 0) > 0) ?? activeShoes[0];
+  const hasValidMessengerContact = !!buildMessengerUrl(profile.fb_username);
 
   return (
     <div>
@@ -162,81 +160,58 @@ export function OwnProfile({
 
       {tab === 'listings' && (
         <div>
-          <SurfaceCard className="mb-4 border-teal-500/20 bg-teal-500/[0.04] p-4">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-gray-100">
-                    {activeListings > 0 ? 'Your active listings are ready to share.' : 'Your closed listings are saved here.'}
-                  </p>
-                  <p className="mt-1 text-sm text-gray-300 leading-relaxed">
-                    Active pairs stay first. Closed pairs are kept lower so your next sale stays easy to manage.
-                  </p>
-                </div>
+          <SurfaceCard className="mb-3 border-white/[0.08] bg-slate-950/45 p-3 sm:p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-gray-100">
+                  {activeListings > 0
+                    ? `${activeListings} active listing${activeListings === 1 ? '' : 's'}`
+                    : 'No active listings'}
+                </p>
+                <p className="mt-0.5 text-xs leading-5 text-gray-500">
+                  {activeListings > 0
+                    ? `${photoReadyCount} ${photoReadyCount === 1 ? 'has' : 'have'} top + sole photos`
+                    : 'Closed listings stay saved below'}
+                  <span className="mx-1.5 text-gray-700">·</span>
+                  {hasValidMessengerContact ? 'Messenger ready' : 'Add Messenger'}
+                  {closedShoes.length > 0 && (
+                    <>
+                      <span className="mx-1.5 text-gray-700">·</span>
+                      {closedShoes.length} closed
+                    </>
+                  )}
+                </p>
               </div>
-              <Link href="/listings/new" className="lg:shrink-0">
-                <Button size="sm" className="w-full lg:w-auto">+ List a Shoe</Button>
+              <Link href="/listings/new" className="shrink-0">
+                <Button size="sm" className="h-9 px-3 text-xs sm:text-sm">+ List</Button>
               </Link>
             </div>
 
-            <div className="mt-4 grid gap-2 sm:grid-cols-4">
-              {[
-                { label: 'Active', value: activeListings.toLocaleString() },
-                { label: 'Photo-ready', value: photoReadyCount.toLocaleString() },
-                { label: 'Buyer requests', value: purchaseRequests.length.toLocaleString() },
-                { label: 'Closed', value: closedShoes.length.toLocaleString() },
-              ].map((stat) => (
-                <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-slate-950/55 px-4 py-3">
-                  <p className="text-lg font-bold text-gray-100">{stat.value}</p>
-                  <p className="mt-0.5 text-xs text-gray-500">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-4 grid gap-2 text-xs sm:grid-cols-4">
-              {[
-                { label: 'Active listing live', done: activeListings > 0 },
-                { label: 'Top + sole photos', done: activeListings === 0 || photoReadyCount === activeListings },
-                { label: 'Contact ready', done: !!profile.fb_username },
-                { label: 'Ready to share', done: activeListings > 0 && shareReadyCount > 0 },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className={[
-                    'flex items-center gap-2 rounded-lg border px-3 py-2',
-                    item.done
-                      ? 'border-teal-400/20 bg-teal-400/[0.06] text-teal-100'
-                      : 'border-white/[0.08] bg-slate-950/45 text-gray-400',
-                  ].join(' ')}
-                >
-                  <span className={[
-                    'flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
-                    item.done ? 'bg-teal-400/15 text-teal-200' : 'bg-gray-800 text-gray-500',
-                  ].join(' ')}>
-                    {item.done ? '✓' : '•'}
-                  </span>
-                  <span className="font-medium">{item.label}</span>
-                </div>
-              ))}
-            </div>
-
-            {purchaseRequests.length > 0 && (
-              <p className="mt-3 text-xs font-medium text-sky-300">
-                {purchaseRequests.length} active buyer request{purchaseRequests.length !== 1 ? 's' : ''} waiting for your response.
-              </p>
-            )}
-            {totalListingViews > 0 && shareTarget && (
-              <div className="mt-4 flex flex-col gap-3 rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs leading-5 text-gray-400">
-                  People are checking your pairs. Share again while there&apos;s momentum.
+            {purchaseRequests.length > 0 ? (
+              <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-sky-500/25 bg-sky-500/[0.07] px-3 py-2">
+                <p className="min-w-0 truncate text-xs font-medium text-sky-200">
+                  Buyer request{purchaseRequests.length === 1 ? '' : 's'} waiting
                 </p>
-                <div className="sm:shrink-0">
-                  <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => setSharePostShoe(shareTarget)}>
-                    Share again
-                  </Button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setTab('purchases')}
+                  className="shrink-0 text-xs font-semibold text-sky-100 hover:text-white"
+                >
+                  Review
+                </button>
               </div>
-            )}
+            ) : totalListingViews > 0 && shareTarget ? (
+              <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-white/[0.08] bg-slate-950/55 px-3 py-2">
+                <p className="min-w-0 truncate text-xs text-gray-400">Getting views</p>
+                <button
+                  type="button"
+                  onClick={() => setSharePostShoe(shareTarget)}
+                  className="shrink-0 text-xs font-semibold text-teal-300 hover:text-teal-200"
+                >
+                  Share again
+                </button>
+              </div>
+            ) : null}
           </SurfaceCard>
           <ListingGrid
             shoes={orderedShoes}

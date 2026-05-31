@@ -339,12 +339,13 @@ export default function BestPlacesToRunClarkPampangaPage() {
                 </h2>
                 <p className="mt-4 max-w-3xl text-base leading-8 text-gray-300">
                   Go Pair PH helps Pampanga runners find daily trainers, speed shoes,
-                  race-day pairs, and pre-loved listings from nearby sellers.
+                  race-day pairs, and pre-loved listings from Central Luzon and NCR sellers
+                  who serve Pampanga buyers.
                 </p>
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                   <Link href="/browse">
                     <Button size="lg" className="w-full sm:w-auto">
-                      Browse Marketplace
+                      Browse GP Marketplace
                     </Button>
                   </Link>
                   <Link href="/looking-for/new">
