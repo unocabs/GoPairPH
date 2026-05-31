@@ -27,6 +27,7 @@ function emptyRow(): VariantRow {
 
 export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }: VariantsEditorProps) {
   const rows = value.length === 0 ? [emptyRow()] : value;
+  const fieldClassName = 'min-w-0 rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-sm text-gray-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-60';
 
   function update(idx: number, patch: Partial<VariantRow>) {
     const next = rows.map((r, i) => (i === idx ? { ...r, ...patch } : r));
@@ -103,8 +104,8 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
   }
 
   return (
-    <div className="space-y-2">
-      <div className="hidden sm:grid sm:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] gap-2 px-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+    <div className="space-y-2 overflow-hidden">
+      <div className="hidden sm:grid sm:grid-cols-[72px_minmax(128px,0.95fr)_72px_72px_76px_44px] gap-2 px-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">
         <span>EU</span>
         <span>US type</span>
         <span>US</span>
@@ -114,7 +115,7 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
       </div>
 
       {rows.map((row, idx) => (
-        <div key={row.id ?? `new-${idx}`} className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] gap-2 items-start">
+        <div key={row.id ?? `new-${idx}`} className="grid grid-cols-2 gap-2 items-start sm:grid-cols-[72px_minmax(128px,0.95fr)_72px_72px_76px_44px]">
           <input
             type="number"
             step={0.5}
@@ -124,13 +125,13 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
             value={row.size_eu}
             onChange={e => autofillFromEu(idx, e.target.value)}
             disabled={!!row.id /* lock size on existing rows to preserve unique key */}
-            className="rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-sm text-gray-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-60"
+            className={fieldClassName}
           />
           <select
             value={row.us_size_type}
             onChange={e => updateUsSizeType(idx, e.target.value as UsSizeType)}
             disabled={!!row.id}
-            className="rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-sm text-gray-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-60"
+            className={fieldClassName}
           >
             {US_SIZE_TYPE_OPTIONS.map(option => (
               <option key={option.value} value={option.value} className="bg-gray-800">
@@ -145,7 +146,7 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
             value={row.size_us}
             onChange={e => autofillFromUs(idx, e.target.value)}
             disabled={!!row.id}
-            className="rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-sm text-gray-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-60"
+            className={fieldClassName}
           />
           <input
             type="number"
@@ -154,7 +155,7 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
             value={row.size_cm}
             onChange={e => autofillFromCm(idx, e.target.value)}
             disabled={!!row.id}
-            className="rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-sm text-gray-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-60"
+            className={fieldClassName}
           />
           <input
             type="number"
@@ -166,14 +167,14 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
               const n = parseInt(e.target.value, 10);
               update(idx, { quantity: isNaN(n) ? '' : n });
             }}
-            className="rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-sm text-gray-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            className={fieldClassName}
           />
           <button
             type="button"
             onClick={() => removeRow(idx)}
             aria-label={preserveRowsOnRemove ? 'Set quantity to zero' : 'Remove row'}
             title={preserveRowsOnRemove ? 'Set stock to 0' : 'Remove'}
-            className="col-span-2 sm:col-span-1 inline-flex items-center justify-center rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-gray-400 hover:bg-gray-800 hover:text-red-400 transition-colors"
+            className="col-span-2 inline-flex min-w-0 items-center justify-center rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-gray-400 transition-colors hover:bg-gray-800 hover:text-red-400 sm:col-span-1"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22" />

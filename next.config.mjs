@@ -3,6 +3,7 @@ const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || '.next',
   poweredByHeader: false,
   images: {
+    unoptimized: true,
     minimumCacheTTL: 2678400,
     remotePatterns: [
       {
