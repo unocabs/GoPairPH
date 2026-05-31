@@ -7,6 +7,7 @@ import { Footer } from '@/components/layout/Footer';
 import { SessionProvider } from '@/components/auth/SessionProvider';
 import { InAppBrowserRedirect } from '@/components/layout/InAppBrowserRedirect';
 import { AnnouncementBar } from '@/components/layout/AnnouncementBar';
+import { RouteLoadingIndicator } from '@/components/layout/RouteLoadingIndicator';
 import { SOCIAL_URLS } from '@/lib/socialLinks';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -167,6 +168,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </main>
           <Footer />
+          <RouteLoadingIndicator />
         </SessionProvider>
       </body>
     </html>
