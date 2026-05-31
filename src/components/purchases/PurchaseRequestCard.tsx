@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { formatRelativeDate, formatPrice, formatSize, getPublicUrl, getListingPath } from '@/lib/utils';
 import { buildMessengerUrl } from '@/lib/facebook';
@@ -34,6 +35,7 @@ export function PurchaseRequestCard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+  const [messageBuyerOpen, setMessageBuyerOpen] = useState(false);
 
   // Resolve a thumbnail from whichever listing reference we have.
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -107,6 +109,15 @@ export function PurchaseRequestCard({
   }
 
   const isReservedForOther = status === 'declined' && listingStatus === 'reserved';
+  const buyerName = request.profiles?.display_name ?? 'the buyer';
+
+  function handleMessageBuyer() {
+    if (buyerMessengerUrl) {
+      window.open(buyerMessengerUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    setMessageBuyerOpen(true);
+  }
 
   return (
     <div className="rounded-xl border border-gray-800 bg-gray-900 p-4 space-y-3">
@@ -163,46 +174,40 @@ export function PurchaseRequestCard({
       <div className="flex items-center gap-1.5 flex-wrap text-xs text-gray-500">
         <span>From</span>
         <Link href={`/profile/${request.buyer_id}`} className="text-teal-400 hover:text-teal-300">
-          {request.profiles?.display_name ?? 'Unknown'}
+          {buyerName}
         </Link>
-        {buyerMessengerUrl && (
-          <>
-            <span className="text-gray-700">·</span>
-            <a
-              href={buyerMessengerUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.652V24l4.088-2.242c1.092.3 2.246.464 3.443.464 6.627 0 12-4.975 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8l3.131 3.259L19.752 8l-6.561 6.963z"/>
-              </svg>
-              Messenger
-            </a>
-          </>
-        )}
       </div>
-      {!buyerMessengerUrl && (
-        <p className="rounded-lg border border-white/[0.08] bg-slate-950/45 px-3 py-2 text-xs leading-5 text-gray-400">
-          Buyer has not added a valid Messenger link. Use their message or profile to coordinate after accepting.
-        </p>
-      )}
 
       {status === 'pending' && (
-        <div className="flex gap-2 pt-1">
+        <div className="grid grid-cols-2 gap-2 pt-1 sm:grid-cols-3">
           <button
-            onClick={handleDecline}
+            type="button"
+            onClick={handleMessageBuyer}
             disabled={loading}
-            className="flex-1 rounded-lg border border-gray-700 px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-colors disabled:opacity-50"
+            className={`col-span-2 inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50 sm:col-span-1 ${
+              buyerMessengerUrl
+                ? 'border-blue-400/25 bg-blue-600 text-white hover:bg-blue-500'
+                : 'border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50'
+            }`}
           >
-            Decline
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
+            </svg>
+            Message Buyer
           </button>
           <button
             onClick={handleAccept}
             disabled={loading}
-            className="flex-1 rounded-lg bg-teal-600 px-3 py-2 text-sm font-medium text-white hover:bg-teal-500 transition-colors disabled:opacity-50"
+            className="rounded-lg bg-teal-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-400 disabled:opacity-50"
           >
-            Accept
+            Accept offer
+          </button>
+          <button
+            onClick={handleDecline}
+            disabled={loading}
+            className="rounded-lg border border-gray-700 bg-slate-950/45 px-3 py-2 text-sm font-semibold text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-100 disabled:opacity-50"
+          >
+            Decline
           </button>
         </div>
       )}
@@ -244,14 +249,81 @@ export function PurchaseRequestCard({
       {confirmAction && (
         <RequestConfirmPanel
           action={confirmAction}
-          buyerName={request.profiles?.display_name ?? 'the buyer'}
+          buyerName={buyerName}
           loading={loading}
           onCancel={() => setConfirmAction(null)}
           onConfirm={confirmSelectedAction}
         />
       )}
 
+      {messageBuyerOpen && typeof window !== 'undefined' && createPortal(
+        <MessageBuyerFallbackModal
+          buyerName={buyerName}
+          listingName={listingName}
+          onClose={() => setMessageBuyerOpen(false)}
+        />,
+        document.body,
+      )}
+
       {error && <p className="text-xs text-red-400">{error}</p>}
+    </div>
+  );
+}
+
+function MessageBuyerFallbackModal({
+  buyerName,
+  listingName,
+  onClose,
+}: {
+  buyerName: string;
+  listingName: string;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-4"
+      onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}
+    >
+      <div className="w-full max-w-md rounded-t-2xl border border-gray-700 bg-gray-900 shadow-2xl shadow-black/50 sm:rounded-2xl">
+        <div className="flex items-center justify-between border-b border-gray-800 px-5 py-4">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-gray-100">Messenger not added</h2>
+            <p className="mt-0.5 truncate text-xs text-gray-500">{listingName}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1 text-gray-500 transition-colors hover:bg-gray-800 hover:text-gray-300"
+            aria-label="Close message buyer"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="space-y-3 px-5 py-4">
+          <div className="rounded-xl border border-blue-400/20 bg-blue-600/[0.08] p-4">
+            <p className="text-sm font-semibold text-blue-100">Buyer has not added Messenger yet.</p>
+            <p className="mt-2 text-sm leading-6 text-gray-300">
+              {buyerName} can still see your decision on Go Pair PH. Accept the offer if you want to reserve the pair, then coordinate from the offer status and buyer profile.
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/[0.08] bg-slate-950/45 p-3 text-xs leading-5 text-gray-400">
+            Accepting reserves the listing while you complete meetup, payment, or shipping. You can reopen it if the buyer backs out.
+          </div>
+        </div>
+
+        <div className="border-t border-gray-800 p-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
+          >
+            Got it
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -272,8 +344,8 @@ function RequestConfirmPanel({
   const copy = {
     accept: {
       title: `Reserve for ${buyerName}?`,
-      body: 'The listing will be reserved while you coordinate the deal. You can reopen it if the buyer backs out.',
-      confirmLabel: 'Accept request',
+      body: 'Accepting reserves the listing, notifies the buyer, and gives you space to coordinate meetup, payment, or shipping. Mark it sold after the deal is complete.',
+      confirmLabel: 'Accept offer',
       confirmClass: 'bg-teal-600 hover:bg-teal-500',
     },
     complete: {

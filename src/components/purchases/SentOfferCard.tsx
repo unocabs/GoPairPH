@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { formatRelativeDate, formatPrice, getPublicUrl, formatListingName, getListingPath } from '@/lib/utils';
 import { buildMessengerUrl } from '@/lib/facebook';
@@ -17,6 +18,7 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
   const [status, setStatus] = useState<PurchaseRequestStatus>(request.status);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [messageSellerOpen, setMessageSellerOpen] = useState(false);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const shoe = request.listing as Shoe | undefined;
@@ -38,6 +40,14 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
     setStatus('declined');
     setLoading(false);
     onChanged(request.id);
+  }
+
+  function handleMessageSeller() {
+    if (sellerMessengerUrl) {
+      window.open(sellerMessengerUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    setMessageSellerOpen(true);
   }
 
   return (
@@ -103,41 +113,121 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
         ) : (
           <span>Unknown</span>
         )}
-        {sellerMessengerUrl && (
-          <>
-            <span className="text-gray-700">·</span>
-            <a
-              href={sellerMessengerUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.652V24l4.088-2.242c1.092.3 2.246.464 3.443.464 6.627 0 12-4.975 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8l3.131 3.259L19.752 8l-6.561 6.963z"/>
-              </svg>
-              Messenger
-            </a>
-          </>
-        )}
       </div>
 
       {status === 'pending' && (
-        <div className="rounded-lg bg-amber-950 border border-amber-800 px-3 py-2 text-xs text-amber-300 text-center">
-          Awaiting seller&apos;s response
+        <div className="rounded-lg border border-amber-400/20 bg-amber-400/[0.07] px-3 py-2 text-xs leading-5 text-amber-200">
+          Waiting for seller response. If they accept, this pair becomes reserved for you while you coordinate the deal.
+        </div>
+      )}
+
+      {status === 'accepted' && (
+        <div className="rounded-lg border border-teal-400/20 bg-teal-400/[0.07] px-3 py-2 text-xs leading-5 text-teal-200">
+          Seller accepted. Message them to coordinate meetup, payment, or shipping, then they will mark the pair sold after completion.
         </div>
       )}
 
       {(status === 'pending' || status === 'accepted') && (
-        <button
-          onClick={handleRetract}
-          disabled={loading}
-          className="w-full rounded-lg border border-gray-700 px-3 py-2 text-sm font-medium text-gray-400 hover:border-red-700 hover:bg-red-950 hover:text-red-300 transition-colors disabled:opacity-50"
-        >
-          {status === 'accepted' ? 'Cancel reservation' : 'Retract offer'}
-        </button>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={handleMessageSeller}
+            disabled={loading}
+            className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
+              sellerMessengerUrl
+                ? 'border-blue-400/25 bg-blue-600 text-white hover:bg-blue-500'
+                : 'border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50'
+            }`}
+          >
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
+            </svg>
+            Message Seller
+          </button>
+          <button
+            onClick={handleRetract}
+            disabled={loading}
+            className="rounded-lg border border-gray-700 bg-slate-950/45 px-3 py-2 text-sm font-semibold text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-100 disabled:opacity-50"
+          >
+            {status === 'accepted' ? 'Cancel reservation' : 'Retract offer'}
+          </button>
+        </div>
+      )}
+
+      {messageSellerOpen && typeof window !== 'undefined' && createPortal(
+        <MessageSellerFallbackModal
+          sellerName={seller?.display_name ?? 'The seller'}
+          listingName={listingName}
+          status={status}
+          onClose={() => setMessageSellerOpen(false)}
+        />,
+        document.body,
       )}
 
       {error && <p className="text-xs text-red-400">{error}</p>}
+    </div>
+  );
+}
+
+function MessageSellerFallbackModal({
+  sellerName,
+  listingName,
+  status,
+  onClose,
+}: {
+  sellerName: string;
+  listingName: string;
+  status: PurchaseRequestStatus;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-4"
+      onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}
+    >
+      <div className="w-full max-w-md rounded-t-2xl border border-gray-700 bg-gray-900 shadow-2xl shadow-black/50 sm:rounded-2xl">
+        <div className="flex items-center justify-between border-b border-gray-800 px-5 py-4">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-gray-100">Messenger not added</h2>
+            <p className="mt-0.5 truncate text-xs text-gray-500">{listingName}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1 text-gray-500 transition-colors hover:bg-gray-800 hover:text-gray-300"
+            aria-label="Close message seller"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="space-y-3 px-5 py-4">
+          <div className="rounded-xl border border-blue-400/20 bg-blue-600/[0.08] p-4">
+            <p className="text-sm font-semibold text-blue-100">Seller has not added Messenger yet.</p>
+            <p className="mt-2 text-sm leading-6 text-gray-300">
+              {sellerName} can still review and update your offer on Go Pair PH.
+              {status === 'accepted'
+                ? ' Since your offer is accepted, use this status as your reference while coordinating through their profile or agreed contact.'
+                : ' Keep an eye on Sent Offers for their response.'}
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/[0.08] bg-slate-950/45 p-3 text-xs leading-5 text-gray-400">
+            Go Pair PH keeps the listing, offer, and status in one place so both sides can return to the same deal.
+          </div>
+        </div>
+
+        <div className="border-t border-gray-800 p-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
+          >
+            Got it
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
