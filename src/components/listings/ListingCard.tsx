@@ -141,6 +141,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
               fill
               className="object-cover transition-transform group-hover:scale-105"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              quality={58}
             />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-gray-900 via-gray-900 to-teal-950/40" style={theme ? { background: `linear-gradient(135deg, ${theme.surfaceStrong}, ${theme.background})` } : undefined}>

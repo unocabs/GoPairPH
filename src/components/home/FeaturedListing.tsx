@@ -38,6 +38,7 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-105"
             sizes="500px"
+            quality={68}
             priority
           />
         ) : (

@@ -103,6 +103,7 @@ export function PhotoGallery({ images, isOwner = false, listingPath, overlay }: 
             fill
             className="object-cover hover:scale-105 transition-transform"
             sizes="(min-width: 1024px) 50vw, 100vw"
+            quality={72}
             priority
           />
         </button>
@@ -130,6 +131,7 @@ export function PhotoGallery({ images, isOwner = false, listingPath, overlay }: 
                   fill
                   className="object-cover"
                   sizes="64px"
+                  quality={45}
                 />
                 <div className="absolute inset-0 flex items-end justify-center pb-0.5">
                   <span className="rounded bg-black/50 px-1 text-[10px] text-white capitalize">{img.view_type}</span>

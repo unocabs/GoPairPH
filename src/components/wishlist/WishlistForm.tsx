@@ -22,7 +22,7 @@ async function convertToWebP(file: File): Promise<Blob> {
     const url = URL.createObjectURL(file);
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const maxDim = 1200;
+      const maxDim = 900;
       let w = img.width, h = img.height;
       if (w > maxDim || h > maxDim) {
         if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
@@ -35,7 +35,7 @@ async function convertToWebP(file: File): Promise<Blob> {
         URL.revokeObjectURL(url);
         if (blob) resolve(blob);
         else reject(new Error('Conversion failed'));
-      }, 'image/webp', 0.85);
+      }, 'image/webp', 0.72);
     };
     img.onerror = reject;
     img.src = url;
