@@ -110,15 +110,14 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
         onSendOffer={action.onSendOffer}
         ariaLabel={askSellerHref ? 'Ask seller on Messenger' : 'Seller has not added Messenger'}
         className={cn(
-          'flex h-9 w-10 shrink-0 items-center justify-center rounded-lg border text-gray-200 transition-colors',
+          'flex h-9 w-10 shrink-0 items-center justify-center rounded-lg border transition-colors',
           askSellerHref
-            ? 'border-white/[0.12] bg-slate-950/65 hover:border-teal-400/45 hover:bg-slate-900 hover:text-teal-100'
-            : 'border-white/[0.08] bg-slate-950/45 text-gray-500 hover:border-amber-400/35 hover:text-amber-100',
+            ? 'border-blue-400/25 bg-blue-600 text-white hover:bg-blue-500'
+            : 'border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50',
         )}
-        style={theme ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: askSellerHref ? theme.text : theme.mutedText } : undefined}
       >
-        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72A7.49 7.49 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
         </svg>
       </AskSellerButton>
     );

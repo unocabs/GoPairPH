@@ -23,7 +23,6 @@ import { QualityFlagAdminPanel } from './QualityFlagAdminPanel';
 import { OwnerMoreActions } from './OwnerMoreActions';
 import { BuyButton } from '@/components/purchases/BuyButton';
 import { DonateRequestButton } from '@/components/purchases/DonateRequestButton';
-import { ContactSellerButtons } from '@/components/listings/ContactSellerButtons';
 import { ListingShareActions } from '@/components/listings/ListingShareActions';
 import { AskSellerButton } from '@/components/listings/AskSellerButton';
 import { SaveListingButton } from '@/components/listings/SaveListingButton';
@@ -209,7 +208,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const shopContactHref = getFacebookContactUrl(shop?.fb_page_url ?? null);
   const sellerMessengerHref = buildMessengerUrl(seller?.fb_username ?? null);
   const askSellerHref = shopContactHref ?? sellerMessengerHref;
-  const canAskSeller = shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && !!askSellerHref;
+  const canAskSeller = shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner;
   const signedOutForSaleCtaLabel = shoe.shop_id
     ? 'Sign in to Place Order'
     : 'Sign in to Send Offer';
@@ -564,14 +563,6 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 </Link>
               </div>
               <ListingShareActions shoe={shoe} seller={seller} isOwner={isOwner} className="mt-3" />
-              {!isOwner && (
-                <ContactSellerButtons fbUsername={seller.fb_username} />
-              )}
-              {!isOwner && !sellerMessengerHref && (
-                <div className="mt-3 rounded-lg border border-white/[0.08] bg-slate-950/45 px-3 py-2 text-xs leading-5 text-gray-400">
-                  This seller has not added a Messenger button yet. You can still send an offer through Go Pair PH, and they can reply from their profile.
-                </div>
-              )}
             </div>
           )}
 
@@ -642,15 +633,27 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && !shoe.shop_id && (
             <div className="mt-4 space-y-2">
               <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
-                {canAskSeller && askSellerHref && (
+                {canAskSeller && (
                   <AskSellerButton
                     contactUrl={askSellerHref}
                     listingName={listingName}
                     listingHref={getListingPath(shoe)}
                     sellerName={shop?.name ?? seller?.display_name}
                     isShop={!!shop}
-                    className="flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
-                  />
+                    buyerNeedsMessenger={!currentProfileFbUsername}
+                    ariaLabel={askSellerHref ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
+                    className={cn(
+                      'flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
+                      askSellerHref
+                        ? 'bg-blue-600 text-white hover:bg-blue-500'
+                        : 'border border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50',
+                    )}
+                  >
+                    <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
+                    </svg>
+                    Message Seller
+                  </AskSellerButton>
                 )}
                 <BuyButton
                   listingId={shoe.id}
@@ -664,12 +667,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                   buyerProfileId={currentProfileId}
                   buyerFbUsername={currentProfileFbUsername}
                   showOfferCount={false}
-                  className={cn(
-                    'w-full rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
-                    canAskSeller
-                      ? 'border border-white/[0.12] bg-slate-950/55 text-gray-100 hover:bg-slate-900'
-                      : 'bg-teal-500 text-white hover:bg-teal-400',
-                  )}
+                  className="w-full rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
                 />
               </div>
               {canAskSeller && (
@@ -682,15 +680,27 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && shoe.shop_id && shoe.has_stock && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
             <div className="mt-4 space-y-2">
               <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
-                {canAskSeller && askSellerHref && (
+                {canAskSeller && (
                   <AskSellerButton
                     contactUrl={askSellerHref}
                     listingName={listingName}
                     listingHref={getListingPath(shoe)}
                     sellerName={shop?.name ?? seller?.display_name}
                     isShop={!!shop}
-                    className="flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
-                  />
+                    buyerNeedsMessenger={!currentProfileFbUsername}
+                    ariaLabel={askSellerHref ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
+                    className={cn(
+                      'flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
+                      askSellerHref
+                        ? 'bg-blue-600 text-white hover:bg-blue-500'
+                        : 'border border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50',
+                    )}
+                  >
+                    <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
+                    </svg>
+                    Message Seller
+                  </AskSellerButton>
                 )}
                 <BuyButton
                   listingId={shoe.id}
@@ -705,12 +715,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                   label="Place Order"
                   buyerProfileId={currentProfileId}
                   buyerFbUsername={currentProfileFbUsername}
-                  className={cn(
-                    'w-full rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
-                    canAskSeller
-                      ? 'border border-white/[0.12] bg-slate-950/55 text-gray-100 hover:bg-slate-900'
-                      : 'bg-teal-500 text-white hover:bg-teal-400',
-                  )}
+                  className="w-full rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
                 />
               </div>
               {canAskSeller && (
@@ -723,25 +728,42 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && !currentProfileId && (
             <div className="mt-4 space-y-2">
               <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
-                {canAskSeller && askSellerHref && (
+                {canAskSeller && (
                   <AskSellerButton
                     contactUrl={askSellerHref}
                     listingName={listingName}
                     listingHref={getListingPath(shoe)}
                     sellerName={shop?.name ?? seller?.display_name}
                     isShop={!!shop}
-                    className="flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
-                  />
+                    sendOfferLabel={signedOutForSaleCtaLabel}
+                    sendOfferHref={signInHref}
+                    ariaLabel={askSellerHref ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
+                    className={cn(
+                      'flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
+                      askSellerHref
+                        ? 'bg-blue-600 text-white hover:bg-blue-500'
+                        : 'border border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50',
+                    )}
+                  >
+                    <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
+                    </svg>
+                    Message Seller
+                  </AskSellerButton>
                 )}
                 <Link
                   href={signInHref}
                   className={cn(
-                    'flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
+                    'flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
                     canAskSeller
                       ? 'border border-white/[0.12] bg-slate-950/55 text-gray-100 hover:bg-slate-900'
                       : 'bg-teal-500 text-white hover:bg-teal-400',
                   )}
                 >
+                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L3 13V3h10l7.59 7.59a2 2 0 010 2.82z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01" />
+                  </svg>
                   {signedOutForSaleCtaLabel}
                 </Link>
               </div>

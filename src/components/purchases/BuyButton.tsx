@@ -48,7 +48,19 @@ export function BuyButton({ listingId, listingSlug, listingName, priceFormatted,
         onClick={() => setOpen(true)}
         className={className ?? "mt-4 w-full rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-400 transition-colors"}
       >
-        {actionLabel}
+        <span className="flex items-center justify-center gap-2">
+          {shop ? (
+            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 7h12l-1 13H7L6 7zm3 0a3 3 0 016 0" />
+            </svg>
+          ) : (
+            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L3 13V3h10l7.59 7.59a2 2 0 010 2.82z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01" />
+            </svg>
+          )}
+          {actionLabel}
+        </span>
       </button>
       {!label && showOfferCount && (
         <p className="mt-2 text-xs text-center">
