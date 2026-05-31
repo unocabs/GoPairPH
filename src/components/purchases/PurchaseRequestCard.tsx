@@ -214,25 +214,43 @@ export function PurchaseRequestCard({
 
       {status === 'accepted' && (
         <div className="space-y-2 pt-1">
-          <div className="rounded-lg bg-teal-950 border border-teal-800 px-3 py-2 text-xs text-teal-300 text-center">
-            Accepted — arrange a meetup with{' '}
+          <div className="rounded-lg border border-teal-400/20 bg-teal-400/[0.07] px-3 py-2 text-xs leading-5 text-teal-200">
+            Offer accepted. This pair is reserved for{' '}
             <Link href={`/profile/${request.buyer_id}`} className="underline hover:text-teal-200">
               {request.profiles?.display_name ?? 'the buyer'}
             </Link>
-            {' '}or complete the transaction online, and process the shipping.
+            {' '}while you finish the deal.
           </div>
-          <div className="flex gap-2">
+          <DealSteps
+            steps={['Message buyer', 'Complete meetup, payment, or shipping', 'Mark as sold']}
+          />
+          <div className="grid gap-2 sm:grid-cols-3">
+            <button
+              type="button"
+              onClick={handleMessageBuyer}
+              disabled={loading}
+              className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
+                buyerMessengerUrl
+                  ? 'border-blue-400/25 bg-blue-600 text-white hover:bg-blue-500'
+                  : 'border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50'
+              }`}
+            >
+              <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
+              </svg>
+              Message Buyer
+            </button>
             <button
               onClick={() => setConfirmAction('cancel')}
               disabled={loading}
-              className="flex-1 rounded-lg border border-gray-700 px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-colors disabled:opacity-50"
+              className="rounded-lg border border-gray-700 bg-slate-950/45 px-3 py-2 text-sm font-semibold text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-100 disabled:opacity-50"
             >
-              Cancel &amp; Reopen
+              Cancel reservation
             </button>
             <button
               onClick={() => setConfirmAction('complete')}
               disabled={loading}
-              className="flex-1 rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-500 transition-colors disabled:opacity-50"
+              className="rounded-lg bg-teal-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-400 disabled:opacity-50"
             >
               Mark as Sold
             </button>
@@ -356,8 +374,8 @@ function RequestConfirmPanel({
     },
     cancel: {
       title: 'Reopen this listing?',
-      body: 'The accepted request will be cancelled and the listing will become active again for other buyers.',
-      confirmLabel: 'Reopen listing',
+      body: 'Use this only if the buyer backs out or the deal falls through. The listing will become active again for other buyers.',
+      confirmLabel: 'Cancel reservation',
       confirmClass: 'bg-amber-600 hover:bg-amber-500',
     },
   }[action];
@@ -384,6 +402,21 @@ function RequestConfirmPanel({
           {loading ? 'Working...' : copy.confirmLabel}
         </button>
       </div>
+    </div>
+  );
+}
+
+function DealSteps({ steps }: { steps: string[] }) {
+  return (
+    <div className="grid gap-1.5 rounded-lg border border-white/[0.08] bg-slate-950/45 p-2.5">
+      {steps.map((step, index) => (
+        <div key={step} className="flex items-center gap-2 text-xs text-gray-300">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-500/15 text-[10px] font-bold text-teal-200 ring-1 ring-teal-400/25">
+            {index + 1}
+          </span>
+          <span>{step}</span>
+        </div>
+      ))}
     </div>
   );
 }

@@ -575,10 +575,10 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           )}
 
           {purchaseContext?.type === 'my_request_accepted' && (
-            <div className="mt-4 rounded-xl border border-teal-700 bg-teal-950 p-4">
-              <p className="text-sm font-semibold text-teal-300">Your offer was accepted!</p>
-              <p className="text-xs text-teal-400 mt-1">
-                Coordinate with the seller for a meetup. They&apos;ll mark this as sold once you&apos;ve completed the exchange in person.
+            <div className="mt-4 rounded-xl border border-teal-500/35 bg-teal-500/[0.07] p-4">
+              <p className="text-sm font-semibold text-teal-200">Offer accepted. Reserved for you.</p>
+              <p className="mt-1 text-xs leading-5 text-teal-100/80">
+                Message the seller, confirm meetup/payment/shipping, then receive the pair. The seller marks it sold after completion.
               </p>
             </div>
           )}
@@ -593,22 +593,22 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           )}
 
           {purchaseContext?.type === 'reserved_for_someone_else' && (
-            <div className="mt-4 rounded-xl border border-white/[0.08] bg-slate-950/55 p-4">
-              <p className="text-sm font-semibold text-gray-300">Sale Pending</p>
-              <p className="text-xs text-gray-500 mt-1">This listing is reserved for another buyer right now.</p>
+            <div className="mt-4 rounded-xl border border-teal-500/20 bg-teal-500/[0.04] p-4">
+              <p className="text-sm font-semibold text-teal-200">Deal in progress</p>
+              <p className="mt-1 text-xs leading-5 text-gray-400">This pair is reserved for another buyer while they coordinate with the seller.</p>
             </div>
           )}
 
           {purchaseContext?.type === 'sale_in_progress' && (
-            <div className="mt-4 rounded-xl border border-teal-700 bg-teal-950 p-4 space-y-3">
+            <div className="mt-4 space-y-3 rounded-xl border border-teal-500/35 bg-teal-500/[0.07] p-4">
               <div>
-                <p className="text-sm font-semibold text-teal-300">Sale in progress</p>
-                <p className="text-xs text-teal-400 mt-1">
-                  You accepted a request from{' '}
+                <p className="text-sm font-semibold text-teal-200">Offer accepted. Reserved for buyer.</p>
+                <p className="mt-1 text-xs leading-5 text-teal-100/80">
+                  Message{' '}
                   <Link href={`/profile/${purchaseContext.request.buyer_id}`} className="underline hover:text-teal-200">
                     {purchaseContext.request.profiles?.display_name ?? 'the buyer'}
                   </Link>
-                  . Meet up to complete the sale or complete the transaction online and process the shipping, then mark it sold below.
+                  , complete meetup/payment/shipping, then mark it sold below.
                 </p>
               </div>
               <CompleteSaleButtons requestId={purchaseContext.request.id} />

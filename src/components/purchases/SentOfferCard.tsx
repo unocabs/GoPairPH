@@ -30,7 +30,7 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
 
   async function handleRetract() {
     const msg = status === 'accepted'
-      ? 'Cancel this reservation? The seller will be notified and the listing will return to active.'
+      ? 'Cancel this reservation? Use this if you no longer want to continue with the deal.'
       : 'Retract your offer? The seller will no longer see this request.';
     if (!confirm(msg)) return;
     setLoading(true);
@@ -52,13 +52,13 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
 
   return (
     <div className={`rounded-xl border bg-gray-900 p-4 space-y-3 ${
-      status === 'accepted' ? 'border-orange-800' : 'border-gray-800'
+      status === 'accepted' ? 'border-teal-500/35' : 'border-gray-800'
     }`}>
       {status === 'accepted' && (
-        <div className="flex items-start gap-1.5 rounded-lg bg-orange-950 border border-orange-800 px-3 py-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-orange-400 animate-pulse shrink-0 mt-1.5" />
-          <p className="text-xs font-semibold text-orange-300 leading-snug">
-            Reserved for you — seller marks it sold once you receive the pair.
+        <div className="flex items-start gap-1.5 rounded-lg border border-teal-400/20 bg-teal-400/[0.07] px-3 py-2">
+          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-teal-300" />
+          <p className="text-xs font-semibold leading-snug text-teal-200">
+            Offer accepted. This pair is reserved for you while you finish the deal.
           </p>
         </div>
       )}
@@ -122,9 +122,9 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
       )}
 
       {status === 'accepted' && (
-        <div className="rounded-lg border border-teal-400/20 bg-teal-400/[0.07] px-3 py-2 text-xs leading-5 text-teal-200">
-          Seller accepted. Message them to coordinate meetup, payment, or shipping, then they will mark the pair sold after completion.
-        </div>
+        <DealSteps
+          steps={['Message seller', 'Confirm meetup, payment, or shipping', 'Receive the pair']}
+        />
       )}
 
       {(status === 'pending' || status === 'accepted') && (
@@ -165,6 +165,21 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
       )}
 
       {error && <p className="text-xs text-red-400">{error}</p>}
+    </div>
+  );
+}
+
+function DealSteps({ steps }: { steps: string[] }) {
+  return (
+    <div className="grid gap-1.5 rounded-lg border border-white/[0.08] bg-slate-950/45 p-2.5">
+      {steps.map((step, index) => (
+        <div key={step} className="flex items-center gap-2 text-xs text-gray-300">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-500/15 text-[10px] font-bold text-teal-200 ring-1 ring-teal-400/25">
+            {index + 1}
+          </span>
+          <span>{step}</span>
+        </div>
+      ))}
     </div>
   );
 }

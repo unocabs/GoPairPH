@@ -174,14 +174,14 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
           )}
           {shoe.status !== 'active' && (
             <div className={`absolute inset-0 flex items-center justify-center ${
-              shoe.status === 'reserved' ? 'bg-orange-500/30' : 'bg-gray-900/30'
+              shoe.status === 'reserved' ? 'bg-teal-500/25' : 'bg-gray-900/30'
             }`}>
               <span className={`font-bold text-xl uppercase tracking-widest drop-shadow-lg ${
-                shoe.status === 'reserved' ? 'text-orange-300' : 'text-white/70'
+                shoe.status === 'reserved' ? 'text-teal-100' : 'text-white/70'
               }`}>
                 {shoe.status === 'sold' ? 'SOLD'
                   : shoe.status === 'donated' ? 'DONATED'
-                  : shoe.status === 'reserved' ? 'RESERVED'
+                  : shoe.status === 'reserved' ? 'DEAL PENDING'
                   : shoe.status.toUpperCase()}
               </span>
             </div>
