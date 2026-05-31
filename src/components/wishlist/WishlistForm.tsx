@@ -5,7 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { wishlistSchema, type WishlistFormData } from '@/lib/validations';
-import { BRANDS, SIZE_CONVERSIONS } from '@/lib/constants';
+import { BRANDS, US_SIZE_TYPE_OPTIONS } from '@/lib/constants';
+import { findSizeConversion } from '@/lib/utils';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
@@ -48,14 +49,16 @@ export function WishlistForm() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const router = useRouter();
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<WishlistFormData>({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<WishlistFormData>({
     resolver: zodResolver(wishlistSchema) as Resolver<WishlistFormData>,
+    defaultValues: { us_size_type: 'mens' },
   });
+  const usSizeType = watch('us_size_type') ?? 'mens';
 
   function autoFillSize(field: 'eu' | 'us' | 'cm', val: string) {
     const num = parseFloat(val);
     if (isNaN(num)) return;
-    const match = SIZE_CONVERSIONS.find(s => s[field] === num);
+    const match = findSizeConversion(field, num, usSizeType);
     if (!match) return;
     if (field !== 'eu') setValue('size_eu', match.eu);
     if (field !== 'us') setValue('size_us', match.us);
@@ -115,10 +118,18 @@ export function WishlistForm() {
         <p className="text-sm font-medium text-gray-300 mb-1">
           Size <span className="text-gray-500 font-normal text-xs">(optional — fill any one and the others auto-fill)</span>
         </p>
+        <div className="mb-3">
+          <Select
+            label="US size type"
+            options={[...US_SIZE_TYPE_OPTIONS]}
+            hint="US men's and women's sizes convert differently."
+            {...register('us_size_type')}
+          />
+        </div>
         <div className="grid grid-cols-3 gap-3">
           <Input label="EU" type="number" step={0.5} error={errors.size_eu?.message}
             {...register('size_eu', { onChange: e => autoFillSize('eu', e.target.value) })} />
-          <Input label="US" type="number" step={0.5} error={errors.size_us?.message}
+          <Input label={usSizeType === 'womens' ? 'US W' : usSizeType === 'mens' ? 'US M' : 'US'} type="number" step={0.5} error={errors.size_us?.message}
             {...register('size_us', { onChange: e => autoFillSize('us', e.target.value) })} />
           <Input label="CM" type="number" step={0.5} error={errors.size_cm?.message}
             {...register('size_cm', { onChange: e => autoFillSize('cm', e.target.value) })} />

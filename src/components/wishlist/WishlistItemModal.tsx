@@ -58,7 +58,7 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const images = item.wishlist_images ?? [];
-  const sizeLabel = formatSize(item.size_eu, item.size_us, item.size_cm);
+  const sizeLabel = formatSize(item.size_eu, item.size_us, item.size_cm, item.us_size_type);
   const budgetLabel = priceRangeLabel(item.price_min_php, item.price_max_php);
   const isOwner = !!profile && profile.id === item.user_id;
 

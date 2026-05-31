@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { CONDITIONS, LISTING_TYPE_LABELS } from './constants';
+import { CONDITIONS, LISTING_TYPE_LABELS, SIZE_CONVERSIONS_BY_US_TYPE, US_SIZE_PREFIX, type UsSizeType } from './constants';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -23,11 +23,36 @@ export function formatListingType(type: string): string {
   return LISTING_TYPE_LABELS[type] ?? type;
 }
 
-export function formatSize(eu: number | null, us: number | null, cm: number | null): string {
+export function normalizeUsSizeType(value?: string | null): UsSizeType {
+  if (value === 'mens' || value === 'womens' || value === 'unisex') return value;
+  return 'mens';
+}
+
+function formatNumber(value: number): string {
+  return Number.isInteger(value) ? value.toString() : value.toFixed(1);
+}
+
+export function formatUsSize(us: number | null, usSizeType?: string | null): string {
+  if (!us) return '';
+  const type = normalizeUsSizeType(usSizeType);
+  return `${US_SIZE_PREFIX[type]} ${formatNumber(us)}`;
+}
+
+export function findSizeConversion(
+  field: 'eu' | 'us' | 'cm',
+  value: number,
+  usSizeType?: string | null
+) {
+  const type = normalizeUsSizeType(usSizeType);
+  const conversions = SIZE_CONVERSIONS_BY_US_TYPE[type];
+  return conversions.find(size => size[field] === value);
+}
+
+export function formatSize(eu: number | null, us: number | null, cm: number | null, usSizeType?: string | null): string {
   const parts: string[] = [];
-  if (eu) parts.push(`EU ${eu}`);
-  if (us) parts.push(`US ${us}`);
-  if (cm) parts.push(`${cm}cm`);
+  if (eu) parts.push(`EU ${formatNumber(eu)}`);
+  if (us) parts.push(formatUsSize(us, usSizeType));
+  if (cm) parts.push(`${formatNumber(cm)}cm`);
   return parts.join(' / ');
 }
 

@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { sendEmail } from '@/lib/email/resend';
 import { makeSavedSearchEmailMatch, renderSavedSearchAlertEmail } from '@/lib/email/savedSearchAlerts';
 import { getAbsoluteListingUrl } from '@/lib/utils';
-import type { Condition } from '@/types';
+import type { Condition, UsSizeType } from '@/types';
 
 export const runtime = 'nodejs';
 
@@ -15,6 +15,7 @@ type SavedSearchRow = {
   size_eu: number | null;
   size_us: number | null;
   size_cm: number | null;
+  us_size_type: UsSizeType;
   condition: Condition | null;
   max_price_php: number | null;
   email_enabled: boolean;
@@ -36,11 +37,12 @@ type ListingRow = {
   size_eu: number | null;
   size_us: number | null;
   size_cm: number | null;
+  us_size_type: UsSizeType;
   created_at: string;
   profiles?: { display_name: string | null; location: string | null } | null;
   shops?: { name: string | null; location: string | null } | null;
   shoe_images?: Array<{ id: string }>;
-  shoe_variants?: Array<{ size_eu: number | null; size_us: number | null; size_cm: number | null }>;
+  shoe_variants?: Array<{ size_eu: number | null; size_us: number | null; size_cm: number | null; us_size_type: UsSizeType }>;
 };
 
 function isAuthorized(request: Request): boolean {
@@ -85,11 +87,16 @@ function sizeMatches(search: SavedSearchRow, listing: ListingRow): boolean {
   if (!wantsSize) return true;
 
   const same = (a: number | null, b: number | null) => a == null || b == null ? false : Math.abs(Number(a) - Number(b)) < 0.01;
-  const rowMatches = (row: { size_eu: number | null; size_us: number | null; size_cm: number | null }) => (
-    (search.size_eu == null || same(search.size_eu, row.size_eu)) &&
-    (search.size_us == null || same(search.size_us, row.size_us)) &&
-    (search.size_cm == null || same(search.size_cm, row.size_cm))
-  );
+  const rowMatches = (row: { size_eu: number | null; size_us: number | null; size_cm: number | null; us_size_type?: UsSizeType | null }) => {
+    const usTypeMatches =
+      search.size_us == null ||
+      row.us_size_type === search.us_size_type;
+
+    return usTypeMatches &&
+      (search.size_eu == null || same(search.size_eu, row.size_eu)) &&
+      (search.size_us == null || same(search.size_us, row.size_us)) &&
+      (search.size_cm == null || same(search.size_cm, row.size_cm));
+  };
 
   if (rowMatches(listing)) return true;
   return (listing.shoe_variants ?? []).some(rowMatches);
@@ -125,7 +132,7 @@ export async function GET(request: Request) {
       .limit(1000),
     service
       .from('shoes')
-      .select('id, slug, seller_id, brand, model, color, condition, listing_type, price_php, description, size_eu, size_us, size_cm, created_at, profiles!shoes_seller_id_fkey(display_name, location), shops(name, location), shoe_images!inner(id), shoe_variants(size_eu, size_us, size_cm)')
+      .select('id, slug, seller_id, brand, model, color, condition, listing_type, price_php, description, size_eu, size_us, size_cm, us_size_type, created_at, profiles!shoes_seller_id_fkey(display_name, location), shops(name, location), shoe_images!inner(id), shoe_variants(size_eu, size_us, size_cm, us_size_type)')
       .eq('status', 'active')
       .is('quality_flagged_at', null)
       .gte('created_at', since)
@@ -214,6 +221,7 @@ export async function GET(request: Request) {
         sizeEu: listing.size_eu,
         sizeUs: listing.size_us,
         sizeCm: listing.size_cm,
+        usSizeType: listing.us_size_type,
         condition: listing.condition,
       })),
     });

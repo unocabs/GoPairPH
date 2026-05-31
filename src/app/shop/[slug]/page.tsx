@@ -25,6 +25,7 @@ interface ShopLandingPageProps {
     condition?: string;
     size?: string;
     size_unit?: string;
+    us_size_type?: string;
     stock?: string;
     sort?: string;
   };
@@ -41,19 +42,27 @@ async function getShop(slug: string): Promise<Shop | null> {
   return (data as Shop) ?? null;
 }
 
-function getSizeFilter(searchParams: ShopLandingPageProps['searchParams']): { unit: SizeUnit; value: number } | null {
+function getSizeFilter(searchParams: ShopLandingPageProps['searchParams']): { unit: SizeUnit; value: number; usSizeType: string | null } | null {
   if (!searchParams.size) return null;
   const value = Number.parseFloat(searchParams.size);
   if (!Number.isFinite(value)) return null;
   const unit = ['eu', 'us', 'cm'].includes(searchParams.size_unit ?? '') ? searchParams.size_unit as SizeUnit : 'eu';
-  return { unit, value };
+  return {
+    unit,
+    value,
+    usSizeType: unit === 'us' && ['mens', 'womens', 'unisex'].includes(searchParams.us_size_type ?? '')
+      ? searchParams.us_size_type ?? null
+      : null,
+  };
 }
 
-function shoeMatchesSize(shoe: Shoe, sizeFilter: { unit: SizeUnit; value: number } | null): boolean {
+function shoeMatchesSize(shoe: Shoe, sizeFilter: { unit: SizeUnit; value: number; usSizeType: string | null } | null): boolean {
   if (!sizeFilter) return true;
   const key = sizeFilter.unit === 'us' ? 'size_us' : sizeFilter.unit === 'cm' ? 'size_cm' : 'size_eu';
-  if (shoe[key] === sizeFilter.value) return true;
-  return (shoe.shoe_variants ?? []).some(variant => variant.quantity > 0 && variant[key] === sizeFilter.value);
+  const usTypeMatches = (row: { us_size_type?: string | null }) =>
+    !sizeFilter.usSizeType || row.us_size_type === sizeFilter.usSizeType;
+  if (shoe[key] === sizeFilter.value && usTypeMatches(shoe)) return true;
+  return (shoe.shoe_variants ?? []).some(variant => variant.quantity > 0 && variant[key] === sizeFilter.value && usTypeMatches(variant));
 }
 
 async function getShopListings(shopId: string, searchParams: ShopLandingPageProps['searchParams']): Promise<Shoe[]> {

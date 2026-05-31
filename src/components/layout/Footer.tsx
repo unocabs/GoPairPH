@@ -7,6 +7,7 @@ const FOOTER_GROUPS = [
     heading: 'GP Marketplace',
     links: [
       { href: '/browse', label: 'All Listings' },
+      { href: '/price-guide', label: 'Price Guide' },
       { href: '/shop', label: 'Shops' },
       { href: '/looking-for', label: 'Looking For' },
       { href: '/listings/new', label: 'List a Shoe' },

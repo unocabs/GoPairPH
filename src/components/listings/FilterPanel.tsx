@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, useTransition, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { BRANDS, CONDITIONS, LISTING_TYPE_LABELS } from '@/lib/constants';
+import { BRANDS, CONDITIONS, LISTING_TYPE_LABELS, US_SIZE_TYPE_OPTIONS } from '@/lib/constants';
 
 const SIZE_UNITS = [
   { value: 'eu', label: 'EU', placeholder: '42', min: 35, max: 48 },
@@ -14,7 +14,7 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
   const router = useRouter();
   const params = useSearchParams();
   const paramsString = params.toString();
-  const hasActiveControls = params.has('type') || params.has('brand') || params.has('condition') || params.has('size') || params.has('size_eu') || params.has('q') || params.has('sort');
+  const hasActiveControls = params.has('type') || params.has('brand') || params.has('condition') || params.has('size') || params.has('size_eu') || params.has('us_size_type') || params.has('q') || params.has('sort');
   const currentQuery = params.get('q') ?? '';
   const [isOpen, setIsOpen] = useState(hasActiveControls);
   const [query, setQuery] = useState(currentQuery);
@@ -70,6 +70,7 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
     startTransition(() => {
       const next = new URLSearchParams(paramsString);
       next.set('size_unit', unit);
+      if (unit !== 'us') next.delete('us_size_type');
       if (size.trim()) {
         next.set('size', size.trim());
       }
@@ -102,6 +103,7 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
         } else {
           next.delete('size');
           next.delete('size_unit');
+          next.delete('us_size_type');
         }
         next.delete('size_eu');
         next.delete('page');
@@ -175,7 +177,7 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
       </div>
 
       <div className={`${isOpen ? 'block' : 'hidden'} mt-4`}>
-        <div className="grid gap-4 lg:grid-cols-[140px_minmax(150px,1fr)_minmax(150px,1fr)_minmax(160px,1fr)_220px] lg:items-end">
+        <div className="grid gap-4 lg:grid-cols-[140px_minmax(150px,1fr)_minmax(150px,1fr)_minmax(160px,1fr)_minmax(260px,1.1fr)] lg:items-end">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Type</p>
             <select
@@ -253,6 +255,20 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
                 className="min-w-0 flex-1 rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-sm text-gray-200 placeholder-gray-600 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
             </div>
+            {currentSizeUnit === 'us' && (
+              <select
+                value={params.get('us_size_type') ?? ''}
+                onChange={e => updateParam('us_size_type', e.target.value)}
+                className="mt-2 w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-sm text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              >
+                <option value="" className="bg-gray-800">Any US type</option>
+                {US_SIZE_TYPE_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value} className="bg-gray-800">
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         </div>
 

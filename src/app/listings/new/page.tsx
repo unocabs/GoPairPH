@@ -9,7 +9,7 @@ import { formatPrice, formatRelativeDate, formatSize } from '@/lib/utils';
 import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
 import type { Shop, WishlistItem } from '@/types';
 
-type DemandSignal = Pick<WishlistItem, 'id' | 'brand' | 'model' | 'size_eu' | 'size_us' | 'size_cm' | 'price_max_php' | 'location' | 'created_at'>;
+type DemandSignal = Pick<WishlistItem, 'id' | 'brand' | 'model' | 'size_eu' | 'size_us' | 'size_cm' | 'us_size_type' | 'price_max_php' | 'location' | 'created_at'>;
 
 async function getProfileAndShop(): Promise<{ profileId: string; fbUsername: string | null; shop: Shop | null } | null> {
   const supabase = createClient();
@@ -30,7 +30,7 @@ async function getDemandSignals(): Promise<DemandSignal[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from('wishlist_items')
-    .select('id, brand, model, size_eu, size_us, size_cm, price_max_php, location, created_at')
+    .select('id, brand, model, size_eu, size_us, size_cm, us_size_type, price_max_php, location, created_at')
     .order('created_at', { ascending: false })
     .limit(5);
 
@@ -79,7 +79,7 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
                 {demandSignals.length > 0 ? (
                   <div className="mt-3 space-y-2">
                     {demandSignals.slice(0, 3).map((item) => {
-                      const size = formatSize(item.size_eu, item.size_us, item.size_cm);
+                      const size = formatSize(item.size_eu, item.size_us, item.size_cm, item.us_size_type);
                       return (
                         <Link
                           key={item.id}
@@ -132,7 +132,7 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
               {demandSignals.length > 0 ? (
                 <div className="mt-3 space-y-2">
                   {demandSignals.slice(0, 3).map((item) => {
-                    const size = formatSize(item.size_eu, item.size_us, item.size_cm);
+                    const size = formatSize(item.size_eu, item.size_us, item.size_cm, item.us_size_type);
                     return (
                       <Link
                         key={item.id}

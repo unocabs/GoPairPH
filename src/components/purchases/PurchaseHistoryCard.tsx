@@ -43,7 +43,7 @@ export function PurchaseHistoryCard({ request, currentProfileId }: PurchaseHisto
               <p className="text-sm font-semibold text-gray-200 truncate hover:text-teal-400 transition-colors">
                 {formatListingName(shoe.brand, shoe.model)}
               </p>
-              <p className="text-xs text-gray-500">{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}</p>
+              <p className="text-xs text-gray-500">{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type)}</p>
             </Link>
           ) : (
             <p className="text-sm text-gray-500">—</p>

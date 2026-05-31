@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CONDITIONS } from '@/lib/constants';
+import { CONDITIONS, US_SIZE_TYPE_OPTIONS } from '@/lib/constants';
 import { type ShopTheme } from '@/lib/shopTheme';
 
 interface ShopListingsFilterProps {
@@ -74,6 +74,7 @@ export function ShopListingsFilter({ basePath, theme }: ShopListingsFilterProps)
         } else {
           next.delete('size');
           next.delete('size_unit');
+          next.delete('us_size_type');
         }
         pushParams(next);
       });
@@ -86,6 +87,7 @@ export function ShopListingsFilter({ basePath, theme }: ShopListingsFilterProps)
     startTransition(() => {
       const next = new URLSearchParams(paramsString);
       next.set('size_unit', unit);
+      if (unit !== 'us') next.delete('us_size_type');
       if (size.trim()) next.set('size', size.trim());
       pushParams(next);
     });
@@ -147,6 +149,12 @@ export function ShopListingsFilter({ basePath, theme }: ShopListingsFilterProps)
               </select>
               <input type="number" step={0.5} value={size} onChange={event => setSize(event.target.value)} placeholder={selectedSizeUnit.placeholder} className="min-w-0 flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1" style={{ backgroundColor: theme.surfaceStrong, borderColor: theme.border, color: theme.text, '--tw-ring-color': theme.accent } as React.CSSProperties} />
             </div>
+            {sizeUnit === 'us' && (
+              <select value={params.get('us_size_type') ?? ''} onChange={event => updateParam('us_size_type', event.target.value)} className="mt-2 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1" style={{ backgroundColor: theme.surfaceStrong, borderColor: theme.border, color: theme.text, '--tw-ring-color': theme.accent } as React.CSSProperties}>
+                <option value="">Any US type</option>
+                {US_SIZE_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            )}
           </div>
 
           <label className="block">

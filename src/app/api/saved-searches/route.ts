@@ -32,6 +32,7 @@ export async function POST(request: Request) {
       size_eu: parsed.data.size_eu ?? null,
       size_us: parsed.data.size_us ?? null,
       size_cm: parsed.data.size_cm ?? null,
+      us_size_type: parsed.data.us_size_type ?? 'mens',
       condition: parsed.data.condition ?? null,
       max_price_php: parsed.data.max_price_php ?? null,
       email_enabled: parsed.data.email_enabled ?? true,

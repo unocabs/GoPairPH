@@ -6,14 +6,14 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { listingSchema, type ListingFormData } from '@/lib/validations';
-import { BRANDS, CONDITIONS, SIZE_CONVERSIONS } from '@/lib/constants';
+import { BRANDS, CONDITIONS, US_SIZE_TYPE_OPTIONS } from '@/lib/constants';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { VariantsEditor, type VariantRow } from '@/components/listings/VariantsEditor';
 import { PhotoUploader, type UploadedPhoto } from '@/components/listings/PhotoUploader';
-import { getListingPath, getPublicUrl } from '@/lib/utils';
+import { findSizeConversion, getListingPath, getPublicUrl } from '@/lib/utils';
 import type { Shoe, ViewType } from '@/types';
 
 const BRAND_OPTIONS = BRANDS.map(b => ({ value: b, label: b }));
@@ -71,6 +71,7 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
             size_eu: v.size_eu,
             size_us: v.size_us ?? '',
             size_cm: v.size_cm ?? '',
+            us_size_type: v.us_size_type ?? 'mens',
             quantity: v.quantity,
           }))
       : []
@@ -93,6 +94,7 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
       size_eu: isShopListing ? 99 : (shoe.size_eu ?? undefined),
       size_us: shoe.size_us ?? undefined,
       size_cm: shoe.size_cm ?? undefined,
+      us_size_type: shoe.us_size_type ?? 'mens',
     },
   });
 
@@ -108,6 +110,9 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
   const condition = watch('condition');
   const description = watch('description') ?? '';
   const mileageKm = toOptionalNumber(watch('mileage_km'));
+  const sizeEu = toOptionalNumber(watch('size_eu'));
+  const sizeUs = toOptionalNumber(watch('size_us'));
+  const usSizeType = watch('us_size_type') ?? 'mens';
   const isNew = condition === 'new';
   const hasTopPhoto = photos.some(photo => photo.viewType === 'top');
   const hasSolePhoto = photos.some(photo => photo.viewType === 'sole');
@@ -127,22 +132,36 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
   function handleSizeEuChange(val: string) {
     const num = parseFloat(val);
     if (isNaN(num)) return;
-    const match = SIZE_CONVERSIONS.find(s => s.eu === num);
+    const match = findSizeConversion('eu', num, usSizeType);
     if (match) { setValue('size_us', match.us); setValue('size_cm', match.cm); }
   }
 
   function handleSizeUsChange(val: string) {
     const num = parseFloat(val);
     if (isNaN(num)) return;
-    const match = SIZE_CONVERSIONS.find(s => s.us === num);
+    const match = findSizeConversion('us', num, usSizeType);
     if (match) { setValue('size_eu', match.eu); setValue('size_cm', match.cm); }
   }
 
   function handleSizeCmChange(val: string) {
     const num = parseFloat(val);
     if (isNaN(num)) return;
-    const match = SIZE_CONVERSIONS.find(s => s.cm === num);
+    const match = findSizeConversion('cm', num, usSizeType);
     if (match) { setValue('size_eu', match.eu); setValue('size_us', match.us); }
+  }
+
+  function handleUsSizeTypeChange(val: string) {
+    setValue('us_size_type', val as ListingFormData['us_size_type'], { shouldDirty: true, shouldValidate: true });
+    const match = sizeUs
+      ? findSizeConversion('us', sizeUs, val)
+      : sizeEu
+        ? findSizeConversion('eu', sizeEu, val)
+        : null;
+    if (match) {
+      setValue('size_eu', match.eu);
+      setValue('size_us', match.us);
+      setValue('size_cm', match.cm);
+    }
   }
 
   async function onSubmit(data: ListingFormData) {
@@ -210,6 +229,7 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
           size_eu: isShopListing ? null : data.size_eu,
           size_us: isShopListing ? null : data.size_us,
           size_cm: isShopListing ? null : data.size_cm,
+          us_size_type: isShopListing ? 'mens' : (data.us_size_type ?? 'mens'),
           ...(isShopListing ? { listed_in_main_feed: listedInMainFeed } : {}),
         })
         .eq('id', shoe.id);
@@ -226,6 +246,7 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
             size_eu: v.size_eu as number,
             size_us: typeof v.size_us === 'number' ? v.size_us : null,
             size_cm: typeof v.size_cm === 'number' ? v.size_cm : null,
+            us_size_type: v.us_size_type ?? 'mens',
             quantity: typeof v.quantity === 'number' ? v.quantity : 0,
           }));
         const newRows = variants.filter(v => !v.id).map(v => ({
@@ -233,6 +254,7 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
           size_eu: v.size_eu as number,
           size_us: typeof v.size_us === 'number' ? v.size_us : null,
           size_cm: typeof v.size_cm === 'number' ? v.size_cm : null,
+          us_size_type: v.us_size_type ?? 'mens',
           quantity: typeof v.quantity === 'number' ? v.quantity : 0,
         }));
 
@@ -343,10 +365,19 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
               Size <span className="text-teal-400">*</span>
               <span className="ml-1 text-xs text-gray-500 font-normal">(fill one; EU, US, or CM)</span>
             </p>
+            <div className="mb-3">
+              <Select
+                label="US size type"
+                options={[...US_SIZE_TYPE_OPTIONS]}
+                hint="US men's and women's sizes convert differently. Pick the label printed on the shoe box when possible."
+                value={usSizeType}
+                onChange={e => handleUsSizeTypeChange(e.target.value)}
+              />
+            </div>
             <div className="grid grid-cols-3 gap-3">
               <Input label="EU" type="number" step={0.5} error={errors.size_eu?.message}
                 {...register('size_eu', { onChange: e => handleSizeEuChange(e.target.value) })} />
-              <Input label="US" type="number" step={0.5} error={errors.size_us?.message}
+              <Input label={usSizeType === 'womens' ? 'US W' : usSizeType === 'mens' ? 'US M' : 'US'} type="number" step={0.5} error={errors.size_us?.message}
                 {...register('size_us', { onChange: e => handleSizeUsChange(e.target.value) })} />
               <Input label="CM" type="number" step={0.5} error={errors.size_cm?.message}
                 {...register('size_cm', { onChange: e => handleSizeCmChange(e.target.value) })} />

@@ -36,7 +36,7 @@ export function ManualSaleHistoryCard({ shoe }: ManualSaleHistoryCardProps) {
             <p className="truncate text-sm font-semibold text-gray-200 transition-colors hover:text-teal-400">
               {formatListingName(shoe.brand, shoe.model)}
             </p>
-            <p className="text-xs text-gray-500">{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm) || CONDITIONS[shoe.condition]}</p>
+            <p className="text-xs text-gray-500">{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type) || CONDITIONS[shoe.condition]}</p>
           </Link>
         </div>
         <div className="shrink-0 text-right">

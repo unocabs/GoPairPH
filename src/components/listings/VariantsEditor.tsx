@@ -1,6 +1,7 @@
 'use client';
 
-import { SIZE_CONVERSIONS } from '@/lib/constants';
+import { US_SIZE_TYPE_OPTIONS, type UsSizeType } from '@/lib/constants';
+import { findSizeConversion } from '@/lib/utils';
 
 export interface VariantRow {
   /** Existing variant id, or null for new (unsaved) rows. */
@@ -8,6 +9,7 @@ export interface VariantRow {
   size_eu: number | '';
   size_us: number | '';
   size_cm: number | '';
+  us_size_type: UsSizeType;
   quantity: number | '';
 }
 
@@ -20,7 +22,7 @@ interface VariantsEditorProps {
 }
 
 function emptyRow(): VariantRow {
-  return { id: null, size_eu: '', size_us: '', size_cm: '', quantity: 1 };
+  return { id: null, size_eu: '', size_us: '', size_cm: '', us_size_type: 'mens', quantity: 1 };
 }
 
 export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }: VariantsEditorProps) {
@@ -37,7 +39,7 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
       update(idx, { size_eu: '' });
       return;
     }
-    const match = SIZE_CONVERSIONS.find(s => s.eu === num);
+    const match = findSizeConversion('eu', num, rows[idx].us_size_type);
     update(idx, {
       size_eu: num,
       size_us: match?.us ?? rows[idx].size_us,
@@ -51,7 +53,7 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
       update(idx, { size_us: '' });
       return;
     }
-    const match = SIZE_CONVERSIONS.find(s => s.us === num);
+    const match = findSizeConversion('us', num, rows[idx].us_size_type);
     update(idx, {
       size_us: num,
       size_eu: match?.eu ?? rows[idx].size_eu,
@@ -65,7 +67,7 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
       update(idx, { size_cm: '' });
       return;
     }
-    const match = SIZE_CONVERSIONS.find(s => s.cm === num);
+    const match = findSizeConversion('cm', num, rows[idx].us_size_type);
     update(idx, {
       size_cm: num,
       size_eu: match?.eu ?? rows[idx].size_eu,
@@ -75,6 +77,19 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
 
   function addRow() {
     onChange([...rows, emptyRow()]);
+  }
+
+  function updateUsSizeType(idx: number, usSizeType: UsSizeType) {
+    const row = rows[idx];
+    const match = typeof row.size_us === 'number'
+      ? findSizeConversion('us', row.size_us, usSizeType)
+      : typeof row.size_eu === 'number'
+        ? findSizeConversion('eu', row.size_eu, usSizeType)
+        : null;
+    update(idx, {
+      us_size_type: usSizeType,
+      ...(match ? { size_eu: match.eu, size_us: match.us, size_cm: match.cm } : {}),
+    });
   }
 
   function removeRow(idx: number) {
@@ -89,8 +104,9 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
 
   return (
     <div className="space-y-2">
-      <div className="hidden sm:grid sm:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 px-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+      <div className="hidden sm:grid sm:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] gap-2 px-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">
         <span>EU</span>
+        <span>US type</span>
         <span>US</span>
         <span>CM</span>
         <span>Qty</span>
@@ -98,7 +114,7 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
       </div>
 
       {rows.map((row, idx) => (
-        <div key={row.id ?? `new-${idx}`} className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 items-start">
+        <div key={row.id ?? `new-${idx}`} className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] gap-2 items-start">
           <input
             type="number"
             step={0.5}
@@ -110,10 +126,22 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
             disabled={!!row.id /* lock size on existing rows to preserve unique key */}
             className="rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-sm text-gray-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-60"
           />
+          <select
+            value={row.us_size_type}
+            onChange={e => updateUsSizeType(idx, e.target.value as UsSizeType)}
+            disabled={!!row.id}
+            className="rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-sm text-gray-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-60"
+          >
+            {US_SIZE_TYPE_OPTIONS.map(option => (
+              <option key={option.value} value={option.value} className="bg-gray-800">
+                {option.label}
+              </option>
+            ))}
+          </select>
           <input
             type="number"
             step={0.5}
-            placeholder="US"
+            placeholder={row.us_size_type === 'womens' ? 'US W' : row.us_size_type === 'mens' ? 'US M' : 'US'}
             value={row.size_us}
             onChange={e => autofillFromUs(idx, e.target.value)}
             disabled={!!row.id}

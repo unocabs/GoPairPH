@@ -112,6 +112,7 @@ export function makeSavedSearchEmailMatch(args: {
   sizeEu: number | null;
   sizeUs: number | null;
   sizeCm: number | null;
+  usSizeType?: string | null;
   condition: string | null;
 }): SavedSearchAlertMatch {
   return {
@@ -119,7 +120,7 @@ export function makeSavedSearchEmailMatch(args: {
     listingName: formatListingName(args.brand, args.model),
     listingUrl: args.listingUrl,
     pricePhp: args.pricePhp,
-    size: formatSize(args.sizeEu, args.sizeUs, args.sizeCm),
+    size: formatSize(args.sizeEu, args.sizeUs, args.sizeCm, args.usSizeType),
     condition: args.condition,
   };
 }

@@ -392,10 +392,10 @@ interface ShareCardProps {
 function getShareSizeText(shoe: Shoe): string {
   const inStock = (shoe.shoe_variants ?? []).filter(v => v.quantity > 0);
   if (inStock.length === 1) {
-    return formatSize(inStock[0].size_eu, inStock[0].size_us, inStock[0].size_cm);
+    return formatSize(inStock[0].size_eu, inStock[0].size_us, inStock[0].size_cm, inStock[0].us_size_type);
   }
   if (inStock.length > 1) return `${inStock.length} sizes available`;
-  return formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm);
+  return formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type);
 }
 
 const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(

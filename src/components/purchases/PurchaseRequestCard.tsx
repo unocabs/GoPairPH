@@ -147,7 +147,7 @@ export function PurchaseRequestCard({
           </p>
           {request.shoe_variants && (
             <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-teal-500/10 border border-teal-500/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-300">
-              Size {formatSize(request.shoe_variants.size_eu, request.shoe_variants.size_us, request.shoe_variants.size_cm)}
+              Size {formatSize(request.shoe_variants.size_eu, request.shoe_variants.size_us, request.shoe_variants.size_cm, request.shoe_variants.us_size_type)}
             </p>
           )}
         </div>

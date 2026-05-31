@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, type FormEvent } from 'react';
-import { BRANDS, CONDITIONS } from '@/lib/constants';
+import { BRANDS, CONDITIONS, US_SIZE_TYPE_OPTIONS } from '@/lib/constants';
 import { formatCondition, formatPrice, formatSize } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -15,6 +15,7 @@ type SavedSearchDraft = {
   size_eu: string;
   size_us: string;
   size_cm: string;
+  us_size_type: string;
   condition: string;
   max_price_php: string;
   email_enabled: boolean;
@@ -26,6 +27,7 @@ const EMPTY_DRAFT: SavedSearchDraft = {
   size_eu: '',
   size_us: '',
   size_cm: '',
+  us_size_type: 'mens',
   condition: '',
   max_price_php: '',
   email_enabled: true,
@@ -41,6 +43,7 @@ function draftFromSearch(search: SavedSearch): SavedSearchDraft {
     size_eu: search.size_eu?.toString() ?? '',
     size_us: search.size_us?.toString() ?? '',
     size_cm: search.size_cm?.toString() ?? '',
+    us_size_type: search.us_size_type === 'womens' || search.us_size_type === 'unisex' ? search.us_size_type : 'mens',
     condition: search.condition ?? '',
     max_price_php: search.max_price_php?.toString() ?? '',
     email_enabled: search.email_enabled,
@@ -55,6 +58,7 @@ function payloadFromDraft(draft: SavedSearchDraft) {
     size_eu: numberOrNull(draft.size_eu),
     size_us: numberOrNull(draft.size_us),
     size_cm: numberOrNull(draft.size_cm),
+    us_size_type: draft.us_size_type || 'mens',
     condition: draft.condition || null,
     max_price_php: numberOrNull(draft.max_price_php),
     email_enabled: draft.email_enabled,
@@ -64,7 +68,7 @@ function payloadFromDraft(draft: SavedSearchDraft) {
 function SearchSummary({ search }: { search: SavedSearch }) {
   const filters = [
     search.brand,
-    formatSize(search.size_eu, search.size_us, search.size_cm),
+    formatSize(search.size_eu, search.size_us, search.size_cm, search.us_size_type),
     search.condition ? formatCondition(search.condition) : null,
     search.max_price_php != null ? `Up to ${formatPrice(search.max_price_php)}` : null,
   ].filter(Boolean);
@@ -250,6 +254,12 @@ export function SavedSearchesPanel({ initialSearches }: SavedSearchesPanelProps)
             onChange={(event) => updateDraft('brand', event.target.value)}
             options={BRAND_OPTIONS}
           />
+          <Select
+            label="US size type"
+            value={draft.us_size_type}
+            onChange={(event) => updateDraft('us_size_type', event.target.value)}
+            options={[...US_SIZE_TYPE_OPTIONS]}
+          />
           <div className="grid grid-cols-3 gap-2">
             <Input
               label="EU"
@@ -259,7 +269,7 @@ export function SavedSearchesPanel({ initialSearches }: SavedSearchesPanelProps)
               placeholder="42"
             />
             <Input
-              label="US"
+              label={draft.us_size_type === 'womens' ? 'US W' : draft.us_size_type === 'mens' ? 'US M' : 'US'}
               inputMode="decimal"
               value={draft.size_us}
               onChange={(event) => updateDraft('size_us', event.target.value)}

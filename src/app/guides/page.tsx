@@ -4,6 +4,14 @@ import Link from 'next/link';
 
 const guides = [
   {
+    href: '/price-guide',
+    title: 'Running Shoe Price Guide Philippines',
+    description:
+      'Estimate a suggested resale range before selling brand-new or pre-loved running shoes in the Philippines.',
+    category: 'Seller Tool',
+    image: '/og-image.png',
+  },
+  {
     href: '/official-running-shoe-brand-links-ph',
     title: 'Official Running Shoe Brand Links',
     description:

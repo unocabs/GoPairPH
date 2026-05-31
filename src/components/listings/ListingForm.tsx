@@ -3,17 +3,18 @@
 import { useEffect, useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { listingSchema, type ListingFormData } from '@/lib/validations';
-import { BRANDS, CONDITIONS, SIZE_CONVERSIONS } from '@/lib/constants';
+import { BRANDS, CONDITIONS, US_SIZE_TYPE_OPTIONS } from '@/lib/constants';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { PhotoUploader, type UploadedPhoto } from './PhotoUploader';
 import { VariantsEditor, type VariantRow } from './VariantsEditor';
-import { formatPrice, formatSize, getListingPath } from '@/lib/utils';
+import { findSizeConversion, formatPrice, formatSize, getListingPath } from '@/lib/utils';
 import type { Shop } from '@/types';
 
 const BRAND_OPTIONS = BRANDS.map(b => ({ value: b, label: b }));
@@ -50,7 +51,7 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
   const [shoeId, setShoeId] = useState<string | null>(null);
   const [details, setDetails] = useState<ListingFormData | null>(null);
   const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
-  const [variants, setVariants] = useState<VariantRow[]>([{ id: null, size_eu: '', size_us: '', size_cm: '', quantity: 1 }]);
+  const [variants, setVariants] = useState<VariantRow[]>([{ id: null, size_eu: '', size_us: '', size_cm: '', us_size_type: 'mens', quantity: 1 }]);
   const [listedInMainFeed, setListedInMainFeed] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,8 +62,8 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<ListingFormData>({
     resolver: zodResolver(listingSchema) as Resolver<ListingFormData>,
     defaultValues: isShop
-      ? { listing_type: 'for_sale', condition: 'new', is_negotiable: false, size_eu: 99 /* placeholder; overridden to NULL on insert */ }
-      : { listing_type: 'for_sale' },
+      ? { listing_type: 'for_sale', condition: 'new', is_negotiable: false, size_eu: 99, us_size_type: 'mens' /* placeholder; overridden to NULL on insert */ }
+      : { listing_type: 'for_sale', us_size_type: 'mens' },
   });
 
   // Keep schema-required fields satisfied for shop submissions even though we
@@ -95,6 +96,15 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
     }
   }, [profileId, reset, searchParams]);
 
+  useEffect(() => {
+    const suggestedPrice = searchParams.get('price');
+    if (!suggestedPrice) return;
+    const parsed = Number(suggestedPrice);
+    if (!Number.isFinite(parsed) || parsed <= 0) return;
+    setValue('listing_type', 'for_sale', { shouldDirty: true, shouldValidate: true });
+    setValue('price_php', parsed, { shouldDirty: true, shouldValidate: true });
+  }, [searchParams, setValue]);
+
   const listingType = watch('listing_type');
   const condition = watch('condition');
   const brand = watch('brand') ?? '';
@@ -106,6 +116,7 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
   const sizeEu = toOptionalNumber(watch('size_eu'));
   const sizeUs = toOptionalNumber(watch('size_us'));
   const sizeCm = toOptionalNumber(watch('size_cm'));
+  const usSizeType = watch('us_size_type') ?? 'mens';
   const isNew = condition === 'new';
   const hasTopPhoto = photos.some(p => p.viewType === 'top');
   const hasSolePhoto = photos.some(p => p.viewType === 'sole');
@@ -124,7 +135,7 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
       : validVariants[0]?.size_eu
         ? `EU ${validVariants[0].size_eu}`
         : 'Add sizes'
-    : formatSize(sizeEu, sizeUs, sizeCm) || 'Add size';
+    : formatSize(sizeEu, sizeUs, sizeCm, usSizeType) || 'Add size';
   const previewPrice = listingType === 'donate'
     ? 'Donation'
     : pricePhp
@@ -164,22 +175,36 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
   function handleSizeEuChange(val: string) {
     const num = parseFloat(val);
     if (isNaN(num)) return;
-    const match = SIZE_CONVERSIONS.find(s => s.eu === num);
+    const match = findSizeConversion('eu', num, usSizeType);
     if (match) { setValue('size_us', match.us); setValue('size_cm', match.cm); }
   }
 
   function handleSizeUsChange(val: string) {
     const num = parseFloat(val);
     if (isNaN(num)) return;
-    const match = SIZE_CONVERSIONS.find(s => s.us === num);
+    const match = findSizeConversion('us', num, usSizeType);
     if (match) { setValue('size_eu', match.eu); setValue('size_cm', match.cm); }
   }
 
   function handleSizeCmChange(val: string) {
     const num = parseFloat(val);
     if (isNaN(num)) return;
-    const match = SIZE_CONVERSIONS.find(s => s.cm === num);
+    const match = findSizeConversion('cm', num, usSizeType);
     if (match) { setValue('size_eu', match.eu); setValue('size_us', match.us); }
+  }
+
+  function handleUsSizeTypeChange(val: string) {
+    setValue('us_size_type', val as ListingFormData['us_size_type'], { shouldDirty: true, shouldValidate: true });
+    const match = sizeUs
+      ? findSizeConversion('us', sizeUs, val)
+      : sizeEu
+        ? findSizeConversion('eu', sizeEu, val)
+        : null;
+    if (match) {
+      setValue('size_eu', match.eu);
+      setValue('size_us', match.us);
+      setValue('size_cm', match.cm);
+    }
   }
 
   function onDetailsSubmit(data: ListingFormData) {
@@ -257,6 +282,7 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
           size_eu: isShop ? null : details.size_eu,
           size_us: isShop ? null : details.size_us,
           size_cm: isShop ? null : details.size_cm,
+          us_size_type: isShop ? 'mens' : (details.us_size_type ?? 'mens'),
           status: 'active',
           shop_id: shop?.id ?? null,
           quantity: 0,
@@ -274,6 +300,7 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
             size_eu: v.size_eu as number,
             size_us: typeof v.size_us === 'number' ? v.size_us : null,
             size_cm: typeof v.size_cm === 'number' ? v.size_cm : null,
+            us_size_type: v.us_size_type ?? 'mens',
             quantity: v.quantity as number,
           }));
         if (variantRows.length > 0) {
@@ -428,10 +455,19 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
                   Size <span className="text-teal-400">*</span>
                   <span className="ml-1 text-xs text-gray-500 font-normal">(fill one; EU, US, or CM)</span>
                 </p>
+                <div className="mb-3">
+                  <Select
+                    label="US size type"
+                    options={[...US_SIZE_TYPE_OPTIONS]}
+                    hint="US men's and women's sizes convert differently. Pick the label printed on the shoe box when possible."
+                    value={usSizeType}
+                    onChange={e => handleUsSizeTypeChange(e.target.value)}
+                  />
+                </div>
                 <div className="grid grid-cols-3 gap-3">
                   <Input label="EU" type="number" step={0.5} min={35} max={48} error={errors.size_eu?.message}
                     {...register('size_eu', { onChange: e => handleSizeEuChange(e.target.value) })} />
-                  <Input label="US" type="number" step={0.5} error={errors.size_us?.message}
+                  <Input label={usSizeType === 'womens' ? 'US W' : usSizeType === 'mens' ? 'US M' : 'US'} type="number" step={0.5} error={errors.size_us?.message}
                     {...register('size_us', { onChange: e => handleSizeUsChange(e.target.value) })} />
                   <Input label="CM" type="number" step={0.5} error={errors.size_cm?.message}
                     {...register('size_cm', { onChange: e => handleSizeCmChange(e.target.value) })} />
@@ -446,14 +482,18 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
             {(isShop || listingType === 'for_sale') && (
               <div className="space-y-2">
                 <Input label="Price (PHP)" type="number" min={0} required placeholder="e.g. 2500" error={errors.price_php?.message} {...register('price_php')} />
-                <div className="rounded-lg border border-white/[0.08] bg-slate-950/40 px-3 py-2 text-xs leading-5 text-gray-500">
-                  Price clearly so buyers can decide faster. Check official retail first, then price pre-loved pairs honestly.
-                  <a
-                    href="/official-running-shoe-brand-links-ph"
-                    className="ml-1 font-medium text-teal-300 hover:text-teal-200"
-                  >
-                    View official brand links
-                  </a>
+                <div className="rounded-lg border border-teal-400/20 bg-teal-400/[0.06] px-3 py-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs leading-5 text-gray-400">
+                      Not sure what to price it? Estimate a suggested resale range before listing.
+                    </p>
+                    <Link
+                      href="/price-guide"
+                      className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-lg border border-teal-400/30 bg-slate-950/55 px-3 py-1.5 text-xs font-semibold text-teal-200 transition-colors hover:bg-teal-400/10"
+                    >
+                      Check Price Guide
+                    </Link>
+                  </div>
                 </div>
                 {!isShop && (
                   <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">

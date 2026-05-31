@@ -29,6 +29,7 @@ interface BrowsePageProps {
     condition?: string;
     size?: string;
     size_unit?: string;
+    us_size_type?: string;
     size_eu?: string;
     q?: string;
     sort?: string;
@@ -62,7 +63,7 @@ function sortListings(listings: Shoe[], key: SortKey): Shoe[] {
   return arr.sort((a, b) => (b.price_php ?? Number.NEGATIVE_INFINITY) - (a.price_php ?? Number.NEGATIVE_INFINITY));
 }
 
-function getSizeFilter(searchParams: BrowsePageProps['searchParams']): { column: 'size_eu' | 'size_us' | 'size_cm'; value: number } | null {
+function getSizeFilter(searchParams: BrowsePageProps['searchParams']): { column: 'size_eu' | 'size_us' | 'size_cm'; value: number; usSizeType: string | null } | null {
   const rawValue = searchParams.size ?? searchParams.size_eu;
   if (!rawValue) return null;
 
@@ -76,6 +77,9 @@ function getSizeFilter(searchParams: BrowsePageProps['searchParams']): { column:
   return {
     column: unit === 'us' ? 'size_us' : unit === 'cm' ? 'size_cm' : 'size_eu',
     value,
+    usSizeType: unit === 'us' && ['mens', 'womens', 'unisex'].includes(searchParams.us_size_type ?? '')
+      ? searchParams.us_size_type ?? null
+      : null,
   };
 }
 
@@ -92,7 +96,10 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
   if (searchParams.brand) query = query.ilike('brand', searchParams.brand);
   if (searchParams.condition) query = query.eq('condition', searchParams.condition);
   const sizeFilter = getSizeFilter(searchParams);
-  if (sizeFilter) query = query.eq(sizeFilter.column, sizeFilter.value);
+  if (sizeFilter) {
+    query = query.eq(sizeFilter.column, sizeFilter.value);
+    if (sizeFilter.usSizeType) query = query.eq('us_size_type', sizeFilter.usSizeType);
+  }
   if (searchParams.q) query = query.or(`brand.ilike.%${searchParams.q}%,model.ilike.%${searchParams.q}%`);
 
   const { data } = await query.limit(60);
@@ -224,6 +231,29 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
               className="inline-flex w-full items-center justify-center rounded-lg border border-teal-400/35 px-4 py-2 text-sm font-semibold text-teal-200 transition-colors hover:bg-teal-500/10 sm:w-auto"
             >
               View official brand links
+            </Link>
+          </div>
+        </SurfaceCard>
+
+        <SurfaceCard className="border-white/[0.08] bg-slate-950/55 p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
+                Seller Tool
+              </p>
+              <h2 className="mt-1 text-lg font-semibold text-gray-100">
+                Not sure how much to list your shoes for?
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-400">
+                Estimate a suggested resale range for brand-new or pre-loved running
+                shoes in the Philippines before posting.
+              </p>
+            </div>
+            <Link
+              href="/price-guide"
+              className="inline-flex w-full items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400 sm:w-auto"
+            >
+              Check Price Guide
             </Link>
           </div>
         </SurfaceCard>

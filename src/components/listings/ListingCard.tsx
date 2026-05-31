@@ -214,7 +214,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
               );
             })()
           ) : (
-            <p className="text-xs text-gray-500 mt-0.5" style={themedMutedStyle}>{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm)}</p>
+            <p className="text-xs text-gray-500 mt-0.5" style={themedMutedStyle}>{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type)}</p>
           )}
 
           <div className="mt-2 flex items-center justify-between gap-2">

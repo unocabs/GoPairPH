@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { normalizeFacebookUsername } from '@/lib/facebook';
 
+const usSizeTypeSchema = z.enum(['mens', 'womens', 'unisex', 'unknown']).optional().default('mens');
+
 export const listingSchema = z.object({
   brand: z.string().min(1, 'Brand is required'),
   model: z.string().min(1, 'Model is required'),
@@ -17,6 +19,7 @@ export const listingSchema = z.object({
   size_eu: z.coerce.number().optional().nullable(),
   size_us: z.coerce.number().optional().nullable(),
   size_cm: z.coerce.number().optional().nullable(),
+  us_size_type: usSizeTypeSchema,
 }).superRefine((data, ctx) => {
   if (data.listing_type === 'for_sale' && !data.price_php) {
     ctx.addIssue({
@@ -41,6 +44,7 @@ export const wishlistSchema = z.object({
   size_eu: z.coerce.number().optional().nullable(),
   size_us: z.coerce.number().optional().nullable(),
   size_cm: z.coerce.number().optional().nullable(),
+  us_size_type: usSizeTypeSchema,
   price_min_php: z.coerce.number().min(0).optional().nullable(),
   price_max_php: z.coerce.number().min(0).optional().nullable(),
   description: z.string().optional().nullable(),
@@ -78,6 +82,7 @@ export const savedSearchSchema = z.object({
   size_eu: optionalNumber,
   size_us: optionalNumber,
   size_cm: optionalNumber,
+  us_size_type: usSizeTypeSchema,
   condition: z.preprocess(
     val => (val === '' || val == null ? null : val),
     z.enum(['new', 'like_new', 'good', 'fair']).nullable().optional()

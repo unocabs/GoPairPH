@@ -36,7 +36,7 @@ export function VariantSelector({ variants, selectedId, onSelect }: VariantSelec
               }`}
             >
               <span className="text-sm font-semibold">
-                {formatSize(v.size_eu, v.size_us, v.size_cm)}
+                {formatSize(v.size_eu, v.size_us, v.size_cm, v.us_size_type)}
               </span>
               <span className={`text-[11px] ${active ? 'text-teal-400' : 'text-gray-500'}`}>
                 {v.quantity} left

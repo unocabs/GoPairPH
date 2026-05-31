@@ -65,7 +65,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   const listingName = formatListingName(shoe.brand, shoe.model);
   const title = `${listingName} — ${priceLabel}`;
   const sellerType = shoe.shop_id ? 'shop seller' : 'community seller';
-  const sizeLabel = formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm);
+  const sizeLabel = formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type);
   const sizeDetails = sizeLabel ? `, size ${sizeLabel}` : '';
   const mileageDetails = shoe.mileage_km != null ? `, ${shoe.mileage_km}km` : '';
   const description = `${CONDITIONS[shoe.condition]} ${listingName} in ${shoe.color}${sizeDetails}${mileageDetails}. Listed by a ${sellerType} on Go Pair PH.`;
@@ -628,7 +628,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                       <li key={v.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-gray-200">
-                            {formatSize(v.size_eu, v.size_us, v.size_cm)}
+                            {formatSize(v.size_eu, v.size_us, v.size_cm, v.us_size_type)}
                           </p>
                           <p className={`text-xs ${inStock ? 'text-gray-500' : 'text-red-400'}`}>
                             {inStock ? `${v.quantity} left` : 'Out of stock'}
@@ -644,7 +644,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           {/* Specs */}
           <dl className="mt-6 grid grid-cols-2 gap-3 rounded-xl border border-white/[0.08] bg-slate-950/55 p-4">
             {[
-              ...(shoe.shop_id ? [] : [{ label: 'Size', value: formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm) }]),
+              ...(shoe.shop_id ? [] : [{ label: 'Size', value: formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type) }]),
               ...(shoe.shop_id ? [] : [{ label: 'Mileage', value: shoe.mileage_km != null ? `${shoe.mileage_km.toLocaleString()} km` : 'Not provided' }]),
               { label: 'Brand', value: shoe.brand === 'Other' ? shoe.model : shoe.brand },
               { label: 'Model', value: shoe.model },

@@ -2,6 +2,7 @@ export type ListingType = 'for_sale' | 'donate';
 export type Condition = 'new' | 'like_new' | 'good' | 'fair';
 export type ViewType = 'top' | 'sole' | 'front' | 'left' | 'right' | 'back';
 export type ListingStatus = 'active' | 'reserved' | 'sold' | 'donated' | 'archived';
+export type UsSizeType = 'mens' | 'womens' | 'unisex' | 'unknown';
 
 export interface Profile {
   id: string;
@@ -70,6 +71,7 @@ export interface ShoeVariant {
   size_eu: number;
   size_us: number | null;
   size_cm: number | null;
+  us_size_type: UsSizeType;
   quantity: number;
   created_at: string;
   updated_at: string;
@@ -84,6 +86,7 @@ export interface Shoe {
   size_eu: number | null;
   size_us: number | null;
   size_cm: number | null;
+  us_size_type: UsSizeType;
   color: string;
   condition: Condition;
   mileage_km: number | null;
@@ -144,6 +147,7 @@ export interface SavedSearch {
   size_eu: number | null;
   size_us: number | null;
   size_cm: number | null;
+  us_size_type: UsSizeType;
   condition: Condition | null;
   max_price_php: number | null;
   email_enabled: boolean;
@@ -179,6 +183,7 @@ export interface WishlistItem {
   size_eu: number | null;
   size_us: number | null;
   size_cm: number | null;
+  us_size_type: UsSizeType;
   price_min_php: number | null;
   price_max_php: number | null;
   description: string | null;

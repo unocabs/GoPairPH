@@ -130,7 +130,7 @@ async function sendNotification({ buyerId, listingId, message, offerPricePhp, va
 
   const { data: listing, error: listingErr } = await service
     .from('shoes')
-    .select('id, brand, model, size_eu, size_us, size_cm, condition, mileage_km, price_php, listing_type, seller_id, shop_id, shops(name)')
+    .select('id, brand, model, size_eu, size_us, size_cm, us_size_type, condition, mileage_km, price_php, listing_type, seller_id, shop_id, shops(name)')
     .eq('id', listingId)
     .single();
   if (listingErr || !listing) throw new Error(`listing fetch failed: ${listingErr?.message}`);
@@ -166,7 +166,7 @@ async function sendNotification({ buyerId, listingId, message, offerPricePhp, va
     const html = renderDonationRequestEmail({
       donor_name: sellerProfile.display_name,
       listing_title: listingTitle,
-      shoe_size: formatSize(listing.size_eu, listing.size_us, listing.size_cm) || '—',
+      shoe_size: formatSize(listing.size_eu, listing.size_us, listing.size_cm, listing.us_size_type) || '—',
       condition: formatCondition(listing.condition),
       requester_name: buyerProfile?.display_name ?? 'A Go Pair PH runner',
       requester_message: message,
@@ -181,14 +181,14 @@ async function sendNotification({ buyerId, listingId, message, offerPricePhp, va
   }
 
   if (listing.shop_id) {
-    let selectedSize = formatSize(listing.size_eu, listing.size_us, listing.size_cm) || 'Selected size';
+    let selectedSize = formatSize(listing.size_eu, listing.size_us, listing.size_cm, listing.us_size_type) || 'Selected size';
     if (variantId) {
       const { data: variant } = await service
         .from('shoe_variants')
-        .select('size_eu, size_us, size_cm')
+        .select('size_eu, size_us, size_cm, us_size_type')
         .eq('id', variantId)
         .maybeSingle();
-      if (variant) selectedSize = formatSize(variant.size_eu, variant.size_us, variant.size_cm) || selectedSize;
+      if (variant) selectedSize = formatSize(variant.size_eu, variant.size_us, variant.size_cm, variant.us_size_type) || selectedSize;
     }
 
     const shop = Array.isArray(listing.shops) ? listing.shops[0] : listing.shops;
@@ -213,7 +213,7 @@ async function sendNotification({ buyerId, listingId, message, offerPricePhp, va
   const html = renderOfferEmail({
     seller_name: sellerProfile.display_name,
     listing_title: listingTitle,
-    shoe_size: formatSize(listing.size_eu, listing.size_us, listing.size_cm) || '—',
+    shoe_size: formatSize(listing.size_eu, listing.size_us, listing.size_cm, listing.us_size_type) || '—',
     condition: formatCondition(listing.condition),
     mileage: listing.mileage_km != null ? `${listing.mileage_km} km` : 'Mileage not specified',
     offer_amount: formatPesos(offerAmount),

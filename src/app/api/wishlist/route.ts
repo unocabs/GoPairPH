@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     uploadedImages.push({ storage_path: path });
   }
 
-  const { brand, model, color, size_eu, size_us, size_cm, price_min_php, price_max_php, description, location } = parsed.data;
+  const { brand, model, color, size_eu, size_us, size_cm, us_size_type, price_min_php, price_max_php, description, location } = parsed.data;
 
   const { data: inserted, error: insertErr } = await service
     .from('wishlist_items')
@@ -95,6 +95,7 @@ export async function POST(request: Request) {
       size_eu: size_eu ?? null,
       size_us: size_us ?? null,
       size_cm: size_cm ?? null,
+      us_size_type: us_size_type ?? 'mens',
       price_min_php: price_min_php ?? null,
       price_max_php: price_max_php ?? null,
       description: description || null,

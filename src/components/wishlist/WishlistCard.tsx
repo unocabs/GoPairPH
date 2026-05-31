@@ -22,7 +22,7 @@ export function WishlistCard({ item, offerCount, onOpen }: WishlistCardProps) {
   const firstImg = item.wishlist_images?.[0];
   const imgUrl = firstImg ? getPublicUrl(supabaseUrl, firstImg.storage_path) : null;
 
-  const sizeLabel = formatSize(item.size_eu, item.size_us, item.size_cm);
+  const sizeLabel = formatSize(item.size_eu, item.size_us, item.size_cm, item.us_size_type);
   const priceLabel = priceRangeLabel(item.price_min_php, item.price_max_php);
 
   function handleKeyDown(e: React.KeyboardEvent) {
