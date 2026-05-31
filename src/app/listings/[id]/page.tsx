@@ -753,12 +753,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 )}
                 <Link
                   href={signInHref}
-                  className={cn(
-                    'flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
-                    canAskSeller
-                      ? 'border border-white/[0.12] bg-slate-950/55 text-gray-100 hover:bg-slate-900'
-                      : 'bg-teal-500 text-white hover:bg-teal-400',
-                  )}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
                 >
                   <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L3 13V3h10l7.59 7.59a2 2 0 010 2.82z" />
