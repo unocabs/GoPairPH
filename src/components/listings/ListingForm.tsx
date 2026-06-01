@@ -317,6 +317,13 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
       }));
       const { error: imgError } = await supabase.from('shoe_images').insert(imageRows);
       if (imgError) throw imgError;
+      await fetch('/api/admin/new-listing-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId: insertedShoe?.id ?? shoeId }),
+      }).catch((notificationError) => {
+        console.error('[listings] admin notification email failed:', notificationError);
+      });
       window.localStorage.removeItem(LISTING_DRAFT_KEY);
       router.push(`${getListingPath(insertedShoe ?? { id: shoeId })}?listed=1`);
     } catch (err) {
