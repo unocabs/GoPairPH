@@ -64,6 +64,7 @@ export function getPublicUrl(
     width?: number;
     height?: number;
     quality?: number;
+    resize?: 'cover' | 'contain' | 'fill';
   }
 ): string {
   const encodedPath = storagePath.split('/').map(encodeURIComponent).join('/');
@@ -73,6 +74,7 @@ export function getPublicUrl(
     if (transform.width) params.set('width', String(transform.width));
     if (transform.height) params.set('height', String(transform.height));
     if (transform.quality) params.set('quality', String(transform.quality));
+    params.set('resize', transform.resize ?? 'contain');
     return `${supabaseUrl}/storage/v1/render/image/public/${encodeURIComponent(bucket)}/${encodedPath}?${params.toString()}`;
   }
 
