@@ -90,25 +90,33 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: insertErr?.message ?? 'Failed to add offer' }, { status: 400 });
   }
 
+  let notification: LeadNotificationResult = { status: 'skipped_unknown' };
   try {
-    await sendLeadNotification({
+    notification = await sendLeadNotification({
       service,
       request: existing,
       offer: inserted,
-      offererProfileId,
     });
   } catch (error) {
     console.error('[wishlist-offers] lead notification email failed:', error);
+    notification = { status: 'failed', reason: error instanceof Error ? error.message : 'Unknown email error' };
   }
 
-  return NextResponse.json(inserted, { status: 201 });
+  return NextResponse.json({ ...inserted, notification }, { status: 201 });
 }
+
+type LeadNotificationResult =
+  | { status: 'sent'; recipient: string }
+  | { status: 'skipped_unknown' }
+  | { status: 'skipped_no_owner' }
+  | { status: 'skipped_throttled'; recentLeadCount: number }
+  | { status: 'skipped_no_email' }
+  | { status: 'failed'; reason: string };
 
 async function sendLeadNotification({
   service,
   request,
   offer,
-  offererProfileId,
 }: {
   service: ReturnType<typeof createServiceClient>;
   request: {
@@ -128,10 +136,8 @@ async function sendLeadNotification({
     note: string | null;
     profiles?: { display_name?: string | null } | null;
   };
-  offererProfileId: string | null;
-}) {
-  if (!request.user_id) return;
-  if (offererProfileId && offererProfileId === request.user_id) return;
+}): Promise<LeadNotificationResult> {
+  if (!request.user_id) return { status: 'skipped_no_owner' };
 
   const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
   const { count: recentLeadCount } = await service
@@ -139,18 +145,20 @@ async function sendLeadNotification({
     .select('id', { count: 'exact', head: true })
     .eq('wishlist_id', request.id)
     .gte('created_at', thirtyMinutesAgo);
-  if ((recentLeadCount ?? 0) > 1) return;
+  if ((recentLeadCount ?? 0) > 1) {
+    return { status: 'skipped_throttled', recentLeadCount: recentLeadCount ?? 0 };
+  }
 
   const { data: ownerProfile } = await service
     .from('profiles')
     .select('user_id')
     .eq('id', request.user_id)
     .single();
-  if (!ownerProfile?.user_id) return;
+  if (!ownerProfile?.user_id) return { status: 'skipped_no_email' };
 
   const { data: ownerAuth } = await service.auth.admin.getUserById(ownerProfile.user_id);
   const ownerEmail = ownerAuth.user?.email;
-  if (!ownerEmail) return;
+  if (!ownerEmail) return { status: 'skipped_no_email' };
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com').replace(/\/$/, '');
   const requestUrl = `${siteUrl}/looking-for?item=${encodeURIComponent(request.id)}`;
@@ -179,4 +187,5 @@ async function sendLeadNotification({
       sizeLabel,
     }),
   });
+  return { status: 'sent', recipient: ownerEmail };
 }
