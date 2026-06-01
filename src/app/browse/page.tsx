@@ -219,7 +219,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
                 Price Check
               </p>
               <h2 className="mt-1 text-lg font-semibold text-gray-100">
-                Checking retail prices?
+                Brand New Price Compare?
               </h2>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-400">
                 Compare official brand running shoe pages before buying pre-loved pairs
@@ -242,7 +242,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
                 Seller Tool
               </p>
               <h2 className="mt-1 text-lg font-semibold text-gray-100">
-                Not sure how much to list your shoes for?
+                Not sure how much to sell your shoes for?
               </h2>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-400">
                 Estimate a suggested resale range for brand-new or pre-loved running
