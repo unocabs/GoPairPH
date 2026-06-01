@@ -260,7 +260,7 @@ export default async function HomePage() {
             {[
               { icon: '💰', label: 'Community', desc: 'Buy, sell, or donate with local runners' },
               { icon: '👟', label: 'Running shoes', desc: 'Brand-new and pre-loved pairs in one focused place' },
-              { icon: '📍', label: 'Pampanga-first', desc: 'Open to Central Luzon and NCR sellers who serve Pampanga buyers' },
+              { icon: '📍', label: 'Pampanga & nearby', desc: 'Open to Central Luzon and NCR sellers who serve Pampanga buyers' },
             ].map(f => (
               <div key={f.label} className="flex items-center justify-center gap-2 px-2 py-1.5 sm:gap-3">
                 <span className="text-xl sm:text-2xl shrink-0" aria-hidden="true">{f.icon}</span>
