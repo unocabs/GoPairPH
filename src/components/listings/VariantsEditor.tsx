@@ -124,13 +124,11 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
             placeholder="EU"
             value={row.size_eu}
             onChange={e => autofillFromEu(idx, e.target.value)}
-            disabled={!!row.id /* lock size on existing rows to preserve unique key */}
             className={fieldClassName}
           />
           <select
             value={row.us_size_type}
             onChange={e => updateUsSizeType(idx, e.target.value as UsSizeType)}
-            disabled={!!row.id}
             className={fieldClassName}
           >
             {US_SIZE_TYPE_OPTIONS.map(option => (
@@ -145,7 +143,6 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
             placeholder={row.us_size_type === 'womens' ? 'US W' : row.us_size_type === 'mens' ? 'US M' : 'US'}
             value={row.size_us}
             onChange={e => autofillFromUs(idx, e.target.value)}
-            disabled={!!row.id}
             className={fieldClassName}
           />
           <input
@@ -154,7 +151,6 @@ export function VariantsEditor({ value, onChange, preserveRowsOnRemove = false }
             placeholder="CM"
             value={row.size_cm}
             onChange={e => autofillFromCm(idx, e.target.value)}
-            disabled={!!row.id}
             className={fieldClassName}
           />
           <input

@@ -59,9 +59,24 @@ export function formatSize(eu: number | null, us: number | null, cm: number | nu
 export function getPublicUrl(
   supabaseUrl: string,
   storagePath: string,
-  bucket = 'shoe-images'
+  bucket = 'shoe-images',
+  transform?: {
+    width?: number;
+    height?: number;
+    quality?: number;
+  }
 ): string {
-  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${storagePath}`;
+  const encodedPath = storagePath.split('/').map(encodeURIComponent).join('/');
+
+  if (transform && (transform.width || transform.height || transform.quality)) {
+    const params = new URLSearchParams();
+    if (transform.width) params.set('width', String(transform.width));
+    if (transform.height) params.set('height', String(transform.height));
+    if (transform.quality) params.set('quality', String(transform.quality));
+    return `${supabaseUrl}/storage/v1/render/image/public/${encodeURIComponent(bucket)}/${encodedPath}?${params.toString()}`;
+  }
+
+  return `${supabaseUrl}/storage/v1/object/public/${encodeURIComponent(bucket)}/${encodedPath}`;
 }
 
 export function formatListingName(brand: string, model: string): string {

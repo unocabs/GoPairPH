@@ -25,7 +25,7 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
   const seller = shoe?.profiles;
   const sellerMessengerUrl = buildMessengerUrl(seller?.fb_username);
   const topImg = shoe?.shoe_images?.find(i => i.view_type === 'top') ?? shoe?.shoe_images?.[0];
-  const thumbUrl = topImg && supabaseUrl ? getPublicUrl(supabaseUrl, topImg.storage_path) : null;
+  const thumbUrl = topImg && supabaseUrl ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', { width: 160, quality: 55 }) : null;
   const listingName = shoe ? formatListingName(shoe.brand, shoe.model) : 'Listing';
 
   async function handleRetract() {

@@ -13,7 +13,7 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImage =
     shoe.shoe_images?.find(img => img.view_type === 'top') ?? shoe.shoe_images?.[0];
-  const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path) : null;
+  const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path, 'shoe-images', { width: 900, quality: 70 }) : null;
   const seller = shoe.profiles;
   const listingName = formatListingName(shoe.brand, shoe.model);
 

@@ -85,7 +85,7 @@ export function ShopLogoUploader({ shopId, currentLogoPath }: ShopLogoUploaderPr
 
       const { error: uploadError } = await supabase.storage
         .from('shop-logos')
-        .upload(storagePath, webpBlob, { contentType: 'image/webp', upsert: true });
+        .upload(storagePath, webpBlob, { contentType: 'image/webp', cacheControl: '31536000', upsert: true });
       if (uploadError) throw uploadError;
 
       const { error: updateError } = await supabase

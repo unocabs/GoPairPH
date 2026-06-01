@@ -446,7 +446,7 @@ function ShopsPanel({ shops, profiles }: { shops: ShopWithOwner[]; profiles: Pro
 
     const { error: uploadError } = await supabase.storage
       .from('shop-logos')
-      .upload(storagePath, webpBlob, { contentType: 'image/webp', upsert: true });
+      .upload(storagePath, webpBlob, { contentType: 'image/webp', cacheControl: '31536000', upsert: true });
     if (uploadError) throw uploadError;
 
     if (currentLogoPath?.startsWith(`${userId}/`) && currentLogoPath !== storagePath) {

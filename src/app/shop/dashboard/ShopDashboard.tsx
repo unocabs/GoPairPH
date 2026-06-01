@@ -209,7 +209,7 @@ export function ShopDashboard({ shop, listings }: ShopDashboardProps) {
 
     const { error: uploadError } = await supabase.storage
       .from('shop-logos')
-      .upload(storagePath, blob, { contentType: 'image/webp', upsert: true });
+      .upload(storagePath, blob, { contentType: 'image/webp', cacheControl: '31536000', upsert: true });
     if (uploadError) throw uploadError;
 
     uploadedPaths.push(storagePath);

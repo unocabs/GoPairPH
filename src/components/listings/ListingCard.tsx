@@ -54,7 +54,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImage = shoe.shoe_images?.find(img => img.view_type === 'top') ?? shoe.shoe_images?.[0];
-  const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path) : null;
+  const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path, 'shoe-images', { width: 560, quality: 60 }) : null;
   const isOwner = !!currentProfileId && shoe.seller_id === currentProfileId;
   const canSeeQualityFlag = !!shoe.quality_flagged_at && !!currentProfileId && (isOwner || currentProfileIsAdmin === true);
   const canSave = !!currentProfileId && !isOwner;

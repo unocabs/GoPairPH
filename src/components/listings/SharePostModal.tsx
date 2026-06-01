@@ -124,13 +124,13 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImg = shoe.shoe_images?.find(i => i.view_type === 'top') ?? shoe.shoe_images?.[0];
-  const heroUrl = topImg ? getPublicUrl(supabaseUrl, topImg.storage_path) : null;
+  const heroUrl = topImg ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', { width: 1200, quality: 76 }) : null;
   const thumbnailImageUrls = useMemo(
     () => (shoe.shoe_images ?? [])
       .slice()
       .sort((a, b) => a.order - b.order)
       .filter(image => image.id !== topImg?.id)
-      .map(image => getPublicUrl(supabaseUrl, image.storage_path))
+      .map(image => getPublicUrl(supabaseUrl, image.storage_path, 'shoe-images', { width: 420, quality: 64 }))
       .slice(0, 3),
     [shoe.shoe_images, supabaseUrl, topImg?.id],
   );

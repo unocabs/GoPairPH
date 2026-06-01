@@ -20,7 +20,7 @@ function priceRangeLabel(min: number | null, max: number | null): string | null 
 export function WishlistCard({ item, offerCount, onOpen }: WishlistCardProps) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const firstImg = item.wishlist_images?.[0];
-  const imgUrl = firstImg ? getPublicUrl(supabaseUrl, firstImg.storage_path) : null;
+  const imgUrl = firstImg ? getPublicUrl(supabaseUrl, firstImg.storage_path, 'shoe-images', { width: 560, quality: 60 }) : null;
 
   const sizeLabel = formatSize(item.size_eu, item.size_us, item.size_cm, item.us_size_type);
   const priceLabel = priceRangeLabel(item.price_min_php, item.price_max_php);

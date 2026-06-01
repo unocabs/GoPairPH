@@ -45,7 +45,7 @@ export function PurchaseRequestCard({
   const topImg =
     resolvedListing?.shoe_images?.find(i => i.view_type === 'top') ??
     resolvedListing?.shoe_images?.[0];
-  const thumbUrl = topImg && supabaseUrl ? getPublicUrl(supabaseUrl, topImg.storage_path) : null;
+  const thumbUrl = topImg && supabaseUrl ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', { width: 160, quality: 55 }) : null;
 
   async function changeStatus(next: 'accepted' | 'declined') {
     setLoading(true);

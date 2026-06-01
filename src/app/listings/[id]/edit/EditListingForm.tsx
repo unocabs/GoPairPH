@@ -227,8 +227,9 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
       if (err) throw err;
 
       if (isShopListing) {
-        // Save variants in separate batches. A mixed bulk upsert can send
-        // id=null for new rows, which violates shoe_variants.id NOT NULL.
+        // Save variants in separate batches. Existing rows are updated by id so
+        // sellers can correct a wrong size/US type without hitting the
+        // shoe_id,size_eu upsert conflict key.
         const existingRows = variants
           .filter(v => v.id)
           .map(v => ({
@@ -250,10 +251,14 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
         }));
 
         if (existingRows.length > 0) {
-          const { error: varErr } = await supabase.from('shoe_variants').upsert(existingRows, {
-            onConflict: 'shoe_id,size_eu',
-          });
-          if (varErr) throw varErr;
+          for (const row of existingRows) {
+            const { id, ...payload } = row;
+            const { error: varErr } = await supabase
+              .from('shoe_variants')
+              .update(payload)
+              .eq('id', id);
+            if (varErr) throw varErr;
+          }
         }
 
         if (newRows.length > 0) {

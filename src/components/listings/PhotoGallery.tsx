@@ -56,7 +56,7 @@ export function PhotoGallery({ images, isOwner = false, listingPath, overlay }: 
   });
 
   const slides = sorted.map(img => ({
-    src: getPublicUrl(supabaseUrl, img.storage_path),
+    src: getPublicUrl(supabaseUrl, img.storage_path, 'shoe-images', { width: 1400, quality: 78 }),
   }));
 
   if (sorted.length === 0) {
@@ -98,7 +98,7 @@ export function PhotoGallery({ images, isOwner = false, listingPath, overlay }: 
           className="relative w-full h-full overflow-hidden rounded-xl bg-gray-900 block"
         >
           <Image
-            src={getPublicUrl(supabaseUrl, main.storage_path)}
+            src={getPublicUrl(supabaseUrl, main.storage_path, 'shoe-images', { width: 1100, quality: 72 })}
             alt="Main shoe photo"
             fill
             className="object-cover hover:scale-105 transition-transform"
@@ -126,7 +126,7 @@ export function PhotoGallery({ images, isOwner = false, listingPath, overlay }: 
                 }`}
               >
                 <Image
-                  src={getPublicUrl(supabaseUrl, img.storage_path)}
+                  src={getPublicUrl(supabaseUrl, img.storage_path, 'shoe-images', { width: 160, quality: 48 })}
                   alt={img.view_type}
                   fill
                   className="object-cover"

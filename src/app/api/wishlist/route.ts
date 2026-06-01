@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     const buffer = await file.arrayBuffer();
     const { error: upErr } = await service.storage
       .from('shoe-images')
-      .upload(path, buffer, { contentType: 'image/webp', upsert: false });
+      .upload(path, buffer, { contentType: 'image/webp', cacheControl: '31536000', upsert: false });
 
     if (upErr) {
       return NextResponse.json({ error: upErr.message }, { status: 400 });

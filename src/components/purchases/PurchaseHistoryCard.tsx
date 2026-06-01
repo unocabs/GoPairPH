@@ -15,7 +15,7 @@ export function PurchaseHistoryCard({ request, currentProfileId }: PurchaseHisto
   const iWasBuyer = request.buyer_id === currentProfileId;
   const shoe = request.listing;
   const topImg = shoe?.shoe_images?.find(i => i.view_type === 'top') ?? shoe?.shoe_images?.[0];
-  const imgUrl = topImg ? getPublicUrl(supabaseUrl, topImg.storage_path) : null;
+  const imgUrl = topImg ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', { width: 160, quality: 55 }) : null;
 
   const otherProfile = iWasBuyer ? shoe?.profiles : request.profiles;
   const otherProfileId = iWasBuyer ? shoe?.seller_id : request.buyer_id;

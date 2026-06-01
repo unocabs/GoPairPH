@@ -13,7 +13,7 @@ interface ManualSaleHistoryCardProps {
 export function ManualSaleHistoryCard({ shoe }: ManualSaleHistoryCardProps) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImg = shoe.shoe_images?.find(i => i.view_type === 'top') ?? shoe.shoe_images?.[0];
-  const imgUrl = topImg ? getPublicUrl(supabaseUrl, topImg.storage_path) : null;
+  const imgUrl = topImg ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', { width: 160, quality: 55 }) : null;
   const label = shoe.status === 'donated' ? 'Marked donated' : 'Marked sold outside Go Pair PH';
 
   return (
