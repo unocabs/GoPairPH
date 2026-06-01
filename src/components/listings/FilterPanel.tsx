@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, useTransition, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BRANDS, CONDITIONS, LISTING_TYPE_LABELS, US_SIZE_TYPE_OPTIONS } from '@/lib/constants';
+import { SaveSearchButton } from './SaveSearchButton';
 
 const SIZE_UNITS = [
   { value: 'eu', label: 'EU', placeholder: '42', min: 35, max: 48 },
@@ -144,6 +145,7 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
 
         <div className="hidden items-center gap-3 lg:flex">
           <p className="text-xs text-gray-500">{listingLabel}</p>
+          {currentQuery.trim().length >= 2 && <SaveSearchButton keyword={currentQuery} />}
           {isPending && <p className="text-[11px] text-teal-400">Updating...</p>}
           {hasFilters && (
             <button onClick={clearAll} className="text-xs text-teal-400 transition-colors hover:text-teal-300">
@@ -162,8 +164,13 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-3 lg:hidden">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs text-gray-500">{listingLabel}</p>
+          {currentQuery.trim().length >= 2 && (
+            <div className="mt-1">
+              <SaveSearchButton keyword={currentQuery} />
+            </div>
+          )}
           {isPending && <p className="mt-0.5 text-[11px] text-teal-400">Updating...</p>}
         </div>
         <button
