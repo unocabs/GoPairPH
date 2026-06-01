@@ -9,8 +9,17 @@ export interface Profile {
   user_id: string;
   display_name: string;
   location: string | null;
+  location_city: string | null;
+  location_province: string | null;
+  location_region: string | null;
   avatar_url: string | null;
   fb_username: string | null;
+  preferred_size_eu: number | null;
+  preferred_size_us: number | null;
+  preferred_size_cm: number | null;
+  preferred_us_size_type: UsSizeType;
+  personalized_browse_enabled: boolean;
+  profile_match_email_enabled: boolean;
   is_verified: boolean;
   is_admin: boolean;
   created_at: string;

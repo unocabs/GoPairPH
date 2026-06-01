@@ -2,6 +2,7 @@ import { type Shoe } from '@/types';
 import { type ShopTheme } from '@/lib/shopTheme';
 import { ListingCard } from './ListingCard';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import type { PersonalizationBadges } from '@/lib/personalization';
 
 interface ListingGridProps {
   shoes: Shoe[];
@@ -12,12 +13,13 @@ interface ListingGridProps {
   myRequestListingIds?: Set<string>;
   offerCounts?: Record<string, number>;
   viewCounts?: Record<string, { total: number; last7d: number }>;
+  personalizationBadges?: Record<string, PersonalizationBadges>;
   savedListingIds?: Set<string>;
   onSavedChange?: (listingId: string, saved: boolean) => void;
   theme?: ShopTheme;
 }
 
-export function ListingGrid({ shoes, emptyMessage = 'No listings found.', currentProfileId, currentProfileIsAdmin = false, currentProfileFbUsername, myRequestListingIds, offerCounts, viewCounts, savedListingIds, onSavedChange, theme }: ListingGridProps) {
+export function ListingGrid({ shoes, emptyMessage = 'No listings found.', currentProfileId, currentProfileIsAdmin = false, currentProfileFbUsername, myRequestListingIds, offerCounts, viewCounts, personalizationBadges, savedListingIds, onSavedChange, theme }: ListingGridProps) {
   if (shoes.length === 0) {
     return (
       <SurfaceCard className="flex flex-col items-center justify-center border-dashed py-16 text-center">
@@ -39,6 +41,7 @@ export function ListingGrid({ shoes, emptyMessage = 'No listings found.', curren
           hasExistingRequest={myRequestListingIds?.has(shoe.id) ?? false}
           offerCount={offerCounts?.[shoe.id] ?? 0}
           viewSummary={viewCounts?.[shoe.id]}
+          personalizationBadges={personalizationBadges?.[shoe.id]}
           isSaved={savedListingIds?.has(shoe.id) ?? false}
           onSavedChange={onSavedChange}
           theme={theme}

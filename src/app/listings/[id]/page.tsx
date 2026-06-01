@@ -41,6 +41,8 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { isListingSaved } from '@/lib/savedListings';
 import { getViewSummariesForListings } from '@/lib/listingViews';
 import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
+import { listingLocationScore, listingMatchesPreferredSize, type PersonalizationProfile } from '@/lib/personalization';
+import type { Profile } from '@/types';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -111,17 +113,17 @@ async function getShoeByRouteParam(id: string): Promise<Shoe | null> {
   return shoe;
 }
 
-async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean; isVerified: boolean; fbUsername: string | null } | null> {
+async function getCurrentProfile(): Promise<Profile | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   const { data } = await supabase
     .from('profiles')
-    .select('id, is_admin, is_verified, fb_username')
+    .select('*')
     .eq('user_id', user.id)
     .single();
   if (!data) return null;
-  return { id: data.id, isAdmin: !!data.is_admin, isVerified: !!data.is_verified, fbUsername: data.fb_username ?? null };
+  return data as Profile;
 }
 
 const listingDiscoverySelect = '*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)';
@@ -141,10 +143,14 @@ function getComparableSize(shoe: Shoe): number | null {
   return firstVariant?.size_eu ?? null;
 }
 
-function scoreSimilarListing(base: Shoe, candidate: Shoe): number {
+function scoreSimilarListing(base: Shoe, candidate: Shoe, viewerProfile?: PersonalizationProfile | null): number {
   let score = 0;
   if (candidate.brand === base.brand) score += 5;
   if (candidate.condition === base.condition) score += 1;
+  if (viewerProfile?.personalized_browse_enabled) {
+    if (listingMatchesPreferredSize(viewerProfile, candidate)) score += 4;
+    score += listingLocationScore(viewerProfile, candidate);
+  }
 
   const baseSize = getComparableSize(base);
   const candidateSize = getComparableSize(candidate);
@@ -164,7 +170,7 @@ function scoreSimilarListing(base: Shoe, candidate: Shoe): number {
   return score;
 }
 
-async function getListingDiscovery(shoe: Shoe): Promise<{ similarListings: Shoe[]; sellerListings: Shoe[] }> {
+async function getListingDiscovery(shoe: Shoe, viewerProfile?: PersonalizationProfile | null): Promise<{ similarListings: Shoe[]; sellerListings: Shoe[] }> {
   const supabase = createClient();
 
   const [sameBrandRes, broadRes, sellerRes] = await Promise.all([
@@ -206,7 +212,7 @@ async function getListingDiscovery(shoe: Shoe): Promise<{ similarListings: Shoe[
   ], shoe.id)
     .filter((listing) => !sellerListingIds.has(listing.id))
     .sort((a, b) => {
-      const scoreDiff = scoreSimilarListing(shoe, b) - scoreSimilarListing(shoe, a);
+      const scoreDiff = scoreSimilarListing(shoe, b, viewerProfile) - scoreSimilarListing(shoe, a, viewerProfile);
       if (scoreDiff !== 0) return scoreDiff;
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
@@ -271,9 +277,9 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   if (!shoe) notFound();
 
   const currentProfileId = currentProfile?.id ?? null;
-  const currentProfileFbUsername = currentProfile?.fbUsername ?? null;
-  const isAdmin = currentProfile?.isAdmin ?? false;
-  const isVerified = currentProfile?.isVerified ?? false;
+  const currentProfileFbUsername = currentProfile?.fb_username ?? null;
+  const isAdmin = currentProfile?.is_admin ?? false;
+  const isVerified = currentProfile?.is_verified ?? false;
   const isOwner = currentProfileId === shoe.seller_id;
   const canSeeQualityFlag = !!shoe.quality_flagged_at && !!currentProfileId && (isOwner || isAdmin === true);
   const seller = shoe.profiles;
@@ -286,7 +292,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const viewSummary = isOwner
     ? (await getViewSummariesForListings([shoe.id])).get(shoe.id) ?? { total: 0, last7d: 0 }
     : null;
-  const discovery = await getListingDiscovery(shoe);
+  const discovery = await getListingDiscovery(shoe, currentProfile);
 
   const now = new Date();
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > now;

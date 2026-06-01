@@ -93,7 +93,10 @@ export const savedSearchSchema = z.object({
 
 export const profileSchema = z.object({
   display_name: z.string().min(1, 'Display name is required').max(50),
-  location: z.string().optional().nullable(),
+  location: z.string().max(120).optional().nullable(),
+  location_city: z.string().max(80).optional().nullable(),
+  location_province: z.string().max(80).optional().nullable(),
+  location_region: z.string().max(80).optional().nullable(),
   fb_username: z.string()
     .min(1, 'Facebook username is required')
     .max(120)
@@ -106,10 +109,17 @@ export const profileSchema = z.object({
         });
       }
     }),
+  preferred_size_eu: optionalNumber,
+  preferred_size_us: optionalNumber,
+  preferred_size_cm: optionalNumber,
+  preferred_us_size_type: usSizeTypeSchema,
+  personalized_browse_enabled: z.boolean().optional().default(true),
+  profile_match_email_enabled: z.boolean().optional().default(true),
 });
 
 export type ListingFormData = z.infer<typeof listingSchema>;
 export type WishlistFormData = z.infer<typeof wishlistSchema>;
 export type OfferFormData = z.infer<typeof offerSchema>;
 export type SavedSearchFormData = z.infer<typeof savedSearchSchema>;
+export type ProfileFormInput = z.input<typeof profileSchema>;
 export type ProfileFormData = z.infer<typeof profileSchema>;

@@ -24,6 +24,7 @@ import { SaveListingButton } from './SaveListingButton';
 import { type ShopTheme } from '@/lib/shopTheme';
 import { AskSellerButton } from './AskSellerButton';
 import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
+import type { PersonalizationBadges } from '@/lib/personalization';
 
 const NEW_PILL_WINDOW_MS = 24 * 60 * 60 * 1000;
 const SharePostModal = dynamic(
@@ -40,12 +41,13 @@ interface ListingCardProps {
   offerCount?: number;
   /** Owner-only: total + last-7-days view counts. Rendered as a pill on the card. */
   viewSummary?: { total: number; last7d: number };
+  personalizationBadges?: PersonalizationBadges;
   isSaved?: boolean;
   onSavedChange?: (listingId: string, saved: boolean) => void;
   theme?: ShopTheme;
 }
 
-export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = false, currentProfileFbUsername, hasExistingRequest = false, offerCount = 0, viewSummary, isSaved = false, onSavedChange, theme }: ListingCardProps) {
+export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = false, currentProfileFbUsername, hasExistingRequest = false, offerCount = 0, viewSummary, personalizationBadges, isSaved = false, onSavedChange, theme }: ListingCardProps) {
   const [buyOpen, setBuyOpen] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [sharePostOpen, setSharePostOpen] = useState(false);
@@ -244,6 +246,21 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
           )}
           {shoe.listing_type === 'donate' && (
             <p className="mt-2 text-xs text-green-400 font-medium">Free Donation</p>
+          )}
+
+          {(personalizationBadges?.matchesSize || personalizationBadges?.nearYou) && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {personalizationBadges.matchesSize && (
+                <span className="rounded-full border border-teal-400/25 bg-teal-500/10 px-2 py-0.5 text-[10px] font-semibold text-teal-200">
+                  Your size
+                </span>
+              )}
+              {personalizationBadges.nearYou && (
+                <span className="rounded-full border border-sky-400/20 bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold text-sky-200">
+                  Near you
+                </span>
+              )}
+            </div>
           )}
 
           <p className="mt-1.5 text-xs text-gray-600" style={themedMutedStyle}>{formatRelativeDate(shoe.created_at)}</p>

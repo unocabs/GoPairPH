@@ -13,7 +13,14 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { PageShell } from '@/components/layout/PageShell';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { getSavedListingIds } from '@/lib/savedListings';
-import type { Shoe } from '@/types';
+import {
+  getPersonalizationBadges,
+  hasPreferredLocation,
+  hasPreferredSize,
+  sortByPersonalization,
+  type PersonalizationBadges,
+} from '@/lib/personalization';
+import type { Profile, Shoe } from '@/types';
 
 export const metadata: Metadata = {
   title: 'GP Marketplace',
@@ -45,8 +52,8 @@ function parseSort(raw: string | undefined): SortKey {
   return 'mixed';
 }
 
-function sortListings(listings: Shoe[], key: SortKey): Shoe[] {
-  const arr = [...listings];
+function sortListings(listings: Shoe[], key: SortKey, profile?: Profile | null): Shoe[] {
+  let arr = [...listings];
   if (key === 'mixed') {
     // Fisher-Yates shuffle. Default sort: fair rotation across all listings in
     // the bucket so old listings still surface and re-listing can't game the order.
@@ -55,12 +62,14 @@ function sortListings(listings: Shoe[], key: SortKey): Shoe[] {
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-    return arr;
+    return sortByPersonalization(arr, profile);
   }
   if (key === 'price_asc') {
-    return arr.sort((a, b) => (a.price_php ?? Number.POSITIVE_INFINITY) - (b.price_php ?? Number.POSITIVE_INFINITY));
+    arr = arr.sort((a, b) => (a.price_php ?? Number.POSITIVE_INFINITY) - (b.price_php ?? Number.POSITIVE_INFINITY));
+    return sortByPersonalization(arr, profile);
   }
-  return arr.sort((a, b) => (b.price_php ?? Number.NEGATIVE_INFINITY) - (a.price_php ?? Number.NEGATIVE_INFINITY));
+  arr = arr.sort((a, b) => (b.price_php ?? Number.NEGATIVE_INFINITY) - (a.price_php ?? Number.NEGATIVE_INFINITY));
+  return sortByPersonalization(arr, profile);
 }
 
 function getSizeFilter(searchParams: BrowsePageProps['searchParams']): { column: 'size_eu' | 'size_us' | 'size_cm'; value: number; usSizeType: string | null } | null {
@@ -83,7 +92,7 @@ function getSizeFilter(searchParams: BrowsePageProps['searchParams']): { column:
   };
 }
 
-async function getListings(searchParams: BrowsePageProps['searchParams']): Promise<Shoe[]> {
+async function getListings(searchParams: BrowsePageProps['searchParams'], profile?: Profile | null): Promise<Shoe[]> {
   const supabase = createClient();
   let query = supabase
     .from('shoes')
@@ -135,20 +144,25 @@ async function getListings(searchParams: BrowsePageProps['searchParams']): Promi
   });
 
   return [
-    ...sortListings(sponsoredWithPhoto, sortKey),
-    ...sortListings(freshWithPhoto, sortKey),
-    ...sortListings(regularWithPhoto, sortKey),
-    ...sortListings(lowPriority, sortKey),
+    ...sortListings(sponsoredWithPhoto, sortKey, profile),
+    ...sortListings(freshWithPhoto, sortKey, profile),
+    ...sortListings(regularWithPhoto, sortKey, profile),
+    ...sortListings(lowPriority, sortKey, profile),
   ];
 }
 
-async function getCurrentProfileAndRequests(listingIds: string[]): Promise<{ profileId: string; isAdmin: boolean; fbUsername: string | null; requestListingIds: Set<string>; savedListingIds: Set<string> } | null> {
+async function getCurrentProfile(): Promise<Profile | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data: profile } = await supabase.from('profiles').select('id, is_admin, fb_username').eq('user_id', user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
   if (!profile) return null;
+  return profile as Profile;
+}
 
+async function getCurrentProfileRequests(profile: Profile | null, listingIds: string[]): Promise<{ requestListingIds: Set<string>; savedListingIds: Set<string> }> {
+  if (!profile) return { requestListingIds: new Set(), savedListingIds: new Set() };
+  const supabase = createClient();
   const { data: requests } = await supabase
     .from('purchase_requests')
     .select('listing_id')
@@ -157,13 +171,23 @@ async function getCurrentProfileAndRequests(listingIds: string[]): Promise<{ pro
 
   const requestListingIds = new Set((requests ?? []).map((r: { listing_id: string }) => r.listing_id));
   const savedListingIds = await getSavedListingIds(profile.id, listingIds);
-  return { profileId: profile.id, isAdmin: !!profile.is_admin, fbUsername: profile.fb_username ?? null, requestListingIds, savedListingIds };
+  return { requestListingIds, savedListingIds };
 }
 
 export default async function BrowsePage({ searchParams }: BrowsePageProps) {
-  const shoes = await getListings(searchParams);
-  const userContext = await getCurrentProfileAndRequests(shoes.map(s => s.id));
+  const profile = await getCurrentProfile();
+  const shoes = await getListings(searchParams, profile);
+  const userContext = await getCurrentProfileRequests(profile, shoes.map(s => s.id));
   const offerCounts = await getOfferCounts(shoes.map(s => s.id));
+  const personalizationEnabled = !!profile?.personalized_browse_enabled;
+  const hasSizePreference = hasPreferredSize(profile);
+  const hasLocationPreference = hasPreferredLocation(profile);
+  const personalizationBadges: Record<string, PersonalizationBadges> = {};
+  if (personalizationEnabled && (hasSizePreference || hasLocationPreference)) {
+    shoes.forEach((shoe) => {
+      personalizationBadges[shoe.id] = getPersonalizationBadges(profile, shoe);
+    });
+  }
 
   return (
     <PageShell>
@@ -178,14 +202,36 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
       </PageHeader>
 
       <div className="flex flex-col gap-6">
+        {profile && personalizationEnabled && (!hasSizePreference || !hasLocationPreference) && (
+          <SurfaceCard className="border-teal-500/20 bg-teal-500/[0.04] p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-100">
+                  Make GP Marketplace feel more personal
+                </p>
+                <p className="mt-1 text-xs leading-5 text-gray-400">
+                  Add {hasSizePreference ? 'your city/province' : hasLocationPreference ? 'your primary shoe size' : 'your primary size and city'} so matching pairs appear first.
+                </p>
+              </div>
+              <Link
+                href="/profile"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-teal-400/35 px-4 py-2 text-sm font-semibold text-teal-200 transition-colors hover:bg-teal-500/10"
+              >
+                Update profile
+              </Link>
+            </div>
+          </SurfaceCard>
+        )}
+
         <ListingGrid
           shoes={shoes}
-          currentProfileId={userContext?.profileId}
-          currentProfileIsAdmin={userContext?.isAdmin}
-          currentProfileFbUsername={userContext?.fbUsername}
-          myRequestListingIds={userContext?.requestListingIds}
-          savedListingIds={userContext?.savedListingIds}
+          currentProfileId={profile?.id}
+          currentProfileIsAdmin={profile?.is_admin}
+          currentProfileFbUsername={profile?.fb_username}
+          myRequestListingIds={userContext.requestListingIds}
+          savedListingIds={userContext.savedListingIds}
           offerCounts={offerCounts}
+          personalizationBadges={personalizationBadges}
           emptyMessage="No listings match your filters. Try adjusting them."
         />
 

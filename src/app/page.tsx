@@ -21,7 +21,7 @@ const sellerBenefits: ReadonlyArray<{
 }> = [
   {
     title: 'Price before listing',
-    text: 'Use the Price Guide to estimate a practical resale range before posting your pair.',
+    text: 'Use Price My Pair to estimate a practical resale range before posting your running shoes.',
     icon: 'check',
   },
   {
@@ -258,7 +258,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
           <div className="grid grid-cols-3 gap-2 divide-x divide-white/[0.08] rounded-xl border border-white/[0.08] bg-slate-900/45 p-2 shadow-[0_14px_50px_rgba(0,0,0,0.24)] backdrop-blur-sm sm:gap-0 sm:p-3">
             {[
-              { icon: '💰', label: 'Community', desc: 'Buy, sell, or donate with local runners' },
+              { icon: '💰', label: 'Buy and sell', desc: 'Buy, sell, or donate with local runners' },
               { icon: '👟', label: 'Running shoes', desc: 'Brand-new and pre-loved pairs in one focused place' },
               { icon: '📍', label: 'Pampanga & nearby', desc: 'Open to Central Luzon and NCR sellers who serve Pampanga buyers' },
             ].map(f => (
@@ -326,7 +326,7 @@ export default async function HomePage() {
                   href="/price-guide"
                   className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 bg-slate-950/60 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-800 hover:text-gray-100 sm:px-4 sm:py-2.5"
                 >
-                  Check Price Guide
+                  Price My Pair
                 </Link>
               </div>
             </div>

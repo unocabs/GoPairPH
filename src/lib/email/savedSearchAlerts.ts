@@ -8,6 +8,7 @@ export interface SavedSearchAlertMatch {
   pricePhp: number | null;
   size: string;
   condition: string | null;
+  location?: string | null;
 }
 
 interface SavedSearchAlertEmailArgs {
@@ -37,6 +38,7 @@ export function renderSavedSearchAlertEmail({
       match.pricePhp != null ? formatPrice(match.pricePhp) : 'Donation',
       match.size || null,
       match.condition ? CONDITIONS[match.condition] ?? match.condition : null,
+      match.location || null,
     ].filter(Boolean).join(' · ');
 
     return `
@@ -59,13 +61,13 @@ export function renderSavedSearchAlertEmail({
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;">
             <tr>
               <td style="padding:28px 28px 10px;">
-                <p style="margin:0 0 10px;color:#0f766e;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Go Pair PH saved searches</p>
+                <p style="margin:0 0 10px;color:#0f766e;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Go Pair PH matches</p>
                 <h1 style="margin:0;color:#0f172a;font-size:26px;line-height:1.2;">Fresh pairs matched what you're looking for</h1>
               </td>
             </tr>
             <tr>
               <td style="padding:10px 28px 0;">
-                <p style="margin:0;color:#334155;font-size:15px;line-height:1.7;">Hi ${escape(displayName || 'runner')}, a few new pairs matched your saved searches. Check them when you have time.</p>
+                <p style="margin:0;color:#334155;font-size:15px;line-height:1.7;">Hi ${escape(displayName || 'runner')}, a few new pairs matched your saved searches or profile size. Check them when you have time.</p>
               </td>
             </tr>
             <tr>
@@ -92,7 +94,7 @@ export function renderSavedSearchAlertEmail({
             </tr>
             <tr>
               <td style="background-color:#f9fafb;padding:18px 28px;border-top:1px solid #e5e7eb;color:#64748b;font-size:12px;line-height:1.6;">
-                You're receiving this because saved-search emails are enabled in your Go Pair PH profile. We send at most one saved-search digest per day.
+                You're receiving this because matched-listing emails are enabled in your Go Pair PH profile. We send at most one digest per day.
               </td>
             </tr>
           </table>
@@ -114,6 +116,7 @@ export function makeSavedSearchEmailMatch(args: {
   sizeCm: number | null;
   usSizeType?: string | null;
   condition: string | null;
+  location?: string | null;
 }): SavedSearchAlertMatch {
   return {
     searchKeyword: args.searchKeyword,
@@ -122,5 +125,6 @@ export function makeSavedSearchEmailMatch(args: {
     pricePhp: args.pricePhp,
     size: formatSize(args.sizeEu, args.sizeUs, args.sizeCm, args.usSizeType),
     condition: args.condition,
+    location: args.location ?? null,
   };
 }
