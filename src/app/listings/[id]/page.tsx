@@ -24,6 +24,7 @@ import { OwnerMoreActions } from './OwnerMoreActions';
 import { BuyButton } from '@/components/purchases/BuyButton';
 import { DonateRequestButton } from '@/components/purchases/DonateRequestButton';
 import { ListingShareActions } from '@/components/listings/ListingShareActions';
+import { ListingDiscoverySection } from '@/components/listings/ListingDiscoverySection';
 import { AskSellerButton } from '@/components/listings/AskSellerButton';
 import { SaveListingButton } from '@/components/listings/SaveListingButton';
 import { ListingViewTracker } from '@/components/listings/ListingViewTracker';
@@ -123,6 +124,99 @@ async function getCurrentProfile(): Promise<{ id: string; isAdmin: boolean; isVe
   return { id: data.id, isAdmin: !!data.is_admin, isVerified: !!data.is_verified, fbUsername: data.fb_username ?? null };
 }
 
+const listingDiscoverySelect = '*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)';
+
+function uniqueListings(listings: Shoe[], currentId: string): Shoe[] {
+  const seen = new Set<string>();
+  return listings.filter((listing) => {
+    if (listing.id === currentId || seen.has(listing.id)) return false;
+    seen.add(listing.id);
+    return true;
+  });
+}
+
+function getComparableSize(shoe: Shoe): number | null {
+  if (shoe.size_eu != null) return shoe.size_eu;
+  const firstVariant = (shoe.shoe_variants ?? []).find((variant) => variant.quantity > 0);
+  return firstVariant?.size_eu ?? null;
+}
+
+function scoreSimilarListing(base: Shoe, candidate: Shoe): number {
+  let score = 0;
+  if (candidate.brand === base.brand) score += 5;
+  if (candidate.condition === base.condition) score += 1;
+
+  const baseSize = getComparableSize(base);
+  const candidateSize = getComparableSize(candidate);
+  if (baseSize != null && candidateSize != null) {
+    const sizeDiff = Math.abs(baseSize - candidateSize);
+    if (sizeDiff <= 0.5) score += 4;
+    else if (sizeDiff <= 1.5) score += 3;
+    else if (sizeDiff <= 2.5) score += 1;
+  }
+
+  if (base.price_php != null && candidate.price_php != null && base.price_php > 0) {
+    const priceDiff = Math.abs(candidate.price_php - base.price_php) / base.price_php;
+    if (priceDiff <= 0.15) score += 3;
+    else if (priceDiff <= 0.35) score += 1;
+  }
+
+  return score;
+}
+
+async function getListingDiscovery(shoe: Shoe): Promise<{ similarListings: Shoe[]; sellerListings: Shoe[] }> {
+  const supabase = createClient();
+
+  const [sameBrandRes, broadRes, sellerRes] = await Promise.all([
+    supabase
+      .from('shoes')
+      .select(listingDiscoverySelect)
+      .eq('status', 'active')
+      .eq('has_stock', true)
+      .eq('listed_in_main_feed', true)
+      .eq('brand', shoe.brand)
+      .neq('id', shoe.id)
+      .order('created_at', { ascending: false })
+      .limit(18),
+    supabase
+      .from('shoes')
+      .select(listingDiscoverySelect)
+      .eq('status', 'active')
+      .eq('has_stock', true)
+      .eq('listed_in_main_feed', true)
+      .neq('id', shoe.id)
+      .order('created_at', { ascending: false })
+      .limit(36),
+    supabase
+      .from('shoes')
+      .select(listingDiscoverySelect)
+      .eq('status', 'active')
+      .eq('has_stock', true)
+      .eq('seller_id', shoe.seller_id)
+      .neq('id', shoe.id)
+      .order('created_at', { ascending: false })
+      .limit(4),
+  ]);
+
+  const sellerListings = uniqueListings((sellerRes.data as Shoe[]) ?? [], shoe.id).slice(0, 4);
+  const sellerListingIds = new Set(sellerListings.map((listing) => listing.id));
+  const candidates = uniqueListings([
+    ...(((sameBrandRes.data as Shoe[]) ?? [])),
+    ...(((broadRes.data as Shoe[]) ?? [])),
+  ], shoe.id)
+    .filter((listing) => !sellerListingIds.has(listing.id))
+    .sort((a, b) => {
+      const scoreDiff = scoreSimilarListing(shoe, b) - scoreSimilarListing(shoe, a);
+      if (scoreDiff !== 0) return scoreDiff;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+  return {
+    similarListings: candidates.slice(0, 6),
+    sellerListings,
+  };
+}
+
 type PurchaseContext =
   | { type: 'my_request_pending'; request: PurchaseRequest }       // I'm the buyer, request pending
   | { type: 'my_request_accepted'; request: PurchaseRequest }      // I'm the buyer, accepted, meetup time
@@ -192,6 +286,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const viewSummary = isOwner
     ? (await getViewSummariesForListings([shoe.id])).get(shoe.id) ?? { total: 0, last7d: 0 }
     : null;
+  const discovery = await getListingDiscovery(shoe);
 
   const now = new Date();
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > now;
@@ -873,6 +968,11 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           )}
         </SurfaceCard>
       </div>
+
+      <ListingDiscoverySection
+        similarListings={discovery.similarListings}
+        sellerListings={discovery.sellerListings}
+      />
     </PageShell>
   );
 }
