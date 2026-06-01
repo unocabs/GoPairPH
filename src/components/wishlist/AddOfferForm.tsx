@@ -37,13 +37,18 @@ export function AddOfferForm({ wishlistId, onAdded }: AddOfferFormProps) {
   useEffect(() => {
     if (!profile) { setMyListings([]); return; }
     const supabase = createClient();
-    supabase
+    let query = supabase
       .from('shoes')
       .select('id, slug, brand, model, price_php')
-      .eq('seller_id', profile.id)
       .eq('status', 'active')
       .order('created_at', { ascending: false })
-      .then((res: { data: unknown }) => setMyListings(((res.data as MyListing[]) ?? [])));
+      .limit(profile.is_admin ? 100 : 50);
+
+    if (!profile.is_admin) {
+      query = query.eq('seller_id', profile.id);
+    }
+
+    query.then((res: { data: unknown }) => setMyListings(((res.data as MyListing[]) ?? [])));
   }, [profile]);
 
   const listingOptions = useMemo(() => [
@@ -104,11 +109,11 @@ export function AddOfferForm({ wishlistId, onAdded }: AddOfferFormProps) {
 
       {profile && myListings.length > 0 && (
         <Select
-          label="Pick from my listings"
+          label={profile.is_admin ? 'Pick a Go Pair PH listing' : 'Pick from my listings'}
           options={listingOptions}
           value={shoeId}
           onChange={e => handlePickListing(e.target.value)}
-          hint="Picking one auto-fills the URL and price."
+          hint={profile.is_admin ? 'Admins can attach any active Go Pair PH listing.' : 'Picking one auto-fills the URL and price.'}
         />
       )}
 

@@ -32,34 +32,38 @@ export async function POST(request: Request, { params }: RouteContext) {
 
   // Authenticated callers get their profile attached. shoe_id, if supplied,
   // must belong to that profile — anyone could otherwise attribute a stranger's
-  // listing to themselves.
+  // listing to themselves. Admins can attach any active Go Pair PH listing.
   let offererProfileId: string | null = null;
+  let offererIsAdmin = false;
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
-    const { data: prof } = await supabase.from('profiles').select('id').eq('user_id', user.id).single();
+    const { data: prof } = await supabase.from('profiles').select('id, is_admin').eq('user_id', user.id).single();
     offererProfileId = prof?.id ?? null;
+    offererIsAdmin = !!prof?.is_admin;
   }
 
+  const service = createServiceClient();
   let shoeId: string | null = null;
   if (parsed.data.shoe_id) {
     if (!offererProfileId) {
       return NextResponse.json({ error: 'You must be logged in to attach a listing.' }, { status: 401 });
     }
-    const service = createServiceClient();
     const { data: shoe } = await service
       .from('shoes')
-      .select('id, seller_id')
+      .select('id, seller_id, status')
       .eq('id', parsed.data.shoe_id)
       .single();
-    if (!shoe || shoe.seller_id !== offererProfileId) {
+    if (!shoe || shoe.status !== 'active') {
+      return NextResponse.json({ error: 'That listing is no longer active.' }, { status: 400 });
+    }
+    if (!offererIsAdmin && shoe.seller_id !== offererProfileId) {
       return NextResponse.json({ error: "That listing isn't yours to attach." }, { status: 403 });
     }
     shoeId = shoe.id;
   }
 
   // Make sure the pair request still exists.
-  const service = createServiceClient();
   const { data: existing } = await service
     .from('wishlist_items')
     .select('id, user_id, brand, model, color, size_eu, size_us, size_cm, us_size_type')
@@ -86,14 +90,16 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: insertErr?.message ?? 'Failed to add offer' }, { status: 400 });
   }
 
-  sendLeadNotification({
-    service,
-    request: existing,
-    offer: inserted,
-    offererProfileId,
-  }).catch(error => {
+  try {
+    await sendLeadNotification({
+      service,
+      request: existing,
+      offer: inserted,
+      offererProfileId,
+    });
+  } catch (error) {
     console.error('[wishlist-offers] lead notification email failed:', error);
-  });
+  }
 
   return NextResponse.json(inserted, { status: 201 });
 }
@@ -126,6 +132,14 @@ async function sendLeadNotification({
 }) {
   if (!request.user_id) return;
   if (offererProfileId && offererProfileId === request.user_id) return;
+
+  const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const { count: recentLeadCount } = await service
+    .from('wishlist_offers')
+    .select('id', { count: 'exact', head: true })
+    .eq('wishlist_id', request.id)
+    .gte('created_at', thirtyMinutesAgo);
+  if ((recentLeadCount ?? 0) > 1) return;
 
   const { data: ownerProfile } = await service
     .from('profiles')
