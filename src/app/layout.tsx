@@ -143,6 +143,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.className}>
       <head>
+        {shouldLoadAdsense ? (
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+            crossOrigin="anonymous"
+          />
+        ) : null}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-LH99NEKGMC"
           strategy="afterInteractive"
@@ -157,14 +164,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Script>
       </head>
       <body className="min-h-screen flex flex-col bg-gray-950 text-gray-100">
-        {shouldLoadAdsense ? (
-          <Script
-            id="google-adsense"
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
-            strategy="afterInteractive"
-            crossOrigin="anonymous"
-          />
-        ) : null}
         <Script
           id="site-json-ld"
           type="application/ld+json"
