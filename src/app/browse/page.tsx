@@ -40,16 +40,36 @@ interface BrowsePageProps {
     size_eu?: string;
     q?: string;
     sort?: string;
+    limit?: string;
   };
 }
 
 type SizeUnit = 'eu' | 'us' | 'cm';
 type SortKey = 'mixed' | 'price_asc' | 'price_desc';
 const FRESH_LISTING_WINDOW_MS = 24 * 60 * 60 * 1000;
+const BROWSE_BATCH_SIZE = 24;
+const BROWSE_MAX_VISIBLE = 240;
 
 function parseSort(raw: string | undefined): SortKey {
   if (raw === 'price_asc' || raw === 'price_desc') return raw;
   return 'mixed';
+}
+
+function parseVisibleLimit(raw: string | undefined): number {
+  const value = Number.parseInt(raw ?? '', 10);
+  if (!Number.isFinite(value)) return BROWSE_BATCH_SIZE;
+
+  const roundedToBatch = Math.ceil(value / BROWSE_BATCH_SIZE) * BROWSE_BATCH_SIZE;
+  return Math.min(BROWSE_MAX_VISIBLE, Math.max(BROWSE_BATCH_SIZE, roundedToBatch));
+}
+
+function getLoadMoreHref(searchParams: BrowsePageProps['searchParams'], nextLimit: number): string {
+  const params = new URLSearchParams();
+  Object.entries(searchParams).forEach(([key, value]) => {
+    if (value && key !== 'limit') params.set(key, value);
+  });
+  params.set('limit', String(nextLimit));
+  return `/browse?${params.toString()}`;
 }
 
 function sortListings(listings: Shoe[], key: SortKey, profile?: Profile | null): Shoe[] {
@@ -111,7 +131,7 @@ async function getListings(searchParams: BrowsePageProps['searchParams'], profil
   }
   if (searchParams.q) query = query.or(`brand.ilike.%${searchParams.q}%,model.ilike.%${searchParams.q}%`);
 
-  const { data } = await query.limit(60);
+  const { data } = await query.limit(BROWSE_MAX_VISIBLE);
   const all = (data as Shoe[]) ?? [];
 
   // Sort within quality buckets. Image-backed sponsored listings lead, fresh
@@ -177,17 +197,21 @@ async function getCurrentProfileRequests(profile: Profile | null, listingIds: st
 export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const profile = await getCurrentProfile();
   const shoes = await getListings(searchParams, profile);
-  const userContext = await getCurrentProfileRequests(profile, shoes.map(s => s.id));
-  const offerCounts = await getOfferCounts(shoes.map(s => s.id));
+  const visibleLimit = parseVisibleLimit(searchParams.limit);
+  const visibleShoes = shoes.slice(0, visibleLimit);
+  const userContext = await getCurrentProfileRequests(profile, visibleShoes.map(s => s.id));
+  const offerCounts = await getOfferCounts(visibleShoes.map(s => s.id));
   const personalizationEnabled = !!profile?.personalized_browse_enabled;
   const hasSizePreference = hasPreferredSize(profile);
   const hasLocationPreference = hasPreferredLocation(profile);
   const personalizationBadges: Record<string, PersonalizationBadges> = {};
   if (personalizationEnabled && (hasSizePreference || hasLocationPreference)) {
-    shoes.forEach((shoe) => {
+    visibleShoes.forEach((shoe) => {
       personalizationBadges[shoe.id] = getPersonalizationBadges(profile, shoe);
     });
   }
+  const hasMoreListings = visibleShoes.length < shoes.length;
+  const nextVisibleLimit = Math.min(visibleLimit + BROWSE_BATCH_SIZE, BROWSE_MAX_VISIBLE, shoes.length);
 
   return (
     <PageShell>
@@ -224,7 +248,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
         )}
 
         <ListingGrid
-          shoes={shoes}
+          shoes={visibleShoes}
           currentProfileId={profile?.id}
           currentProfileIsAdmin={profile?.is_admin}
           currentProfileFbUsername={profile?.fb_username}
@@ -234,6 +258,21 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
           personalizationBadges={personalizationBadges}
           emptyMessage="No listings match your filters. Try adjusting them."
         />
+
+        {hasMoreListings && (
+          <div className="flex flex-col items-center gap-2">
+            <Link
+              href={getLoadMoreHref(searchParams, nextVisibleLimit)}
+              scroll={false}
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-teal-400/30 bg-teal-500/10 px-5 py-2.5 text-sm font-semibold text-teal-100 transition-colors hover:border-teal-300/60 hover:bg-teal-500/15 sm:w-auto"
+            >
+              Load more
+            </Link>
+            <p className="text-xs text-gray-500">
+              Showing {visibleShoes.length} of {shoes.length} pairs
+            </p>
+          </div>
+        )}
 
         {/* Looking For CTA — full width below on desktop, last on mobile */}
         <section className="w-full">

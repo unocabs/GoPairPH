@@ -535,7 +535,7 @@ export function renderRequestStatusChangeEmail(data: RequestStatusChangeEmailDat
     : 'Your request was declined';
   const intro = accepted
     ? `Good news, ${data.buyer_name} — ${data.seller_name} accepted your request. Coordinate the meetup or shipping with them directly.`
-    : `Hi ${data.buyer_name}, ${data.seller_name} declined your request. No worries — keep browsing, there are more pairs.`;
+    : `Hi ${data.buyer_name}, ${data.seller_name} declined your request. No worries — keep browsing, there are more shoes.`;
 
   const ctaLabel = accepted && data.messenger_link
     ? `Message ${data.seller_name}`
@@ -545,7 +545,7 @@ export function renderRequestStatusChangeEmail(data: RequestStatusChangeEmailDat
   return renderSimpleEmail({
     preheader: accepted
       ? `${data.seller_name} accepted your request. Time to coordinate the meetup.`
-      : `${data.seller_name} declined your request. Keep browsing — more pairs are listed daily.`,
+      : `${data.seller_name} declined your request. Keep browsing — more shoes are listed daily.`,
     headline,
     intro,
     rows: [

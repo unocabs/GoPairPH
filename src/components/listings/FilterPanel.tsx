@@ -36,6 +36,7 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
         next.delete(key);
       }
       next.delete('page');
+      next.delete('limit');
 
       const query = next.toString();
       router.replace(query ? `/browse?${query}` : '/browse', { scroll: false });
@@ -61,6 +62,7 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
         next.delete('q');
       }
       next.delete('page');
+      next.delete('limit');
 
       const search = next.toString();
       router.replace(search ? `/browse?${search}` : '/browse', { scroll: false });
@@ -77,6 +79,7 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
       }
       next.delete('size_eu');
       next.delete('page');
+      next.delete('limit');
 
       const query = next.toString();
       router.replace(query ? `/browse?${query}` : '/browse', { scroll: false });
@@ -108,6 +111,7 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
         }
         next.delete('size_eu');
         next.delete('page');
+        next.delete('limit');
 
         const query = next.toString();
         router.replace(query ? `/browse?${query}` : '/browse', { scroll: false });
