@@ -233,7 +233,7 @@ export function PriceGuideForm() {
               Price before listing
             </p>
             <h2 className="mt-2 text-2xl font-extrabold text-gray-100">
-              Get a practical range, not a fake exact value.
+              Get a practical range, use it as a reference.
             </h2>
             <p className="mt-3 text-sm leading-6 text-gray-400">
               Built for runners selling brand-new or pre-loved running shoes. Add the

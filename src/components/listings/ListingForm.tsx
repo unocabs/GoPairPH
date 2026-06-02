@@ -498,7 +498,7 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
                       href="/price-guide"
                       className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-lg border border-teal-400/30 bg-slate-950/55 px-3 py-1.5 text-xs font-semibold text-teal-200 transition-colors hover:bg-teal-400/10"
                     >
-                      Check Price Guide
+                      Check Price Estimator
                     </Link>
                   </div>
                 </div>

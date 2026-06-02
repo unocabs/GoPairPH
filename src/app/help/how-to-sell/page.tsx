@@ -7,7 +7,7 @@ import { CanListWidget } from '@/components/listings/CanListWidget';
 
 export const metadata: Metadata = {
   title: 'How to Sell on Go Pair PH',
-  description: 'List your running shoes in minutes and connect with runners in Pampanga on Go Pair PH.',
+  description: 'List your running shoes in minutes and connect with Central Luzon and NCR runners on Go Pair PH.',
   alternates: { canonical: '/help/how-to-sell' },
 };
 
@@ -252,7 +252,7 @@ function HeroSection() {
           How to Sell on <span className="text-teal-300">Go Pair PH</span>
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300 sm:mt-5 sm:text-lg sm:leading-8">
-          List your running shoes in minutes and connect with runners in Pampanga.
+          List your running shoes in minutes and connect with Central Luzon and NCR runners.
         </p>
         <div className="mt-5 flex flex-wrap gap-2.5 sm:mt-7 sm:gap-3">
           <Link

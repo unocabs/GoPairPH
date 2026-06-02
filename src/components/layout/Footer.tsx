@@ -7,7 +7,9 @@ const FOOTER_GROUPS = [
     heading: 'GP Marketplace',
     links: [
       { href: '/browse', label: 'All Listings' },
-      { href: '/price-guide', label: 'Price Guide' },
+      { href: '/buy-and-sell-running-shoes-philippines', label: 'Buy & Sell Shoes PH' },
+      { href: '/buy-and-sell-running-shoes-pampanga', label: 'Pampanga Shoes' },
+      { href: '/price-guide', label: 'Price Estimator' },
       { href: '/shop', label: 'Shops' },
       { href: '/looking-for', label: 'Looking For' },
       { href: '/listings/new', label: 'List a Shoe' },

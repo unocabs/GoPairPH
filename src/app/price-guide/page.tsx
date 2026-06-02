@@ -2,16 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PriceGuideForm } from '@/components/pricing/PriceGuideForm';
 
-const title = 'Running Shoe Price Guide Philippines';
+const title = 'Running Shoe Price Estimator Philippines';
 const description =
   'Not sure how much to sell your running shoes for? Use Go Pair PH to estimate a suggested resale range for brand-new and pre-loved running shoes in the Philippines.';
+const image = '/guides/running-shoe-price-estimator-hero.jpg';
 
 export const metadata: Metadata = {
   title,
   description,
   alternates: { canonical: '/price-guide' },
   keywords: [
-    'running shoe price guide Philippines',
+    'running shoe price estimator Philippines',
     'how much to sell running shoes Philippines',
     'pre-loved running shoes Philippines',
     'second hand running shoes price',
@@ -24,13 +25,13 @@ export const metadata: Metadata = {
     title: `${title} | Go Pair PH`,
     description,
     url: '/price-guide',
-    images: ['/og-image.png'],
+    images: [image],
   },
   twitter: {
     card: 'summary_large_image',
     title: `${title} | Go Pair PH`,
     description,
-    images: ['/og-image.png'],
+    images: [image],
   },
 };
 
@@ -77,7 +78,7 @@ export default function PriceGuidePage() {
         <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
           <div className="max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">
-              Running Shoe Price Guide
+              Running Shoe Price Estimator
             </p>
             <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-gray-100 sm:text-5xl">
               Price Your Running Shoes Before Selling

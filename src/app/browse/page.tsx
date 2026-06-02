@@ -23,9 +23,9 @@ import {
 import type { Profile, Shoe } from '@/types';
 
 export const metadata: Metadata = {
-  title: 'GP Marketplace',
+  title: 'Browse Running Shoes',
   description:
-    'Browse GP Marketplace for brand-new and pre-loved running shoes from Pampanga runners, plus Central Luzon and NCR sellers who serve Pampanga buyers.',
+    'Browse brand-new, pre-loved, second-hand, and donated running shoes from Central Luzon and NCR sellers on Go Pair PH.',
   alternates: { canonical: '/browse' },
 };
 
@@ -217,8 +217,8 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
     <PageShell>
       <FirstListingNudge />
       <PageHeader
-        title="GP Marketplace"
-        subtitle="Running shoes for sale, donation, and local deals in one focused place for Pampanga runners, with Central Luzon and NCR sellers welcome if they serve Pampanga buyers."
+        title="Browse Running Shoes"
+        subtitle="Running shoes for sale, donation, and local deals in one focused place for Central Luzon and NCR runners, with strong roots in Pampanga."
       >
         <Suspense>
           <FilterPanel listingCount={shoes.length} />
@@ -338,8 +338,33 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
               href="/price-guide"
               className="inline-flex w-full items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400 sm:w-auto"
             >
-              Check Price Guide
+              Check Shoe Price Estimator
             </Link>
+          </div>
+        </SurfaceCard>
+
+        <SurfaceCard className="border-white/[0.08] bg-slate-950/55 p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
+                Marketplace Guides
+              </p>
+              <h2 className="mt-1 text-lg font-semibold text-gray-100">
+                Buying or selling running shoes?
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-400">
+                Read our guides for buying, selling, and sharing brand-new, pre-loved,
+                and second-hand running shoes in the Philippines and Pampanga.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:shrink-0">
+              <Link href="/buy-and-sell-running-shoes-philippines" className="inline-flex w-full items-center justify-center rounded-lg border border-teal-400/35 px-4 py-2 text-sm font-semibold text-teal-200 transition-colors hover:bg-teal-500/10">
+                Philippines guide
+              </Link>
+              <Link href="/buy-and-sell-running-shoes-pampanga" className="inline-flex w-full items-center justify-center rounded-lg border border-teal-400/35 px-4 py-2 text-sm font-semibold text-teal-200 transition-colors hover:bg-teal-500/10">
+                Pampanga guide
+              </Link>
+            </div>
           </div>
         </SurfaceCard>
       </div>

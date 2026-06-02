@@ -2,14 +2,44 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
-const guides = [
+type Guide = {
+  href: string;
+  title: string;
+  description: string;
+  category: string;
+  image: string;
+  imageSource?: string;
+  imageCredit?: string;
+};
+
+const guides: Guide[] = [
+  {
+    href: '/buy-and-sell-running-shoes-philippines',
+    title: 'Buy and Sell Running Shoes in the Philippines',
+    description:
+      'A practical guide to buying, selling, and sharing brand-new, pre-loved, and second-hand running shoes on Go Pair PH.',
+    category: 'Marketplace Guide',
+    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Marathon_shoes.jpg?width=1200',
+    imageSource: 'https://commons.wikimedia.org/wiki/File:Marathon_shoes.jpg',
+    imageCredit: 'Josiah Mackenzie, CC BY 2.0, via Wikimedia Commons',
+  },
+  {
+    href: '/buy-and-sell-running-shoes-pampanga',
+    title: 'Buy and Sell Running Shoes in Pampanga',
+    description:
+      'A local guide for Pampanga runners buying and selling brand-new, pre-loved, and second-hand running shoes.',
+    category: 'Local Marketplace Guide',
+    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Friendship_Highway_Angeles_Koreatown.jpg?width=1200',
+    imageSource: 'https://commons.wikimedia.org/wiki/File:Friendship_Highway_Angeles_Koreatown.jpg',
+    imageCredit: 'Matthew Gan, CC BY-SA 4.0, via Wikimedia Commons',
+  },
   {
     href: '/price-guide',
-    title: 'Running Shoe Price Guide Philippines',
+    title: 'Running Shoe Price Estimator Philippines',
     description:
-      'Estimate a suggested resale range before selling brand-new or pre-loved running shoes in the Philippines.',
+      'Estimate a suggested resale price range before selling brand-new or pre-loved running shoes.',
     category: 'Seller Tool',
-    image: '/og-image.png',
+    image: '/guides/running-shoe-price-estimator-hero.jpg',
   },
   {
     href: '/official-running-shoe-brand-links-ph',
@@ -17,7 +47,9 @@ const guides = [
     description:
       'Use official brand category pages to compare retail prices before buying pre-loved running shoes on Go Pair PH.',
     category: 'Price Check',
-    image: '/og-image.png',
+    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Running_shoes_display.JPG?width=1200',
+    imageSource: 'https://commons.wikimedia.org/wiki/File:Running_shoes_display.JPG',
+    imageCredit: 'MarkBuckawicki, CC0, via Wikimedia Commons',
   },
   {
     href: '/best-running-shoes-ph',
@@ -25,7 +57,9 @@ const guides = [
     description:
       'Compare daily trainers, max-cushion shoes, race-day pairs, stability options, and pre-loved buying checks for PH runners.',
     category: 'Shoe Roundup',
-    image: '/og-image.png',
+    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Running_shoes.jpg?width=1200',
+    imageSource: 'https://commons.wikimedia.org/wiki/File:Running_shoes.jpg',
+    imageCredit: 'Tiia Monto, CC BY-SA 4.0, via Wikimedia Commons',
   },
   {
     href: '/best-places-to-run-clark-pampanga',
@@ -92,31 +126,45 @@ export default function GuidesPage() {
 
       <section className="grid gap-5 md:grid-cols-2">
         {guides.map(guide => (
-          <Link
+          <article
             key={guide.href}
-            href={guide.href}
             className="group overflow-hidden rounded-lg border border-gray-800 bg-gray-900 transition-colors hover:border-teal-500/60 hover:bg-gray-900/80"
           >
-            <Image
-              src={guide.image}
-              alt=""
-              width={1200}
-              height={720}
-              className="aspect-[16/9] w-full object-cover"
-            />
-            <div className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-teal-400">
-                {guide.category}
+            <Link href={guide.href} className="block">
+              <Image
+                src={guide.image}
+                alt=""
+                width={1200}
+                height={720}
+                className="aspect-[16/9] w-full object-cover"
+              />
+              <div className="p-5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-teal-400">
+                  {guide.category}
+                </p>
+                <h2 className="mt-2 text-xl font-semibold text-gray-100 group-hover:text-teal-300">
+                  {guide.title}
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-gray-400">{guide.description}</p>
+                <p className="mt-4 text-sm font-medium text-teal-400 group-hover:text-teal-300">
+                  Read guide &rarr;
+                </p>
+              </div>
+            </Link>
+            {guide.imageSource && guide.imageCredit ? (
+              <p className="border-t border-gray-800 px-5 pb-4 pt-3 text-[11px] leading-5 text-gray-500">
+                Image:{' '}
+                <a
+                  href={guide.imageSource}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-gray-300"
+                >
+                  {guide.imageCredit}
+                </a>
               </p>
-              <h2 className="mt-2 text-xl font-semibold text-gray-100 group-hover:text-teal-300">
-                {guide.title}
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-gray-400">{guide.description}</p>
-              <p className="mt-4 text-sm font-medium text-teal-400 group-hover:text-teal-300">
-                Read guide &rarr;
-              </p>
-            </div>
-          </Link>
+            ) : null}
+          </article>
         ))}
       </section>
     </div>

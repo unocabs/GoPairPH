@@ -22,7 +22,7 @@ const sellerBenefits: ReadonlyArray<{
 }> = [
   {
     title: 'Price before listing',
-    text: 'Use Price My Pair to estimate a practical resale range before posting your running shoes.',
+    text: 'Use Shoe Price Estimator to estimate a practical resale range before posting your running shoes.',
     icon: 'check',
   },
   {
@@ -237,7 +237,7 @@ export default async function HomePage() {
                   <Button size="lg" variant="secondary" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">Browse Running Shoes</Button>
                 </Link>
                 <Link href="/listings/new">
-                  <Button size="lg" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">List Your Pair</Button>
+                  <Button size="lg" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">List Your Shoes</Button>
                 </Link>
               </div>
               <p className="mt-4 text-xs font-medium uppercase tracking-[0.18em] text-teal-300/80">
@@ -309,6 +309,36 @@ export default async function HomePage() {
 
       <FirstListingNudge />
 
+      {/* Popular SEO paths */}
+      <section className="mx-auto max-w-7xl px-4 pt-7 sm:px-6 sm:pt-10 lg:px-8">
+        <SurfaceCard className="border-white/[0.08] bg-slate-950/55 p-4 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
+                Popular searches
+              </p>
+              <h2 className="mt-1 text-lg font-semibold text-gray-100">
+                Buy and sell running shoes in one focused place
+              </h2>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Link
+                href="/buy-and-sell-running-shoes-philippines"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
+              >
+                Running shoes Philippines
+              </Link>
+              <Link
+                href="/buy-and-sell-running-shoes-pampanga"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
+              >
+                Running shoes Pampanga
+              </Link>
+            </div>
+          </div>
+        </SurfaceCard>
+      </section>
+
       {/* Seller benefits */}
       <section className="mx-auto max-w-7xl px-4 pt-7 sm:px-6 sm:pt-10 lg:px-8">
         <SurfaceCard glow className="relative overflow-hidden border-teal-500/20 bg-slate-950/70 p-4 sm:p-7">
@@ -337,7 +367,7 @@ export default async function HomePage() {
                   href="/price-guide"
                   className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 bg-slate-950/60 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-800 hover:text-gray-100 sm:px-4 sm:py-2.5"
                 >
-                  Price My Pair
+                  Shoe Price Estimator
                 </Link>
               </div>
             </div>

@@ -49,7 +49,7 @@ export function FirstListingNudge() {
           <span className="text-xl leading-none" aria-hidden>👟</span>
           <div className="text-sm">
             <p className="font-semibold text-gray-100">Got a pair to sell?</p>
-            <p className="text-gray-400">List your first shoe in 2 minutes — reach Pampanga runners looking for your exact pair.</p>
+            <p className="text-gray-400">List your first shoe in 2 minutes — reach runners looking for your exact pair.</p>
           </div>
         </div>
         <div className="flex items-center gap-2 sm:shrink-0">

@@ -6,7 +6,7 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard';
 
 export const metadata: Metadata = {
   title: 'How to Buy on Go Pair PH',
-  description: 'Find running shoes from Pampanga runners, plus Central Luzon and NCR sellers who serve Pampanga buyers.',
+  description: 'Find brand-new, pre-loved, and second-hand running shoes from Central Luzon and NCR sellers on Go Pair PH.',
   alternates: { canonical: '/help/how-to-buy' },
 };
 
@@ -160,7 +160,8 @@ function HeroSection() {
           How to Buy on <span className="text-teal-300">Go Pair PH</span>
         </h1>
         <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-300">
-          Find running shoes from Pampanga runners, plus Central Luzon and NCR sellers who serve Pampanga buyers.
+          Find brand-new, pre-loved, and second-hand running shoes from Central
+          Luzon and NCR sellers in one focused marketplace built for runners.
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
           <Link

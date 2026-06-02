@@ -26,9 +26,9 @@ const serviceOptions: ReadonlyArray<{
   value: ServiceOption;
   label: string;
 }> = [
-  { value: 'meetup', label: 'Can meet up in/near Pampanga' },
-  { value: 'delivery', label: 'Can deliver to Pampanga' },
-  { value: 'shipping', label: 'Can ship to Pampanga' },
+  { value: 'meetup', label: 'Can meet up locally' },
+  { value: 'delivery', label: 'Can deliver within your service area' },
+  { value: 'shipping', label: 'Can ship to buyers' },
 ];
 
 export function CanListWidget({ showCta = false, compact = false }: CanListWidgetProps) {
@@ -40,7 +40,7 @@ export function CanListWidget({ showCta = false, compact = false }: CanListWidge
       return {
         tone: 'positive' as const,
         title: 'Yes, you can list.',
-        text: 'Go Pair PH is built around Pampanga runners.',
+        text: 'Go Pair PH is built for runners across Central Luzon and NCR.',
       };
     }
 
@@ -48,7 +48,7 @@ export function CanListWidget({ showCta = false, compact = false }: CanListWidge
       return {
         tone: 'positive' as const,
         title: 'Yes, you can list.',
-        text: 'You can list if Pampanga buyers can realistically receive the pair.',
+        text: 'You can list if buyers can realistically receive the pair through meetup, delivery, or shipping.',
       };
     }
 
@@ -71,11 +71,11 @@ export function CanListWidget({ showCta = false, compact = false }: CanListWidge
     return (
       <div className="rounded-xl border border-white/[0.08] bg-slate-950/35 p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">
-          Pampanga-first
+          Central Luzon and NCR
         </p>
         <h2 className="mt-2 text-sm font-semibold text-gray-100">Central Luzon and NCR sellers are welcome.</h2>
         <p className="mt-1 text-xs leading-5 text-gray-500">
-          List if Pampanga buyers can meet up, receive delivery, or arrange shipping with you.
+          List if buyers can meet up, receive delivery, or arrange shipping with you.
         </p>
       </div>
     );
@@ -86,13 +86,14 @@ export function CanListWidget({ showCta = false, compact = false }: CanListWidge
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_10%,rgba(20,184,166,0.13),transparent_36%)]" />
       <div className="relative">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
-          Pampanga-first, not Pampanga-only
+          Central Luzon and NCR
         </p>
         <h2 className="mt-2 text-xl font-bold text-gray-100 sm:text-2xl">
           Can I list on Go Pair PH?
         </h2>
         <p className="mt-2 text-sm leading-6 text-gray-400">
-          Pampanga sellers are ideal. Central Luzon and NCR sellers are welcome if they can serve Pampanga buyers.
+          Go Pair PH is built for runners and sellers across Central Luzon and NCR,
+          while keeping strong roots in the Pampanga running community.
         </p>
 
         <div className="mt-5 space-y-4">
