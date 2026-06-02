@@ -16,6 +16,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
 const SITE_NAME = 'Go Pair PH';
 const SITE_DESCRIPTION =
   'Go Pair PH is a focused running shoe marketplace where runners can buy, sell, and share brand-new, pre-loved, and second-hand running shoes from Central Luzon and NCR sellers.';
+const ADSENSE_CLIENT = 'ca-pub-5353988777781174';
+const shouldLoadAdsense = process.env.NODE_ENV === 'production';
 
 const siteJsonLd = [
   {
@@ -155,6 +157,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Script>
       </head>
       <body className="min-h-screen flex flex-col bg-gray-950 text-gray-100">
+        {shouldLoadAdsense ? (
+          <Script
+            id="google-adsense"
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+            strategy="afterInteractive"
+            crossOrigin="anonymous"
+          />
+        ) : null}
         <Script
           id="site-json-ld"
           type="application/ld+json"
