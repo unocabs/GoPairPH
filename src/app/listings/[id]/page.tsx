@@ -33,6 +33,7 @@ import { SponsoredPill } from '@/components/listings/SponsoredPill';
 import { FeaturedPill } from '@/components/listings/FeaturedPill';
 import { FlaggedPill } from '@/components/listings/FlaggedPill';
 import { QualityFlagNotice } from '@/components/listings/QualityFlagNotice';
+import { PostListingFeedbackPrompt } from '@/components/feedback/PostListingFeedbackPrompt';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import { getSponsoredSlotInfo } from '@/lib/sponsored';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
@@ -113,7 +114,9 @@ async function getShoeByRouteParam(id: string): Promise<Shoe | null> {
   return shoe;
 }
 
-async function getCurrentProfile(): Promise<Profile | null> {
+type CurrentProfile = Profile & { authEmail: string | null };
+
+async function getCurrentProfile(): Promise<CurrentProfile | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -123,7 +126,7 @@ async function getCurrentProfile(): Promise<Profile | null> {
     .eq('user_id', user.id)
     .single();
   if (!data) return null;
-  return data as Profile;
+  return { ...(data as Profile), authEmail: user.email ?? null };
 }
 
 const listingDiscoverySelect = '*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)';
@@ -553,6 +556,13 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 <span className="font-medium text-gray-300">{title}</span>
               </div>
             ))}
+          </div>
+
+          <div className="mt-4">
+            <PostListingFeedbackPrompt
+              listingId={shoe.id}
+              initialContactEmail={currentProfile?.authEmail ?? null}
+            />
           </div>
         </SurfaceCard>
       )}

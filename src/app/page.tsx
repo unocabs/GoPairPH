@@ -10,6 +10,7 @@ import { FeaturedListing } from '@/components/home/FeaturedListing';
 import { FirstListingNudge } from '@/components/listings/FirstListingNudge';
 import { LogoMark } from '@/components/brand/Logo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { PostListingFeedbackPrompt } from '@/components/feedback/PostListingFeedbackPrompt';
 import type { Shoe } from '@/types';
 
 type SellerBenefitIcon = 'user' | 'shoe' | 'form' | 'send' | 'check' | 'chat';
@@ -242,6 +243,16 @@ export default async function HomePage() {
               <p className="mt-4 text-xs font-medium uppercase tracking-[0.18em] text-teal-300/80">
                 List once. Share anywhere.
               </p>
+              <div className="mt-4 max-w-md">
+                <PostListingFeedbackPrompt
+                  title="Got any feedback for Go Pair PH?"
+                  body="Got suggestions or something confusing? Send quick feedback."
+                  successBody="Thanks. Your feedback helps shape Go Pair PH."
+                  buttonLabel="Send Feedback"
+                  compact
+                  inline
+                />
+              </div>
             </div>
 
             {/* Right slot — featured listing if set, else marketplace pulse.
@@ -278,15 +289,15 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {[
-            { label: 'New listings this week', value: activity.newListingsThisWeek },
+            { label: 'New running shoes for sale this week', value: activity.newListingsThisWeek },
+            { label: 'Recent active sellers', value: activity.recentSellers },
             { label: 'Looking for shoes', value: activity.activePairRequests },
             { label: 'Sold, reserved, or donated', value: activity.soldOrReservedPairs },
-            { label: 'Recent active sellers', value: activity.recentSellers },
           ].map((stat) => (
             <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-slate-950/55 px-3 py-2.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] sm:px-4 sm:py-3">
               <p className="text-lg font-bold tabular-nums text-gray-100 sm:text-xl">
                 {stat.value.toLocaleString()}
-                {stat.label === 'New listings this week' && stat.value >= 2 ? (
+                {stat.label === 'New running shoes for sale this week' && stat.value >= 2 ? (
                   <span className="ml-1" aria-label="celebration">🎉</span>
                 ) : null}
               </p>

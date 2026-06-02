@@ -117,9 +117,21 @@ export const profileSchema = z.object({
   profile_match_email_enabled: z.boolean().optional().default(true),
 });
 
+export const feedbackSchema = z.object({
+  category: z.enum(['confusing', 'missing_feature', 'bug', 'suggestion']).optional().default('suggestion'),
+  message: z.string().trim().min(1, 'Feedback is required').max(800, 'Feedback must be 800 characters or less'),
+  contact_email: z.preprocess(
+    val => (typeof val === 'string' && val.trim() === '' ? null : val),
+    z.string().trim().email('Enter a valid email or leave it blank').max(160).nullable().optional()
+  ),
+  listing_id: z.string().uuid().nullable().optional(),
+  page_path: z.string().trim().min(1).max(500).optional().default('/'),
+});
+
 export type ListingFormData = z.infer<typeof listingSchema>;
 export type WishlistFormData = z.infer<typeof wishlistSchema>;
 export type OfferFormData = z.infer<typeof offerSchema>;
 export type SavedSearchFormData = z.infer<typeof savedSearchSchema>;
 export type ProfileFormInput = z.input<typeof profileSchema>;
 export type ProfileFormData = z.infer<typeof profileSchema>;
+export type FeedbackFormData = z.infer<typeof feedbackSchema>;
