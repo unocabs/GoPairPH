@@ -45,7 +45,7 @@ export function ListingShareActions({ shoe, seller, isOwner = false, className =
     const url = `${window.location.origin}${listingPath}`;
     await copyText(
       buildListingCaption(shoe, url),
-      isOwner ? 'Caption copied. Paste it on Facebook groups, Facebook Marketplace, or Messenger.' : 'Caption copied.'
+      isOwner ? 'Caption copied. Paste it with your Go Pair PH link so buyers can check the full details.' : 'Caption copied.'
     );
   }
 
@@ -111,7 +111,7 @@ export function ListingShareActions({ shoe, seller, isOwner = false, className =
             <StepIcon type="group" />
             <span className="min-w-0 flex-1">
               <span className="block font-semibold">Share on FB Group</span>
-              <span className="block truncate text-xs text-gray-500">Open the Go Pair PH group.</span>
+              <span className="block truncate text-xs text-gray-500">Open the Go Pair PH group first.</span>
             </span>
             <StepNumber>3</StepNumber>
           </a>

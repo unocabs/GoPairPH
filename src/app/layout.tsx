@@ -15,7 +15,7 @@ const inter = Inter({ subsets: ['latin'] });
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
 const SITE_NAME = 'Go Pair PH';
 const SITE_DESCRIPTION =
-  'GP Marketplace by Go Pair PH helps Pampanga runners find brand-new, pre-loved, and donated running shoes from Pampanga runners, plus Central Luzon and NCR sellers who serve Pampanga buyers.';
+  'Go Pair PH is a focused running shoe marketplace where runners can buy, sell, and share brand-new, pre-loved, and second-hand running shoes from Central Luzon and NCR sellers.';
 
 const siteJsonLd = [
   {
@@ -44,7 +44,7 @@ const siteJsonLd = [
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} — GP Marketplace for Running Shoes`,
+    default: `${SITE_NAME} — Buy and Sell Running Shoes`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -67,7 +67,8 @@ export const metadata: Metadata = {
     'running shoe sellers',
     'central luzon running shoe sellers',
     'ncr running shoe sellers',
-    'serve pampanga buyers',
+    'central luzon running shoes',
+    'ncr running shoes',
     'local sellers',
     'runner sellers',
     'local running shoe marketplace',
@@ -89,20 +90,20 @@ export const metadata: Metadata = {
     locale: 'en_PH',
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `${SITE_NAME} — GP Marketplace for Running Shoes`,
+    title: `${SITE_NAME} — Buy and Sell Running Shoes`,
     description: SITE_DESCRIPTION,
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: `${SITE_NAME} — GP Marketplace for Running Shoes`,
+        alt: `${SITE_NAME} — Buy and Sell Running Shoes`,
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: `${SITE_NAME} — GP Marketplace for Running Shoes`,
+    title: `${SITE_NAME} — Buy and Sell Running Shoes`,
     description: SITE_DESCRIPTION,
     images: ['/og-image.png'],
   },

@@ -41,8 +41,8 @@ export function Footer() {
           <div className="col-span-2 sm:col-span-1">
             <Logo size="sm" />
             <p className="mt-3 text-xs text-gray-500 leading-relaxed">
-              GP Marketplace is a Pampanga-focused running shoe marketplace for runners,
-              Central Luzon and NCR sellers, brand-new pairs, pre-loved pairs, and donations.
+              Go Pair PH is a focused running shoe marketplace for Central Luzon and NCR
+              runners, sellers, shops, brand-new pairs, pre-loved pairs, and donations.
             </p>
           </div>
 
@@ -91,7 +91,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-8 pt-6 border-t border-gray-800 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
           <p className="text-xs text-gray-600">
-            © {new Date().getFullYear()} Go Pair PH. Built around Pampanga runners. To God be the glory.
+            © {new Date().getFullYear()} Go Pair PH. Built for runners across Central Luzon and NCR. To God be the glory.
           </p>
           <p className="text-xs text-gray-600">
             <Link href="/privacy" className="hover:text-teal-400 transition-colors">Privacy</Link>

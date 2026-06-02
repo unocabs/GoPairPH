@@ -532,10 +532,13 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">Your listing is live</p>
-              <h2 className="mt-2 text-xl font-bold text-gray-100">Share it where runners already are.</h2>
+              <h2 className="mt-2 text-xl font-bold text-gray-100">List first. Now share it properly.</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
-                Copy the caption, create the share image, or send the listing link to Facebook groups,
-                Facebook Marketplace, Messenger, and running chats.
+                Use your Go Pair PH link as the main listing link so buyers can check size, photos,
+                price, condition, and status in one place.
+              </p>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-teal-100/80">
+                Facebook gets the reach. Go Pair PH keeps the details clean.
               </p>
             </div>
             <div className="shrink-0 rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 lg:w-[460px]">
@@ -543,11 +546,12 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             </div>
           </div>
 
-          <div className="mt-4 grid gap-2 text-xs sm:grid-cols-3">
+          <div className="mt-4 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
             {[
               ['1', 'Copy FB caption'],
-              ['2', 'Share Post image'],
-              ['3', 'Paste anywhere'],
+              ['2', 'Download Share Post'],
+              ['3', 'Open Go Pair PH group'],
+              ['4', 'Post to running groups'],
             ].map(([step, title]) => (
               <div key={step} className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-slate-950/45 px-3 py-2 text-gray-400">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-500/15 text-[11px] font-bold text-teal-300 ring-1 ring-teal-400/25">

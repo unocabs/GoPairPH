@@ -221,23 +221,23 @@ export default async function HomePage() {
               <div className="flex items-center gap-2 mb-4">
                 <LogoMark size={40} />
                 <span className="rounded-full border border-teal-400/30 bg-teal-400/10 px-3 py-1 text-xs font-semibold text-teal-300 shadow-[0_0_28px_rgba(20,184,166,0.12)] backdrop-blur-sm">
-                  GP Marketplace for running shoes
+                  Go Pair PH Marketplace
                 </span>
               </div>
               <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-gray-100 drop-shadow-[0_16px_36px_rgba(0,0,0,0.45)] sm:text-5xl">
                 Find Your Next<br />
-                <span className="text-teal-300">Running Pair in Pampanga</span>
+                <span className="text-teal-300">Running Shoes</span>
               </h1>
               <p className="mt-3 max-w-lg text-sm leading-6 text-gray-300/85 sm:mt-4 sm:text-lg sm:leading-8">
-                Buy brand-new or pre-loved pairs from Pampanga runners, plus Central
-                Luzon and NCR sellers who can serve Pampanga buyers.
+                Buy brand-new, pre-loved, and second-hand running shoes from Central
+                Luzon and NCR sellers in one focused marketplace built for runners.
               </p>
               <div className="mt-6 flex flex-wrap gap-2.5 sm:mt-8 sm:gap-3">
                 <Link href="/browse">
-                  <Button size="lg" variant="secondary" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">Browse GP Marketplace</Button>
+                  <Button size="lg" variant="secondary" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">Browse Running Shoes</Button>
                 </Link>
                 <Link href="/listings/new">
-                  <Button size="lg" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">List Your Shoes</Button>
+                  <Button size="lg" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">List Your Pair</Button>
                 </Link>
               </div>
               <p className="mt-4 text-xs font-medium uppercase tracking-[0.18em] text-teal-300/80">
@@ -271,7 +271,7 @@ export default async function HomePage() {
             {[
               { icon: '💰', label: 'Buy and sell', desc: 'Buy, sell, or donate with local runners' },
               { icon: '👟', label: 'Running shoes', desc: 'Brand-new and pre-loved pairs in one focused place' },
-              { icon: '📍', label: 'Pampanga & nearby', desc: 'Open to Central Luzon and NCR sellers who serve Pampanga buyers' },
+              { icon: '📍', label: 'Central Luzon & NCR', desc: 'Built for runners buying and selling across the region' },
             ].map(f => (
               <div key={f.label} className="flex items-center justify-center gap-2 px-2 py-1.5 sm:gap-3">
                 <span className="text-xl sm:text-2xl shrink-0" aria-hidden="true">{f.icon}</span>
