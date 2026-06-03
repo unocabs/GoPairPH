@@ -3,7 +3,6 @@ import { createPublicClient } from '@/lib/supabase/server';
 interface PulseStats {
   totalActive: number;
   forSale: number;
-  donations: number;
   totalKm: number;
   weekDelta: number;
   todayListers: number;
@@ -42,7 +41,6 @@ async function getPulseStats(): Promise<PulseStats> {
 
   const totalActive = activeShoes?.length ?? 0;
   const forSale = activeShoes?.filter(s => s.listing_type === 'for_sale').length ?? 0;
-  const donations = activeShoes?.filter(s => s.listing_type === 'donate').length ?? 0;
   const totalKm = (activeShoes ?? []).reduce(
     (sum, s) => sum + (typeof s.mileage_km === 'number' ? s.mileage_km : 0),
     0,
@@ -87,7 +85,6 @@ async function getPulseStats(): Promise<PulseStats> {
   return {
     totalActive,
     forSale,
-    donations,
     totalKm: Math.round(totalKm),
     weekDelta,
     todayListers: todayListings.length,
@@ -163,11 +160,11 @@ export async function HeroFallback() {
           </div>
         </div>
         <div className="rounded-lg border border-gray-800 bg-gray-900/60 p-3">
-          <div className="text-xl font-bold tabular-nums text-green-400">
-            {stats.donations}
+          <div className="text-xl font-bold tabular-nums text-teal-300">
+            {stats.weekDelta}
           </div>
           <div className="text-[10px] uppercase tracking-wider text-gray-500 mt-0.5">
-            Donations
+            This Week
           </div>
         </div>
         <div className="rounded-lg border border-gray-800 bg-gray-900/60 p-3">
