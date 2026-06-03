@@ -123,9 +123,9 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
     if (condition === 'new') {
       return 'Brand new pair. See photos for box, tags, and condition.\nMeetup around Pampanga preferred.';
     }
-    const usageLine = mileageKm
+    const usageLine = mileageKm != null
       ? `Used for approximately ${mileageKm.toLocaleString()} km.`
-      : 'Used for running.';
+      : 'Mileage not tracked.';
     return `${usageLine} See top and sole photos for condition.\nMeetup around Pampanga preferred.`;
   })();
 
@@ -415,7 +415,7 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
             <p className="text-sm text-gray-500 mt-0.5">Automatically set to <span className="text-gray-300 font-medium">0 km</span> for new shoes.</p>
           </div>
         ) : (
-          <Input label="Mileage (km)" type="number" min={0} placeholder="e.g. 350" hint="Optional — leave blank if unknown." error={errors.mileage_km?.message} {...register('mileage_km')} />
+          <Input label="Mileage (km)" type="number" min={0} placeholder="e.g. 350" hint="Leave blank if you do not track mileage; buyers will see Not Tracked." error={errors.mileage_km?.message} {...register('mileage_km')} />
         )}
         <Textarea label="Description (optional)" rows={3} {...register('description')} />
         <div className="rounded-lg border border-white/[0.08] bg-slate-950/45 p-3">

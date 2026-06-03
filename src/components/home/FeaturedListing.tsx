@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Shoe } from '@/types';
 import { CONDITIONS } from '@/lib/constants';
-import { formatPrice, formatSize, getPublicUrl, formatListingName, getListingPath } from '@/lib/utils';
+import { formatMileage, formatPrice, formatSize, getPublicUrl, formatListingName, getListingPath } from '@/lib/utils';
 import { FeaturedPill } from '@/components/listings/FeaturedPill';
 
 interface FeaturedListingProps {
@@ -105,9 +105,9 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
               {formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type)}
             </span>
           )}
-          {shoe.mileage_km != null && (
+          {!shoe.shop_id && (
             <span className="rounded-full border border-white/20 bg-white/10 px-2 py-0.5 font-mono text-[9px] tabular-nums text-white backdrop-blur-md sm:px-2.5 sm:py-1 sm:text-[10px]">
-              {shoe.mileage_km.toLocaleString()} km
+              {formatMileage(shoe.mileage_km)}
             </span>
           )}
         </div>

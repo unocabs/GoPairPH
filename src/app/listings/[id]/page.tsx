@@ -11,7 +11,7 @@ import { ShopBadge } from '@/components/shop/ShopBadge';
 import { ListingTypeBadge } from '@/components/listings/ListingTypeBadge';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
-import { formatPrice, formatSize, formatRelativeDate, getPublicUrl, formatListingName, getListingPath, getAbsoluteListingUrl } from '@/lib/utils';
+import { formatMileage, formatPrice, formatSize, formatRelativeDate, getPublicUrl, formatListingName, getListingPath, getAbsoluteListingUrl } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import type { Shoe, PurchaseRequest } from '@/types';
 import { Avatar } from '@/components/ui/Avatar';
@@ -760,7 +760,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           <dl className="mt-6 grid grid-cols-2 gap-3 rounded-xl border border-white/[0.08] bg-slate-950/55 p-4">
             {[
               ...(shoe.shop_id ? [] : [{ label: 'Size', value: formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type) }]),
-              ...(shoe.shop_id ? [] : [{ label: 'Mileage', value: shoe.mileage_km != null ? `${shoe.mileage_km.toLocaleString()} km` : 'Not provided' }]),
+              ...(shoe.shop_id ? [] : [{ label: 'Mileage', value: formatMileage(shoe.mileage_km) }]),
               { label: 'Brand', value: shoe.brand === 'Other' ? shoe.model : shoe.brand },
               { label: 'Model', value: shoe.model },
               { label: 'Color', value: shoe.color },

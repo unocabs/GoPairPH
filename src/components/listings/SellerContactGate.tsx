@@ -63,7 +63,8 @@ export function SellerContactGate({ profileId, initialFbUsername, hasShopContact
             </h2>
             <p className="mt-2 text-sm leading-6 text-gray-400">
               Messenger makes it easier for buyers to ask questions and close the deal, but you can
-              publish your listing first and add it later from your profile.
+              publish your listing first and add it later from your profile. Add your location there too
+              so buyers know if meetup, delivery, or shipping is realistic.
             </p>
 
             <div className="mt-5 max-w-md space-y-3">
@@ -84,7 +85,8 @@ export function SellerContactGate({ profileId, initialFbUsername, hasShopContact
                 </Button>
               </div>
               <p className="text-xs text-gray-500">
-                Good listings can still receive requests on Go Pair PH. Messenger just removes extra back-and-forth.
+                Good listings can still receive requests on Go Pair PH. Messenger and location details just
+                remove extra back-and-forth and help buyers trust the deal faster.
               </p>
             </div>
           </div>

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { renderOfferEmail, renderShopOrderEmail, renderDonationRequestEmail } from '@/lib/email/offerNotification';
 import { sendOfferEmail } from '@/lib/email/resend';
-import { formatCondition, formatListingName, formatSize } from '@/lib/utils';
+import { formatCondition, formatListingName, formatMileage, formatSize } from '@/lib/utils';
 
 const bodySchema = z.object({
   listing_id: z.string().uuid(),
@@ -215,7 +215,7 @@ async function sendNotification({ buyerId, listingId, message, offerPricePhp, va
     listing_title: listingTitle,
     shoe_size: formatSize(listing.size_eu, listing.size_us, listing.size_cm, listing.us_size_type) || '—',
     condition: formatCondition(listing.condition),
-    mileage: listing.mileage_km != null ? `${listing.mileage_km} km` : 'Mileage not specified',
+    mileage: formatMileage(listing.mileage_km),
     offer_amount: formatPesos(offerAmount),
     listed_price: formatPesos(listedPrice),
     buyer_name: buyerProfile?.display_name ?? 'A Go Pair PH runner',

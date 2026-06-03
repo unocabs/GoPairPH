@@ -1,5 +1,5 @@
 import { CONDITIONS } from './constants';
-import { formatListingName, formatPrice, formatSize } from './utils';
+import { formatListingName, formatMileage, formatPrice, formatSize } from './utils';
 import type { Shoe } from '@/types';
 
 export function buildListingCaption(shoe: Shoe, listingUrl: string): string {
@@ -9,7 +9,7 @@ export function buildListingCaption(shoe: Shoe, listingUrl: string): string {
     shoe.listing_type === 'for_sale' && shoe.price_php ? `Price: ${formatPrice(shoe.price_php)}` : null,
     size ? `Size: ${size}` : null,
     shoe.condition ? `Condition: ${CONDITIONS[shoe.condition]}` : null,
-    shoe.mileage_km != null ? `Mileage: ${shoe.mileage_km.toLocaleString()} km` : null,
+    `Mileage: ${formatMileage(shoe.mileage_km)}`,
   ].filter(Boolean);
 
   const headline = shoe.listing_type === 'donate'

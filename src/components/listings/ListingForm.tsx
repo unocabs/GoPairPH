@@ -148,9 +148,9 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
     if (condition === 'new') {
       return 'Brand new pair. See photos for box, tags, and condition.\nMeetup around Pampanga preferred.';
     }
-    const usageLine = mileageKm
+    const usageLine = mileageKm != null
       ? `Used for approximately ${mileageKm.toLocaleString()} km.`
-      : 'Used for running.';
+      : 'Mileage not tracked.';
     return `${usageLine} See top and sole photos for condition.\nMeetup around Pampanga preferred.`;
   })();
   const readinessItems = [
@@ -528,11 +528,11 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
               </div>
             ) : (
               <Input
-                label="Mileage (km, optional)"
+                label="Mileage (km)"
                 type="number"
                 min={0}
                 placeholder="e.g. 350"
-                hint="Optional — leave blank if unknown."
+                hint="Leave blank if you do not track mileage; buyers will see Not Tracked."
                 error={errors.mileage_km?.message}
                 {...register('mileage_km')}
               />

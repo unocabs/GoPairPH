@@ -15,6 +15,10 @@ export function formatPrice(price: number | null): string {
   }).format(price);
 }
 
+export function formatMileage(mileageKm: number | null | undefined): string {
+  return mileageKm != null ? `${mileageKm.toLocaleString()} km` : 'Not Tracked';
+}
+
 export function formatCondition(condition: string): string {
   return CONDITIONS[condition] ?? condition;
 }

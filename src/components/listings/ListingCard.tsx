@@ -12,7 +12,7 @@ import { OutOfStockBadge } from '@/components/shop/OutOfStockBadge';
 import { ListingTypeBadge } from './ListingTypeBadge';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
-import { formatPrice, formatSize, getPublicUrl, formatRelativeDate, formatListingName, getListingPath } from '@/lib/utils';
+import { formatMileage, formatPrice, formatSize, getPublicUrl, formatRelativeDate, formatListingName, getListingPath } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { BuyModal } from '@/components/purchases/BuyModal';
 import { DonateRequestModal } from '@/components/purchases/DonateRequestModal';
@@ -225,8 +225,8 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
               {CONDITIONS[shoe.condition]}
             </Badge>
             {!shoe.shop_id && (
-              <span className="text-xs text-gray-600 whitespace-nowrap" title={shoe.mileage_km != null ? `${shoe.mileage_km.toLocaleString()} km` : 'Mileage not provided'}>
-                {shoe.mileage_km != null ? `${shoe.mileage_km.toLocaleString()} km` : '—'}
+              <span className="text-xs text-gray-600 whitespace-nowrap" title={shoe.mileage_km != null ? formatMileage(shoe.mileage_km) : 'Mileage not tracked'}>
+                {formatMileage(shoe.mileage_km)}
               </span>
             )}
           </div>
