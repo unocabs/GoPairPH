@@ -15,7 +15,7 @@ const inter = Inter({ subsets: ['latin'] });
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
 const SITE_NAME = 'Go Pair PH';
 const SITE_DESCRIPTION =
-  'Go Pair PH is a focused running shoe marketplace where runners can buy, sell, and share brand-new, pre-loved, and second-hand running shoes from Central Luzon and NCR sellers.';
+  'Go Pair PH is a running shoe marketplace where runners can buy, sell, and share brand-new, pre-loved, and second-hand running shoes from Central Luzon and NCR.';
 const ADSENSE_CLIENT = 'ca-pub-5353988777781174';
 const shouldLoadAdsense = process.env.NODE_ENV === 'production';
 
