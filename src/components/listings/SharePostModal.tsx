@@ -4,7 +4,7 @@ import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import * as htmlToImage from 'html-to-image';
 import { LogoMark } from '@/components/brand/Logo';
 import { CONDITIONS, LISTING_TYPE_LABELS } from '@/lib/constants';
-import { formatListingName, formatPrice, formatSize, getPublicUrl } from '@/lib/utils';
+import { formatListingName, formatMileage, formatPrice, formatSize, getPublicUrl } from '@/lib/utils';
 import type { Condition, ListingType, Shoe, Profile, Shop } from '@/types';
 
 interface SharePostModalProps {
@@ -457,8 +457,9 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
       >
         <IdentityBlock identityName={identityName} identityLocation={identityLocation} identityLabel={identityLabel} identitySrc={identitySrc} seller={seller} compact />
         <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} />
-        <TitleBlock shoe={shoe} shareSize={shareSize} titleSize={52} metaSize={18} maxLines={3} />
+        <TitleBlock shoe={shoe} shareSize={shareSize} identityLocation={identityLocation} titleSize={52} metaSize={18} maxLines={3} />
         <PriceBlock shoe={shoe} priceSize={40} />
+        <ShareDetailPills shoe={shoe} shareSize={shareSize} identityLocation={identityLocation} />
         <DescriptionBlock description={shoe.description} maxLines={5} />
         <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 9, color: '#94a3b8', fontSize: 13, fontWeight: 700 }}>
           <LogoMark size={24} />
@@ -541,6 +542,7 @@ const VerticalShareCard = forwardRef<HTMLDivElement, VerticalShareCardProps>(fun
   const displayModel = truncateText(shoe.model, 46);
   const displayColor = truncateText(shoe.color, 28);
   const displaySize = truncateText(shareSize, 24);
+  const displayLocation = truncateText(identityLocation ?? 'Ask seller for location', 31);
   const modelTitleSize = hideBrand
     ? displayModel.length > 13 ? 66 : 78
     : displayModel.length > 13 ? 58 : 72;
@@ -599,6 +601,9 @@ const VerticalShareCard = forwardRef<HTMLDivElement, VerticalShareCardProps>(fun
                 {displaySize}
               </div>
             )}
+            <div style={{ marginTop: 10, color: identityLocation ? '#a9b6c5' : '#94a3b8', fontSize: 22, lineHeight: 1.22, fontWeight: 750, width: 340, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Location: {displayLocation}
+            </div>
           </div>
 
           <div style={{ marginTop: 12 }}>
@@ -1010,9 +1015,24 @@ function BadgeRow({ shoe, isFeatured, isSponsored, size = 'sm' }: { shoe: Shoe; 
   );
 }
 
-function TitleBlock({ shoe, shareSize, titleSize, metaSize, maxLines }: { shoe: Shoe; shareSize: string; titleSize: number; metaSize: number; maxLines?: number }) {
+function TitleBlock({
+  shoe,
+  shareSize,
+  identityLocation,
+  titleSize,
+  metaSize,
+  maxLines,
+}: {
+  shoe: Shoe;
+  shareSize: string;
+  identityLocation?: string | null;
+  titleSize: number;
+  metaSize: number;
+  maxLines?: number;
+}) {
   const displayColor = truncateText(shoe.color, 30);
   const displayShareSize = truncateText(shareSize, 28);
+  const displayLocation = truncateText(identityLocation, 28);
 
   return (
     <div style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>
@@ -1027,7 +1047,48 @@ function TitleBlock({ shoe, shareSize, titleSize, metaSize, maxLines }: { shoe: 
             <span style={{ minWidth: 0, maxWidth: 190, color: '#d1d5db', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayShareSize}</span>
           </>
         )}
+        {displayLocation && (
+          <>
+            <span style={{ color: '#374151', flexShrink: 0 }}>•</span>
+            <span style={{ minWidth: 0, maxWidth: 190, color: '#d1d5db', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayLocation}</span>
+          </>
+        )}
       </p>
+    </div>
+  );
+}
+
+function ShareDetailPills({ shoe, shareSize, identityLocation }: { shoe: Shoe; shareSize: string; identityLocation: string | null }) {
+  const items = [
+    shareSize ? { label: 'Size', value: shareSize } : null,
+    !shoe.shop_id ? { label: 'Mileage', value: formatMileage(shoe.mileage_km) } : null,
+    { label: 'Location', value: identityLocation ?? 'Ask seller' },
+  ].filter(Boolean) as Array<{ label: string; value: string }>;
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      {items.map(item => (
+        <div
+          key={item.label}
+          style={{
+            maxWidth: 230,
+            borderRadius: 9999,
+            border: '1px solid rgba(148, 163, 184, 0.22)',
+            background: item.label === 'Location' ? 'rgba(20, 184, 166, 0.1)' : 'rgba(15, 23, 42, 0.62)',
+            padding: '7px 11px',
+            color: '#cbd5e1',
+            fontSize: 12,
+            lineHeight: 1,
+            fontWeight: 750,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          <span style={{ color: item.label === 'Location' ? '#5eead4' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: 10 }}>{item.label}: </span>
+          {truncateText(item.value, item.label === 'Location' ? 24 : 18)}
+        </div>
+      ))}
     </div>
   );
 }
