@@ -350,6 +350,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             canSave={!!currentProfileId}
             initialSaveCount={saveCount}
             signInHref={signInHref}
+            sellerId={shoe.seller_id}
           />
         </div>
       )}

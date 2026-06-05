@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useSession } from '@/hooks/useSession';
 import { trackMarketplaceAction } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 
@@ -13,6 +14,7 @@ interface SaveListingButtonProps {
   variant?: 'icon' | 'button';
   className?: string;
   signInHref?: string;
+  sellerId?: string | null;
   onSavedChange?: (listingId: string, saved: boolean) => void;
 }
 
@@ -24,15 +26,21 @@ export function SaveListingButton({
   variant = 'icon',
   className,
   signInHref,
+  sellerId,
   onSavedChange,
 }: SaveListingButtonProps) {
+  const { user, profile, loading: sessionLoading } = useSession();
   const [saved, setSaved] = useState(initialSaved);
   const [saveCount, setSaveCount] = useState(initialSaveCount);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isOwnPair = !!sellerId && profile?.id === sellerId;
+  const canSaveFromClientSession = !!user && !isOwnPair;
+  const effectiveCanSave = canSave || canSaveFromClientSession;
+  const shouldLinkToSignIn = !effectiveCanSave && !user && !!signInHref;
 
   async function handleToggle() {
-    if (!canSave || loading) return;
+    if (!effectiveCanSave || loading) return;
 
     const next = !saved;
     setSaved(next);
@@ -68,16 +76,17 @@ export function SaveListingButton({
     }
   }
 
-  const label = canSave
+  const label = effectiveCanSave
     ? saved ? 'Saved Pair' : 'Save Pair'
+    : user && isOwnPair ? 'Your Pair'
     : 'Sign in to save';
   const countLabel = saveCount > 99 ? '99+' : saveCount.toString();
 
   if (variant === 'button') {
-    if (!canSave && signInHref) {
+    if (shouldLinkToSignIn) {
       return (
         <Link
-          href={signInHref}
+          href={signInHref!}
           className={cn(
             'inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-700 bg-slate-950/40 px-4 py-2 text-sm font-semibold text-gray-300 transition-colors hover:bg-slate-900 hover:text-gray-100',
             className,
@@ -94,7 +103,7 @@ export function SaveListingButton({
         <button
           type="button"
           onClick={handleToggle}
-          disabled={!canSave || loading}
+          disabled={!effectiveCanSave || loading || sessionLoading}
           className={cn(
             'inline-flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60',
             saved
@@ -117,10 +126,10 @@ export function SaveListingButton({
     );
   }
 
-  if (!canSave && signInHref) {
+  if (shouldLinkToSignIn) {
     return (
       <Link
-        href={signInHref}
+        href={signInHref!}
         title="Sign in to Save Pair"
         aria-label="Sign in to Save Pair"
         className={cn(
@@ -141,7 +150,7 @@ export function SaveListingButton({
     <button
       type="button"
       onClick={handleToggle}
-      disabled={!canSave || loading}
+      disabled={!effectiveCanSave || loading || sessionLoading}
       title={label}
       aria-label={label}
       aria-pressed={saved}

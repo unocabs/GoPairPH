@@ -15,6 +15,11 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const next = getSafeNext(searchParams.get('next'));
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    return NextResponse.redirect(`${origin}${next}`);
+  }
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',

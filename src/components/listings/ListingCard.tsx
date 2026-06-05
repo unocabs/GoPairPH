@@ -324,6 +324,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
               canSave={canSave}
               initialSaveCount={saveCount}
               signInHref={signInHref}
+              sellerId={shoe.seller_id}
               onSavedChange={onSavedChange}
             />
           </div>
