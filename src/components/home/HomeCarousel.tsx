@@ -157,7 +157,7 @@ export function HomeCarousel() {
           <button
             type="button"
             onClick={goToPrevious}
-            className="absolute left-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/[0.14] bg-slate-950/72 text-gray-200 backdrop-blur-sm transition-colors hover:bg-slate-900 hover:text-white sm:-left-4"
+            className="absolute left-0 top-1/2 z-10 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/[0.14] bg-slate-950/72 text-gray-200 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-sm transition-colors hover:bg-slate-900 hover:text-white"
             aria-label="Previous homepage highlight"
           >
             <ArrowLeftIcon />
@@ -207,7 +207,7 @@ export function HomeCarousel() {
           <button
             type="button"
             onClick={goToNext}
-            className="absolute right-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/[0.14] bg-slate-950/72 text-gray-200 backdrop-blur-sm transition-colors hover:bg-slate-900 hover:text-white sm:-right-4"
+            className="absolute right-0 top-1/2 z-10 flex h-10 w-10 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/[0.14] bg-slate-950/72 text-gray-200 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-sm transition-colors hover:bg-slate-900 hover:text-white"
             aria-label="Next homepage highlight"
           >
             <ArrowRightIcon />
