@@ -22,7 +22,7 @@ const slides: ReadonlyArray<HomeCarouselSlide> = [
     title: 'Buy and sell running shoes nearby',
     body: 'A running-shoe marketplace for Pampanga, Central Luzon, and NCR runners.',
     imageSrc: '/home-carousel/central-luzon-ncr.jpg',
-    imageAlt: 'Go Pair PH marketplace for running shoes in Central Luzon and NCR',
+    imageAlt: 'Go Pair PH running shoe marketplace for sellers and buyers in Pampanga, Central Luzon, and NCR',
     ctaHref: '/browse',
   },
   {
@@ -31,7 +31,7 @@ const slides: ReadonlyArray<HomeCarouselSlide> = [
     title: 'Post once. Share the link.',
     body: 'Create one clean pair page, then share it to Facebook groups, Messenger, Marketplace, or friends.',
     imageSrc: '/home-carousel/post-once-share-link.jpg',
-    imageAlt: 'Post once and share the Go Pair PH listing link',
+    imageAlt: 'Go Pair PH seller guide showing one running shoe listing link shared to Facebook groups and Messenger',
     ctaHref: '/listings/new',
   },
   {
@@ -40,7 +40,7 @@ const slides: ReadonlyArray<HomeCarouselSlide> = [
     title: 'Shoe details should be easy to check',
     body: 'Show photos, size, condition, mileage, price, and location in one place.',
     imageSrc: '/home-carousel/shoe-details-one-place.jpg',
-    imageAlt: 'Shoe details shown in one clean Go Pair PH listing page',
+    imageAlt: 'Clean Go Pair PH running shoe listing page with photos, size, condition, mileage, price, and location',
     ctaHref: '/help/how-to-sell',
   },
   {
@@ -49,7 +49,7 @@ const slides: ReadonlyArray<HomeCarouselSlide> = [
     title: 'Post. Share. Win ₱500 GCash.',
     body: 'List your running shoes on Go Pair PH, share your listing link on Facebook, then submit your entry.',
     imageSrc: '/home-carousel/post-share-win.jpg',
-    imageAlt: 'Post Share Win campaign for Go Pair PH sellers',
+    imageAlt: 'Go Pair PH Post Share Win campaign for running shoe sellers listing and sharing pairs online',
     ctaHref: '/listings/new',
   },
 ];
