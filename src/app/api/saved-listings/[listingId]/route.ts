@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getSavedListingCount } from '@/lib/savedListings';
 
 export async function DELETE(_request: Request, { params }: { params: { listingId: string } }) {
   const supabase = createClient();
@@ -27,5 +28,7 @@ export async function DELETE(_request: Request, { params }: { params: { listingI
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json({ saved: false });
+  const saveCount = await getSavedListingCount(params.listingId);
+
+  return NextResponse.json({ saved: false, saveCount });
 }

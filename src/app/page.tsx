@@ -11,6 +11,7 @@ import { FirstListingNudge } from '@/components/listings/FirstListingNudge';
 import { LogoMark } from '@/components/brand/Logo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { PostListingFeedbackPrompt } from '@/components/feedback/PostListingFeedbackPrompt';
+import { getSavedListingCounts } from '@/lib/savedListings';
 import type { Shoe } from '@/types';
 
 type SellerBenefitIcon = 'user' | 'shoe' | 'form' | 'send' | 'check' | 'chat';
@@ -186,6 +187,7 @@ export default async function HomePage() {
     getMarketplaceActivity(),
   ]);
   const offerCounts = await getOfferCounts(recentShoes.map(s => s.id));
+  const savedListingCounts = await getSavedListingCounts(recentShoes.map(s => s.id));
 
   return (
     <div>
@@ -339,6 +341,35 @@ export default async function HomePage() {
         </SurfaceCard>
       </section>
 
+      {/* Recent Listings */}
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-100">Recent Listings</h2>
+        </div>
+        <ListingGrid
+          shoes={recentShoes}
+          offerCounts={offerCounts}
+          savedListingCounts={savedListingCounts}
+          emptyMessage="No listings yet. Be the first to list your shoes!"
+        />
+        <div className="mt-8 text-center">
+          <Link href="/browse" className="inline-flex text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors">
+            View all →
+          </Link>
+        </div>
+      </section>
+
+      {/* CTA banner */}
+      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+        <div className="rounded-2xl bg-teal-500/5 border border-teal-500/20 p-8 text-center">
+          <h3 className="text-xl font-bold text-gray-100">Can&apos;t find the right pair?</h3>
+          <p className="text-gray-400 mt-1 text-sm">Post what you&apos;re looking for and let the community drop available links.</p>
+          <Link href="/looking-for/new" className="mt-4 inline-block">
+            <Button>Post what you&apos;re looking for</Button>
+          </Link>
+        </div>
+      </section>
+
       {/* Seller benefits */}
       <section className="mx-auto max-w-7xl px-4 pt-7 sm:px-6 sm:pt-10 lg:px-8">
         <SurfaceCard glow className="relative overflow-hidden border-teal-500/20 bg-slate-950/70 p-4 sm:p-7">
@@ -392,34 +423,6 @@ export default async function HomePage() {
             </div>
           </div>
         </SurfaceCard>
-      </section>
-
-      {/* Recent Listings */}
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-100">Recent Listings</h2>
-        </div>
-        <ListingGrid
-          shoes={recentShoes}
-          offerCounts={offerCounts}
-          emptyMessage="No listings yet. Be the first to list your shoes!"
-        />
-        <div className="mt-8 text-center">
-          <Link href="/browse" className="inline-flex text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors">
-            View all →
-          </Link>
-        </div>
-      </section>
-
-      {/* CTA banner */}
-      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
-        <div className="rounded-2xl bg-teal-500/5 border border-teal-500/20 p-8 text-center">
-          <h3 className="text-xl font-bold text-gray-100">Can&apos;t find the right pair?</h3>
-          <p className="text-gray-400 mt-1 text-sm">Post what you&apos;re looking for and let the community drop available links.</p>
-          <Link href="/looking-for/new" className="mt-4 inline-block">
-            <Button>Post what you&apos;re looking for</Button>
-          </Link>
-        </div>
       </section>
     </div>
   );

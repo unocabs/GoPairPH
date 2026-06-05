@@ -6,7 +6,7 @@ import { OwnProfile } from './OwnProfile';
 import { PageShell } from '@/components/layout/PageShell';
 import { getViewSummariesForListings } from '@/lib/listingViews';
 import { getCompletedSalesCount } from '@/lib/sales';
-import { getSavedListings } from '@/lib/savedListings';
+import { getSavedListingCounts, getSavedListings } from '@/lib/savedListings';
 import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest, SavedSearch } from '@/types';
 
 async function getOwnProfileData() {
@@ -75,6 +75,9 @@ async function getOwnProfileData() {
     .filter(shoe => (shoe.status === 'sold' || shoe.status === 'donated') && !completedOwnListingIds.has(shoe.id))
     .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
   const sentOffers = (sentOffersRes.data as PurchaseRequest[]) ?? [];
+  const savedListingCounts = await getSavedListingCounts(
+    Array.from(new Set([...shoes, ...savedListings].map(shoe => shoe.id)))
+  );
 
   // Most recent verification request (if any)
   const { data: verificationData } = await supabase
@@ -98,6 +101,7 @@ async function getOwnProfileData() {
     manualSaleListings,
     latestVerification,
     viewCounts,
+    savedListingCounts,
     completedSales,
   };
 }

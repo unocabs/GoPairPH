@@ -5,7 +5,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { getOfferCounts } from '@/lib/offers';
-import { getSavedListingIds } from '@/lib/savedListings';
+import { getSavedListingCounts, getSavedListingIds } from '@/lib/savedListings';
 import { ListingGrid } from '@/components/listings/ListingGrid';
 import type { Shoe, Shop } from '@/types';
 
@@ -74,6 +74,7 @@ export default async function ShopListingsPage({ params }: { params: { slug: str
   ]);
   const offerCounts = await getOfferCounts(listings.map(s => s.id));
   const savedListingIds = await getSavedListingIds(currentProfile?.id ?? null, listings.map(s => s.id));
+  const savedListingCounts = await getSavedListingCounts(listings.map(s => s.id));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -88,6 +89,7 @@ export default async function ShopListingsPage({ params }: { params: { slug: str
         currentProfileIsAdmin={currentProfile?.isAdmin}
         currentProfileFbUsername={currentProfile?.fbUsername}
         savedListingIds={savedListingIds}
+        savedListingCounts={savedListingCounts}
         emptyMessage="This shop hasn't posted any listings yet."
       />
     </div>

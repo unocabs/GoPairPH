@@ -1,18 +1,15 @@
 'use client';
 
-import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 
 export function GoogleSignInButton() {
-  const supabase = createClient();
+  function getNextPath() {
+    if (typeof window === 'undefined') return '/browse';
+    return `${window.location.pathname}${window.location.search}`;
+  }
 
-  async function handleSignIn() {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-      },
-    });
+  function handleSignIn() {
+    window.location.href = `/auth/sign-in?next=${encodeURIComponent(getNextPath())}`;
   }
 
   return (

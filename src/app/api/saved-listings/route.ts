@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
+import { getSavedListingCount } from '@/lib/savedListings';
 
 const bodySchema = z.object({
   listingId: z.string().uuid(),
@@ -55,5 +56,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json({ saved: true });
+  const saveCount = await getSavedListingCount(parsed.listingId);
+
+  return NextResponse.json({ saved: true, saveCount });
 }

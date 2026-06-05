@@ -44,11 +44,12 @@ interface ListingCardProps {
   viewSummary?: { total: number; last7d: number };
   personalizationBadges?: PersonalizationBadges;
   isSaved?: boolean;
+  saveCount?: number;
   onSavedChange?: (listingId: string, saved: boolean) => void;
   theme?: ShopTheme;
 }
 
-export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = false, currentProfileFbUsername, hasExistingRequest = false, offerCount = 0, viewSummary, personalizationBadges, isSaved = false, onSavedChange, theme }: ListingCardProps) {
+export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = false, currentProfileFbUsername, hasExistingRequest = false, offerCount = 0, viewSummary, personalizationBadges, isSaved = false, saveCount = 0, onSavedChange, theme }: ListingCardProps) {
   const [buyOpen, setBuyOpen] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [sharePostOpen, setSharePostOpen] = useState(false);
@@ -321,6 +322,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
               listingId={shoe.id}
               initialSaved={isSaved}
               canSave={canSave}
+              initialSaveCount={saveCount}
               signInHref={signInHref}
               onSavedChange={onSavedChange}
             />

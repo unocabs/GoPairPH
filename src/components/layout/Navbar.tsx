@@ -89,11 +89,11 @@ export function Navbar() {
     setMenuOpen(false);
   }
 
-  async function handleSignIn() {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` },
-    });
+  function handleSignIn() {
+    const next = typeof window === 'undefined'
+      ? pathname || '/browse'
+      : `${window.location.pathname}${window.location.search}`;
+    window.location.href = `/auth/sign-in?next=${encodeURIComponent(next)}`;
   }
 
   return (

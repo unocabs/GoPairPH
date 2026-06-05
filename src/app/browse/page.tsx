@@ -12,7 +12,7 @@ import { FilterPanel } from '@/components/listings/FilterPanel';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageShell } from '@/components/layout/PageShell';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { getSavedListingIds } from '@/lib/savedListings';
+import { getSavedListingCounts, getSavedListingIds } from '@/lib/savedListings';
 import {
   getPersonalizationBadges,
   hasPreferredLocation,
@@ -201,6 +201,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const visibleShoes = shoes.slice(0, visibleLimit);
   const userContext = await getCurrentProfileRequests(profile, visibleShoes.map(s => s.id));
   const offerCounts = await getOfferCounts(visibleShoes.map(s => s.id));
+  const savedListingCounts = await getSavedListingCounts(visibleShoes.map(s => s.id));
   const personalizationEnabled = !!profile?.personalized_browse_enabled;
   const hasSizePreference = hasPreferredSize(profile);
   const hasLocationPreference = hasPreferredLocation(profile);
@@ -254,6 +255,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
           currentProfileFbUsername={profile?.fb_username}
           myRequestListingIds={userContext.requestListingIds}
           savedListingIds={userContext.savedListingIds}
+          savedListingCounts={savedListingCounts}
           offerCounts={offerCounts}
           personalizationBadges={personalizationBadges}
           emptyMessage="No listings match your filters. Try adjusting them."

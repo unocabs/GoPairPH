@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getOfferCounts } from '@/lib/offers';
 import { getPublicUrl, formatListingName } from '@/lib/utils';
 import { getShopTheme } from '@/lib/shopTheme';
-import { getSavedListingIds } from '@/lib/savedListings';
+import { getSavedListingCounts, getSavedListingIds } from '@/lib/savedListings';
 import { ListingGrid } from '@/components/listings/ListingGrid';
 import { ShopHeader } from '@/components/shop/ShopHeader';
 import { ShopCarousel } from '@/components/shop/ShopCarousel';
@@ -156,6 +156,7 @@ export default async function ShopLandingPage({ params, searchParams }: ShopLand
   ]);
   const offerCounts = await getOfferCounts(listings.map(s => s.id));
   const savedListingIds = await getSavedListingIds(currentProfile?.id ?? null, listings.map(s => s.id));
+  const savedListingCounts = await getSavedListingCounts(listings.map(s => s.id));
   const isOwner = currentProfile?.id === shop.owner_profile_id;
   const theme = getShopTheme(shop.background_color, shop.accent_color);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -224,6 +225,7 @@ export default async function ShopLandingPage({ params, searchParams }: ShopLand
               currentProfileIsAdmin={currentProfile?.isAdmin}
               currentProfileFbUsername={currentProfile?.fbUsername}
               savedListingIds={savedListingIds}
+              savedListingCounts={savedListingCounts}
               emptyMessage="No shop listings match these filters yet."
               theme={theme}
             />

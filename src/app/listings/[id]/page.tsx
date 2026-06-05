@@ -39,7 +39,7 @@ import { getSponsoredSlotInfo } from '@/lib/sponsored';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
 import { PageShell } from '@/components/layout/PageShell';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { isListingSaved } from '@/lib/savedListings';
+import { getSavedListingCount, isListingSaved } from '@/lib/savedListings';
 import { getViewSummariesForListings } from '@/lib/listingViews';
 import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
 import { listingLocationScore, listingMatchesPreferredSize, type PersonalizationProfile } from '@/lib/personalization';
@@ -292,6 +292,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const productImageUrl = topImage ? getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, topImage.storage_path) : null;
   const purchaseContext = await getPurchaseContext(shoe.id, currentProfileId, isOwner, shoe.status);
   const isSaved = await isListingSaved(currentProfileId, shoe.id);
+  const saveCount = await getSavedListingCount(shoe.id);
   const viewSummary = isOwner
     ? (await getViewSummariesForListings([shoe.id])).get(shoe.id) ?? { total: 0, last7d: 0 }
     : null;
@@ -347,6 +348,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             listingId={shoe.id}
             initialSaved={isSaved}
             canSave={!!currentProfileId}
+            initialSaveCount={saveCount}
             signInHref={signInHref}
           />
         </div>

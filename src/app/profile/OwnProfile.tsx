@@ -39,6 +39,7 @@ interface OwnProfileProps {
   manualSaleListings: Shoe[];
   latestVerification: VerificationRequest | null;
   viewCounts?: Record<string, { total: number; last7d: number }>;
+  savedListingCounts?: Record<string, number>;
   completedSales?: number;
   initialTab?: ProfileTab;
 }
@@ -55,6 +56,7 @@ export function OwnProfile({
   manualSaleListings,
   latestVerification,
   viewCounts,
+  savedListingCounts,
   completedSales,
   initialTab,
 }: OwnProfileProps) {
@@ -220,6 +222,7 @@ export function OwnProfile({
             currentProfileFbUsername={profile.fb_username}
             offerCounts={requestCountsByListing}
             viewCounts={viewCounts}
+            savedListingCounts={savedListingCounts}
             emptyMessage="You haven't listed any shoes yet."
           />
         </div>
@@ -311,6 +314,7 @@ export function OwnProfile({
               currentProfileIsAdmin={profile.is_admin}
               currentProfileFbUsername={profile.fb_username}
               savedListingIds={new Set(savedListings.map(shoe => shoe.id))}
+              savedListingCounts={savedListingCounts}
               onSavedChange={handleSavedListingChanged}
               emptyMessage="No saved pairs yet. Save pairs you like and come back before they sell."
             />

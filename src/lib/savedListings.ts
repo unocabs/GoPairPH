@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createPublicClient, createServiceClient } from '@/lib/supabase/server';
 import type { Shoe } from '@/types';
 
 export async function getSavedListingIds(profileId: string | null | undefined, listingIds: string[]): Promise<Set<string>> {
@@ -26,6 +26,35 @@ export async function isListingSaved(profileId: string | null | undefined, listi
     .maybeSingle();
 
   return !!data;
+}
+
+function getSavedCountClient() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createServiceClient()
+    : createPublicClient();
+}
+
+export async function getSavedListingCounts(listingIds: string[]): Promise<Record<string, number>> {
+  const ids = Array.from(new Set(listingIds.filter(Boolean)));
+  if (ids.length === 0) return {};
+
+  const supabase = getSavedCountClient();
+  const { data, error } = await supabase
+    .from('saved_listings')
+    .select('listing_id')
+    .in('listing_id', ids);
+
+  if (error) return {};
+
+  return (data ?? []).reduce<Record<string, number>>((counts, row: { listing_id: string }) => {
+    counts[row.listing_id] = (counts[row.listing_id] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
+export async function getSavedListingCount(listingId: string): Promise<number> {
+  const counts = await getSavedListingCounts([listingId]);
+  return counts[listingId] ?? 0;
 }
 
 export async function getSavedListings(profileId: string): Promise<Shoe[]> {
