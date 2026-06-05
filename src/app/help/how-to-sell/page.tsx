@@ -71,6 +71,11 @@ const sellerBenefits: ReadonlyArray<{
   icon: IconName;
 }> = [
   {
+    title: 'Price before listing',
+    text: 'Use Shoe Price Estimator to estimate a practical resale range before posting your running shoes.',
+    icon: 'check',
+  },
+  {
     title: 'List once, share anywhere',
     text: 'Create one clean pair link, then share it to FB groups, Facebook Marketplace, Messenger, or friends.',
     icon: 'send',
@@ -212,10 +217,10 @@ function SellerBenefitsSection() {
               List Your Running Shoes
             </Link>
             <Link
-              href="/browse"
+              href="/price-guide"
               className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 bg-slate-950/60 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-800 hover:text-gray-100 sm:px-4 sm:py-2.5"
             >
-              See GP Marketplace
+              Shoe Price Estimator
             </Link>
           </div>
         </div>

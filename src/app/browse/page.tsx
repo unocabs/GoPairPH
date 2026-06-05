@@ -211,6 +211,17 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
       personalizationBadges[shoe.id] = getPersonalizationBadges(profile, shoe);
     });
   }
+  const canShowRecommendations = personalizationEnabled && hasSizePreference && hasLocationPreference;
+  const recommendedShoes = canShowRecommendations
+    ? visibleShoes.filter((shoe) => {
+        const badges = personalizationBadges[shoe.id];
+        return badges?.matchesSize || badges?.nearYou;
+      })
+    : [];
+  const recommendedIds = new Set(recommendedShoes.map((shoe) => shoe.id));
+  const discoverShoes = recommendedShoes.length > 0
+    ? visibleShoes.filter((shoe) => !recommendedIds.has(shoe.id))
+    : visibleShoes;
   const hasMoreListings = visibleShoes.length < shoes.length;
   const nextVisibleLimit = Math.min(visibleLimit + BROWSE_BATCH_SIZE, BROWSE_MAX_VISIBLE, shoes.length);
 
@@ -248,18 +259,71 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
           </SurfaceCard>
         )}
 
-        <ListingGrid
-          shoes={visibleShoes}
-          currentProfileId={profile?.id}
-          currentProfileIsAdmin={profile?.is_admin}
-          currentProfileFbUsername={profile?.fb_username}
-          myRequestListingIds={userContext.requestListingIds}
-          savedListingIds={userContext.savedListingIds}
-          savedListingCounts={savedListingCounts}
-          offerCounts={offerCounts}
-          personalizationBadges={personalizationBadges}
-          emptyMessage="No listings match your filters. Try adjusting them."
-        />
+        {recommendedShoes.length > 0 ? (
+          <>
+            <section>
+              <div className="mb-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
+                  Matched to your profile
+                </p>
+                <h2 className="mt-1 text-2xl font-bold text-gray-100">
+                  Recommended For You
+                </h2>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-400">
+                  Pairs that match your saved size or location.
+                </p>
+              </div>
+              <ListingGrid
+                shoes={recommendedShoes}
+                currentProfileId={profile?.id}
+                currentProfileIsAdmin={profile?.is_admin}
+                currentProfileFbUsername={profile?.fb_username}
+                myRequestListingIds={userContext.requestListingIds}
+                savedListingIds={userContext.savedListingIds}
+                savedListingCounts={savedListingCounts}
+                offerCounts={offerCounts}
+                personalizationBadges={personalizationBadges}
+                emptyMessage="No recommended pairs match your filters."
+              />
+            </section>
+
+            <section>
+              <div className="mb-4">
+                <h2 className="text-2xl font-bold text-gray-100">
+                  Discover More Running Shoes
+                </h2>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-400">
+                  More active pairs from the Go Pair PH marketplace.
+                </p>
+              </div>
+              <ListingGrid
+                shoes={discoverShoes}
+                currentProfileId={profile?.id}
+                currentProfileIsAdmin={profile?.is_admin}
+                currentProfileFbUsername={profile?.fb_username}
+                myRequestListingIds={userContext.requestListingIds}
+                savedListingIds={userContext.savedListingIds}
+                savedListingCounts={savedListingCounts}
+                offerCounts={offerCounts}
+                personalizationBadges={personalizationBadges}
+                emptyMessage="No other pairs match your filters."
+              />
+            </section>
+          </>
+        ) : (
+          <ListingGrid
+            shoes={visibleShoes}
+            currentProfileId={profile?.id}
+            currentProfileIsAdmin={profile?.is_admin}
+            currentProfileFbUsername={profile?.fb_username}
+            myRequestListingIds={userContext.requestListingIds}
+            savedListingIds={userContext.savedListingIds}
+            savedListingCounts={savedListingCounts}
+            offerCounts={offerCounts}
+            personalizationBadges={personalizationBadges}
+            emptyMessage="No listings match your filters. Try adjusting them."
+          />
+        )}
 
         {hasMoreListings && (
           <div className="flex flex-col items-center gap-2">
