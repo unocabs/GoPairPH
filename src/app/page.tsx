@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { createClient, createPublicClient } from '@/lib/supabase/server';
 import { getOfferCounts } from '@/lib/offers';
 import { ListingGrid } from '@/components/listings/ListingGrid';
@@ -295,6 +296,17 @@ export default async function HomePage() {
             View all →
           </Link>
         </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+        <Image
+          src="/promos/footer-images.jpg"
+          alt="Go Pair PH marketplace benefits for runners in Central Luzon and NCR"
+          width={1898}
+          height={829}
+          loading="lazy"
+          className="block w-full rounded-2xl border border-white/[0.08] bg-slate-950 object-cover shadow-2xl shadow-black/30"
+        />
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
