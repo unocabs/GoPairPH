@@ -15,6 +15,7 @@ import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { trackMarketplaceAction } from '@/lib/analytics';
 
 const brandOptions = BRANDS.map((brand) => ({ value: brand, label: brand }));
 
@@ -88,6 +89,17 @@ export function PriceGuideForm() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setShowResult(true);
+    trackMarketplaceAction('price_estimate_submit', {
+      brand,
+      condition,
+      mileage,
+      age,
+      demand,
+      urgency,
+      has_box: hasBox,
+      has_receipt: hasReceipt,
+      has_visible_flaws: hasVisibleFlaws,
+    });
   }
 
   return (
@@ -211,6 +223,11 @@ export function PriceGuideForm() {
             <div className="mt-5 grid gap-2">
               <Link
                 href={`/listings/new?price=${estimate.suggestedHigh}`}
+                onClick={() => trackMarketplaceAction('price_estimator_to_listing', {
+                  brand,
+                  condition,
+                  urgency,
+                })}
                 className="inline-flex min-h-11 items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400"
               >
                 List this shoe

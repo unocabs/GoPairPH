@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { PhotoUploader, type UploadedPhoto } from './PhotoUploader';
 import { VariantsEditor, type VariantRow } from './VariantsEditor';
 import { findSizeConversion, formatPrice, formatSize, getListingPath } from '@/lib/utils';
+import { trackMarketplaceAction } from '@/lib/analytics';
 import type { Shop } from '@/types';
 
 const BRAND_OPTIONS = BRANDS.map(b => ({ value: b, label: b }));
@@ -209,9 +210,18 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
 
   function onDetailsSubmit(data: ListingFormData) {
     setError(null);
+    trackMarketplaceAction('listing_create_start', {
+      listing_type: isShop ? 'shop' : data.listing_type,
+      is_guest: isGuest,
+      surface: 'new_listing_form',
+    });
     if (isGuest) {
       try {
         window.localStorage.setItem(LISTING_DRAFT_KEY, JSON.stringify({ details: data, savedAt: Date.now() }));
+        trackMarketplaceAction('listing_draft_saved', {
+          listing_type: data.listing_type,
+          auth_required: true,
+        });
         router.push(`/auth/sign-in?next=${encodeURIComponent('/listings/new?resume=draft')}`);
       } catch {
         setError('Could not save your draft in this browser. Please sign in first, then list your shoe.');
@@ -317,6 +327,12 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
       }));
       const { error: imgError } = await supabase.from('shoe_images').insert(imageRows);
       if (imgError) throw imgError;
+      trackMarketplaceAction('listing_publish', {
+        listing_id: insertedShoe?.id ?? shoeId,
+        listing_type: isShop ? 'shop' : details.listing_type,
+        has_extra_photo: hasExtraPhoto,
+        has_messenger_contact: hasMessengerContact,
+      });
       await fetch('/api/admin/new-listing-notification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -496,6 +512,9 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
                     </p>
                     <Link
                       href="/price-guide"
+                      onClick={() => trackMarketplaceAction('price_estimator_open', {
+                        surface: 'new_listing_form',
+                      })}
                       className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-lg border border-teal-400/30 bg-slate-950/55 px-3 py-1.5 text-xs font-semibold text-teal-200 transition-colors hover:bg-teal-400/10"
                     >
                       Check Price Estimator

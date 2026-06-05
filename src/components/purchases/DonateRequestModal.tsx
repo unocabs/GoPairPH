@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { BuyerContactPrompt } from './BuyerContactPrompt';
+import { trackMarketplaceAction } from '@/lib/analytics';
 
 interface DonateRequestModalProps {
   listingId: string;
@@ -36,6 +37,11 @@ export function DonateRequestModal({ listingId, listingName, requesterId, reques
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? 'Failed to send request');
       }
+      trackMarketplaceAction('request_submit', {
+        listing_id: listingId,
+        listing_type: 'donation_request',
+        has_message: message.trim().length > 0,
+      });
       onSubmitted();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send request');

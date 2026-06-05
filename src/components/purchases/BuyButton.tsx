@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { BuyModal } from './BuyModal';
+import { trackMarketplaceAction } from '@/lib/analytics';
 import type { Profile, ShoeVariant, Shop } from '@/types';
 
 interface BuyButtonProps {
@@ -50,7 +51,14 @@ export function BuyButton({ listingId, listingSlug, listingName, priceFormatted,
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          trackMarketplaceAction('request_start', {
+            listing_id: listingId,
+            listing_type: shop ? 'shop_order' : isNegotiable ? 'offer' : 'buy_request',
+            surface: 'listing_detail',
+          });
+          setOpen(true);
+        }}
         className={className ?? "mt-4 w-full rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-400 transition-colors"}
       >
         <span className="flex items-center justify-center gap-2">

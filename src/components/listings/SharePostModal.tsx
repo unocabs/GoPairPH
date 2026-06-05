@@ -4,6 +4,7 @@ import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import * as htmlToImage from 'html-to-image';
 import { LogoMark } from '@/components/brand/Logo';
 import { CONDITIONS, LISTING_TYPE_LABELS } from '@/lib/constants';
+import { trackMarketplaceAction } from '@/lib/analytics';
 import { formatListingName, formatMileage, formatPrice, formatSize, getPublicUrl } from '@/lib/utils';
 import type { Condition, ListingType, Shoe, Profile, Shop } from '@/types';
 
@@ -121,6 +122,13 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
   const [error, setError] = useState<string | null>(null);
   const [format, setFormat] = useState<ShareFormat>('mobile');
   const [renderAttempt, setRenderAttempt] = useState(0);
+
+  useEffect(() => {
+    trackMarketplaceAction('share_post_open', {
+      listing_id: shoe.id,
+      listing_type: shoe.listing_type,
+    });
+  }, [shoe.id, shoe.listing_type]);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImg = shoe.shoe_images?.find(i => i.view_type === 'top') ?? shoe.shoe_images?.[0];
@@ -242,6 +250,11 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    trackMarketplaceAction('share_post_download', {
+      listing_id: shoe.id,
+      listing_type: shoe.listing_type,
+      format,
+    });
     onDownloaded?.();
   }
 

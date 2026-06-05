@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DonateRequestModal } from './DonateRequestModal';
+import { trackMarketplaceAction } from '@/lib/analytics';
 
 interface DonateRequestButtonProps {
   listingId: string;
@@ -29,7 +30,14 @@ export function DonateRequestButton({ listingId, listingName, requesterId, reque
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          trackMarketplaceAction('request_start', {
+            listing_id: listingId,
+            listing_type: 'donation_request',
+            surface: 'listing_detail',
+          });
+          setOpen(true);
+        }}
         className="mt-4 w-full rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white hover:bg-green-500 transition-colors"
       >
         Request this Pair — Free

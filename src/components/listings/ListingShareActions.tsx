@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { SharePostModal } from './SharePostModal';
 import { getListingPath } from '@/lib/utils';
 import { buildListingCaption } from '@/lib/listingShare';
+import { trackMarketplaceAction } from '@/lib/analytics';
 import type { Shoe, Profile } from '@/types';
 
 const FB_GROUP_URL = 'https://www.facebook.com/groups/gopairph';
@@ -47,13 +48,28 @@ export function ListingShareActions({ shoe, seller, isOwner = false, className =
       buildListingCaption(shoe, url),
       isOwner ? 'Caption copied. Paste it with your Go Pair PH link so buyers can check the full details.' : 'Caption copied.'
     );
+    trackMarketplaceAction('copy_share_caption', {
+      listing_id: shoe.id,
+      surface: 'listing_detail_share_kit',
+      is_owner: isOwner,
+    });
   }
 
   return (
     <div className={`space-y-2 ${className}`}>
       <button
         type="button"
-        onClick={() => setKitOpen(open => !open)}
+        onClick={() => {
+          const nextOpen = !kitOpen;
+          setKitOpen(nextOpen);
+          if (nextOpen) {
+            trackMarketplaceAction('share_kit_open', {
+              listing_id: shoe.id,
+              surface: 'listing_detail',
+              is_owner: isOwner,
+            });
+          }
+        }}
         aria-expanded={kitOpen}
         className="inline-flex min-h-10 w-full items-center justify-between gap-2 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm font-semibold text-gray-100 transition-colors hover:bg-gray-700"
       >
@@ -91,7 +107,13 @@ export function ListingShareActions({ shoe, seller, isOwner = false, className =
 
           <button
             type="button"
-            onClick={() => setShareOpen(true)}
+            onClick={() => {
+              trackMarketplaceAction('share_post_start', {
+                listing_id: shoe.id,
+                surface: 'listing_detail_share_kit',
+              });
+              setShareOpen(true);
+            }}
             className="flex min-h-[4.25rem] w-full items-center gap-3 border-b border-white/[0.06] px-3 py-2.5 text-left text-sm text-gray-200 transition-colors hover:bg-slate-900"
           >
             <StepIcon type="download" />
@@ -106,6 +128,11 @@ export function ListingShareActions({ shoe, seller, isOwner = false, className =
             href={FB_GROUP_URL}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackMarketplaceAction('outbound_click', {
+              destination: 'fb_group',
+              listing_id: shoe.id,
+              surface: 'listing_detail_share_kit',
+            })}
             className="flex min-h-[4.25rem] w-full items-center gap-3 px-3 py-2.5 text-left text-sm text-gray-200 transition-colors hover:bg-slate-900"
           >
             <StepIcon type="group" />

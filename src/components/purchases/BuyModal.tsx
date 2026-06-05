@@ -10,6 +10,7 @@ import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import { VariantSelector } from '@/components/listings/VariantSelector';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
 import { BuyerContactPrompt } from './BuyerContactPrompt';
+import { trackMarketplaceAction } from '@/lib/analytics';
 import { getPublicUrl } from '@/lib/utils';
 import { getFacebookContactUrl } from '@/lib/facebook';
 import type { Profile, ShoeVariant, Shop } from '@/types';
@@ -114,6 +115,13 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? 'Failed to send request');
       }
+      trackMarketplaceAction('request_submit', {
+        listing_id: listingId,
+        listing_type: isShopOrder ? 'shop_order' : isNegotiable ? 'offer' : 'buy_request',
+        has_message: message.trim().length > 0,
+        has_offer_price: offerNum != null,
+        selected_variant: !!variantId,
+      });
       onSubmitted();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send request');
@@ -173,6 +181,11 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
                   href={shopFacebookUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackMarketplaceAction('outbound_click', {
+                    destination: 'shop_facebook',
+                    listing_id: listingId,
+                    surface: 'request_modal',
+                  })}
                   className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-blue-300 hover:text-blue-200 transition-colors"
                 >
                   <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">

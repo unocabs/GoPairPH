@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { trackMarketplaceAction } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 
 interface SaveListingButtonProps {
@@ -46,6 +47,10 @@ export function SaveListingButton({
 
       const confirmedSaved = !!body.saved;
       setSaved(confirmedSaved);
+      trackMarketplaceAction(confirmedSaved ? 'save_listing' : 'unsave_listing', {
+        listing_id: listingId,
+        surface: variant,
+      });
       onSavedChange?.(listingId, confirmedSaved);
     } catch (err) {
       setSaved(!next);

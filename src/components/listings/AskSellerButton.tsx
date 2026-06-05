@@ -3,6 +3,7 @@
 import { type CSSProperties, type ReactNode, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
+import { trackMarketplaceAction } from '@/lib/analytics';
 
 interface AskSellerButtonProps {
   contactUrl?: string | null;
@@ -72,6 +73,11 @@ export function AskSellerButton({
       setCopied(false);
     }
     setContactOpened(true);
+    trackMarketplaceAction('outbound_click', {
+      destination: contactUrl?.includes('facebook.com') || contactUrl?.includes('m.me') ? 'messenger_or_facebook' : 'seller_contact',
+      surface: 'ask_seller_modal',
+      is_shop: isShop,
+    });
     if (contactUrl) window.open(contactUrl, '_blank', 'noopener,noreferrer');
   }
 
@@ -81,6 +87,10 @@ export function AskSellerButton({
     try {
       await navigator.clipboard.writeText(listingUrl);
       setLinkCopied(true);
+      trackMarketplaceAction('copy_listing_link', {
+        surface: 'ask_seller_modal',
+        is_shop: isShop,
+      });
       setTimeout(() => setLinkCopied(false), 1800);
     } catch {
       setLinkCopied(false);
@@ -91,7 +101,13 @@ export function AskSellerButton({
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          trackMarketplaceAction('ask_seller_open', {
+            has_contact: !!contactUrl,
+            is_shop: isShop,
+          });
+          setOpen(true);
+        }}
         className={className}
         style={style}
         aria-label={ariaLabel}
@@ -248,6 +264,10 @@ export function AskSellerButton({
                   type="button"
                   onClick={() => {
                     setOpen(false);
+                    trackMarketplaceAction('request_start', {
+                      listing_type: isShop ? 'shop_order' : 'offer',
+                      surface: 'ask_seller_modal',
+                    });
                     onSendOffer();
                   }}
                   className="flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
@@ -257,6 +277,10 @@ export function AskSellerButton({
               ) : sendOfferHref ? (
                 <a
                   href={sendOfferHref}
+                  onClick={() => trackMarketplaceAction('request_start', {
+                    listing_type: isShop ? 'shop_order' : 'offer',
+                    surface: 'ask_seller_modal',
+                  })}
                   className="flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
                 >
                   {sendOfferLabel}

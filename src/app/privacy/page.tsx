@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <InfoPage title="Privacy Policy" lastUpdated="May 2026">
+    <InfoPage title="Privacy Policy" lastUpdated="June 2026">
       <section>
         <h2 className="text-xl font-semibold text-gray-100">1. Who we are</h2>
         <p>
@@ -30,7 +30,7 @@ export default function PrivacyPage() {
           <li><strong>Listings and shop content:</strong> shoe photos, brand, model, size, condition, mileage, price, description, location, availability, shop logos, shop pages, and related listing details.</li>
           <li><strong>GP Marketplace activity:</strong> offers, shop orders, donation requests, saved pairs, saved searches, Looking For posts, buyer demand signals, listing status updates, seller actions, and admin review activity.</li>
           <li><strong>Communications:</strong> messages or notes submitted through offer, order, donation, support, shop application, verification, and contact forms.</li>
-          <li><strong>Listing analytics:</strong> listing views, daily view totals, unique view counts, timestamps, and limited technical identifiers used to count views and reduce duplicate or abusive activity.</li>
+          <li><strong>Marketplace analytics:</strong> listing views, saved pairs, request starts, request submissions, listing publish events, share actions, outbound contact clicks, price estimator usage, timestamps, and limited technical identifiers used to measure activity and reduce duplicate or abusive activity.</li>
           <li><strong>Technical information:</strong> IP address, browser, device, pages visited, referring pages, cookies, session data, and server logs needed to operate, secure, measure, and improve the site.</li>
         </ul>
       </section>
@@ -85,8 +85,8 @@ export default function PrivacyPage() {
         <h2 className="text-xl font-semibold text-gray-100">6. Cookies</h2>
         <p>
           We use cookies and similar technologies to keep you signed in, maintain secure
-          sessions, remember basic site behavior, count listing views, and understand site
-          traffic. We also use Google Analytics for measurement. We do not sell your
+          sessions, remember basic site behavior, count listing views, measure marketplace
+          actions, and understand site traffic. We also use Google Analytics for measurement. We do not sell your
           personal information, and we do not use cookies to run Go Pair PH-owned targeted
           advertising campaigns on the site.
         </p>

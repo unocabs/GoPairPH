@@ -25,6 +25,7 @@ import { type ShopTheme } from '@/lib/shopTheme';
 import { AskSellerButton } from './AskSellerButton';
 import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
 import type { PersonalizationBadges } from '@/lib/personalization';
+import { trackMarketplaceAction } from '@/lib/analytics';
 
 const NEW_PILL_WINDOW_MS = 24 * 60 * 60 * 1000;
 const SharePostModal = dynamic(
@@ -83,6 +84,11 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
       document.body.removeChild(ta);
     }
     setCopied(true);
+    trackMarketplaceAction('copy_listing_link', {
+      listing_id: shoe.id,
+      surface: 'listing_card',
+      is_owner: isOwner,
+    });
     setTimeout(() => setCopied(false), 2000);
   }
 
@@ -346,7 +352,13 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
           ) : (
             <button
               type="button"
-              onClick={() => setSharePostOpen(true)}
+              onClick={() => {
+                trackMarketplaceAction('share_post_start', {
+                  listing_id: shoe.id,
+                  surface: 'listing_card',
+                });
+                setSharePostOpen(true);
+              }}
               className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-800 bg-teal-950/70 px-3 py-2 text-sm font-semibold text-teal-300 transition-colors hover:border-teal-500 hover:bg-teal-900/70 hover:text-teal-100"
               style={theme ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.accent } : undefined}
             >
@@ -381,7 +393,14 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
           ) : showBuy ? (
             <div className="flex gap-2">
               <button
-                onClick={() => setBuyOpen(true)}
+                onClick={() => {
+                  trackMarketplaceAction('request_start', {
+                    listing_id: shoe.id,
+                    listing_type: shoe.is_negotiable ? 'offer' : 'buy_request',
+                    surface: 'listing_card',
+                  });
+                  setBuyOpen(true);
+                }}
                 className="flex h-9 min-w-0 flex-1 items-center justify-center rounded-lg bg-teal-600 px-2 text-center text-[13px] font-semibold text-white transition-colors hover:bg-teal-500"
                 style={theme ? { backgroundColor: theme.accent, color: theme.accentText } : undefined}
               >
@@ -402,7 +421,14 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
             </div>
           ) : showDonate ? (
             <button
-              onClick={() => setDonateOpen(true)}
+              onClick={() => {
+                trackMarketplaceAction('request_start', {
+                  listing_id: shoe.id,
+                  listing_type: 'donation_request',
+                  surface: 'listing_card',
+                });
+                setDonateOpen(true);
+              }}
               className="w-full rounded-lg bg-green-700 px-3 py-2 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
             >
               Request Pair

@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { formatRelativeDate, formatPrice, getPublicUrl, formatListingName, getListingPath } from '@/lib/utils';
 import { buildMessengerUrl } from '@/lib/facebook';
+import { trackMarketplaceAction } from '@/lib/analytics';
 import type { PurchaseRequest, PurchaseRequestStatus, Shoe } from '@/types';
 
 interface SentOfferCardProps {
@@ -38,12 +39,21 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
     const { error: err } = await createClient().rpc('retract_purchase_request', { p_request_id: request.id });
     if (err) { setError(err.message); setLoading(false); return; }
     setStatus('declined');
+    trackMarketplaceAction('buyer_request_retract', {
+      listing_id: shoe?.id,
+      previous_status: status,
+    });
     setLoading(false);
     onChanged(request.id);
   }
 
   function handleMessageSeller() {
     if (sellerMessengerUrl) {
+      trackMarketplaceAction('outbound_click', {
+        destination: 'seller_messenger',
+        listing_id: shoe?.id,
+        surface: 'sent_offer_card',
+      });
       window.open(sellerMessengerUrl, '_blank', 'noopener,noreferrer');
       return;
     }

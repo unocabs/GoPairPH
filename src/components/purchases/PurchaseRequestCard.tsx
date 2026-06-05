@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { formatRelativeDate, formatPrice, formatSize, getPublicUrl, getListingPath } from '@/lib/utils';
 import { buildMessengerUrl } from '@/lib/facebook';
+import { trackMarketplaceAction } from '@/lib/analytics';
 import type { PurchaseRequest, PurchaseRequestStatus, Shoe } from '@/types';
 
 type ConfirmAction = 'accept' | 'complete' | 'cancel';
@@ -61,6 +62,10 @@ export function PurchaseRequestCard({
         throw new Error(body.error ?? 'Failed to update request');
       }
       setStatus(next);
+      trackMarketplaceAction('seller_request_status', {
+        listing_id: listingId,
+        request_status: next,
+      });
       if (next === 'declined') onChanged(request.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update request');
@@ -83,6 +88,10 @@ export function PurchaseRequestCard({
     setError(null);
     const { error: err } = await createClient().rpc('complete_purchase', { p_request_id: request.id });
     if (err) { setError(err.message); setLoading(false); return; }
+    trackMarketplaceAction('seller_request_status', {
+      listing_id: listingId,
+      request_status: 'sold',
+    });
     onChanged(request.id);
   }
 
@@ -92,6 +101,10 @@ export function PurchaseRequestCard({
     const { error: err } = await createClient().rpc('cancel_purchase_acceptance', { p_request_id: request.id });
     if (err) { setError(err.message); setLoading(false); return; }
     setStatus('pending');
+    trackMarketplaceAction('seller_request_status', {
+      listing_id: listingId,
+      request_status: 'reopened',
+    });
     setLoading(false);
   }
 
@@ -113,6 +126,11 @@ export function PurchaseRequestCard({
 
   function handleMessageBuyer() {
     if (buyerMessengerUrl) {
+      trackMarketplaceAction('outbound_click', {
+        destination: 'buyer_messenger',
+        listing_id: listingId,
+        surface: 'purchase_request_card',
+      });
       window.open(buyerMessengerUrl, '_blank', 'noopener,noreferrer');
       return;
     }
