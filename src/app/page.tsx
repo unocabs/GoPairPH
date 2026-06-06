@@ -2,6 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
 import Image from 'next/image';
+import type { Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 import { createClient, createPublicClient } from '@/lib/supabase/server';
 import { getOfferCounts } from '@/lib/offers';
 import { ListingGrid } from '@/components/listings/ListingGrid';
@@ -23,6 +25,35 @@ import {
 } from '@/lib/personalization';
 import type { Profile, Shoe } from '@/types';
 
+const HOME_TITLE = 'Go Pair PH — Buy and Sell Running Shoes';
+const HOME_DESCRIPTION = 'Buy and sell brand-new, pre-loved, and second-hand running shoes from Central Luzon and NCR sellers on Go Pair PH.';
+
+export const metadata: Metadata = {
+  title: { absolute: HOME_TITLE },
+  description: HOME_DESCRIPTION,
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+    url: '/',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: HOME_TITLE,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+    images: ['/og-image.png'],
+  },
+};
+
 async function getCurrentProfile(): Promise<Profile | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -32,7 +63,7 @@ async function getCurrentProfile(): Promise<Profile | null> {
   return (profile as Profile) ?? null;
 }
 
-async function getHomepageListings(): Promise<Shoe[]> {
+const getHomepageListings = unstable_cache(async function getHomepageListings(): Promise<Shoe[]> {
   const supabase = createPublicClient();
   const { data } = await supabase
     .from('shoes')
@@ -50,7 +81,7 @@ async function getHomepageListings(): Promise<Shoe[]> {
       if (aPhoto !== bPhoto) return aPhoto ? -1 : 1;
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-}
+}, ['homepage-listings'], { revalidate: 60 });
 
 function getRecommendedListings(profile: Profile | null, shoes: Shoe[]): Shoe[] {
   if (!profile?.personalized_browse_enabled) return [];
@@ -71,7 +102,7 @@ function getRecommendedListings(profile: Profile | null, shoes: Shoe[]): Shoe[] 
  * with featured_until). Picks the row with the latest featured_until in case
  * an admin accidentally features more than one.
  */
-async function getFeaturedListing(): Promise<Shoe | null> {
+const getFeaturedListing = unstable_cache(async function getFeaturedListing(): Promise<Shoe | null> {
   const supabase = createPublicClient();
   const { data } = await supabase
     .from('shoes')
@@ -83,9 +114,9 @@ async function getFeaturedListing(): Promise<Shoe | null> {
     .limit(1)
     .maybeSingle();
   return (data as Shoe) ?? null;
-}
+}, ['homepage-featured-listing'], { revalidate: 60 });
 
-async function getMarketplaceActivity(): Promise<{
+const getMarketplaceActivity = unstable_cache(async function getMarketplaceActivity(): Promise<{
   newListingsThisWeek: number;
   activePairRequests: number;
   soldOrReservedPairs: number;
@@ -122,7 +153,7 @@ async function getMarketplaceActivity(): Promise<{
     soldOrReservedPairs: soldReservedRes.count ?? 0,
     recentSellers: new Set((recentSellerRes.data ?? []).map(row => row.seller_id)).size,
   };
-}
+}, ['homepage-marketplace-activity'], { revalidate: 60 });
 
 export default async function HomePage() {
   const [profile, homepageShoes, featured, activity] = await Promise.all([
@@ -320,7 +351,7 @@ export default async function HomePage() {
                 Buy and sell running shoes in one focused place
               </h2>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
               <Link
                 href="/buy-and-sell-running-shoes-philippines"
                 className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
@@ -332,6 +363,24 @@ export default async function HomePage() {
                 className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
               >
                 Running shoes Pampanga
+              </Link>
+              <Link
+                href="/price-guide"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
+              >
+                Price Estimator
+              </Link>
+              <Link
+                href="/help/how-to-buy"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
+              >
+                How to Buy
+              </Link>
+              <Link
+                href="/help/how-to-sell"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
+              >
+                How to Sell
               </Link>
             </div>
           </div>

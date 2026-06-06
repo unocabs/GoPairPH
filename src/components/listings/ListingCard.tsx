@@ -315,6 +315,28 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
         </button>
       </div>
 
+      {isOwner && saveCount > 0 && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square">
+          <div
+            className="absolute right-2 top-2 flex h-8 min-w-8 items-center justify-center gap-1 rounded-lg border border-white/15 bg-black/60 px-2 text-white backdrop-blur-sm"
+            title={`${saveCount} ${saveCount === 1 ? 'runner has' : 'runners have'} saved this pair`}
+            aria-label={`${saveCount} ${saveCount === 1 ? 'runner has' : 'runners have'} saved this pair`}
+          >
+            <svg className="h-4 w-4 text-teal-200" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20.8 5.6a5.3 5.3 0 0 0-7.5 0L12 6.9l-1.3-1.3a5.3 5.3 0 1 0-7.5 7.5L12 21l8.8-7.9a5.3 5.3 0 0 0 0-7.5Z"
+              />
+            </svg>
+            <span className="text-[11px] font-bold leading-none tabular-nums">
+              {saveCount > 99 ? '99+' : saveCount}
+            </span>
+          </div>
+        </div>
+      )}
+
       {!isOwner && (
         <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square">
           <div className="pointer-events-auto absolute right-2 top-2">

@@ -17,6 +17,15 @@ type HomeCarouselSlide = {
 
 const slides: ReadonlyArray<HomeCarouselSlide> = [
   {
+    id: 'post-share-win',
+    label: 'Seller campaign',
+    title: 'Post. Share. Win ₱500 GCash.',
+    body: 'List your running shoes on Go Pair PH, share your listing link on Facebook, then submit your entry.',
+    imageSrc: '/home-carousel/post-share-win.png',
+    imageAlt: 'Go Pair PH Post Share Win campaign for running shoe sellers listing and sharing pairs online',
+    ctaHref: 'https://www.facebook.com/share/p/18q3UWFwfU/',
+  },
+  {
     id: 'central-luzon-ncr',
     label: 'Focused marketplace',
     title: 'Buy and sell running shoes nearby',
@@ -42,15 +51,6 @@ const slides: ReadonlyArray<HomeCarouselSlide> = [
     imageSrc: '/home-carousel/shoe-details-one-place.jpg',
     imageAlt: 'Clean Go Pair PH running shoe listing page with photos, size, condition, mileage, price, and location',
     ctaHref: '/help/how-to-sell',
-  },
-  {
-    id: 'post-share-win',
-    label: 'Seller campaign',
-    title: 'Post. Share. Win ₱500 GCash.',
-    body: 'List your running shoes on Go Pair PH, share your listing link on Facebook, then submit your entry.',
-    imageSrc: '/home-carousel/post-share-win.jpg',
-    imageAlt: 'Go Pair PH Post Share Win campaign for running shoe sellers listing and sharing pairs online',
-    ctaHref: '/listings/new',
   },
 ];
 
@@ -173,34 +173,42 @@ export function HomeCarousel() {
               style={trackStyle}
               onTransitionEnd={handleTransitionEnd}
             >
-            {trackSlides.map((slide, index) => (
-              <article
-                key={`${slide.id}-${index}`}
-                className="min-w-0 shrink-0 basis-full overflow-hidden rounded-xl border border-white/[0.08] bg-slate-950 shadow-[0_16px_50px_rgba(0,0,0,0.28)] sm:basis-[calc((100%_-_1rem)/2)]"
-              >
-                <Link
-                  href={slide.ctaHref}
-                  className="block"
-                  aria-label={`${slide.title}. ${slide.body}`}
+            {trackSlides.map((slide, index) => {
+              const isPrimarySlide = index >= baseIndex && index < baseIndex * 2;
+
+              return (
+                <article
+                  key={`${slide.id}-${index}`}
+                  aria-hidden={!isPrimarySlide}
+                  className="min-w-0 shrink-0 basis-full overflow-hidden rounded-xl border border-white/[0.08] bg-slate-950 shadow-[0_16px_50px_rgba(0,0,0,0.28)] sm:basis-[calc((100%_-_1rem)/2)]"
                 >
-                  <div className="relative aspect-[2.45/1] overflow-hidden bg-slate-950 sm:aspect-[2.5/1]">
-                    <Image
-                      src={slide.imageSrc}
-                      alt={slide.imageAlt}
-                      fill
-                      priority={activeIndex === 0 && index === baseIndex}
-                      sizes="(max-width: 640px) 100vw, 50vw"
-                      className="object-cover object-top transition-transform duration-300 hover:scale-[1.015]"
-                    />
-                  </div>
-                  <div className="sr-only">
-                    <p>{slide.label}</p>
-                    <h2>{slide.title}</h2>
-                    <p>{slide.body}</p>
-                  </div>
-                </Link>
-              </article>
-            ))}
+                  <Link
+                    href={slide.ctaHref}
+                    className="block"
+                    aria-label={isPrimarySlide ? `${slide.title}. ${slide.body}` : undefined}
+                    tabIndex={isPrimarySlide ? undefined : -1}
+                  >
+                    <div className="relative aspect-[2.45/1] overflow-hidden bg-slate-950 sm:aspect-[2.5/1]">
+                      <Image
+                        src={slide.imageSrc}
+                        alt={isPrimarySlide ? slide.imageAlt : ''}
+                        fill
+                        priority={activeIndex === 0 && index === baseIndex}
+                        sizes="(max-width: 640px) 100vw, 50vw"
+                        className="object-cover object-top transition-transform duration-300 hover:scale-[1.015]"
+                      />
+                    </div>
+                    {isPrimarySlide && (
+                      <div className="sr-only">
+                        <p>{slide.label}</p>
+                        <h2>{slide.title}</h2>
+                        <p>{slide.body}</p>
+                      </div>
+                    )}
+                  </Link>
+                </article>
+              );
+            })}
             </div>
           </div>
 

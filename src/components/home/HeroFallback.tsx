@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { createPublicClient } from '@/lib/supabase/server';
 
 interface PulseStats {
@@ -30,7 +31,7 @@ function formatKm(km: number): string {
   return km.toString();
 }
 
-async function getPulseStats(): Promise<PulseStats> {
+const getPulseStats = unstable_cache(async function getPulseStats(): Promise<PulseStats> {
   const supabase = createPublicClient();
 
   // Active listings split by type
@@ -90,7 +91,7 @@ async function getPulseStats(): Promise<PulseStats> {
     todayListers: todayListings.length,
     recentAvatars,
   };
-}
+}, ['homepage-pulse-stats'], { revalidate: 60 });
 
 export async function HeroFallback() {
   const stats = await getPulseStats();
