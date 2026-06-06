@@ -342,8 +342,8 @@ export default async function HomePage() {
 
       <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
         <SurfaceCard className="border-white/[0.08] bg-slate-950/55 p-4 sm:p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
+          <div className="space-y-4">
+            <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
                 Popular searches
               </p>
@@ -351,34 +351,34 @@ export default async function HomePage() {
                 Buy and sell running shoes in one focused place
               </h2>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
               <Link
                 href="/buy-and-sell-running-shoes-philippines"
-                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-center text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
               >
                 Running shoes Philippines
               </Link>
               <Link
                 href="/buy-and-sell-running-shoes-pampanga"
-                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-center text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
               >
                 Running shoes Pampanga
               </Link>
               <Link
                 href="/price-guide"
-                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-center text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
               >
                 Price Estimator
               </Link>
               <Link
                 href="/help/how-to-buy"
-                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-center text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
               >
                 How to Buy
               </Link>
               <Link
                 href="/help/how-to-sell"
-                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-center text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
               >
                 How to Sell
               </Link>
