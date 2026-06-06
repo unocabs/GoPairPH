@@ -61,6 +61,7 @@ async function loadOpenLeadReports(): Promise<WishlistOfferReport[]> {
 
 async function loadAdminData() {
   const supabase = createClient();
+  const service = createServiceClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
@@ -73,7 +74,7 @@ async function loadAdminData() {
   if (!profile?.is_admin) return null;
 
   const viewWindow = getDashboardViewWindow();
-  const [pendingRes, recentRes, verifiedRes, shopsRes, profilesRes, listingViews, leadReports] = await Promise.all([
+  const [pendingRes, recentRes, verifiedRes, shopsRes, profilesRes, listingViews, leadReports, siteSettingsRes] = await Promise.all([
     supabase
       .from('verification_requests')
       .select('*, profiles:profiles!user_id(*)')
@@ -100,6 +101,11 @@ async function loadAdminData() {
       .order('display_name'),
     getListingViewSummaries({ ...viewWindow, limit: 100 }),
     loadOpenLeadReports(),
+    service
+      .from('site_settings')
+      .select('show_active_visitors_publicly')
+      .eq('id', true)
+      .maybeSingle(),
   ]);
 
   return {
@@ -110,6 +116,9 @@ async function loadAdminData() {
     profiles: (profilesRes.data as Profile[]) ?? [],
     listingViews,
     leadReports,
+    siteSettings: {
+      showActiveVisitorsPublicly: Boolean(siteSettingsRes.data?.show_active_visitors_publicly),
+    },
     viewWindow,
   };
 }

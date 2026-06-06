@@ -8,6 +8,7 @@ import { SessionProvider } from '@/components/auth/SessionProvider';
 import { InAppBrowserRedirect } from '@/components/layout/InAppBrowserRedirect';
 import { AnnouncementBar } from '@/components/layout/AnnouncementBar';
 import { RouteLoadingIndicator } from '@/components/layout/RouteLoadingIndicator';
+import { VisitorPresenceTracker } from '@/components/layout/VisitorPresenceTracker';
 import { SOCIAL_URLS } from '@/lib/socialLinks';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -172,6 +173,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <SessionProvider>
           <InAppBrowserRedirect />
+          <VisitorPresenceTracker />
           <AnnouncementBar />
           <Navbar />
           <main className="flex-1">

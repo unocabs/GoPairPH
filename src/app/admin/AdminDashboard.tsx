@@ -19,10 +19,11 @@ interface AdminDashboardProps {
   profiles: Profile[];
   listingViews: ListingViewSummary[];
   leadReports: WishlistOfferReport[];
+  siteSettings: { showActiveVisitorsPublicly: boolean };
   viewWindow: { startDate: string; endDate: string };
 }
 
-type Tab = 'pending' | 'recent' | 'verified' | 'shops' | 'views' | 'leadReports';
+type Tab = 'pending' | 'recent' | 'verified' | 'shops' | 'views' | 'leadReports' | 'settings';
 const ACCEPTED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 const LEAD_REPORT_REASON_LABELS: Record<WishlistOfferReportReason, string> = {
@@ -77,7 +78,17 @@ async function convertLogoToWebP(file: File): Promise<Blob> {
   });
 }
 
-export function AdminDashboard({ pending, recent, verified, shops, profiles, listingViews, leadReports, viewWindow }: AdminDashboardProps) {
+export function AdminDashboard({
+  pending,
+  recent,
+  verified,
+  shops,
+  profiles,
+  listingViews,
+  leadReports,
+  siteSettings,
+  viewWindow,
+}: AdminDashboardProps) {
   const [tab, setTab] = useState<Tab>('views');
 
   return (
@@ -91,6 +102,7 @@ export function AdminDashboard({ pending, recent, verified, shops, profiles, lis
           { key: 'verified', label: `Verified users (${verified.length})` },
           { key: 'shops', label: `Shops (${shops.length})` },
           { key: 'leadReports', label: `Lead reports (${leadReports.length})` },
+          { key: 'settings', label: 'Settings' },
         ] as const).map(({ key, label }) => (
           <button
             key={key}
@@ -110,6 +122,76 @@ export function AdminDashboard({ pending, recent, verified, shops, profiles, lis
       {tab === 'shops' && <ShopsPanel shops={shops} profiles={profiles} />}
       {tab === 'views' && <ListingViewsPanel listings={listingViews} viewWindow={viewWindow} />}
       {tab === 'leadReports' && <LeadReportsPanel reports={leadReports} />}
+      {tab === 'settings' && <AdminSettingsPanel initialShowActiveVisitorsPublicly={siteSettings.showActiveVisitorsPublicly} />}
+    </div>
+  );
+}
+
+function AdminSettingsPanel({
+  initialShowActiveVisitorsPublicly,
+}: {
+  initialShowActiveVisitorsPublicly: boolean;
+}) {
+  const [showPublicly, setShowPublicly] = useState(initialShowActiveVisitorsPublicly);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+
+  async function handleToggle(event: ChangeEvent<HTMLInputElement>) {
+    const next = event.target.checked;
+    setShowPublicly(next);
+    setSaving(true);
+    setMessage('');
+
+    try {
+      const response = await fetch('/api/visitor-presence', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ showActiveVisitorsPublicly: next }),
+      });
+
+      if (!response.ok) throw new Error('Could not update setting.');
+      setMessage(next ? 'Active visitor count is now public.' : 'Active visitor count is now admin-only.');
+    } catch {
+      setShowPublicly(!next);
+      setMessage('Could not update this setting. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+        <p className="text-sm font-semibold text-gray-100">Public activity signals</p>
+        <p className="mt-1 text-xs leading-5 text-gray-500">
+          Admins always see the active visitor count in the navbar. Turn this on only when you want everyone to see it.
+        </p>
+      </div>
+
+      <label className="flex flex-col gap-4 rounded-xl border border-gray-800 bg-gray-900 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-semibold text-gray-100">Show active visitors publicly</p>
+          <p className="mt-1 text-sm leading-6 text-gray-500">
+            Visitors are counted approximately when their browser has been active in the last 5 minutes.
+          </p>
+        </div>
+        <span className="inline-flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-400">{showPublicly ? 'Public' : 'Admin-only'}</span>
+          <input
+            type="checkbox"
+            checked={showPublicly}
+            onChange={handleToggle}
+            disabled={saving}
+            className="h-5 w-5 rounded border-gray-700 bg-gray-950 text-teal-500 focus:ring-teal-500"
+          />
+        </span>
+      </label>
+
+      {message && (
+        <p className={`text-sm ${message.startsWith('Could not') ? 'text-red-300' : 'text-teal-300'}`}>
+          {message}
+        </p>
+      )}
     </div>
   );
 }
