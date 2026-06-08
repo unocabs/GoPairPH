@@ -23,7 +23,7 @@ interface AdminDashboardProps {
   viewWindow: { startDate: string; endDate: string };
 }
 
-type Tab = 'pending' | 'recent' | 'verified' | 'shops' | 'views' | 'leadReports' | 'settings';
+type Tab = 'pending' | 'recent' | 'verified' | 'shops' | 'views' | 'leadReports' | 'emailBlast' | 'settings';
 const ACCEPTED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 const LEAD_REPORT_REASON_LABELS: Record<WishlistOfferReportReason, string> = {
@@ -34,6 +34,17 @@ const LEAD_REPORT_REASON_LABELS: Record<WishlistOfferReportReason, string> = {
   spam_or_duplicate: 'Spam or duplicate',
   other: 'Other',
 };
+
+interface EmailBlastPreview {
+  blastId: string;
+  subject: string;
+  previewText: string;
+  siteUrl: string;
+  recipientCount: number;
+  confirmationPhrase: string;
+  sample: Array<{ displayName: string | null; email: string }>;
+  text: string;
+}
 
 async function convertLogoToWebP(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -102,6 +113,7 @@ export function AdminDashboard({
           { key: 'verified', label: `Verified users (${verified.length})` },
           { key: 'shops', label: `Shops (${shops.length})` },
           { key: 'leadReports', label: `Lead reports (${leadReports.length})` },
+          { key: 'emailBlast', label: 'Email blast' },
           { key: 'settings', label: 'Settings' },
         ] as const).map(({ key, label }) => (
           <button
@@ -122,7 +134,204 @@ export function AdminDashboard({
       {tab === 'shops' && <ShopsPanel shops={shops} profiles={profiles} />}
       {tab === 'views' && <ListingViewsPanel listings={listingViews} viewWindow={viewWindow} />}
       {tab === 'leadReports' && <LeadReportsPanel reports={leadReports} />}
+      {tab === 'emailBlast' && <EmailBlastPanel />}
       {tab === 'settings' && <AdminSettingsPanel initialShowActiveVisitorsPublicly={siteSettings.showActiveVisitorsPublicly} />}
+    </div>
+  );
+}
+
+function EmailBlastPanel() {
+  const [preview, setPreview] = useState<EmailBlastPreview | null>(null);
+  const [campaign, setCampaign] = useState<'correction' | 'reactivation'>('correction');
+  const [testEmail, setTestEmail] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  async function requestBlast(mode: 'preview' | 'test' | 'send') {
+    setLoading(true);
+    setMessage('');
+    setError('');
+
+    try {
+      const response = await fetch('/api/admin/email-blasts/reactivation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode,
+          campaign,
+          testEmail: mode === 'test' ? testEmail : undefined,
+          confirm: mode === 'send' ? confirmation : undefined,
+        }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json.error ?? 'Request failed');
+
+      if (mode === 'preview') {
+        setPreview(json as EmailBlastPreview);
+        setConfirmation('');
+        setMessage('Blast preview loaded.');
+      } else if (mode === 'test') {
+        setMessage(`Test email sent to ${testEmail}.`);
+      } else {
+        setMessage(`Blast sent to ${json.sent ?? 0} of ${json.recipientCount ?? 0} users.`);
+        setConfirmation('');
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handlePreview(event: FormEvent) {
+    event.preventDefault();
+    requestBlast('preview');
+  }
+
+  function handleTest(event: FormEvent) {
+    event.preventDefault();
+    requestBlast('test');
+  }
+
+  function handleSend(event: FormEvent) {
+    event.preventDefault();
+    requestBlast('send');
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-xl border border-amber-500/25 bg-amber-950/20 p-4">
+        <p className="text-sm font-semibold text-amber-100">One-time reactivation blast</p>
+        <p className="mt-1 text-sm leading-6 text-amber-100/75">
+          Preview first, send yourself a test, then type the exact confirmation phrase before sending to all users.
+          Each recipient gets a private email, not a shared recipient list.
+        </p>
+      </div>
+
+      <form onSubmit={handlePreview} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="font-semibold text-gray-100">Campaign preview</p>
+            <p className="mt-1 text-sm text-gray-500">Loads subject, public URL, recipient count, and a masked recipient sample.</p>
+          </div>
+          <label className="block">
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Campaign</span>
+            <select
+              value={campaign}
+              onChange={event => {
+                setCampaign(event.target.value as 'correction' | 'reactivation');
+                setPreview(null);
+                setConfirmation('');
+                setMessage('');
+                setError('');
+              }}
+              className="min-h-10 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100 outline-none focus:border-teal-500 sm:max-w-md"
+            >
+              <option value="correction">Corrected link follow-up</option>
+              <option value="reactivation">Original reactivation blast</option>
+            </select>
+          </label>
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-500 disabled:opacity-60"
+            >
+              {loading ? 'Loading...' : 'Preview blast'}
+            </button>
+          </div>
+        </div>
+      </form>
+
+      {preview && (
+        <div className="space-y-4 rounded-xl border border-gray-800 bg-gray-900 p-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-300">Subject</p>
+            <p className="mt-1 text-lg font-semibold text-gray-100">{preview.subject}</p>
+            <p className="mt-1 text-sm text-gray-500">{preview.previewText}</p>
+            <p className="mt-2 text-xs text-gray-500">
+              Public URL: <span className="font-mono text-teal-200">{preview.siteUrl}</span>
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Recipients</p>
+              <p className="mt-1 text-2xl font-bold text-gray-100">{preview.recipientCount}</p>
+            </div>
+            <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Confirm Phrase</p>
+              <p className="mt-1 break-words font-mono text-sm text-amber-200">{preview.confirmationPhrase}</p>
+            </div>
+          </div>
+
+          {preview.sample.length > 0 && (
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Masked sample</p>
+              <div className="flex flex-wrap gap-2">
+                {preview.sample.map(item => (
+                  <span key={item.email} className="rounded-full border border-gray-800 bg-gray-950 px-2.5 py-1 text-xs text-gray-300">
+                    {item.displayName ? `${item.displayName} · ` : ''}{item.email}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border border-gray-800 bg-gray-950 p-4 text-sm leading-6 text-gray-300">
+            {preview.text}
+          </pre>
+        </div>
+      )}
+
+      <form onSubmit={handleTest} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+        <label className="block text-sm font-semibold text-gray-100" htmlFor="test-email">Send test email</label>
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+          <input
+            id="test-email"
+            type="email"
+            value={testEmail}
+            onChange={event => setTestEmail(event.target.value)}
+            placeholder="you@example.com"
+            className="min-h-10 flex-1 rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100 outline-none focus:border-teal-500"
+          />
+          <button
+            type="submit"
+            disabled={loading || !testEmail}
+            className="rounded-lg border border-teal-700 bg-teal-950 px-4 py-2 text-sm font-semibold text-teal-200 transition-colors hover:border-teal-500 hover:bg-teal-900 disabled:opacity-60"
+          >
+            Send test
+          </button>
+        </div>
+      </form>
+
+      <form onSubmit={handleSend} className="rounded-xl border border-red-500/25 bg-red-950/15 p-4">
+        <label className="block text-sm font-semibold text-red-100" htmlFor="blast-confirmation">Send to all users</label>
+        <p className="mt-1 text-sm leading-6 text-red-100/70">
+          Type the confirmation phrase exactly. This action sends the one-time blast immediately.
+        </p>
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+          <input
+            id="blast-confirmation"
+            value={confirmation}
+            onChange={event => setConfirmation(event.target.value)}
+            placeholder={preview?.confirmationPhrase ?? 'Preview first to see the confirmation phrase'}
+            className="min-h-10 flex-1 rounded-lg border border-red-900 bg-gray-950 px-3 py-2 text-sm text-gray-100 outline-none focus:border-red-500"
+          />
+          <button
+            type="submit"
+            disabled={loading || !preview || confirmation !== preview.confirmationPhrase}
+            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-500 disabled:opacity-60"
+          >
+            Send blast
+          </button>
+        </div>
+      </form>
+
+      {message && <p className="text-sm text-teal-300">{message}</p>}
+      {error && <p className="text-sm text-red-300">{error}</p>}
     </div>
   );
 }

@@ -382,45 +382,6 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
       {/* Step 1 */}
       {step === 1 && (
         <form onSubmit={handleSubmit(onDetailsSubmit)} className="space-y-5">
-          <div className="rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 sm:p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-300">Live preview</p>
-                <h2 className="mt-1 truncate text-base font-bold text-gray-100">{previewTitle}</h2>
-                <p className="mt-0.5 truncate text-xs text-gray-500">{color || 'Add colorway'}</p>
-              </div>
-              <div className="rounded-lg bg-teal-400/10 px-3 py-2 sm:shrink-0 sm:text-right">
-                <p className="text-[11px] uppercase tracking-[0.12em] text-teal-200">Price</p>
-                <p className="text-sm font-bold text-teal-100">{previewPrice}</p>
-              </div>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full border border-white/[0.08] bg-slate-900/70 px-2.5 py-1 text-gray-300">
-                {CONDITIONS[condition] ?? 'Condition'}
-              </span>
-              <span className="rounded-full border border-white/[0.08] bg-slate-900/70 px-2.5 py-1 text-gray-300">
-                {previewSize}
-              </span>
-              <span className="rounded-full border border-white/[0.08] bg-slate-900/70 px-2.5 py-1 text-gray-300">
-                {listingType === 'donate' ? 'Donate' : 'For Sale'}
-              </span>
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-              {readinessItems.map((item) => (
-                <div
-                  key={item.label}
-                  className={`rounded-lg border px-2 py-1.5 text-center text-[11px] font-medium ${
-                    item.done
-                      ? 'border-teal-400/25 bg-teal-400/10 text-teal-100'
-                      : 'border-white/[0.08] bg-slate-950/45 text-gray-500'
-                  }`}
-                >
-                  {item.label}
-                </div>
-              ))}
-            </div>
-          </div>
-
           <div className="rounded-xl border border-teal-500/20 bg-teal-500/[0.04] p-4">
             <p className="text-sm font-semibold text-gray-100">Step 1: add the details buyers need first.</p>
             <p className="mt-1 text-xs leading-5 text-gray-500">
@@ -599,6 +560,44 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
           <Button type="submit" size="lg" loading={submitting} className="w-full">
             {isGuest ? 'Save details and sign in →' : 'Continue to Photos →'}
           </Button>
+          <div className="rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 sm:p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-300">Live preview</p>
+                <h2 className="mt-1 truncate text-base font-bold text-gray-100">{previewTitle}</h2>
+                <p className="mt-0.5 truncate text-xs text-gray-500">{color || 'Add colorway'}</p>
+              </div>
+              <div className="rounded-lg bg-teal-400/10 px-3 py-2 sm:shrink-0 sm:text-right">
+                <p className="text-[11px] uppercase tracking-[0.12em] text-teal-200">Price</p>
+                <p className="text-sm font-bold text-teal-100">{previewPrice}</p>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full border border-white/[0.08] bg-slate-900/70 px-2.5 py-1 text-gray-300">
+                {CONDITIONS[condition] ?? 'Condition'}
+              </span>
+              <span className="rounded-full border border-white/[0.08] bg-slate-900/70 px-2.5 py-1 text-gray-300">
+                {previewSize}
+              </span>
+              <span className="rounded-full border border-white/[0.08] bg-slate-900/70 px-2.5 py-1 text-gray-300">
+                {listingType === 'donate' ? 'Donate' : 'For Sale'}
+              </span>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              {readinessItems.map((item) => (
+                <div
+                  key={item.label}
+                  className={`rounded-lg border px-2 py-1.5 text-center text-[11px] font-medium ${
+                    item.done
+                      ? 'border-teal-400/25 bg-teal-400/10 text-teal-100'
+                      : 'border-white/[0.08] bg-slate-950/45 text-gray-500'
+                  }`}
+                >
+                  {item.label}
+                </div>
+              ))}
+            </div>
+          </div>
           {isGuest && (
             <p className="-mt-2 text-center text-xs leading-5 text-gray-500">
               Your details stay in this browser. After sign-in, you&apos;ll continue with photo upload.

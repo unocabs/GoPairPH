@@ -2,7 +2,7 @@ import { Resend } from 'resend';
 
 let cached: Resend | null = null;
 
-function getClient(): Resend | null {
+export function getResendClient(): Resend | null {
   const key = process.env.RESEND_API_KEY;
   if (!key) return null;
   if (!cached) cached = new Resend(key);
@@ -16,7 +16,7 @@ interface SendEmailArgs {
 }
 
 export async function sendEmail({ to, subject, html }: SendEmailArgs): Promise<void> {
-  const client = getClient();
+  const client = getResendClient();
   if (!client) {
     console.warn('[resend] RESEND_API_KEY not set — skipping email send');
     return;
