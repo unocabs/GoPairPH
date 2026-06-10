@@ -4,10 +4,10 @@ import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { formatPrice, formatRelativeDate, getPublicUrl } from '@/lib/utils';
+import { formatCondition, formatListingName, formatPrice, formatRelativeDate, formatSize, getListingPath, getPublicUrl } from '@/lib/utils';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import type { ListingViewSummary } from '@/lib/listingViews';
-import type { VerificationRequest, Profile, Shop, ShopStatus, WishlistOfferReport, WishlistOfferReportReason } from '@/types';
+import type { VerificationRequest, Profile, Shoe, Shop, ShopStatus, WishlistOfferReport, WishlistOfferReportReason } from '@/types';
 
 type ShopWithOwner = Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location'> | null };
 
@@ -17,6 +17,7 @@ interface AdminDashboardProps {
   verified: Profile[];
   shops: ShopWithOwner[];
   profiles: Profile[];
+  soldListings: Shoe[];
   listingViews: ListingViewSummary[];
   leadReports: WishlistOfferReport[];
   siteSettings: {
@@ -26,7 +27,7 @@ interface AdminDashboardProps {
   viewWindow: { startDate: string; endDate: string };
 }
 
-type Tab = 'pending' | 'recent' | 'verified' | 'shops' | 'views' | 'leadReports' | 'emailBlast' | 'settings';
+type Tab = 'pending' | 'recent' | 'verified' | 'shops' | 'soldListings' | 'views' | 'leadReports' | 'emailBlast' | 'settings';
 const ACCEPTED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 const LEAD_REPORT_REASON_LABELS: Record<WishlistOfferReportReason, string> = {
@@ -98,6 +99,7 @@ export function AdminDashboard({
   verified,
   shops,
   profiles,
+  soldListings,
   listingViews,
   leadReports,
   siteSettings,
@@ -115,6 +117,7 @@ export function AdminDashboard({
           { key: 'recent', label: `Recent reviews` },
           { key: 'verified', label: `Verified users (${verified.length})` },
           { key: 'shops', label: `Shops (${shops.length})` },
+          { key: 'soldListings', label: `Closed listings (${soldListings.length})` },
           { key: 'leadReports', label: `Lead reports (${leadReports.length})` },
           { key: 'emailBlast', label: 'Email blast' },
           { key: 'settings', label: 'Settings' },
@@ -135,6 +138,7 @@ export function AdminDashboard({
       {tab === 'recent' && <RecentList requests={recent} />}
       {tab === 'verified' && <VerifiedList users={verified} />}
       {tab === 'shops' && <ShopsPanel shops={shops} profiles={profiles} />}
+      {tab === 'soldListings' && <SoldListingsPanel listings={soldListings} />}
       {tab === 'views' && <ListingViewsPanel listings={listingViews} viewWindow={viewWindow} />}
       {tab === 'leadReports' && <LeadReportsPanel reports={leadReports} />}
       {tab === 'emailBlast' && <EmailBlastPanel />}
@@ -460,6 +464,87 @@ function getManilaDateString(date = new Date()): string {
   }).formatToParts(date);
   const value = (type: string) => parts.find(part => part.type === type)?.value ?? '';
   return `${value('year')}-${value('month')}-${value('day')}`;
+}
+
+const CLOSED_LISTING_STATUS_LABELS: Record<Shoe['status'], string> = {
+  active: 'Active',
+  reserved: 'Reserved',
+  sold: 'Sold',
+  donated: 'Donated',
+  archived: 'Archived',
+};
+
+function SoldListingsPanel({ listings }: { listings: Shoe[] }) {
+  if (listings.length === 0) {
+    return (
+      <div className="rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
+        <p className="text-gray-500">No closed listings found yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+        <p className="text-sm font-semibold text-gray-100">Recent closed listings</p>
+        <p className="mt-1 text-xs text-gray-500">
+          Showing the latest 10 sold, reserved, or donated listings. This matches the homepage activity count.
+        </p>
+      </div>
+
+      <div className="grid gap-3">
+        {listings.map(listing => {
+          const seller = listing.profiles;
+          const size = formatSize(listing.size_eu, listing.size_us, listing.size_cm, listing.us_size_type);
+
+          return (
+            <div key={listing.id} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-teal-800 bg-teal-950 px-2 py-0.5 text-xs font-semibold text-teal-300">
+                      {CLOSED_LISTING_STATUS_LABELS[listing.status] ?? listing.status}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {formatRelativeDate(listing.updated_at)}
+                    </span>
+                  </div>
+
+                  <Link
+                    href={getListingPath(listing)}
+                    target="_blank"
+                    className="mt-2 block font-semibold text-gray-100 hover:text-teal-400"
+                  >
+                    {formatListingName(listing.brand, listing.model)}
+                  </Link>
+
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
+                    {size ? <span>{size}</span> : null}
+                    <span>{formatCondition(listing.condition)}</span>
+                    {seller ? (
+                      <span>
+                        Seller: {seller.display_name}
+                        {seller.location ? ` · ${seller.location}` : ''}
+                      </span>
+                    ) : (
+                      <span>Seller unavailable</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="shrink-0 rounded-lg border border-gray-800 bg-gray-950 px-3 py-2 text-left lg:text-right">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Price</p>
+                  <p className="text-lg font-bold text-teal-200">
+                    {listing.price_php != null ? formatPrice(listing.price_php) : 'No price'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 function ListingViewsPanel({

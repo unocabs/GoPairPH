@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { AdminDashboard } from './AdminDashboard';
 import { getDashboardViewWindow, getListingViewSummaries } from '@/lib/listingViews';
-import type { VerificationRequest, Profile, Shop, WishlistItem, WishlistOffer, WishlistOfferReport } from '@/types';
+import type { VerificationRequest, Profile, Shoe, Shop, WishlistItem, WishlistOffer, WishlistOfferReport } from '@/types';
 
 type PairRequestSummary = Pick<WishlistItem, 'id' | 'brand' | 'model'>;
 
@@ -74,7 +74,7 @@ async function loadAdminData() {
   if (!profile?.is_admin) return null;
 
   const viewWindow = getDashboardViewWindow();
-  const [pendingRes, recentRes, verifiedRes, shopsRes, profilesRes, listingViews, leadReports, siteSettingsRes] = await Promise.all([
+  const [pendingRes, recentRes, verifiedRes, shopsRes, profilesRes, soldListingsRes, listingViews, leadReports, siteSettingsRes] = await Promise.all([
     supabase
       .from('verification_requests')
       .select('*, profiles:profiles!user_id(*)')
@@ -99,6 +99,12 @@ async function loadAdminData() {
       .from('profiles')
       .select('id, user_id, display_name, location, avatar_url, fb_username, is_verified, is_admin, created_at, updated_at')
       .order('display_name'),
+    service
+      .from('shoes')
+      .select('id, slug, seller_id, brand, model, size_eu, size_us, size_cm, us_size_type, color, condition, mileage_km, listing_type, price_php, is_negotiable, description, status, created_at, updated_at, profiles!shoes_seller_id_fkey(id, display_name, location, avatar_url, fb_username, is_verified)')
+      .in('status', ['sold', 'reserved', 'donated'])
+      .order('updated_at', { ascending: false })
+      .limit(10),
     getListingViewSummaries({ ...viewWindow, limit: 100 }),
     loadOpenLeadReports(),
     service
@@ -114,6 +120,7 @@ async function loadAdminData() {
     verified: (verifiedRes.data as Profile[]) ?? [],
     shops: (shopsRes.data as (Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location'> | null })[]) ?? [],
     profiles: (profilesRes.data as Profile[]) ?? [],
+    soldListings: ((soldListingsRes.data ?? []) as unknown as Shoe[]),
     listingViews,
     leadReports,
     siteSettings: {
