@@ -19,7 +19,10 @@ interface AdminDashboardProps {
   profiles: Profile[];
   listingViews: ListingViewSummary[];
   leadReports: WishlistOfferReport[];
-  siteSettings: { showActiveVisitorsPublicly: boolean };
+  siteSettings: {
+    showActiveVisitorsPublicly: boolean;
+    showHomepageActivityPublicly: boolean;
+  };
   viewWindow: { startDate: string; endDate: string };
 }
 
@@ -135,7 +138,12 @@ export function AdminDashboard({
       {tab === 'views' && <ListingViewsPanel listings={listingViews} viewWindow={viewWindow} />}
       {tab === 'leadReports' && <LeadReportsPanel reports={leadReports} />}
       {tab === 'emailBlast' && <EmailBlastPanel />}
-      {tab === 'settings' && <AdminSettingsPanel initialShowActiveVisitorsPublicly={siteSettings.showActiveVisitorsPublicly} />}
+      {tab === 'settings' && (
+        <AdminSettingsPanel
+          initialShowActiveVisitorsPublicly={siteSettings.showActiveVisitorsPublicly}
+          initialShowHomepageActivityPublicly={siteSettings.showHomepageActivityPublicly}
+        />
+      )}
     </div>
   );
 }
@@ -338,33 +346,45 @@ function EmailBlastPanel() {
 
 function AdminSettingsPanel({
   initialShowActiveVisitorsPublicly,
+  initialShowHomepageActivityPublicly,
 }: {
   initialShowActiveVisitorsPublicly: boolean;
+  initialShowHomepageActivityPublicly: boolean;
 }) {
-  const [showPublicly, setShowPublicly] = useState(initialShowActiveVisitorsPublicly);
-  const [saving, setSaving] = useState(false);
+  const [settings, setSettings] = useState({
+    activeVisitors: initialShowActiveVisitorsPublicly,
+    homepageActivity: initialShowHomepageActivityPublicly,
+  });
+  const [savingKey, setSavingKey] = useState<'activeVisitors' | 'homepageActivity' | null>(null);
   const [message, setMessage] = useState('');
 
-  async function handleToggle(event: ChangeEvent<HTMLInputElement>) {
-    const next = event.target.checked;
-    setShowPublicly(next);
-    setSaving(true);
+  async function handleToggle(key: 'activeVisitors' | 'homepageActivity', next: boolean) {
+    setSettings(current => ({ ...current, [key]: next }));
+    setSavingKey(key);
     setMessage('');
 
     try {
       const response = await fetch('/api/visitor-presence', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ showActiveVisitorsPublicly: next }),
+        body: JSON.stringify(
+          key === 'activeVisitors'
+            ? { showActiveVisitorsPublicly: next }
+            : { showHomepageActivityPublicly: next }
+        ),
       });
 
       if (!response.ok) throw new Error('Could not update setting.');
-      setMessage(next ? 'Active visitor count is now public.' : 'Active visitor count is now admin-only.');
+      setMessage(
+        key === 'activeVisitors'
+          ? (next ? 'Active visitor count is now public.' : 'Active visitor count is now admin-only.')
+          : (next ? 'Homepage activity stats are now public.' : 'Homepage activity stats are now admin-only.')
+      );
     } catch {
-      setShowPublicly(!next);
+      setSettings(current => ({ ...current, [key]: !next }));
       setMessage('Could not update this setting. Please try again.');
     } finally {
-      setSaving(false);
+      setSavingKey(null);
     }
   }
 
@@ -373,7 +393,7 @@ function AdminSettingsPanel({
       <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
         <p className="text-sm font-semibold text-gray-100">Public activity signals</p>
         <p className="mt-1 text-xs leading-5 text-gray-500">
-          Admins always see the active visitor count in the navbar. Turn this on only when you want everyone to see it.
+          Admins always see these signals. Turn them on publicly only when the numbers are strong enough to build trust.
         </p>
       </div>
 
@@ -385,12 +405,31 @@ function AdminSettingsPanel({
           </p>
         </div>
         <span className="inline-flex items-center gap-3">
-          <span className="text-sm font-medium text-gray-400">{showPublicly ? 'Public' : 'Admin-only'}</span>
+          <span className="text-sm font-medium text-gray-400">{settings.activeVisitors ? 'Public' : 'Admin-only'}</span>
           <input
             type="checkbox"
-            checked={showPublicly}
-            onChange={handleToggle}
-            disabled={saving}
+            checked={settings.activeVisitors}
+            onChange={(event) => handleToggle('activeVisitors', event.target.checked)}
+            disabled={savingKey === 'activeVisitors'}
+            className="h-5 w-5 rounded border-gray-700 bg-gray-950 text-teal-500 focus:ring-teal-500"
+          />
+        </span>
+      </label>
+
+      <label className="flex flex-col gap-4 rounded-xl border border-gray-800 bg-gray-900 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-semibold text-gray-100">Show homepage activity stats publicly</p>
+          <p className="mt-1 text-sm leading-6 text-gray-500">
+            Controls the four homepage count cards for new listings, active sellers, looking-for posts, and completed pairs.
+          </p>
+        </div>
+        <span className="inline-flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-400">{settings.homepageActivity ? 'Public' : 'Admin-only'}</span>
+          <input
+            type="checkbox"
+            checked={settings.homepageActivity}
+            onChange={(event) => handleToggle('homepageActivity', event.target.checked)}
+            disabled={savingKey === 'homepageActivity'}
             className="h-5 w-5 rounded border-gray-700 bg-gray-950 text-teal-500 focus:ring-teal-500"
           />
         </span>

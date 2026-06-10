@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
-import { createClient, createPublicClient } from '@/lib/supabase/server';
+import { createClient, createPublicClient, createServiceClient } from '@/lib/supabase/server';
 import { getOfferCounts } from '@/lib/offers';
 import { ListingGrid } from '@/components/listings/ListingGrid';
 import { Button } from '@/components/ui/Button';
@@ -27,6 +27,10 @@ import type { Profile, Shoe } from '@/types';
 
 const HOME_TITLE = 'Go Pair PH — Buy and Sell Running Shoes';
 const HOME_DESCRIPTION = 'Buy and sell brand-new, pre-loved, and second-hand running shoes from Central Luzon and NCR sellers on Go Pair PH.';
+
+type HomepageSiteSettings = {
+  showHomepageActivityPublicly: boolean;
+};
 
 export const metadata: Metadata = {
   title: { absolute: HOME_TITLE },
@@ -155,12 +159,26 @@ const getMarketplaceActivity = unstable_cache(async function getMarketplaceActiv
   };
 }, ['homepage-marketplace-activity'], { revalidate: 60 });
 
+async function getHomepageSiteSettings(): Promise<HomepageSiteSettings> {
+  const service = createServiceClient();
+  const { data } = await service
+    .from('site_settings')
+    .select('show_homepage_activity_publicly')
+    .eq('id', true)
+    .maybeSingle();
+
+  return {
+    showHomepageActivityPublicly: Boolean(data?.show_homepage_activity_publicly),
+  };
+}
+
 export default async function HomePage() {
-  const [profile, homepageShoes, featured, activity] = await Promise.all([
+  const [profile, homepageShoes, featured, activity, siteSettings] = await Promise.all([
     getCurrentProfile(),
     getHomepageListings(),
     getFeaturedListing(),
     getMarketplaceActivity(),
+    getHomepageSiteSettings(),
   ]);
   const recommendedShoes = getRecommendedListings(profile, homepageShoes).slice(0, 4);
   const recommendedIds = new Set(recommendedShoes.map((shoe) => shoe.id));
@@ -176,6 +194,7 @@ export default async function HomePage() {
   displayedShoes.forEach((shoe) => {
     if (profile) personalizationBadges[shoe.id] = getPersonalizationBadges(profile, shoe);
   });
+  const showMarketplaceActivity = Boolean(profile?.is_admin) || siteSettings.showHomepageActivityPublicly;
 
   return (
     <div>
@@ -256,27 +275,28 @@ export default async function HomePage() {
 
       <HomeCarousel />
 
-      {/* Marketplace activity */}
-      <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {[
-            { label: 'New running shoes for sale this week', value: activity.newListingsThisWeek },
-            { label: 'Recent active sellers', value: activity.recentSellers },
-            { label: 'Looking for shoes', value: activity.activePairRequests },
-            { label: 'Sold, reserved, or donated', value: activity.soldOrReservedPairs },
-          ].map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-slate-950/55 px-3 py-2.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] sm:px-4 sm:py-3">
-              <p className="text-lg font-bold tabular-nums text-gray-100 sm:text-xl">
-                {stat.value.toLocaleString()}
-                {stat.label === 'New running shoes for sale this week' && stat.value >= 2 ? (
-                  <span className="ml-1" aria-label="celebration">🎉</span>
-                ) : null}
-              </p>
-              <p className="mt-0.5 text-[11px] leading-snug text-gray-500 sm:text-xs">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {showMarketplaceActivity && (
+        <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {[
+              { label: 'New running shoes for sale this week', value: activity.newListingsThisWeek },
+              { label: 'Recent active sellers', value: activity.recentSellers },
+              { label: 'Looking for shoes', value: activity.activePairRequests },
+              { label: 'Sold, reserved, or donated', value: activity.soldOrReservedPairs },
+            ].map((stat) => (
+              <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-slate-950/55 px-3 py-2.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] sm:px-4 sm:py-3">
+                <p className="text-lg font-bold tabular-nums text-gray-100 sm:text-xl">
+                  {stat.value.toLocaleString()}
+                  {stat.label === 'New running shoes for sale this week' && stat.value >= 2 ? (
+                    <span className="ml-1" aria-label="celebration">🎉</span>
+                  ) : null}
+                </p>
+                <p className="mt-0.5 text-[11px] leading-snug text-gray-500 sm:text-xs">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <FirstListingNudge />
 

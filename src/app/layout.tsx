@@ -9,6 +9,7 @@ import { InAppBrowserRedirect } from '@/components/layout/InAppBrowserRedirect';
 import { AnnouncementBar } from '@/components/layout/AnnouncementBar';
 import { RouteLoadingIndicator } from '@/components/layout/RouteLoadingIndicator';
 import { VisitorPresenceTracker } from '@/components/layout/VisitorPresenceTracker';
+import { BuySellFloatingAction } from '@/components/layout/BuySellFloatingAction';
 import { SOCIAL_URLS } from '@/lib/socialLinks';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -180,6 +181,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </main>
           <Footer />
+          <BuySellFloatingAction />
           <RouteLoadingIndicator />
         </SessionProvider>
       </body>

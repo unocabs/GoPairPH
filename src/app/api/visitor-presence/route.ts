@@ -12,8 +12,12 @@ const heartbeatSchema = z.object({
 });
 
 const visibilitySchema = z.object({
-  showActiveVisitorsPublicly: z.boolean(),
-});
+  showActiveVisitorsPublicly: z.boolean().optional(),
+  showHomepageActivityPublicly: z.boolean().optional(),
+}).refine(
+  value => value.showActiveVisitorsPublicly !== undefined || value.showHomepageActivityPublicly !== undefined,
+  'At least one setting is required'
+);
 
 function hashVisitorId(visitorId: string): string {
   const secret = process.env.VISITOR_PRESENCE_SECRET
@@ -52,7 +56,7 @@ async function readVisitorPresence(profile: { is_admin: boolean } | null) {
   const [{ data: settings }, { count }] = await Promise.all([
     service
       .from('site_settings')
-      .select('show_active_visitors_publicly')
+      .select('show_active_visitors_publicly, show_homepage_activity_publicly')
       .eq('id', true)
       .maybeSingle(),
     service
@@ -69,6 +73,7 @@ async function readVisitorPresence(profile: { is_admin: boolean } | null) {
   return {
     activeVisitors: visible ? count ?? 0 : null,
     showActiveVisitorsPublicly: showPublicly,
+    showHomepageActivityPublicly: Boolean(settings?.show_homepage_activity_publicly),
     visible,
     isAdmin,
   };
@@ -119,14 +124,29 @@ export async function PATCH(request: Request) {
   }
 
   const service = createServiceClient();
+  const updatePayload: {
+    id: true;
+    show_active_visitors_publicly?: boolean;
+    show_homepage_activity_publicly?: boolean;
+    updated_by: string;
+    updated_at: string;
+  } = {
+    id: true,
+    updated_by: profile.id,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (parsed.showActiveVisitorsPublicly !== undefined) {
+    updatePayload.show_active_visitors_publicly = parsed.showActiveVisitorsPublicly;
+  }
+
+  if (parsed.showHomepageActivityPublicly !== undefined) {
+    updatePayload.show_homepage_activity_publicly = parsed.showHomepageActivityPublicly;
+  }
+
   const { error } = await service
     .from('site_settings')
-    .upsert({
-      id: true,
-      show_active_visitors_publicly: parsed.showActiveVisitorsPublicly,
-      updated_by: profile.id,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'id' });
+    .upsert(updatePayload, { onConflict: 'id' });
 
   if (error) {
     console.error('[visitor-presence] setting update failed:', error);

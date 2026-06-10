@@ -16,19 +16,16 @@ const quickListingSteps = [
   {
     label: 'List',
     title: 'Add your pair on GoPairPH.com',
-    body: 'One clean page for your running shoes.',
     visual: 'listing',
   },
   {
     label: 'Details',
     title: 'Add details + clear photos',
-    body: 'Size, condition, mileage, location, top, and sole.',
     visual: 'photos',
   },
   {
     label: 'Share',
     title: 'Share your listing anywhere',
-    body: 'Post the link or share image in FB and chats.',
     visual: 'share',
   },
 ] as const;
@@ -142,7 +139,6 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
                 </span>
               </div>
               <h2 className="mt-2 text-xs font-semibold leading-5 text-gray-100 sm:text-sm">{step.title}</h2>
-              <p className="mt-1 hidden max-w-[170px] text-[11px] leading-4 text-gray-500 sm:block">{step.body}</p>
             </div>
           ))}
         </div>
