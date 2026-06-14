@@ -17,15 +17,6 @@ type HomeCarouselSlide = {
 
 const slides: ReadonlyArray<HomeCarouselSlide> = [
   {
-    id: 'post-share-win',
-    label: 'Seller campaign',
-    title: 'Post. Share. Win ₱500 GCash.',
-    body: 'List your running shoes on Go Pair PH, share your listing link on Facebook, then submit your entry.',
-    imageSrc: '/home-carousel/post-share-win.png',
-    imageAlt: 'Go Pair PH Post Share Win campaign for running shoe sellers listing and sharing pairs online',
-    ctaHref: 'https://www.facebook.com/share/p/18q3UWFwfU/',
-  },
-  {
     id: 'central-luzon-ncr',
     label: 'Focused marketplace',
     title: 'Buy and sell running shoes nearby',
