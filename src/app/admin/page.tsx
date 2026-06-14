@@ -93,15 +93,15 @@ async function loadAdminData() {
       .order('display_name'),
     supabase
       .from('shops')
-      .select('*, owner:profiles!shops_owner_profile_id_fkey(id, display_name, location)')
+      .select('*, owner:profiles!shops_owner_profile_id_fkey(id, display_name, location_city, location_province, location_region)')
       .order('created_at', { ascending: false }),
     supabase
       .from('profiles')
-      .select('id, user_id, display_name, location, avatar_url, fb_username, is_verified, is_admin, created_at, updated_at')
+      .select('id, user_id, display_name, location_city, location_province, location_region, avatar_url, fb_username, is_verified, is_admin, created_at, updated_at')
       .order('display_name'),
     service
       .from('shoes')
-      .select('id, slug, seller_id, brand, model, size_eu, size_us, size_cm, us_size_type, color, condition, mileage_km, listing_type, price_php, is_negotiable, description, status, created_at, updated_at, profiles!shoes_seller_id_fkey(id, display_name, location, avatar_url, fb_username, is_verified)')
+      .select('id, slug, seller_id, brand, model, size_eu, size_us, size_cm, us_size_type, color, condition, mileage_km, listing_type, price_php, is_negotiable, description, status, created_at, updated_at, profiles!shoes_seller_id_fkey(id, display_name, location_city, location_province, location_region, avatar_url, fb_username, is_verified)')
       .in('status', ['sold', 'reserved', 'donated'])
       .order('updated_at', { ascending: false })
       .limit(10),
@@ -118,7 +118,7 @@ async function loadAdminData() {
     pending: (pendingRes.data as VerificationRequest[]) ?? [],
     recent: (recentRes.data as VerificationRequest[]) ?? [],
     verified: (verifiedRes.data as Profile[]) ?? [],
-    shops: (shopsRes.data as (Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location'> | null })[]) ?? [],
+    shops: (shopsRes.data as (Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location_city' | 'location_province' | 'location_region'> | null })[]) ?? [],
     profiles: (profilesRes.data as Profile[]) ?? [],
     soldListings: ((soldListingsRes.data ?? []) as unknown as Shoe[]),
     listingViews,

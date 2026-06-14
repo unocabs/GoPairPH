@@ -11,7 +11,7 @@ import { ShopBadge } from '@/components/shop/ShopBadge';
 import { ListingTypeBadge } from '@/components/listings/ListingTypeBadge';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
-import { formatMileage, formatPrice, formatSize, formatRelativeDate, getPublicUrl, formatListingName, getListingPath, getAbsoluteListingUrl } from '@/lib/utils';
+import { formatMileage, formatPrice, formatProfileLocation, formatSize, formatRelativeDate, getPublicUrl, formatListingName, getListingPath, getAbsoluteListingUrl } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import type { Shoe, PurchaseRequest } from '@/types';
 import { Avatar } from '@/components/ui/Avatar';
@@ -286,6 +286,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const isOwner = currentProfileId === shoe.seller_id;
   const canSeeQualityFlag = !!shoe.quality_flagged_at && !!currentProfileId && (isOwner || isAdmin === true);
   const seller = shoe.profiles;
+  const sellerLocation = formatProfileLocation(seller);
   const shop = shoe.shops && shoe.shops.status === 'active' ? shoe.shops : null;
   const shopLogoUrl = shop?.logo_storage_path ? getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, shop.logo_storage_path, 'shop-logos') : null;
   const topImage = shoe.shoe_images?.find(i => i.view_type === 'top') ?? shoe.shoe_images?.[0];
@@ -835,7 +836,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                     {seller.display_name}
                     {seller.is_verified && <VerifiedBadge size="sm" />}
                   </Link>
-                  {seller.location && <p className="text-xs text-gray-500 mt-0.5">{seller.location}</p>}
+                  {sellerLocation && <p className="text-xs text-gray-500 mt-0.5">{sellerLocation}</p>}
                 </div>
                 <Link href={`/profile/${seller.id}`} className="text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors shrink-0">
                   View Profile

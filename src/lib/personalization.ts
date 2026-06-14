@@ -113,7 +113,6 @@ export function listingMatchesPreferredSize(profile: PersonalizationProfile | nu
 export function listingLocationScore(profile: PersonalizationProfile | null | undefined, shoe: Shoe): number {
   if (!profile || !hasPreferredLocation(profile)) return 0;
   const haystack = clean([
-    shoe.profiles?.location,
     shoe.profiles?.location_city,
     shoe.profiles?.location_province,
     shoe.profiles?.location_region,

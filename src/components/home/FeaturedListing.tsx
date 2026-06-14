@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Shoe } from '@/types';
 import { CONDITIONS } from '@/lib/constants';
-import { formatMileage, formatPrice, formatSize, getPublicUrl, formatListingName, getListingPath } from '@/lib/utils';
+import { formatMileage, formatPrice, formatProfileLocation, formatSize, getPublicUrl, formatListingName, getListingPath } from '@/lib/utils';
 import { FeaturedPill } from '@/components/listings/FeaturedPill';
 
 interface FeaturedListingProps {
@@ -15,6 +15,7 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
     shoe.shoe_images?.find(img => img.view_type === 'top') ?? shoe.shoe_images?.[0];
   const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path, 'shoe-images', { width: 900, quality: 70 }) : null;
   const seller = shoe.profiles;
+  const sellerLocation = formatProfileLocation(seller);
   const listingName = formatListingName(shoe.brand, shoe.model);
 
   return (
@@ -67,9 +68,9 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
             Live Spotlight
           </span>
         </div>
-        {seller?.location && (
+        {sellerLocation && (
           <span className="rounded bg-black/30 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-stone-300 backdrop-blur-sm sm:text-[10px]">
-            {seller.location}
+            {sellerLocation}
           </span>
         )}
       </div>

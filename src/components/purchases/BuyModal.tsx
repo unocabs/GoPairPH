@@ -11,7 +11,7 @@ import { VariantSelector } from '@/components/listings/VariantSelector';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
 import { BuyerContactPrompt } from './BuyerContactPrompt';
 import { trackMarketplaceAction } from '@/lib/analytics';
-import { getPublicUrl } from '@/lib/utils';
+import { formatProfileLocation, getPublicUrl } from '@/lib/utils';
 import { getFacebookContactUrl } from '@/lib/facebook';
 import type { Profile, ShoeVariant, Shop } from '@/types';
 
@@ -61,6 +61,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
   );
   const isShopOrder = !!shop;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const sellerLocation = formatProfileLocation(seller);
   const shopLogoUrl = shop?.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
   const shopFacebookUrl = getFacebookContactUrl(shop?.fb_page_url);
   const submitDisabled = showVariantSelector && availableVariants.length === 0;
@@ -212,7 +213,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
                     {seller.display_name}
                     {seller.is_verified && <VerifiedBadge size="sm" />}
                   </Link>
-                  {seller.location && <p className="text-xs text-gray-500">{seller.location}</p>}
+                  {sellerLocation && <p className="text-xs text-gray-500">{sellerLocation}</p>}
                 </div>
               </div>
             </div>

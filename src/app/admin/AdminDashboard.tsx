@@ -4,12 +4,12 @@ import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { formatCondition, formatListingName, formatPrice, formatRelativeDate, formatSize, getListingPath, getPublicUrl } from '@/lib/utils';
+import { formatCondition, formatListingName, formatPrice, formatProfileLocation, formatRelativeDate, formatSize, getListingPath, getPublicUrl } from '@/lib/utils';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import type { ListingViewSummary } from '@/lib/listingViews';
 import type { VerificationRequest, Profile, Shoe, Shop, ShopStatus, WishlistOfferReport, WishlistOfferReportReason } from '@/types';
 
-type ShopWithOwner = Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location'> | null };
+type ShopWithOwner = Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location_city' | 'location_province' | 'location_region'> | null };
 
 interface AdminDashboardProps {
   pending: VerificationRequest[];
@@ -524,7 +524,7 @@ function SoldListingsPanel({ listings }: { listings: Shoe[] }) {
                     {seller ? (
                       <span>
                         Seller: {seller.display_name}
-                        {seller.location ? ` · ${seller.location}` : ''}
+                        {formatProfileLocation(seller) ? ` · ${formatProfileLocation(seller)}` : ''}
                       </span>
                     ) : (
                       <span>Seller unavailable</span>
@@ -1344,7 +1344,7 @@ function VerifiedList({ users }: { users: Profile[] }) {
               {u.display_name}
               <VerifiedBadge size="sm" />
             </Link>
-            {u.location && <p className="text-xs text-gray-500">{u.location}</p>}
+            {formatProfileLocation(u) && <p className="text-xs text-gray-500">{formatProfileLocation(u)}</p>}
           </div>
           <button
             onClick={() => handleRevoke(u.id, u.display_name)}

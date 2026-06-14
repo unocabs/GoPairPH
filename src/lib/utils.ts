@@ -60,6 +60,30 @@ export function formatSize(eu: number | null, us: number | null, cm: number | nu
   return parts.join(' / ');
 }
 
+export function formatProfileLocation(profile: {
+  location_city?: string | null;
+  location_province?: string | null;
+  location_region?: string | null;
+} | null | undefined): string {
+  if (!profile) return '';
+
+  const seen = new Set<string>();
+  return [
+    profile.location_city,
+    profile.location_province,
+    profile.location_region,
+  ]
+    .map(value => value?.trim())
+    .filter((value): value is string => Boolean(value))
+    .filter(value => {
+      const key = value.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .join(', ');
+}
+
 export function getPublicUrl(
   supabaseUrl: string,
   storagePath: string,

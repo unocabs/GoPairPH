@@ -5,7 +5,7 @@ import * as htmlToImage from 'html-to-image';
 import { LogoMark } from '@/components/brand/Logo';
 import { CONDITIONS, LISTING_TYPE_LABELS } from '@/lib/constants';
 import { trackMarketplaceAction } from '@/lib/analytics';
-import { formatListingName, formatMileage, formatPrice, formatSize, getPublicUrl } from '@/lib/utils';
+import { formatListingName, formatMileage, formatPrice, formatProfileLocation, formatSize, getPublicUrl } from '@/lib/utils';
 import type { Condition, ListingType, Shoe, Profile, Shop } from '@/types';
 
 interface SharePostModalProps {
@@ -417,7 +417,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
 ) {
   const isMobile = format === 'mobile';
   const identityName = shop?.name ?? seller?.display_name ?? 'Go Pair PH seller';
-  const identityLocation = shop?.location ?? seller?.location ?? null;
+  const identityLocation = shop?.location ?? formatProfileLocation(seller);
   const identityLabel = shop ? 'Shop' : 'Seller';
   const shareSize = getShareSizeText(shoe);
   const hasDescription = !!shoe.description?.trim();

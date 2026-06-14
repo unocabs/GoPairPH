@@ -1,7 +1,7 @@
 'use client';
 
 import { type Profile } from '@/types';
-import { formatRelativeDate } from '@/lib/utils';
+import { formatProfileLocation, formatRelativeDate } from '@/lib/utils';
 import { getFacebookContactUrl } from '@/lib/facebook';
 import { Avatar } from '@/components/ui/Avatar';
 import { VerifiedBadge } from './VerifiedBadge';
@@ -17,6 +17,7 @@ interface ProfileHeaderProps {
 
 export function ProfileHeader({ profile, listingCount, wishlistCount, completedSales, isOwnProfile }: ProfileHeaderProps) {
   const facebookUrl = getFacebookContactUrl(profile.fb_username);
+  const profileLocation = formatProfileLocation(profile);
 
   return (
     // Center on mobile, left-align from sm+
@@ -34,13 +35,13 @@ export function ProfileHeader({ profile, listingCount, wishlistCount, completedS
           {profile.display_name}
           {profile.is_verified && <VerifiedBadge size="lg" />}
         </h1>
-        {profile.location && (
+        {profileLocation && (
           <p className="text-sm text-gray-400 mt-0.5 flex items-center gap-1 justify-center sm:justify-start">
             <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            {profile.location}
+            {profileLocation}
           </p>
         )}
         {facebookUrl ? (

@@ -30,7 +30,6 @@ export function EditProfileModal({ profile, onClose, onUpdated }: EditProfileMod
     resolver: zodResolver(profileSchema),
     defaultValues: {
       display_name: profile.display_name,
-      location: profile.location ?? '',
       fb_username: profile.fb_username ?? '',
       location_city: profile.location_city ?? '',
       location_province: profile.location_province ?? '',
@@ -97,7 +96,7 @@ export function EditProfileModal({ profile, onClose, onUpdated }: EditProfileMod
         .from('profiles')
         .update({
           display_name: data.display_name,
-          location: blankToNull(data.location),
+          location: null,
           location_city: blankToNull(data.location_city),
           location_province: blankToNull(data.location_province),
           location_region: blankToNull(data.location_region),
@@ -133,13 +132,6 @@ export function EditProfileModal({ profile, onClose, onUpdated }: EditProfileMod
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input label="Display Name" required error={errors.display_name?.message} {...register('display_name')} />
-          <Input
-            label="Location"
-            placeholder="e.g. Angeles City, Pampanga"
-            hint="Help buyers know where to meet"
-            error={errors.location?.message}
-            {...register('location')}
-          />
 
           <div className="rounded-xl border border-teal-500/20 bg-teal-500/[0.04] p-3">
             <div className="flex items-start justify-between gap-3">

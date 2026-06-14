@@ -1,11 +1,11 @@
 import { CONDITIONS } from './constants';
-import { formatListingName, formatMileage, formatPrice, formatSize } from './utils';
+import { formatListingName, formatMileage, formatPrice, formatProfileLocation, formatSize } from './utils';
 import type { Shoe } from '@/types';
 
 export function buildListingCaption(shoe: Shoe, listingUrl: string): string {
   const listingName = formatListingName(shoe.brand, shoe.model);
   const size = formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type);
-  const location = shoe.shops?.location ?? shoe.profiles?.location ?? null;
+  const location = shoe.shops?.location ?? formatProfileLocation(shoe.profiles);
   const details = [
     shoe.listing_type === 'for_sale' && shoe.price_php ? `Price: ${formatPrice(shoe.price_php)}` : null,
     size ? `Size: ${size}` : null,

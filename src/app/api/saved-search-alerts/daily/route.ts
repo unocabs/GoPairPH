@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { sendEmail } from '@/lib/email/resend';
 import { makeSavedSearchEmailMatch, renderSavedSearchAlertEmail } from '@/lib/email/savedSearchAlerts';
-import { formatSize, getAbsoluteListingUrl } from '@/lib/utils';
+import { formatProfileLocation, formatSize, getAbsoluteListingUrl } from '@/lib/utils';
 import { hasPreferredSize, profileSizeMatchesRow, type PersonalizationProfile } from '@/lib/personalization';
 import type { Condition, Profile, UsSizeType } from '@/types';
 
@@ -40,7 +40,7 @@ type ListingRow = {
   size_cm: number | null;
   us_size_type: UsSizeType;
   created_at: string;
-  profiles?: { display_name: string | null; location: string | null; location_city?: string | null; location_province?: string | null; location_region?: string | null } | null;
+  profiles?: { display_name: string | null; location_city?: string | null; location_province?: string | null; location_region?: string | null } | null;
   shops?: { name: string | null; location: string | null } | null;
   shoe_images?: Array<{ id: string }>;
   shoe_variants?: Array<{ size_eu: number | null; size_us: number | null; size_cm: number | null; us_size_type: UsSizeType }>;
@@ -80,7 +80,9 @@ function hasKeywordMatch(search: SavedSearchRow, listing: ListingRow): boolean {
     listing.color,
     listing.description,
     listing.profiles?.display_name,
-    listing.profiles?.location,
+    listing.profiles?.location_city,
+    listing.profiles?.location_province,
+    listing.profiles?.location_region,
     listing.shops?.name,
     listing.shops?.location,
   ].filter(Boolean).join(' '));
@@ -120,7 +122,6 @@ function profileMatchesListing(profile: Profile, listing: ListingRow): boolean {
 
 function normalizeLocationScore(profile: PersonalizationProfile, listing: ListingRow): number {
   const haystack = normalize([
-    listing.profiles?.location,
     listing.profiles?.location_city,
     listing.profiles?.location_province,
     listing.profiles?.location_region,
@@ -134,7 +135,7 @@ function normalizeLocationScore(profile: PersonalizationProfile, listing: Listin
 }
 
 function getListingLocation(listing: ListingRow): string | null {
-  return listing.shops?.location ?? listing.profiles?.location ?? listing.profiles?.location_city ?? null;
+  return listing.shops?.location ?? (formatProfileLocation(listing.profiles) || null);
 }
 
 function getProfileBrowseUrl(siteUrl: string, profile: Profile | null | undefined): string {
@@ -186,7 +187,7 @@ export async function GET(request: Request) {
       .limit(1000),
     service
       .from('shoes')
-      .select('id, slug, seller_id, brand, model, color, condition, listing_type, price_php, description, size_eu, size_us, size_cm, us_size_type, created_at, profiles!shoes_seller_id_fkey(display_name, location, location_city, location_province, location_region), shops(name, location), shoe_images!inner(id), shoe_variants(size_eu, size_us, size_cm, us_size_type)')
+      .select('id, slug, seller_id, brand, model, color, condition, listing_type, price_php, description, size_eu, size_us, size_cm, us_size_type, created_at, profiles!shoes_seller_id_fkey(display_name, location_city, location_province, location_region), shops(name, location), shoe_images!inner(id), shoe_variants(size_eu, size_us, size_cm, us_size_type)')
       .eq('status', 'active')
       .is('quality_flagged_at', null)
       .gte('created_at', since)
