@@ -248,7 +248,6 @@ export function PurchaseRequestCard({
             {sellerMessageAt && <span className="text-[11px] text-gray-500">{formatRelativeDate(sellerMessageAt)}</span>}
           </div>
           <p className="mt-1 text-sm leading-6 text-gray-300">{sellerMessage}</p>
-          <p className="mt-1 text-[11px] leading-4 text-gray-500">One-time note only. This is not a chat thread.</p>
         </div>
       )}
 

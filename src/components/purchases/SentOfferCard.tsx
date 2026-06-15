@@ -123,7 +123,6 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
             )}
           </div>
           <p className="mt-1 text-sm leading-6 text-gray-300">{request.seller_message}</p>
-          <p className="mt-1 text-[11px] leading-4 text-gray-500">One-time note only. This is not a chat thread.</p>
         </div>
       )}
 
