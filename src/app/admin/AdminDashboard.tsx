@@ -4,6 +4,7 @@ import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
 import { formatCondition, formatListingName, formatPrice, formatProfileLocation, formatRelativeDate, formatSize, getListingPath, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import type { ListingViewSummary } from '@/lib/listingViews';
@@ -15,6 +16,7 @@ interface AdminDashboardProps {
   pending: VerificationRequest[];
   recent: VerificationRequest[];
   verified: Profile[];
+  verifiedProofs: VerificationRequest[];
   shops: ShopWithOwner[];
   profiles: Profile[];
   soldListings: Shoe[];
@@ -108,6 +110,7 @@ export function AdminDashboard({
   pending,
   recent,
   verified,
+  verifiedProofs,
   shops,
   profiles,
   soldListings,
@@ -149,7 +152,7 @@ export function AdminDashboard({
 
       {tab === 'pending' && <PendingList requests={pending} />}
       {tab === 'recent' && <RecentList requests={recent} />}
-      {tab === 'verified' && <VerifiedList users={verified} />}
+      {tab === 'verified' && <VerifiedList users={verified} verificationProofs={verifiedProofs} />}
       {tab === 'shops' && <ShopsPanel shops={shops} profiles={profiles} />}
       {tab === 'soldListings' && <SoldListingsPanel listings={soldListings} />}
       {tab === 'views' && <ListingViewsPanel listings={listingViews} viewWindow={viewWindow} />}
@@ -1422,9 +1425,16 @@ function RecentList({ requests }: { requests: VerificationRequest[] }) {
   );
 }
 
-function VerifiedList({ users }: { users: Profile[] }) {
+function VerifiedList({ users, verificationProofs }: { users: Profile[]; verificationProofs: VerificationRequest[] }) {
   const [revoking, setRevoking] = useState<string | null>(null);
   const router = useRouter();
+  const proofByProfileId = new Map<string, VerificationRequest>();
+
+  for (const proof of verificationProofs) {
+    if (!proofByProfileId.has(proof.user_id)) {
+      proofByProfileId.set(proof.user_id, proof);
+    }
+  }
 
   async function handleRevoke(profileId: string, name: string) {
     if (!confirm(`Revoke verification for ${name}? They'll lose the badge.`)) return;
@@ -1443,25 +1453,87 @@ function VerifiedList({ users }: { users: Profile[] }) {
   }
 
   return (
-    <div className="space-y-2">
-      {users.map(u => (
-        <div key={u.id} className="rounded-lg border border-gray-800 bg-gray-900 p-3 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <Link href={`/profile/${u.id}`} target="_blank" className="text-sm font-medium text-gray-200 hover:text-teal-400 inline-flex items-center gap-1.5">
-              {u.display_name}
-              <VerifiedBadge size="sm" />
-            </Link>
-            {formatProfileLocation(u) && <p className="text-xs text-gray-500">{formatProfileLocation(u)}</p>}
+    <div className="space-y-3">
+      {users.map(u => {
+        const proof = proofByProfileId.get(u.id);
+        const facebookUrl = getFacebookContactUrl(u.fb_username);
+        const messengerUrl = buildMessengerUrl(u.fb_username);
+        const location = formatProfileLocation(u);
+
+        return (
+          <div key={u.id} className="rounded-xl border border-gray-800 bg-gray-900/90 p-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link href={`/profile/${u.id}`} target="_blank" className="text-sm font-semibold text-gray-100 hover:text-teal-400 inline-flex items-center gap-1.5">
+                    {u.display_name}
+                    <VerifiedBadge size="sm" />
+                  </Link>
+                  {proof?.reviewed_at && (
+                    <span className="rounded-full border border-gray-700 bg-gray-950 px-2 py-0.5 text-[11px] font-medium text-gray-400">
+                      Verified {formatRelativeDate(proof.reviewed_at)}
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-3 grid gap-2 text-xs text-gray-400 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="rounded-lg border border-gray-800 bg-gray-950/50 p-3">
+                    <p className="font-semibold uppercase tracking-[0.12em] text-gray-600">Location</p>
+                    <p className="mt-1 text-gray-300">{location || 'No location added'}</p>
+                  </div>
+                  <div className="rounded-lg border border-gray-800 bg-gray-950/50 p-3">
+                    <p className="font-semibold uppercase tracking-[0.12em] text-gray-600">Facebook / Messenger</p>
+                    {u.fb_username ? (
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <span className="break-all text-gray-300">facebook.com/{u.fb_username}</span>
+                        {facebookUrl && (
+                          <Link href={facebookUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-teal-300 hover:text-teal-200">
+                            View FB
+                          </Link>
+                        )}
+                        {messengerUrl && (
+                          <Link href={messengerUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-sky-300 hover:text-sky-200">
+                            Messenger
+                          </Link>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="mt-1 text-amber-300">No Facebook username saved</p>
+                    )}
+                  </div>
+                  <div className="rounded-lg border border-gray-800 bg-gray-950/50 p-3 sm:col-span-2 xl:col-span-1">
+                    <p className="font-semibold uppercase tracking-[0.12em] text-gray-600">Profile</p>
+                    <p className="mt-1 break-all text-gray-500">ID: {u.id}</p>
+                    <p className="mt-1 text-gray-500">Joined {formatRelativeDate(u.created_at)}</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 rounded-lg border border-teal-500/15 bg-teal-950/10 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-300">Submitted verification proof</p>
+                  {proof ? (
+                    <p className="mt-2 whitespace-pre-wrap break-words text-sm text-gray-300">{proof.proof}</p>
+                  ) : (
+                    <p className="mt-2 text-sm text-gray-500">No approved proof record found for this profile.</p>
+                  )}
+                  {proof?.admin_notes && (
+                    <p className="mt-2 border-t border-gray-800 pt-2 text-xs text-gray-500">
+                      Admin note: {proof.admin_notes}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleRevoke(u.id, u.display_name)}
+                disabled={revoking === u.id}
+                className="self-start rounded-lg border border-red-900/60 px-3 py-2 text-xs font-semibold text-red-400 transition-colors hover:bg-red-950/40 hover:text-red-300 disabled:opacity-50"
+              >
+                {revoking === u.id ? 'Revoking...' : 'Revoke'}
+              </button>
+            </div>
           </div>
-          <button
-            onClick={() => handleRevoke(u.id, u.display_name)}
-            disabled={revoking === u.id}
-            className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50"
-          >
-            {revoking === u.id ? 'Revoking…' : 'Revoke'}
-          </button>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

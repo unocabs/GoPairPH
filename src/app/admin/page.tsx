@@ -104,7 +104,7 @@ async function loadAdminData() {
   if (!profile?.is_admin) return null;
 
   const viewWindow = getDashboardViewWindow();
-  const [pendingRes, recentRes, verifiedRes, shopsRes, profilesRes, soldListingsRes, listingViews, leadReports, listingReports, siteSettingsRes] = await Promise.all([
+  const [pendingRes, recentRes, verifiedRes, approvedVerificationRes, shopsRes, profilesRes, soldListingsRes, listingViews, leadReports, listingReports, siteSettingsRes] = await Promise.all([
     supabase
       .from('verification_requests')
       .select('*, profiles:profiles!user_id(*)')
@@ -121,6 +121,12 @@ async function loadAdminData() {
       .select('*')
       .eq('is_verified', true)
       .order('display_name'),
+    supabase
+      .from('verification_requests')
+      .select('id, user_id, proof, status, admin_notes, reviewed_by, reviewed_at, created_at')
+      .eq('status', 'approved')
+      .order('reviewed_at', { ascending: false })
+      .limit(500),
     supabase
       .from('shops')
       .select('*, owner:profiles!shops_owner_profile_id_fkey(id, display_name, location_city, location_province, location_region)')
@@ -149,6 +155,7 @@ async function loadAdminData() {
     pending: (pendingRes.data as VerificationRequest[]) ?? [],
     recent: (recentRes.data as VerificationRequest[]) ?? [],
     verified: (verifiedRes.data as Profile[]) ?? [],
+    verifiedProofs: (approvedVerificationRes.data as VerificationRequest[]) ?? [],
     shops: (shopsRes.data as (Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location_city' | 'location_province' | 'location_region'> | null })[]) ?? [],
     profiles: (profilesRes.data as Profile[]) ?? [],
     soldListings: ((soldListingsRes.data ?? []) as unknown as Shoe[]),
