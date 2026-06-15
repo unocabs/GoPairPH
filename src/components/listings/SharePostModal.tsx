@@ -1029,7 +1029,7 @@ function BadgeRow({ shoe, isFeatured, isSponsored, size = 'sm' }: { shoe: Shoe; 
       )}
       {isSponsored && (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 9999, background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#fcd34d', padding: badgePadding, fontSize: badgeFontSize, fontWeight: 700 }}>
-          ✦ Sponsored
+          ✦ Top Pick
         </span>
       )}
     </div>

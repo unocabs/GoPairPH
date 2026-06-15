@@ -108,10 +108,10 @@ export default function TermsPage() {
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold text-gray-100">9. Promotions, sponsored listings, and ranking</h2>
+        <h2 className="text-xl font-semibold text-gray-100">9. Promotions, Top Pick listings, and ranking</h2>
         <p>
-          Go Pair PH may offer free or paid visibility features, including sponsored,
-          featured, or promoted placements. Promotion improves placement or visibility
+          Go Pair PH may offer free or paid visibility features, including Top Pick,
+          Featured, or promoted placements. Promotion improves placement or visibility
           according to the current product rules, but it does not guarantee offers, sales,
           traffic, ranking duration beyond the stated window, or buyer behavior. We may
           still lower the priority of promoted listings that lack clear photos, appear

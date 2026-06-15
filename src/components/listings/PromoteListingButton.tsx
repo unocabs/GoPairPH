@@ -13,6 +13,8 @@ interface PromoteListingButtonProps {
   nextSlotOpensAt: string | null;
   ownListingAlreadySponsored: boolean;
   ownSponsoredUntil: string | null;
+  ownListingAlreadyFeatured: boolean;
+  ownFeaturedUntil: string | null;
 }
 
 export function PromoteListingButton({
@@ -23,6 +25,8 @@ export function PromoteListingButton({
   nextSlotOpensAt,
   ownListingAlreadySponsored,
   ownSponsoredUntil,
+  ownListingAlreadyFeatured,
+  ownFeaturedUntil,
 }: PromoteListingButtonProps) {
   const [showAcknowledgment, setShowAcknowledgment] = useState(false);
   const [open, setOpen] = useState(false);
@@ -87,6 +91,8 @@ export function PromoteListingButton({
           nextSlotOpensAt={nextSlotOpensAt}
           ownListingAlreadySponsored={ownListingAlreadySponsored}
           ownSponsoredUntil={ownSponsoredUntil}
+          ownListingAlreadyFeatured={ownListingAlreadyFeatured}
+          ownFeaturedUntil={ownFeaturedUntil}
           onClose={() => setOpen(false)}
         />
       )}

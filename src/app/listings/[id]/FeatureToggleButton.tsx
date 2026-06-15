@@ -10,6 +10,7 @@ interface FeatureToggleButtonProps {
   isFeatured: boolean;
   featuredUntil: string | null;
   status: string;
+  sellerIsVerified: boolean;
 }
 
 const DURATIONS: { label: string; days: number }[] = [
@@ -32,6 +33,7 @@ export function FeatureToggleButton({
   isFeatured: initial,
   featuredUntil: initialUntil,
   status,
+  sellerIsVerified,
 }: FeatureToggleButtonProps) {
   const [featured, setFeatured] = useState(initial);
   const [until, setUntil] = useState(initialUntil);
@@ -43,6 +45,7 @@ export function FeatureToggleButton({
 
   async function feature(days: number) {
     setError(null);
+    if (!sellerIsVerified && !confirm('This seller is not verified. Continue anyway?')) return;
     if (!confirm(`Feature this listing for ${days} days? It will replace whatever is currently featured on the home page.`)) return;
 
     const supabase = createClient();

@@ -32,7 +32,15 @@ export function PromoteAcknowledgmentModal({ onClose, onProceed }: PromoteAcknow
           <ul className="space-y-2 text-sm text-gray-300">
             <li className="flex gap-2">
               <span className="text-teal-400 shrink-0">•</span>
-              <span>Pick a duration: <strong>7 days (₱30)</strong> or <strong>30 days (₱100)</strong>.</span>
+              <span>Pick a placement: <strong>Featured on Home</strong> or <strong>Top Pick in Browse</strong>.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-teal-400 shrink-0">•</span>
+              <span>Featured is <strong>₱50 / 7 days</strong> or <strong>₱150 / 30 days</strong>.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-teal-400 shrink-0">•</span>
+              <span>Top Pick is <strong>₱30 / 7 days</strong> or <strong>₱100 / 30 days</strong>.</span>
             </li>
             <li className="flex gap-2">
               <span className="text-teal-400 shrink-0">•</span>
@@ -40,7 +48,7 @@ export function PromoteAcknowledgmentModal({ onClose, onProceed }: PromoteAcknow
             </li>
             <li className="flex gap-2">
               <span className="text-teal-400 shrink-0">•</span>
-              <span>Send the receipt screenshot via Messenger — we&apos;ll activate your slot within 24 hours.</span>
+              <span>Send the receipt screenshot to Go Pair PH on Messenger with your listing link and selected placement.</span>
             </li>
           </ul>
 

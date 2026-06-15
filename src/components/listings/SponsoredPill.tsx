@@ -7,15 +7,16 @@ export function SponsoredPill({ size = 'md' }: { size?: 'sm' | 'md' }) {
   return (
     <Tooltip
       trigger="both"
-      content="Sponsored by the seller — paid placement, not endorsed by Go Pair PH."
+      content="Top Pick is paid placement."
     >
       <span
-        className={`inline-flex items-center gap-1 rounded-full bg-amber-500/15 border border-amber-500/40 font-semibold text-amber-300 cursor-help ${padding}`}
+        className={`inline-flex items-center gap-1 rounded-full border border-black/10 bg-white/95 font-semibold text-slate-950 shadow-[0_6px_20px_rgba(0,0,0,0.35)] backdrop-blur-md cursor-help ${padding}`}
       >
-        <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-          <path d="M3 11l18-7-7 18-2.5-7.5L3 11z" />
-        </svg>
-        Sponsored
+        <span className="relative flex h-1.5 w-1.5 shrink-0" aria-hidden="true">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-80" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-300" />
+        </span>
+        Top Pick
       </span>
     </Tooltip>
   );

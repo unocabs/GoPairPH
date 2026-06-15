@@ -5,12 +5,11 @@ import Image from 'next/image';
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 import { createClient, createPublicClient, createServiceClient } from '@/lib/supabase/server';
-import { getOfferCounts } from '@/lib/offers';
-import { ListingGrid } from '@/components/listings/ListingGrid';
 import { Button } from '@/components/ui/Button';
 import { HeroFallback } from '@/components/home/HeroFallback';
 import { FeaturedListing } from '@/components/home/FeaturedListing';
 import { HomeCarousel } from '@/components/home/HomeCarousel';
+import { HomeListingGrid } from '@/components/home/HomeListingGrid';
 import { FirstListingNudge } from '@/components/listings/FirstListingNudge';
 import { LogoMark } from '@/components/brand/Logo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
@@ -31,6 +30,60 @@ const HOME_DESCRIPTION = 'Buy and sell brand-new, pre-loved, and second-hand run
 type HomepageSiteSettings = {
   showHomepageActivityPublicly: boolean;
 };
+
+const HOME_LISTING_SELECT = `
+  id,
+  slug,
+  seller_id,
+  brand,
+  model,
+  size_eu,
+  size_us,
+  size_cm,
+  us_size_type,
+  condition,
+  mileage_km,
+  listing_type,
+  price_php,
+  srp_php,
+  status,
+  created_at,
+  shop_id,
+  has_stock,
+  featured_until,
+  sponsored_until,
+  profiles!shoes_seller_id_fkey(
+    id,
+    display_name,
+    location_city,
+    location_province,
+    location_region,
+    is_verified
+  ),
+  shops(
+    id,
+    location
+  ),
+  shoe_images(
+    id,
+    shoe_id,
+    storage_path,
+    view_type,
+    order,
+    created_at
+  ),
+  shoe_variants(
+    id,
+    shoe_id,
+    size_eu,
+    size_us,
+    size_cm,
+    us_size_type,
+    quantity,
+    created_at,
+    updated_at
+  )
+`;
 
 export const metadata: Metadata = {
   title: { absolute: HOME_TITLE },
@@ -71,12 +124,12 @@ const getHomepageListings = unstable_cache(async function getHomepageListings():
   const supabase = createPublicClient();
   const { data } = await supabase
     .from('shoes')
-    .select('*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)')
+    .select(HOME_LISTING_SELECT)
     .eq('status', 'active')
     .eq('has_stock', true)
     .order('created_at', { ascending: false })
     .limit(24);
-  const all = (data as Shoe[]) ?? [];
+  const all = (data as unknown as Shoe[]) ?? [];
   const hasPhoto = (s: Shoe) => (s.shoe_images?.length ?? 0) > 0;
   return all
     .sort((a, b) => {
@@ -110,14 +163,14 @@ const getFeaturedListing = unstable_cache(async function getFeaturedListing(): P
   const supabase = createPublicClient();
   const { data } = await supabase
     .from('shoes')
-    .select('*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)')
+    .select(HOME_LISTING_SELECT)
     .eq('status', 'active')
     .eq('has_stock', true)
     .gt('featured_until', new Date().toISOString())
     .order('featured_until', { ascending: false })
     .limit(1)
     .maybeSingle();
-  return (data as Shoe) ?? null;
+  return (data as unknown as Shoe) ?? null;
 }, ['homepage-featured-listing'], { revalidate: 60 });
 
 const getMarketplaceActivity = unstable_cache(async function getMarketplaceActivity(): Promise<{
@@ -159,7 +212,7 @@ const getMarketplaceActivity = unstable_cache(async function getMarketplaceActiv
   };
 }, ['homepage-marketplace-activity'], { revalidate: 60 });
 
-async function getHomepageSiteSettings(): Promise<HomepageSiteSettings> {
+const getHomepageSiteSettings = unstable_cache(async function getHomepageSiteSettings(): Promise<HomepageSiteSettings> {
   const service = createServiceClient();
   const { data } = await service
     .from('site_settings')
@@ -170,7 +223,7 @@ async function getHomepageSiteSettings(): Promise<HomepageSiteSettings> {
   return {
     showHomepageActivityPublicly: Boolean(data?.show_homepage_activity_publicly),
   };
-}
+}, ['homepage-site-settings'], { revalidate: 60 });
 
 export default async function HomePage() {
   const [profile, homepageShoes, featured, activity, siteSettings] = await Promise.all([
@@ -185,8 +238,7 @@ export default async function HomePage() {
   const recentShoes = homepageShoes.filter((shoe) => !recommendedIds.has(shoe.id)).slice(0, 4);
   const displayedShoes = [...recommendedShoes, ...recentShoes];
   const displayedListingIds = displayedShoes.map((shoe) => shoe.id);
-  const [offerCounts, savedListingCounts, savedListingIds] = await Promise.all([
-    getOfferCounts(displayedListingIds),
+  const [savedListingCounts, savedListingIds] = await Promise.all([
     getSavedListingCounts(displayedListingIds),
     profile ? getSavedListingIds(profile.id, displayedListingIds) : Promise.resolve(new Set<string>()),
   ]);
@@ -313,12 +365,9 @@ export default async function HomePage() {
               See more matches →
             </Link>
           </div>
-          <ListingGrid
+          <HomeListingGrid
             shoes={recommendedShoes}
             currentProfileId={profile?.id}
-            currentProfileIsAdmin={profile?.is_admin}
-            currentProfileFbUsername={profile?.fb_username}
-            offerCounts={offerCounts}
             savedListingIds={savedListingIds}
             savedListingCounts={savedListingCounts}
             personalizationBadges={personalizationBadges}
@@ -331,12 +380,9 @@ export default async function HomePage() {
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-100">Recent Listings</h2>
         </div>
-        <ListingGrid
+        <HomeListingGrid
           shoes={recentShoes}
           currentProfileId={profile?.id}
-          currentProfileIsAdmin={profile?.is_admin}
-          currentProfileFbUsername={profile?.fb_username}
-          offerCounts={offerCounts}
           savedListingIds={savedListingIds}
           savedListingCounts={savedListingCounts}
           personalizationBadges={personalizationBadges}

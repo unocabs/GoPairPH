@@ -1042,6 +1042,8 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                     nextSlotOpensAt={slotInfo.nextSlotOpensAt}
                     ownListingAlreadySponsored={isSponsored}
                     ownSponsoredUntil={shoe.sponsored_until}
+                    ownListingAlreadyFeatured={isFeatured}
+                    ownFeaturedUntil={shoe.featured_until}
                   />
                 )}
                 {/* StatusButton returns null for reserved (handled by CompleteSaleButtons above) */}
@@ -1069,6 +1071,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                   isFeatured={isFeatured}
                   featuredUntil={shoe.featured_until}
                   status={shoe.status}
+                  sellerIsVerified={seller?.is_verified ?? false}
                 />
                 <p className="mt-2 text-[11px] text-gray-500">
                   Only one listing can be featured at a time. Featuring this one will replace the current pick.
@@ -1079,9 +1082,10 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                   shoeId={shoe.id}
                   sponsoredUntil={shoe.sponsored_until}
                   status={shoe.status}
+                  sellerIsVerified={seller?.is_verified ?? false}
                 />
                 <p className="mt-2 text-[11px] text-gray-500">
-                  Activate after the seller pays. The 15% slot cap is enforced when sellers try to buy a slot.
+                  Activate after the seller pays. The 15% Top Pick slot cap is enforced when sellers try to buy a slot.
                 </p>
               </div>
               <div className="border-t border-gray-800 pt-4">

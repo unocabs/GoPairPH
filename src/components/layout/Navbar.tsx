@@ -110,10 +110,11 @@ export function Navbar() {
       }
     }
 
-    loadVisitorPresence();
+    const timeout = window.setTimeout(loadVisitorPresence, 1_200);
     const interval = window.setInterval(loadVisitorPresence, 60_000);
     return () => {
       active = false;
+      window.clearTimeout(timeout);
       window.clearInterval(interval);
     };
   }, [profile?.is_admin, pathname]);

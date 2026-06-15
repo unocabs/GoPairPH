@@ -3,9 +3,9 @@ import Link from 'next/link';
 import { InfoPage } from '@/components/layout/InfoPage';
 
 export const metadata: Metadata = {
-  title: 'Featured & Sponsored Listings',
+  title: 'Featured & Top Pick Listings',
   description:
-    'How Featured and Sponsored listings work on Go Pair PH — pricing, slots, and what to expect.',
+    'How Featured and Top Pick listings work on Go Pair PH — pricing, slots, and what to expect.',
   alternates: { canonical: '/help/promote-listing' },
   robots: {
     index: false,
@@ -16,32 +16,32 @@ export const metadata: Metadata = {
 export default function PromoteListingPage() {
   return (
     <InfoPage
-      title="Featured & Sponsored Listings"
+      title="Featured & Top Pick Listings"
       subtitle="Get more eyes on your shoes — here's how it works."
     >
       <section>
         <h2 className="text-xl font-semibold text-gray-100">The two ways your listing can stand out</h2>
         <ul className="list-disc list-inside space-y-1.5">
           <li>
-            <strong>★ Featured</strong> — our weekly &ldquo;Pair of the Week&rdquo; on the home page. A
-            shop seller may pay for this placement at the current Featured rate, or an admin may
-            choose any active listing we think the community will love, whether it is from a normal
-            seller or a shop seller.
+            <strong>★ Featured</strong> — our weekly &ldquo;Pair of the Week&rdquo; on the home page. A seller
+            may pay for this placement at the current Featured rate, or an admin may choose any
+            active listing we think the community will love. <strong>₱50 / 7 days</strong> or{' '}
+            <strong>₱150 / 30 days</strong>.
           </li>
           <li>
-            <strong>Sponsored</strong> — seller-paid Browse promotion. Community sellers and shop
-            sellers can pay to lift a listing near the top of Browse for 7 or 30 days. ₱30 or ₱100.
+            <strong>Top Pick</strong> — sellers can boost a listing near the top of Browse for 7 or
+            30 days. <strong>₱30 / 7 days</strong> or <strong>₱100 / 30 days</strong>.
           </li>
         </ul>
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold text-gray-100">Who can buy a Sponsored slot?</h2>
+        <h2 className="text-xl font-semibold text-gray-100">Who can request a promotion?</h2>
         <p>
-          Sponsored is open to <Link href="/help/verification" className="text-teal-400 hover:text-teal-300">verified users</Link>,
+          Featured and Top Pick are open to <Link href="/help/verification" className="text-teal-400 hover:text-teal-300">verified users</Link>,
           including community sellers and shop sellers. This protects buyers from boosted scam listings.
           If you&apos;re not verified yet, get verified first — it&apos;s a quick process and unlocks
-          Sponsored along with other perks.
+          promotion options along with other perks.
         </p>
       </section>
 
@@ -52,29 +52,29 @@ export default function PromoteListingPage() {
           who want their pair to be the first thing visitors see when they land on Go Pair PH.
         </p>
         <ol className="list-decimal list-inside space-y-1.5">
-          <li>Message us first so we can confirm the Featured slot is available.</li>
+          <li>Open your listing, click <strong>Promote Listing</strong>, then choose <strong>Featured on Home</strong>.</li>
           <li>Pick a duration: <strong>7 days (₱50)</strong> or <strong>30 days (₱150)</strong>.</li>
-          <li>Pay via GCash or BPI, then send the receipt screenshot via Messenger with your listing link.</li>
-          <li>An admin activates your Featured slot within 24 hours after payment confirmation.</li>
+          <li>Pay via GCash or BPI, then send the receipt screenshot to Go Pair PH on Messenger with your listing link and selected placement.</li>
+          <li>An admin confirms availability, then activates your Featured slot within 24 hours after payment confirmation.</li>
           <li>Your listing appears on the home page with a clear <strong>★ Featured</strong> tag until the window ends or the item sells.</li>
         </ol>
         <p className="mt-3 text-sm text-gray-400">
-          Featured is separate from Sponsored. Featured highlights your listing on the home page,
-          while Sponsored lifts it near the top of Browse.
+          Featured is separate from Top Pick. Featured highlights your listing on the home page,
+          while Top Pick lifts it near the top of Browse.
         </p>
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold text-gray-100">How Sponsored works</h2>
+        <h2 className="text-xl font-semibold text-gray-100">How Top Pick works</h2>
         <ol className="list-decimal list-inside space-y-1.5">
           <li>Open your listing and click <strong>Promote Listing</strong>.</li>
           <li>Pick a duration: <strong>7 days (₱30)</strong> or <strong>30 days (₱100)</strong>.</li>
           <li>Pay via GCash or BPI — QR codes are shown in the modal.</li>
-          <li>Send the receipt screenshot via Messenger.</li>
-          <li>An admin activates your slot within 24 hours, and your listing rises to the top of Browse with a &ldquo;Sponsored&rdquo; tag.</li>
+          <li>Send the receipt screenshot to Go Pair PH on Messenger with your listing link and selected placement.</li>
+          <li>An admin activates your slot within 24 hours, and your listing rises near the top of Browse with a &ldquo;Top Pick&rdquo; tag.</li>
         </ol>
         <p className="mt-3 text-sm text-gray-400">
-          Admins do not sponsor shoes themselves. We only activate Sponsored after a seller payment is confirmed.
+          Top Pick is paid placement. We only activate Top Pick after a seller payment is confirmed.
         </p>
       </section>
 
@@ -82,15 +82,15 @@ export default function PromoteListingPage() {
         <h2 className="text-xl font-semibold text-gray-100">Slot rules — why we cap it</h2>
         <ul className="list-disc list-inside space-y-1.5">
           <li>
-            We cap Sponsored at roughly <strong>15% of active listings</strong>. This keeps Browse honest
-            and stops Sponsored cards from drowning out organic ones.
+            We cap Top Pick at roughly <strong>15% of active listings</strong>. This keeps Browse honest
+            and stops Top Pick cards from drowning out organic ones.
           </li>
           <li>
             If all slots are taken, you&apos;ll see when the next slot opens up. <strong>No reservation queue
             — first paid wins.</strong> When that date arrives, refresh and try again.
           </li>
           <li>
-            If a Sponsored listing sells (or gets reserved) before its window ends, that slot frees up
+            If a Top Pick listing sells (or gets reserved) before its window ends, that slot frees up
             immediately for the next seller.
           </li>
         </ul>
@@ -99,7 +99,7 @@ export default function PromoteListingPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">If your listing sells before the promotion ends — that&apos;s the win!</h2>
         <p>
-          Here&apos;s the thing: the whole point of paying for a Sponsored slot is to <strong>sell faster</strong>.
+          Here&apos;s the thing: the whole point of paying for a Top Pick slot is to <strong>sell faster</strong>.
           If your shoes sell on day 2 of a 7-day promotion, that means the boost worked exactly as
           intended. 🎉
         </p>
@@ -112,21 +112,20 @@ export default function PromoteListingPage() {
         <p className="text-sm text-gray-400">
           Same goes for Featured — if your listing is chosen or paid into &ldquo;Pair of the Week&rdquo; and it
           sells in three days, congrats! No carryover. Admin-picked Featured slots are a thank-you
-          from us to the community; paid shop Featured slots follow the same promotion-window policy.
+          from us to the community; paid Featured slots follow the same promotion-window policy.
         </p>
       </section>
 
       <section>
         <h2 className="text-xl font-semibold text-gray-100">Honesty &amp; transparency</h2>
         <ul className="list-disc list-inside space-y-1.5">
-          <li>Sponsored listings always show a clear <strong>&ldquo;Sponsored&rdquo;</strong> tag.</li>
+          <li>Top Pick listings always show a clear <strong>&ldquo;Top Pick&rdquo;</strong> tag.</li>
           <li>
-            Go Pair PH does <em>not</em> endorse Sponsored sellers — promotion is paid placement,
-            not a quality stamp. Buyers should still review each listing carefully.
+            Top Pick is paid placement. Buyers should still review each listing carefully.
           </li>
           <li>
             Featured means the listing is highlighted on the home page. It may be an admin choice
-            or a paid shop placement, and buyers should still do their usual checks.
+            or a paid placement, and buyers should still do their usual checks.
           </li>
           <li>
             We may decline or revoke a promotion for listings that violate community guidelines
@@ -141,7 +140,7 @@ export default function PromoteListingPage() {
         <p>
           Message us anytime via{' '}
           <a
-            href="https://m.me/geeyan.cabrera"
+            href="https://m.me/GoPairPH"
             target="_blank"
             rel="noopener noreferrer"
             className="text-teal-400 hover:text-teal-300"
