@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Shoe } from '@/types';
 import { CONDITIONS } from '@/lib/constants';
-import { formatListingName, formatPrice, formatSize, getListingPath, getPublicUrl } from '@/lib/utils';
+import { formatListingName, formatPrice, formatSize, getListingPath, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 
 interface ListingDiscoverySectionProps {
@@ -69,14 +69,14 @@ function MiniListingCard({ shoe }: { shoe: Shoe }) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const image = shoe.shoe_images?.find((item) => item.view_type === 'top') ?? shoe.shoe_images?.[0];
   const imageUrl = image && supabaseUrl
-    ? getPublicUrl(supabaseUrl, image.storage_path, 'shoe-images', { width: 180, quality: 58 })
+    ? getPublicUrl(supabaseUrl, image.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.miniListing)
     : null;
   const title = formatListingName(shoe.brand, shoe.model);
   const size = shoe.shop_id
     ? getVariantSizeLabel(shoe)
     : formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type);
   const price = shoe.listing_type === 'donate'
-    ? 'Donation'
+    ? 'Free'
     : shoe.price_php != null
       ? formatPrice(shoe.price_php)
       : 'See listing';

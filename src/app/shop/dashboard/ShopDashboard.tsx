@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { type ChangeEvent, type FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { formatListingName, getPublicUrl } from '@/lib/utils';
+import { formatListingName, getPublicUrl, IMAGE_TRANSFORM_PRESETS, type ImageTransformOptions } from '@/lib/utils';
 import { getShopTheme, SHOP_THEME_PRESETS } from '@/lib/shopTheme';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
 import type { Shoe, Shop, ShopCarouselItem } from '@/types';
@@ -116,9 +116,9 @@ export function ShopDashboard({ shop, listings }: ShopDashboardProps) {
   const [error, setError] = useState<string | null>(null);
   const previewTheme = getShopTheme(backgroundColor, accentColor);
 
-  function imageUrl(draft: ImageDraft): string | null {
+  function imageUrl(draft: ImageDraft, transform: ImageTransformOptions = IMAGE_TRANSFORM_PRESETS.shopLogo): string | null {
     if (draft.previewUrl) return draft.previewUrl;
-    return draft.storagePath ? getPublicUrl(supabaseUrl, draft.storagePath, 'shop-logos') : null;
+    return draft.storagePath ? getPublicUrl(supabaseUrl, draft.storagePath, 'shop-logos', transform) : null;
   }
 
   function setImage(kind: 'logo' | 'header', event: ChangeEvent<HTMLInputElement>) {
@@ -387,7 +387,7 @@ export function ShopDashboard({ shop, listings }: ShopDashboardProps) {
             <h2 className="text-base font-semibold text-gray-100">Images</h2>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <ImagePicker title="Logo" draft={logo} url={imageUrl(logo)} onChange={event => setImage('logo', event)} onClear={() => clearImage('logo')} saving={saving} />
-              <ImagePicker title="Header photo" draft={header} url={imageUrl(header)} onChange={event => setImage('header', event)} onClear={() => clearImage('header')} saving={saving} wide />
+              <ImagePicker title="Header photo" draft={header} url={imageUrl(header, IMAGE_TRANSFORM_PRESETS.shopHeader)} onChange={event => setImage('header', event)} onClear={() => clearImage('header')} saving={saving} wide />
             </div>
           </section>
 
@@ -406,7 +406,7 @@ export function ShopDashboard({ shop, listings }: ShopDashboardProps) {
                 <div className="rounded-lg border-2 border-dashed border-gray-800 py-8 text-center text-sm text-gray-500">No carousel images yet.</div>
               ) : carousel.map((item, index) => (
                 <div key={index} className="grid gap-3 rounded-lg border border-gray-800 bg-gray-950/50 p-3 md:grid-cols-[180px_1fr_auto]">
-                  <ImagePicker title={`Image ${index + 1}`} draft={item} url={imageUrl(item)} onChange={event => setCarouselImage(index, event)} saving={saving} compact />
+                  <ImagePicker title={`Image ${index + 1}`} draft={item} url={imageUrl(item, IMAGE_TRANSFORM_PRESETS.shopCarousel)} onChange={event => setCarouselImage(index, event)} saving={saving} compact />
                   <label className="block">
                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Optional listing link</span>
                     <select value={item.listingId} onChange={event => setCarouselLink(index, event.target.value)} disabled={saving} className="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-teal-500">
@@ -428,7 +428,7 @@ export function ShopDashboard({ shop, listings }: ShopDashboardProps) {
 
           <section className="overflow-hidden rounded-xl border" style={{ backgroundColor: previewTheme.background, borderColor: previewTheme.border }}>
             <div className="aspect-[16/7] min-h-[180px]">
-              <SafeShopImage src={imageUrl(header)} alt="" className="h-full w-full object-cover opacity-70" logoSize={96} />
+              <SafeShopImage src={imageUrl(header, IMAGE_TRANSFORM_PRESETS.shopHeader)} alt="" className="h-full w-full object-cover opacity-70" logoSize={96} />
             </div>
             <div className="p-4">
               <div className="flex items-center gap-3">

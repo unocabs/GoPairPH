@@ -13,7 +13,7 @@ export const CONDITIONS: Record<string, string> = {
 
 export const LISTING_TYPE_LABELS: Record<string, string> = {
   for_sale: 'For Sale',
-  donate: 'Donate',
+  donate: 'Free Shoes',
 };
 
 export const CONDITION_COLORS: Record<string, string> = {

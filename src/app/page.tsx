@@ -282,7 +282,7 @@ export default async function HomePage() {
               { label: 'New running shoes for sale this week', value: activity.newListingsThisWeek },
               { label: 'Recent active sellers', value: activity.recentSellers },
               { label: 'Looking for shoes', value: activity.activePairRequests },
-              { label: 'Sold, reserved, or donated', value: activity.soldOrReservedPairs },
+              { label: 'Sold, reserved, or claimed', value: activity.soldOrReservedPairs },
             ].map((stat) => (
               <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-slate-950/55 px-3 py-2.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] sm:px-4 sm:py-3">
                 <p className="text-lg font-bold tabular-nums text-gray-100 sm:text-xl">

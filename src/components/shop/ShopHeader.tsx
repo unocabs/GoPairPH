@@ -1,4 +1,4 @@
-import { getPublicUrl } from '@/lib/utils';
+import { getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { getShopTheme } from '@/lib/shopTheme';
 import { getFacebookContactUrl } from '@/lib/facebook';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
@@ -11,8 +11,8 @@ interface ShopHeaderProps {
 
 export function ShopHeader({ shop, listingCount }: ShopHeaderProps) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const logoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
-  const headerUrl = shop.header_image_storage_path ? getPublicUrl(supabaseUrl, shop.header_image_storage_path, 'shop-logos') : null;
+  const logoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos', IMAGE_TRANSFORM_PRESETS.shopLogo) : null;
+  const headerUrl = shop.header_image_storage_path ? getPublicUrl(supabaseUrl, shop.header_image_storage_path, 'shop-logos', IMAGE_TRANSFORM_PRESETS.shopHeader) : null;
   const hasCustomHeader = Boolean(headerUrl);
   const theme = getShopTheme(shop.background_color, shop.accent_color);
   const facebookUrl = getFacebookContactUrl(shop.fb_page_url);

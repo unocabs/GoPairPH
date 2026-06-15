@@ -11,7 +11,7 @@ import { ShopBadge } from '@/components/shop/ShopBadge';
 import { ListingTypeBadge } from '@/components/listings/ListingTypeBadge';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
-import { formatMileage, formatPrice, formatProfileLocation, formatSize, formatRelativeDate, getPublicUrl, formatListingName, getListingPath, getAbsoluteListingUrl } from '@/lib/utils';
+import { formatMileage, formatPrice, formatProfileLocation, formatSize, formatRelativeDate, getPublicUrl, formatListingName, getListingPath, getAbsoluteListingUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import type { Shoe, PurchaseRequest } from '@/types';
 import { Avatar } from '@/components/ui/Avatar';
@@ -20,6 +20,7 @@ import { CompleteSaleButtons } from './CompleteSaleButtons';
 import { FeatureToggleButton } from './FeatureToggleButton';
 import { SponsoredAdminToggle } from './SponsoredAdminToggle';
 import { QualityFlagAdminPanel } from './QualityFlagAdminPanel';
+import { AdminCheckedListingButton } from './AdminCheckedListingButton';
 import { OwnerMoreActions } from './OwnerMoreActions';
 import { BuyButton } from '@/components/purchases/BuyButton';
 import { DonateRequestButton } from '@/components/purchases/DonateRequestButton';
@@ -33,6 +34,10 @@ import { SponsoredPill } from '@/components/listings/SponsoredPill';
 import { FeaturedPill } from '@/components/listings/FeaturedPill';
 import { FlaggedPill } from '@/components/listings/FlaggedPill';
 import { QualityFlagNotice } from '@/components/listings/QualityFlagNotice';
+import { ListingTrustBadges } from '@/components/listings/ListingTrustBadges';
+import { ListingCompletenessCard } from '@/components/listings/ListingCompletenessCard';
+import { SafeDealTips } from '@/components/listings/SafeDealTips';
+import { ReportListingButton } from '@/components/listings/ReportListingButton';
 import { PostListingFeedbackPrompt } from '@/components/feedback/PostListingFeedbackPrompt';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import { getSponsoredSlotInfo } from '@/lib/sponsored';
@@ -43,6 +48,8 @@ import { getSavedListingCount, isListingSaved } from '@/lib/savedListings';
 import { getViewSummariesForListings } from '@/lib/listingViews';
 import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
 import { listingLocationScore, listingMatchesPreferredSize, type PersonalizationProfile } from '@/lib/personalization';
+import { getCompletedSalesCount } from '@/lib/sales';
+import { getListingCompletenessItems, getListingCompletenessScore, getListingTrustSignals } from '@/lib/listingTrust';
 import type { Profile } from '@/types';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
@@ -53,18 +60,67 @@ function getSchemaCondition(condition: Shoe['condition']): string {
   return 'https://schema.org/UsedCondition';
 }
 
+function SellerTrustPanel({ seller, completedSales }: { seller: Profile; completedSales: number }) {
+  const location = formatProfileLocation(seller);
+  const facts = [
+    { label: 'Member since', value: formatRelativeDate(seller.created_at), active: true },
+    { label: 'Verified profile', value: seller.is_verified ? 'Yes' : 'Not yet', active: seller.is_verified },
+    { label: 'Location', value: location || 'Not added', active: Boolean(location) },
+    { label: 'Messenger', value: buildMessengerUrl(seller.fb_username) ? 'Ready' : 'Not added', active: Boolean(buildMessengerUrl(seller.fb_username)) },
+    { label: 'Go Pair PH deals', value: completedSales > 0 ? `${completedSales} completed` : 'No completed deals yet', active: completedSales > 0 },
+  ];
+
+  return (
+    <div className="mt-4 rounded-xl border border-white/[0.08] bg-slate-950/45 p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">Seller trust</p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        {facts.map(fact => (
+          <div key={fact.label} className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2">
+            <p className="text-[11px] font-medium text-gray-500">{fact.label}</p>
+            <p className={cn('mt-0.5 text-xs font-semibold', fact.active ? 'text-gray-100' : 'text-gray-500')}>{fact.value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ShopTrustPanel({ shop }: { shop: NonNullable<Shoe['shops']> }) {
+  const facts = [
+    { label: 'Shop page', value: 'Active on Go Pair PH', active: true },
+    { label: 'Location', value: shop.location || 'Not added', active: Boolean(shop.location) },
+    { label: 'Facebook contact', value: getFacebookContactUrl(shop.fb_page_url) ? 'Ready' : 'Not added', active: Boolean(getFacebookContactUrl(shop.fb_page_url)) },
+  ];
+
+  return (
+    <div className="mt-4 rounded-xl border border-white/[0.08] bg-slate-950/45 p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">Shop trust</p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        {facts.map(fact => (
+          <div key={fact.label} className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2">
+            <p className="text-[11px] font-medium text-gray-500">{fact.label}</p>
+            <p className={cn('mt-0.5 text-xs font-semibold', fact.active ? 'text-gray-100' : 'text-gray-500')}>{fact.value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const shoe = await getShoe(params.id);
   if (!shoe) return { title: 'Listing not found' };
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const topImg = shoe.shoe_images?.find(i => i.view_type === 'top') ?? shoe.shoe_images?.[0];
-  const imageUrl = topImg && supabaseUrl ? getPublicUrl(supabaseUrl, topImg.storage_path) : '/og-image.png';
+  const imageUrl = topImg && supabaseUrl
+    ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.shareHero)
+    : '/og-image.png';
 
   const priceLabel =
     shoe.listing_type === 'for_sale' && shoe.price_php
       ? formatPrice(shoe.price_php) + (shoe.is_negotiable ? ' (Negotiable)' : '')
-      : 'Free Donation';
+      : 'Free';
 
   const listingName = formatListingName(shoe.brand, shoe.model);
   const title = `${listingName} — ${priceLabel}`;
@@ -288,16 +344,22 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const seller = shoe.profiles;
   const sellerLocation = formatProfileLocation(seller);
   const shop = shoe.shops && shoe.shops.status === 'active' ? shoe.shops : null;
-  const shopLogoUrl = shop?.logo_storage_path ? getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, shop.logo_storage_path, 'shop-logos') : null;
+  const shopLogoUrl = shop?.logo_storage_path ? getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, shop.logo_storage_path, 'shop-logos', IMAGE_TRANSFORM_PRESETS.shopLogo) : null;
   const topImage = shoe.shoe_images?.find(i => i.view_type === 'top') ?? shoe.shoe_images?.[0];
-  const productImageUrl = topImage ? getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, topImage.storage_path) : null;
+  const productImageUrl = topImage
+    ? getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, topImage.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.detailMain)
+    : null;
   const purchaseContext = await getPurchaseContext(shoe.id, currentProfileId, isOwner, shoe.status);
   const isSaved = await isListingSaved(currentProfileId, shoe.id);
   const saveCount = await getSavedListingCount(shoe.id);
+  const sellerCompletedSales = seller && !shop ? await getCompletedSalesCount(seller.id) : 0;
   const viewSummary = isOwner
     ? (await getViewSummariesForListings([shoe.id])).get(shoe.id) ?? { total: 0, last7d: 0 }
     : null;
   const discovery = await getListingDiscovery(shoe, currentProfile);
+  const trustSignals = getListingTrustSignals(shoe);
+  const completenessItems = getListingCompletenessItems(shoe);
+  const completenessScore = getListingCompletenessScore(shoe);
 
   const now = new Date();
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > now;
@@ -512,7 +574,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           href={signInHref}
           className="mt-4 flex w-full items-center justify-center rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-500"
         >
-          Sign in to Request Donation
+          Sign in to Claim Free Pair
         </Link>
       )}
     </div>
@@ -601,7 +663,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             </span>
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
-                {justClosedStatus === 'sold' ? 'Listing marked sold' : 'Listing marked donated'}
+                {justClosedStatus === 'sold' ? 'Listing marked sold' : 'Listing marked claimed'}
               </p>
               <h2 className="mt-2 text-xl font-bold text-gray-100">
                 {justClosedStatus === 'sold'
@@ -662,6 +724,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
 
           <h1 className="text-3xl font-bold text-gray-100">{formatListingName(shoe.brand, shoe.model)}</h1>
           <p className="text-gray-500 mt-1">{shoe.color}</p>
+          <ListingTrustBadges signals={trustSignals} className="mt-3" />
           {shoe.shops && shoe.shops.status === 'active' && (
             <div className="mt-2">
               <ShopBadge shop={shoe.shops} variant="sold-by" />
@@ -683,7 +746,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 {shoe.status === 'sold'
                   ? 'This pair has already found its next runner.'
                   : shoe.status === 'donated'
-                    ? 'This donated pair has already been claimed.'
+                    ? 'This free pair has already been claimed.'
                     : 'This listing is no longer available.'}
               </p>
               <p className="mt-1 text-xs leading-5 text-gray-400">
@@ -706,7 +769,13 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             </div>
           )}
 
-          {/* Price / Donate */}
+          {(isOwner || isAdmin) && (
+            <div className="mt-4">
+              <ListingCompletenessCard items={completenessItems} percent={completenessScore.percent} />
+            </div>
+          )}
+
+          {/* Price / Free Shoes */}
           <div className="mt-4">
             {shoe.listing_type === 'for_sale' && shoe.price_php && (
               <div className="flex items-baseline gap-2 flex-wrap">
@@ -720,8 +789,8 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             )}
             {shoe.listing_type === 'donate' && (
               <div className="rounded-lg bg-green-950 border border-green-800 p-4">
-                <p className="text-sm font-semibold text-green-400">Free Donation</p>
-                <p className="text-xs text-green-600 mt-0.5">Send a request to arrange pickup or shipping with the donor</p>
+                <p className="text-sm font-semibold text-green-400">Free Shoes</p>
+                <p className="text-xs text-green-600 mt-0.5">Send a request to arrange pickup or shipping with the seller</p>
               </div>
             )}
           </div>
@@ -803,6 +872,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 </Link>
               </div>
               <div className="mt-3 space-y-2">
+                <ShopTrustPanel shop={shop} />
                 <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner={isOwner} />
                 {!isOwner && shopContactHref && (
                   <a
@@ -842,7 +912,17 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                   View Profile
                 </Link>
               </div>
+              <SellerTrustPanel seller={seller} completedSales={sellerCompletedSales} />
               <ListingShareActions shoe={shoe} seller={seller} isOwner={isOwner} className="mt-3" />
+            </div>
+          )}
+
+          {!isOwner && (
+            <div className="mt-4 space-y-3">
+              <SafeDealTips />
+              <div className="flex justify-end">
+                <ReportListingButton listingId={shoe.id} listingName={listingName} />
+              </div>
             </div>
           )}
 
@@ -960,6 +1040,12 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 Admin controls
               </p>
               <div>
+                <AdminCheckedListingButton
+                  listingId={shoe.id}
+                  checkedAt={shoe.admin_checked_at}
+                />
+              </div>
+              <div className="border-t border-gray-800 pt-4">
                 <FeatureToggleButton
                   shoeId={shoe.id}
                   isFeatured={isFeatured}

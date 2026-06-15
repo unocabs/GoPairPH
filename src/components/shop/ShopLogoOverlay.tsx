@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { getPublicUrl } from '@/lib/utils';
+import { getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import type { Shop } from '@/types';
 
 type Size = 'sm' | 'lg';
@@ -21,7 +21,7 @@ export function ShopLogoOverlay({ shop, size = 'lg', asDiv = false }: ShopLogoOv
   if (!shop.logo_storage_path) return null;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const url = getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos');
+  const url = getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos', IMAGE_TRANSFORM_PRESETS.shopLogo);
   const dims = DIMS[size];
 
   const inner = (

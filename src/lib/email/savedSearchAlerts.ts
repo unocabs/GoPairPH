@@ -35,7 +35,7 @@ export function renderSavedSearchAlertEmail({
 }: SavedSearchAlertEmailArgs): string {
   const rows = matches.map(match => {
     const details = [
-      match.pricePhp != null ? formatPrice(match.pricePhp) : 'Donation',
+      match.pricePhp != null ? formatPrice(match.pricePhp) : 'Free',
       match.size || null,
       match.condition ? CONDITIONS[match.condition] ?? match.condition : null,
       match.location || null,

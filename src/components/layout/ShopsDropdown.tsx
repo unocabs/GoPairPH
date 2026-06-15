@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
-import { getPublicUrl } from '@/lib/utils';
+import { getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import type { Shop } from '@/types';
 
 type ShopLite = Pick<Shop, 'id' | 'slug' | 'name' | 'logo_storage_path'>;
@@ -63,7 +63,7 @@ export function ShopsDropdown() {
             ) : (
               <ul className="max-h-80 overflow-y-auto">
                 {shops.map(shop => {
-                  const logoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
+                  const logoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos', IMAGE_TRANSFORM_PRESETS.shopLogo) : null;
                   return (
                     <li key={shop.id}>
                       <Link

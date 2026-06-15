@@ -112,6 +112,8 @@ export interface Shoe {
   featured_until: string | null;
   sponsored_until: string | null;
   sponsored_started_at: string | null;
+  admin_checked_at: string | null;
+  admin_checked_by: string | null;
   quality_flagged_at: string | null;
   quality_flagged_by: string | null;
   quality_flag_reasons: string[];
@@ -238,5 +240,30 @@ export interface WishlistOfferReport {
   created_at: string;
   offer?: WishlistOffer | null;
   item?: Pick<WishlistItem, 'id' | 'brand' | 'model'> | null;
+  reporter?: Pick<Profile, 'id' | 'display_name'> | null;
+}
+
+export type ListingReportReason =
+  | 'misleading_photos'
+  | 'suspicious_or_scam'
+  | 'already_sold'
+  | 'wrong_price_or_details'
+  | 'seller_unreachable'
+  | 'duplicate_or_spam'
+  | 'other';
+
+export type ListingReportStatus = 'open' | 'dismissed';
+
+export interface ListingReport {
+  id: string;
+  listing_id: string;
+  reason: ListingReportReason;
+  note: string | null;
+  reporter_id: string | null;
+  status: ListingReportStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  listing?: Pick<Shoe, 'id' | 'slug' | 'brand' | 'model' | 'status' | 'price_php' | 'seller_id'> | null;
   reporter?: Pick<Profile, 'id' | 'display_name'> | null;
 }

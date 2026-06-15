@@ -26,7 +26,7 @@ export function renderAdminNewListingEmail({
   photoCount,
   createdAt,
 }: AdminNewListingEmailArgs): string {
-  const priceLabel = listingType === 'donate' ? 'Donation / free' : formatPrice(pricePhp ?? null);
+  const priceLabel = listingType === 'donate' ? 'Free Shoes' : formatPrice(pricePhp ?? null);
   const conditionLabel = CONDITIONS[condition] ?? condition;
   const postedAt = new Date(createdAt).toLocaleString('en-PH', {
     dateStyle: 'medium',

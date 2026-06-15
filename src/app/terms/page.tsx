@@ -47,7 +47,7 @@ export default function TermsPage() {
           <li>Describe items honestly, including brand, model, size, condition, mileage, price, location, stock, and any defects.</li>
           <li>Use only photos of the actual item you are listing.</li>
           <li>Keep listing, shop, availability, and contact information reasonably updated.</li>
-          <li>Honor accepted offers, orders, donation requests, and agreed transaction terms in good faith.</li>
+          <li>Honor accepted offers, orders, free-pair requests, and agreed transaction terms in good faith.</li>
           <li>Treat other users with respect — no harassment, hate speech, or threats.</li>
           <li>Comply with all applicable laws when buying, selling, shipping, or meeting up.</li>
         </ul>
@@ -75,7 +75,7 @@ export default function TermsPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">6. Transactions between users</h2>
         <p>
-          Once a seller accepts an offer, order, or donation request, the buyer and seller arrange the
+          Once a seller accepts an offer, order, or free-pair request, the buyer and seller arrange the
           transaction directly — by meetup, online payment, shipping, or any combination.
           Go Pair PH is not a party to these transactions and is not responsible for
           payment, delivery, item condition, authenticity, warranty, refunds, returns,
@@ -90,8 +90,8 @@ export default function TermsPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">7. Listing status and manual sold actions</h2>
         <p>
-          Sellers may mark a pair as sold, donated, reserved, unavailable, or inactive.
-          If a seller marks an item sold or donated outside Go Pair PH, that status is
+          Sellers may mark a pair as sold, claimed, reserved, unavailable, or inactive.
+          If a seller marks an item sold or claimed outside Go Pair PH, that status is
           for seller organization and marketplace cleanup only. It does not mean Go Pair PH
           verified the sale, buyer, payment, delivery, or transaction outcome.
         </p>
@@ -156,7 +156,7 @@ export default function TermsPage() {
         <h2 className="text-xl font-semibold text-gray-100">13. Emails and notifications</h2>
         <p>
           By using Go Pair PH, you agree that we may send transactional and service-related
-          messages, including sign-in/account messages, offers, orders, donation requests,
+          messages, including sign-in/account messages, offers, orders, free-pair requests,
           shop updates, saved-search alerts, listing-view milestones, safety notices, and
           support replies. You may opt out of non-essential marketing messages where that
           option is available.

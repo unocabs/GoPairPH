@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { VariantsEditor, type VariantRow } from '@/components/listings/VariantsEditor';
 import { PhotoUploader, type UploadedPhoto } from '@/components/listings/PhotoUploader';
-import { findSizeConversion, getListingPath, getPublicUrl } from '@/lib/utils';
+import { findSizeConversion, getListingPath, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import type { Shoe, ViewType } from '@/types';
 
 const BRAND_OPTIONS = BRANDS.map(b => ({ value: b, label: b }));
@@ -26,7 +26,7 @@ const CONDITION_HELPERS = [
 ] as const;
 const LISTING_TYPE_OPTIONS = [
   { value: 'for_sale', label: 'For Sale' },
-  { value: 'donate', label: 'Donate (Free)' },
+  { value: 'donate', label: 'Free Shoes' },
 ];
 const VIEW_ORDER: ViewType[] = ['top', 'sole', 'front', 'left', 'right', 'back'];
 
@@ -56,7 +56,7 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
       .map((image) => ({
         id: image.id,
         storagePath: image.storage_path,
-        publicUrl: getPublicUrl(supabaseUrl, image.storage_path),
+        publicUrl: getPublicUrl(supabaseUrl, image.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.listingCard),
         viewType: image.view_type,
       }))
   );
@@ -118,7 +118,7 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
   const hasSolePhoto = photos.some(photo => photo.viewType === 'sole');
   const suggestedNote = (() => {
     if (listingType === 'donate') {
-      return 'Available for donation. See top and sole photos for condition.\nMeetup around Pampanga preferred.';
+      return 'Free pair available. See top and sole photos for condition.\nMeetup around Pampanga preferred.';
     }
     if (condition === 'new') {
       return 'Brand new pair. See photos for box, tags, and condition.\nMeetup around Pampanga preferred.';

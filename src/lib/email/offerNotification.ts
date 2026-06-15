@@ -36,7 +36,7 @@ interface RequestStatusChangeEmailData {
   listing_title: string;
   seller_name: string;
   status: 'accepted' | 'declined';
-  /** "Free donation" when listing is a donate; pretty peso price otherwise. */
+  /** "Free" when listing is a Free Shoes listing; pretty peso price otherwise. */
   price_label: string;
   request_link: string;
   /** Optional Messenger link to the seller for buyer→seller follow-up after accept. */
@@ -422,7 +422,7 @@ export function renderShopOrderEmail(data: ShopOrderEmailData): string {
 </html>`;
 }
 
-// Simple branded shell shared by the donation + status-change emails.
+// Simple branded shell shared by the free-pair + status-change emails.
 // Keeps the markup small while staying consistent with the offer/shop templates above.
 function renderSimpleEmail({
   preheader,
@@ -512,8 +512,8 @@ function renderSimpleEmail({
 
 export function renderDonationRequestEmail(data: DonationRequestEmailData): string {
   return renderSimpleEmail({
-    preheader: `${data.requester_name} requested your free donation on Go Pair PH.`,
-    headline: 'Someone requested your donation 🙌',
+    preheader: `${data.requester_name} wants to claim your free pair on Go Pair PH.`,
+    headline: 'Someone wants to claim your free pair',
     intro: `Hi ${data.donor_name}, a fellow runner just asked for the pair you're giving away.`,
     rows: [
       { label: 'Listing', value: data.listing_title },
@@ -524,7 +524,7 @@ export function renderDonationRequestEmail(data: DonationRequestEmailData): stri
     message: data.requester_message,
     ctaLabel: 'Review request',
     ctaHref: data.request_link,
-    footer: "You're getting this because your listing is set to donate.",
+    footer: "You're getting this because your listing is set to Free Shoes.",
   });
 }
 

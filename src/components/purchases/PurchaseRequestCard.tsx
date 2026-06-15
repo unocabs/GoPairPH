@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
-import { formatRelativeDate, formatPrice, formatSize, getPublicUrl, getListingPath } from '@/lib/utils';
+import { formatRelativeDate, formatPrice, formatSize, getPublicUrl, getListingPath, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { buildMessengerUrl } from '@/lib/facebook';
 import { trackMarketplaceAction } from '@/lib/analytics';
 import type { PurchaseRequest, PurchaseRequestStatus, Shoe } from '@/types';
@@ -46,7 +46,7 @@ export function PurchaseRequestCard({
   const topImg =
     resolvedListing?.shoe_images?.find(i => i.view_type === 'top') ??
     resolvedListing?.shoe_images?.[0];
-  const thumbUrl = topImg && supabaseUrl ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', { width: 160, quality: 55 }) : null;
+  const thumbUrl = topImg && supabaseUrl ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.purchaseThumb) : null;
 
   async function changeStatus(next: 'accepted' | 'declined') {
     setLoading(true);

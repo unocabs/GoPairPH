@@ -5,7 +5,7 @@ import * as htmlToImage from 'html-to-image';
 import { LogoMark } from '@/components/brand/Logo';
 import { CONDITIONS, LISTING_TYPE_LABELS } from '@/lib/constants';
 import { trackMarketplaceAction } from '@/lib/analytics';
-import { formatListingName, formatMileage, formatPrice, formatProfileLocation, formatSize, getPublicUrl } from '@/lib/utils';
+import { formatListingName, formatMileage, formatPrice, formatProfileLocation, formatSize, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import type { Condition, ListingType, Shoe, Profile, Shop } from '@/types';
 
 interface SharePostModalProps {
@@ -132,20 +132,20 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImg = shoe.shoe_images?.find(i => i.view_type === 'top') ?? shoe.shoe_images?.[0];
-  const heroUrl = topImg ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', { width: 1200, quality: 76 }) : null;
+  const heroUrl = topImg ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.shareHero) : null;
   const thumbnailImageUrls = useMemo(
     () => (shoe.shoe_images ?? [])
       .slice()
       .sort((a, b) => a.order - b.order)
       .filter(image => image.id !== topImg?.id)
-      .map(image => getPublicUrl(supabaseUrl, image.storage_path, 'shoe-images', { width: 420, quality: 64 }))
+      .map(image => getPublicUrl(supabaseUrl, image.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.shareThumb))
       .slice(0, 3),
     [shoe.shoe_images, supabaseUrl, topImg?.id],
   );
   const thumbnailImageUrlKey = thumbnailImageUrls.join('|');
   const shop = shoe.shops?.status === 'active' ? shoe.shops : null;
   const identityImageUrl = shop?.logo_storage_path
-    ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos')
+    ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos', IMAGE_TRANSFORM_PRESETS.shopLogo)
     : seller?.avatar_url ?? null;
   const cardW = format === 'mobile' ? MOBILE_CARD_W : CARD_W;
   const cardH = format === 'mobile' ? MOBILE_CARD_H : CARD_H;
@@ -1110,7 +1110,7 @@ function PriceBlock({ shoe, priceSize, tagSize = 11, alignEnd = false }: { shoe:
   if (shoe.listing_type === 'donate') {
     return (
       <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.4)', borderRadius: 12, padding: '10px 14px', fontSize: Math.max(16, tagSize + 4), fontWeight: 700, color: '#86efac', width: 'fit-content' }}>
-        Free Donation
+        Free Shoes
       </div>
     );
   }

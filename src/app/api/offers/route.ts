@@ -161,7 +161,7 @@ async function sendNotification({ buyerId, listingId, message, offerPricePhp, va
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? '';
   const offerLink = `${siteUrl}/profile`;
 
-  // Donate listings: lighter template, no price talk.
+  // Free Shoes listings: lighter template, no price talk.
   if (listing.listing_type === 'donate') {
     const html = renderDonationRequestEmail({
       donor_name: sellerProfile.display_name,
@@ -174,7 +174,7 @@ async function sendNotification({ buyerId, listingId, message, offerPricePhp, va
     });
     await sendOfferEmail({
       to: sellerEmail,
-      subject: `New donation request: ${listingTitle} — Go Pair PH`,
+      subject: `New free pair request: ${listingTitle} — Go Pair PH`,
       html,
     });
     return;

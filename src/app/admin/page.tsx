@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { AdminDashboard } from './AdminDashboard';
 import { getDashboardViewWindow, getListingViewSummaries } from '@/lib/listingViews';
-import type { VerificationRequest, Profile, Shoe, Shop, WishlistItem, WishlistOffer, WishlistOfferReport } from '@/types';
+import type { ListingReport, VerificationRequest, Profile, Shoe, Shop, WishlistItem, WishlistOffer, WishlistOfferReport } from '@/types';
 
 type PairRequestSummary = Pick<WishlistItem, 'id' | 'brand' | 'model'>;
 
@@ -59,6 +59,36 @@ async function loadOpenLeadReports(): Promise<WishlistOfferReport[]> {
   });
 }
 
+async function loadOpenListingReports(): Promise<ListingReport[]> {
+  const service = createServiceClient();
+  const { data: reports, error } = await service
+    .from('listing_reports')
+    .select('id, listing_id, reason, note, reporter_id, status, reviewed_by, reviewed_at, created_at, listing:shoes!listing_reports_listing_id_fkey(id, slug, brand, model, status, price_php, seller_id)')
+    .eq('status', 'open')
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  if (error) {
+    console.warn('[admin] could not load listing reports:', error.message);
+    return [];
+  }
+
+  const rows = ((reports as unknown as ListingReport[]) ?? []);
+  const reporterIds = Array.from(new Set(rows.map(report => report.reporter_id).filter(Boolean) as string[]));
+  if (reporterIds.length === 0) return rows;
+
+  const { data: reporters } = await service
+    .from('profiles')
+    .select('id, display_name')
+    .in('id', reporterIds);
+
+  const reporterById = new Map(((reporters as Pick<Profile, 'id' | 'display_name'>[]) ?? []).map(reporter => [reporter.id, reporter]));
+  return rows.map(report => ({
+    ...report,
+    reporter: report.reporter_id ? reporterById.get(report.reporter_id) ?? null : null,
+  }));
+}
+
 async function loadAdminData() {
   const supabase = createClient();
   const service = createServiceClient();
@@ -74,7 +104,7 @@ async function loadAdminData() {
   if (!profile?.is_admin) return null;
 
   const viewWindow = getDashboardViewWindow();
-  const [pendingRes, recentRes, verifiedRes, shopsRes, profilesRes, soldListingsRes, listingViews, leadReports, siteSettingsRes] = await Promise.all([
+  const [pendingRes, recentRes, verifiedRes, shopsRes, profilesRes, soldListingsRes, listingViews, leadReports, listingReports, siteSettingsRes] = await Promise.all([
     supabase
       .from('verification_requests')
       .select('*, profiles:profiles!user_id(*)')
@@ -107,6 +137,7 @@ async function loadAdminData() {
       .limit(10),
     getListingViewSummaries({ ...viewWindow, limit: 100 }),
     loadOpenLeadReports(),
+    loadOpenListingReports(),
     service
       .from('site_settings')
       .select('show_active_visitors_publicly, show_homepage_activity_publicly')
@@ -123,6 +154,7 @@ async function loadAdminData() {
     soldListings: ((soldListingsRes.data ?? []) as unknown as Shoe[]),
     listingViews,
     leadReports,
+    listingReports,
     siteSettings: {
       showActiveVisitorsPublicly: Boolean(siteSettingsRes.data?.show_active_visitors_publicly),
       showHomepageActivityPublicly: Boolean(siteSettingsRes.data?.show_homepage_activity_publicly),

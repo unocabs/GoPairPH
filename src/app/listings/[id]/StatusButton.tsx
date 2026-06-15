@@ -12,7 +12,7 @@ interface StatusButtonProps {
 
 const DONE_LABELS: Record<ListingStatus, string> = {
   sold: 'Sold',
-  donated: 'Donated',
+  donated: 'Claimed',
   active: 'Active',
   reserved: 'Reserved',
   archived: 'Archived',
@@ -27,7 +27,7 @@ export function StatusButton({ shoeId, currentStatus }: StatusButtonProps) {
     await createClient().from('shoes').update({ status: 'active' }).eq('id', shoeId);
   }
 
-  // Active listings get marked sold/donated through the Purchase Request flow,
+  // Active listings get marked sold/claimed through the Purchase Request flow,
   // not via a manual button — keeps buyer/seller history intact.
   if (status === 'active' || status === 'archived' || status === 'reserved') return null;
 

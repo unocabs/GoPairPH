@@ -87,7 +87,7 @@ const faqs = [
   {
     question: 'Where can I buy and sell running shoes in Pampanga?',
     answer:
-      'Go Pair PH helps Pampanga runners buy, sell, and share brand-new, pre-loved, used, second-hand, and donated running shoes in one focused marketplace.',
+      'Go Pair PH helps Pampanga runners buy, sell, and share brand-new, pre-loved, used, second-hand, and free running shoes in one focused marketplace.',
   },
   {
     question: 'Can I find used running shoes in Pampanga on Go Pair PH?',

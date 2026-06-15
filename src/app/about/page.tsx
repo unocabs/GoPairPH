@@ -19,7 +19,7 @@ export default function AboutPage() {
         <h2 className="text-xl font-semibold text-gray-100">What we do</h2>
         <p>
           Go Pair PH helps runners find and share running shoe listings in one focused place.
-          Brand-new or pre-loved, for sale or donation, listings are organized around the
+          Brand-new or pre-loved, for sale or free, listings are organized around the
           details runners actually care about.
         </p>
       </section>
@@ -49,7 +49,7 @@ export default function AboutPage() {
         <ul className="list-disc list-inside space-y-1.5 text-gray-300">
           <li>Sign in with your Google account.</li>
           <li>Go to your Profile and add your Facebook username.</li>
-          <li>List a pair (with photos, size, mileage, and condition) for sale or donation.</li>
+          <li>List a pair (with photos, size, mileage, and condition) for sale or as Free Shoes.</li>
           <li>
             Browse listings from runners and sellers across Central Luzon and NCR,
             then coordinate the deal directly with the seller.

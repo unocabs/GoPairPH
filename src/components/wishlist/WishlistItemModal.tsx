@@ -5,7 +5,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from '@/components/auth/SessionProvider';
 import { createClient } from '@/lib/supabase/client';
-import { formatPrice, formatRelativeDate, formatSize, getPublicUrl } from '@/lib/utils';
+import { formatPrice, formatRelativeDate, formatSize, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
@@ -226,7 +226,7 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {images.map(img => (
                 <div key={img.id} className="relative aspect-square overflow-hidden rounded-lg border border-gray-800 bg-gray-800">
-                  <Image src={getPublicUrl(supabaseUrl, img.storage_path)} alt={`${item.brand} ${item.model} reference`} fill className="object-cover" sizes="200px" />
+                  <Image src={getPublicUrl(supabaseUrl, img.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.miniListing)} alt={`${item.brand} ${item.model} reference`} fill className="object-cover" sizes="200px" />
                 </div>
               ))}
             </div>

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 import { type ShoeImage } from '@/types';
-import { getPublicUrl } from '@/lib/utils';
+import { getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 
 interface PhotoGalleryProps {
   images: ShoeImage[];
@@ -56,7 +56,7 @@ export function PhotoGallery({ images, isOwner = false, listingPath, overlay }: 
   });
 
   const slides = sorted.map(img => ({
-    src: getPublicUrl(supabaseUrl, img.storage_path, 'shoe-images', { width: 1400, quality: 78 }),
+    src: getPublicUrl(supabaseUrl, img.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.detailLightbox),
   }));
 
   if (sorted.length === 0) {
@@ -98,12 +98,12 @@ export function PhotoGallery({ images, isOwner = false, listingPath, overlay }: 
           className="relative w-full h-full overflow-hidden rounded-xl bg-gray-900 block"
         >
           <Image
-            src={getPublicUrl(supabaseUrl, main.storage_path, 'shoe-images', { width: 1100, quality: 72 })}
+            src={getPublicUrl(supabaseUrl, main.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.detailMain)}
             alt="Main shoe photo"
             fill
             className="object-cover hover:scale-105 transition-transform"
             sizes="(min-width: 1024px) 50vw, 100vw"
-            quality={72}
+            quality={69}
             priority
           />
         </button>
@@ -126,7 +126,7 @@ export function PhotoGallery({ images, isOwner = false, listingPath, overlay }: 
                 }`}
               >
                 <Image
-                  src={getPublicUrl(supabaseUrl, img.storage_path, 'shoe-images', { width: 160, quality: 48 })}
+                  src={getPublicUrl(supabaseUrl, img.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.detailThumb)}
                   alt={img.view_type}
                   fill
                   className="object-cover"

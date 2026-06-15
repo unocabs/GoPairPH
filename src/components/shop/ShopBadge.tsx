@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getPublicUrl } from '@/lib/utils';
+import { getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import type { Shop } from '@/types';
 
 interface ShopBadgeProps {
@@ -11,7 +11,7 @@ interface ShopBadgeProps {
 
 export function ShopBadge({ shop, variant = 'sold-by' }: ShopBadgeProps) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const logoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
+  const logoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos', IMAGE_TRANSFORM_PRESETS.shopLogo) : null;
 
   return (
     <Link

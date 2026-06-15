@@ -90,7 +90,7 @@ export async function POST(request: Request, { params }: RouteContext) {
 
     const listingTitle = formatListingName(listing.brand, listing.model);
     const priceLabel = listing.listing_type === 'donate'
-      ? 'Free donation'
+      ? 'Free'
       : (listing.price_php != null ? formatPrice(listing.price_php) : 'See listing');
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? '';

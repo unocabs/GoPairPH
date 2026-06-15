@@ -15,10 +15,10 @@ export function buildListingCaption(shoe: Shoe, listingUrl: string): string {
   ].filter(Boolean);
 
   const headline = shoe.listing_type === 'donate'
-    ? `Available for donation: ${listingName}`
+    ? `Free pair available: ${listingName}`
     : `For sale: ${listingName}`;
   const action = shoe.listing_type === 'donate'
-    ? 'Message or send your offer on Go Pair PH:'
+    ? 'Claim this free pair on Go Pair PH:'
     : 'Send your offer on Go Pair PH:';
 
   return [

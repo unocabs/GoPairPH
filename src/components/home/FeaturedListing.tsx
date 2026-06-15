@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Shoe } from '@/types';
 import { CONDITIONS } from '@/lib/constants';
-import { formatMileage, formatPrice, formatProfileLocation, formatSize, getPublicUrl, formatListingName, getListingPath } from '@/lib/utils';
+import { formatMileage, formatPrice, formatProfileLocation, formatSize, getPublicUrl, formatListingName, getListingPath, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { FeaturedPill } from '@/components/listings/FeaturedPill';
 
 interface FeaturedListingProps {
@@ -13,7 +13,7 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImage =
     shoe.shoe_images?.find(img => img.view_type === 'top') ?? shoe.shoe_images?.[0];
-  const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path, 'shoe-images', { width: 900, quality: 70 }) : null;
+  const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.featuredListing) : null;
   const seller = shoe.profiles;
   const sellerLocation = formatProfileLocation(seller);
   const listingName = formatListingName(shoe.brand, shoe.model);
@@ -130,7 +130,7 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
             ) : shoe.listing_type === 'donate' ? (
               <>
                 <div className="font-mono text-[9px] uppercase tracking-[0.26em] text-green-300 sm:text-[10px] sm:tracking-[0.3em]">
-                  Donation
+                  Free Shoes
                 </div>
                 <div className="text-[34px] font-black leading-none tracking-tight text-white sm:text-[40px]">
                   Free

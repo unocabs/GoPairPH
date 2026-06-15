@@ -12,7 +12,7 @@ import { OutOfStockBadge } from '@/components/shop/OutOfStockBadge';
 import { ListingTypeBadge } from './ListingTypeBadge';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
-import { formatMileage, formatPrice, formatSize, getPublicUrl, formatRelativeDate, formatListingName, getListingPath } from '@/lib/utils';
+import { formatMileage, formatPrice, formatSize, getPublicUrl, formatRelativeDate, formatListingName, getListingPath, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { BuyModal } from '@/components/purchases/BuyModal';
 import { DonateRequestModal } from '@/components/purchases/DonateRequestModal';
@@ -58,7 +58,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImage = shoe.shoe_images?.find(img => img.view_type === 'top') ?? shoe.shoe_images?.[0];
-  const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path, 'shoe-images', { width: 560, quality: 60 }) : null;
+  const imageUrl = topImage ? getPublicUrl(supabaseUrl, topImage.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.listingCard) : null;
   const isOwner = !!currentProfileId && shoe.seller_id === currentProfileId;
   const canSeeQualityFlag = !!shoe.quality_flagged_at && !!currentProfileId && (isOwner || currentProfileIsAdmin === true);
   const canSave = !!currentProfileId && !isOwner;
@@ -150,7 +150,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
               fill
               className="object-cover transition-transform group-hover:scale-105"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              quality={58}
+              quality={54}
             />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-gray-900 via-gray-900 to-teal-950/40" style={theme ? { background: `linear-gradient(135deg, ${theme.surfaceStrong}, ${theme.background})` } : undefined}>
@@ -190,7 +190,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
                 shoe.status === 'reserved' ? 'text-teal-100' : 'text-white/70'
               }`}>
                 {shoe.status === 'sold' ? 'SOLD'
-                  : shoe.status === 'donated' ? 'DONATED'
+                  : shoe.status === 'donated' ? 'CLAIMED'
                   : shoe.status === 'reserved' ? 'DEAL PENDING'
                   : shoe.status.toUpperCase()}
               </span>
@@ -252,7 +252,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
             </div>
           )}
           {shoe.listing_type === 'donate' && (
-            <p className="mt-2 text-xs text-green-400 font-medium">Free Donation</p>
+            <p className="mt-2 text-xs text-green-400 font-medium">Free Shoes</p>
           )}
 
           {(personalizationBadges?.matchesSize || personalizationBadges?.nearYou) && (
@@ -395,7 +395,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
           )
         ) : submitted ? (
             <div className="rounded-lg border border-teal-800 bg-teal-950 px-3 py-2 text-xs text-teal-400 text-center" style={theme ? { borderColor: theme.border, backgroundColor: theme.surfaceStrong, color: theme.accent } : undefined}>
-              <p>{showDonate ? 'Request sent. Track it in Sent Offers.' : 'Offer sent. Track it in Sent Offers.'}</p>
+              <p>{showDonate ? 'Free pair request sent. Track it in Sent Offers.' : 'Offer sent. Track it in Sent Offers.'}</p>
               <Link href="/profile?tab=offers" className="mt-1 inline-flex font-semibold text-teal-100 underline underline-offset-2 hover:text-white">
                 View Sent Offers
               </Link>
@@ -456,7 +456,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
               }}
               className="w-full rounded-lg bg-green-700 px-3 py-2 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
             >
-              Request Pair
+              Claim Free Pair
             </button>
           ) : null}
 

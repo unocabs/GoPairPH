@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { CONDITIONS } from '@/lib/constants';
-import { formatListingName, formatPrice, formatRelativeDate, formatSize, getListingPath, getPublicUrl } from '@/lib/utils';
+import { formatListingName, formatPrice, formatRelativeDate, formatSize, getListingPath, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import type { Shoe } from '@/types';
 
 interface ManualSaleHistoryCardProps {
@@ -13,8 +13,8 @@ interface ManualSaleHistoryCardProps {
 export function ManualSaleHistoryCard({ shoe }: ManualSaleHistoryCardProps) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImg = shoe.shoe_images?.find(i => i.view_type === 'top') ?? shoe.shoe_images?.[0];
-  const imgUrl = topImg ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', { width: 160, quality: 55 }) : null;
-  const label = shoe.status === 'donated' ? 'Marked donated' : 'Marked sold outside Go Pair PH';
+  const imgUrl = topImg ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.purchaseThumb) : null;
+  const label = shoe.status === 'donated' ? 'Marked claimed' : 'Marked sold outside Go Pair PH';
 
   return (
     <div className="rounded-xl border border-gray-800 bg-gray-900 p-4 space-y-3">

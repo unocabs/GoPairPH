@@ -4,10 +4,10 @@ import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { formatCondition, formatListingName, formatPrice, formatProfileLocation, formatRelativeDate, formatSize, getListingPath, getPublicUrl } from '@/lib/utils';
+import { formatCondition, formatListingName, formatPrice, formatProfileLocation, formatRelativeDate, formatSize, getListingPath, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import type { ListingViewSummary } from '@/lib/listingViews';
-import type { VerificationRequest, Profile, Shoe, Shop, ShopStatus, WishlistOfferReport, WishlistOfferReportReason } from '@/types';
+import type { ListingReport, ListingReportReason, VerificationRequest, Profile, Shoe, Shop, ShopStatus, WishlistOfferReport, WishlistOfferReportReason } from '@/types';
 
 type ShopWithOwner = Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location_city' | 'location_province' | 'location_region'> | null };
 
@@ -20,6 +20,7 @@ interface AdminDashboardProps {
   soldListings: Shoe[];
   listingViews: ListingViewSummary[];
   leadReports: WishlistOfferReport[];
+  listingReports: ListingReport[];
   siteSettings: {
     showActiveVisitorsPublicly: boolean;
     showHomepageActivityPublicly: boolean;
@@ -27,7 +28,7 @@ interface AdminDashboardProps {
   viewWindow: { startDate: string; endDate: string };
 }
 
-type Tab = 'pending' | 'recent' | 'verified' | 'shops' | 'soldListings' | 'views' | 'leadReports' | 'emailBlast' | 'settings';
+type Tab = 'pending' | 'recent' | 'verified' | 'shops' | 'soldListings' | 'views' | 'leadReports' | 'listingReports' | 'emailBlast' | 'settings';
 const ACCEPTED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 const LEAD_REPORT_REASON_LABELS: Record<WishlistOfferReportReason, string> = {
@@ -36,6 +37,16 @@ const LEAD_REPORT_REASON_LABELS: Record<WishlistOfferReportReason, string> = {
   wrong_item: 'Wrong item',
   broken_link: 'Broken link',
   spam_or_duplicate: 'Spam or duplicate',
+  other: 'Other',
+};
+
+const LISTING_REPORT_REASON_LABELS: Record<ListingReportReason, string> = {
+  misleading_photos: 'Photos misleading or unclear',
+  suspicious_or_scam: 'Suspicious or unsafe',
+  already_sold: 'Already sold or unavailable',
+  wrong_price_or_details: 'Wrong price or details',
+  seller_unreachable: 'Seller hard to reach',
+  duplicate_or_spam: 'Duplicate or spam',
   other: 'Other',
 };
 
@@ -102,6 +113,7 @@ export function AdminDashboard({
   soldListings,
   listingViews,
   leadReports,
+  listingReports,
   siteSettings,
   viewWindow,
 }: AdminDashboardProps) {
@@ -118,6 +130,7 @@ export function AdminDashboard({
           { key: 'verified', label: `Verified users (${verified.length})` },
           { key: 'shops', label: `Shops (${shops.length})` },
           { key: 'soldListings', label: `Closed listings (${soldListings.length})` },
+          { key: 'listingReports', label: `Listing reports (${listingReports.length})` },
           { key: 'leadReports', label: `Lead reports (${leadReports.length})` },
           { key: 'emailBlast', label: 'Email blast' },
           { key: 'settings', label: 'Settings' },
@@ -140,6 +153,7 @@ export function AdminDashboard({
       {tab === 'shops' && <ShopsPanel shops={shops} profiles={profiles} />}
       {tab === 'soldListings' && <SoldListingsPanel listings={soldListings} />}
       {tab === 'views' && <ListingViewsPanel listings={listingViews} viewWindow={viewWindow} />}
+      {tab === 'listingReports' && <ListingReportsPanel reports={listingReports} />}
       {tab === 'leadReports' && <LeadReportsPanel reports={leadReports} />}
       {tab === 'emailBlast' && <EmailBlastPanel />}
       {tab === 'settings' && (
@@ -470,7 +484,7 @@ const CLOSED_LISTING_STATUS_LABELS: Record<Shoe['status'], string> = {
   active: 'Active',
   reserved: 'Reserved',
   sold: 'Sold',
-  donated: 'Donated',
+  donated: 'Claimed',
   archived: 'Archived',
 };
 
@@ -488,7 +502,7 @@ function SoldListingsPanel({ listings }: { listings: Shoe[] }) {
       <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
         <p className="text-sm font-semibold text-gray-100">Recent closed listings</p>
         <p className="mt-1 text-xs text-gray-500">
-          Showing the latest 10 sold, reserved, or donated listings. This matches the homepage activity count.
+          Showing the latest 10 sold, reserved, or claimed listings. This matches the homepage activity count.
         </p>
       </div>
 
@@ -621,6 +635,99 @@ function ListingViewsPanel({
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function ListingReportsPanel({ reports }: { reports: ListingReport[] }) {
+  const [dismissing, setDismissing] = useState<string | null>(null);
+  const router = useRouter();
+
+  async function handleDismiss(report: ListingReport) {
+    setDismissing(report.id);
+    const response = await fetch(`/api/admin/listing-reports/${report.id}`, { method: 'PATCH' });
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { error?: string } | null;
+      alert(body?.error ?? 'Could not dismiss report.');
+      setDismissing(null);
+      return;
+    }
+    router.refresh();
+  }
+
+  if (reports.length === 0) {
+    return (
+      <div className="rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
+        <p className="text-gray-500">No open listing reports.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+        <p className="text-sm font-semibold text-gray-100">Listing reports</p>
+        <p className="mt-1 text-xs text-gray-500">
+          Reports are private. Review the listing, flag quality if needed, mark checked if it looks good, or dismiss the report.
+        </p>
+      </div>
+
+      <div className="grid gap-3">
+        {reports.map(report => {
+          const listing = report.listing;
+          return (
+            <div key={report.id} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-amber-800 bg-amber-950 px-2 py-0.5 text-xs font-semibold text-amber-300">
+                      {LISTING_REPORT_REASON_LABELS[report.reason]}
+                    </span>
+                    <span className="text-xs text-gray-500">{formatRelativeDate(report.created_at)}</span>
+                  </div>
+
+                  {listing ? (
+                    <Link
+                      href={getListingPath(listing)}
+                      target="_blank"
+                      className="mt-2 block font-semibold text-gray-100 hover:text-teal-400"
+                    >
+                      {formatListingName(listing.brand, listing.model)}
+                    </Link>
+                  ) : (
+                    <p className="mt-2 font-semibold text-gray-500">Listing deleted</p>
+                  )}
+
+                  {listing && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      Status: {listing.status}
+                      {listing.price_php != null ? ` · ${formatPrice(listing.price_php)}` : ''}
+                    </p>
+                  )}
+
+                  {report.note && (
+                    <p className="mt-3 rounded-lg border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-300 whitespace-pre-wrap">
+                      {report.note}
+                    </p>
+                  )}
+                  <p className="mt-2 text-xs text-gray-500">
+                    Reporter: {report.reporter?.display_name ?? 'Anonymous'}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleDismiss(report)}
+                  disabled={dismissing === report.id}
+                  className="shrink-0 rounded-lg border border-gray-700 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-800 disabled:opacity-50"
+                >
+                  {dismissing === report.id ? 'Dismissing...' : 'Dismiss report'}
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -800,7 +907,7 @@ function ShopsPanel({ shops, profiles }: { shops: ShopWithOwner[]; profiles: Pro
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
   const ownerOptions = profiles.filter(profile => profile.display_name.trim().length > 0);
-  const currentLogoUrl = form.logo_storage_path ? getPublicUrl(supabaseUrl, form.logo_storage_path, 'shop-logos') : null;
+  const currentLogoUrl = form.logo_storage_path ? getPublicUrl(supabaseUrl, form.logo_storage_path, 'shop-logos', IMAGE_TRANSFORM_PRESETS.shopLogo) : null;
 
   useEffect(() => {
     return () => {

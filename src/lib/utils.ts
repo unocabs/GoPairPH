@@ -84,16 +84,33 @@ export function formatProfileLocation(profile: {
     .join(', ');
 }
 
+export type ImageTransformOptions = {
+  width?: number;
+  height?: number;
+  quality?: number;
+  resize?: 'cover' | 'contain' | 'fill';
+};
+
+export const IMAGE_TRANSFORM_PRESETS = {
+  listingCard: { width: 420, quality: 54, resize: 'contain' },
+  featuredListing: { width: 800, quality: 68, resize: 'contain' },
+  detailMain: { width: 1000, quality: 69, resize: 'contain' },
+  detailLightbox: { width: 1000, quality: 69, resize: 'contain' },
+  detailThumb: { width: 140, quality: 45, resize: 'contain' },
+  miniListing: { width: 160, quality: 52, resize: 'contain' },
+  purchaseThumb: { width: 140, quality: 52, resize: 'contain' },
+  shareHero: { width: 1000, quality: 70, resize: 'contain' },
+  shareThumb: { width: 360, quality: 58, resize: 'contain' },
+  shopLogo: { width: 160, quality: 60, resize: 'cover' },
+  shopHeader: { width: 1000, quality: 68, resize: 'cover' },
+  shopCarousel: { width: 720, quality: 64, resize: 'cover' },
+} satisfies Record<string, ImageTransformOptions>;
+
 export function getPublicUrl(
   supabaseUrl: string,
   storagePath: string,
   bucket = 'shoe-images',
-  transform?: {
-    width?: number;
-    height?: number;
-    quality?: number;
-    resize?: 'cover' | 'contain' | 'fill';
-  }
+  transform?: ImageTransformOptions
 ): string {
   const encodedPath = storagePath.split('/').map(encodeURIComponent).join('/');
 

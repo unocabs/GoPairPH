@@ -44,7 +44,7 @@ export function Footer() {
             <Logo size="sm" />
             <p className="mt-3 text-xs text-gray-500 leading-relaxed">
               Go Pair PH is a focused running shoe marketplace for Central Luzon and NCR
-              runners, sellers, shops, brand-new pairs, pre-loved pairs, and donations.
+              runners, sellers, shops, brand-new pairs, pre-loved pairs, and free shoes.
             </p>
           </div>
 

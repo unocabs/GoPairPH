@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
-import { formatRelativeDate, formatPrice, getPublicUrl, formatListingName, getListingPath } from '@/lib/utils';
+import { formatRelativeDate, formatPrice, getPublicUrl, formatListingName, getListingPath, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { buildMessengerUrl } from '@/lib/facebook';
 import { trackMarketplaceAction } from '@/lib/analytics';
 import type { PurchaseRequest, PurchaseRequestStatus, Shoe } from '@/types';
@@ -26,7 +26,7 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
   const seller = shoe?.profiles;
   const sellerMessengerUrl = buildMessengerUrl(seller?.fb_username);
   const topImg = shoe?.shoe_images?.find(i => i.view_type === 'top') ?? shoe?.shoe_images?.[0];
-  const thumbUrl = topImg && supabaseUrl ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', { width: 160, quality: 55 }) : null;
+  const thumbUrl = topImg && supabaseUrl ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.purchaseThumb) : null;
   const listingName = shoe ? formatListingName(shoe.brand, shoe.model) : 'Listing';
 
   async function handleRetract() {

@@ -18,10 +18,10 @@ export function OwnerMoreActions({ shoeId, listingType, status }: OwnerMoreActio
   const router = useRouter();
   const canMarkDone = status === 'active' && (listingType === 'for_sale' || listingType === 'donate');
   const doneStatus = listingType === 'donate' ? 'donated' : 'sold';
-  const doneLabel = listingType === 'donate' ? 'Mark as Donated' : 'Mark Sold Outside Go Pair PH';
+  const doneLabel = listingType === 'donate' ? 'Mark as Claimed' : 'Mark Sold Outside Go Pair PH';
   const doneHint = listingType === 'donate' ? 'Pair has been claimed' : 'Pair found its next runner';
   const confirmCopy = listingType === 'donate'
-    ? 'This closes the listing and stops new donation requests. Nice, your pair found a new runner.'
+    ? 'This closes the listing and stops new free-pair requests. Nice, your pair found a new runner.'
     : 'This closes the listing and stops new buyer requests. Nice, your running shoes found their next runner.';
 
   async function handleMarkDone() {

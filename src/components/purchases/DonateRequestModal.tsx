@@ -56,7 +56,7 @@ export function DonateRequestModal({ listingId, listingName, requesterId, reques
     >
       <div className="w-full max-w-md rounded-2xl bg-gray-900 border border-gray-700 shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800 shrink-0">
-          <h2 className="font-semibold text-gray-100">Request this Pair</h2>
+          <h2 className="font-semibold text-gray-100">Claim Free Pair</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-300 transition-colors">
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -67,21 +67,21 @@ export function DonateRequestModal({ listingId, listingName, requesterId, reques
           <div className="rounded-lg bg-gray-800 px-3 py-2.5">
             <p className="text-xs text-gray-500">You&apos;re requesting</p>
             <p className="text-sm font-medium text-gray-200 truncate">{listingName}</p>
-            <p className="text-sm font-bold text-green-400 mt-0.5">Free Donation</p>
+            <p className="text-sm font-bold text-green-400 mt-0.5">Free Shoes</p>
           </div>
 
           <div className="rounded-lg border border-green-800/70 bg-green-950/60 px-3 py-2.5">
             <p className="text-xs leading-5 text-green-300">
-              The donor reviews your request first. Arrange pickup or shipping only after they accept.
+              The seller reviews your request first. Arrange pickup or shipping only after they accept.
             </p>
           </div>
 
           <BuyerContactPrompt profileId={requesterId} initialFbUsername={requesterFbUsername} />
 
           <Textarea
-            label="Message to the donor (optional)"
+            label="Message to the seller (optional)"
             rows={3}
-            placeholder="Hi! I'd love to give these shoes a good home. I'm based in..."
+            placeholder="Hi! I'd like to claim this free pair. I'm based in..."
             value={message}
             onChange={e => setMessage(e.target.value)}
           />

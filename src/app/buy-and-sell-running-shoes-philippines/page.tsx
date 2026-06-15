@@ -27,7 +27,7 @@ const shoeTypes = [
   'Brand-new running shoes from runners, resellers, and selected shops',
   'Pre-loved running shoes with useful mileage left',
   'Second-hand running shoes for training, walking, gym use, or starter pairs',
-  'Donated running shoes for runners who need help getting a pair',
+  'Free running shoes for runners who need help getting a pair',
 ];
 
 const buyerChecks = [
@@ -41,7 +41,7 @@ const faqs = [
   {
     question: 'Where can I buy and sell running shoes in the Philippines?',
     answer:
-      'Go Pair PH is a focused marketplace where runners can buy, sell, and share brand-new, pre-loved, second-hand, and donated running shoes in one place.',
+      'Go Pair PH is a focused marketplace where runners can buy, sell, and share brand-new, pre-loved, second-hand, and free running shoes in one place.',
   },
   {
     question: 'Can I sell pre-loved running shoes on Go Pair PH?',
@@ -158,7 +158,7 @@ export default function BuyAndSellRunningShoesPhilippinesPage() {
             </h1>
             <p className="mt-5 max-w-3xl text-lg leading-8 text-gray-300">
               Go Pair PH helps runners find, list, and share brand-new, pre-loved,
-              second-hand, and donated running shoes in one focused marketplace built
+              second-hand, and free running shoes in one focused marketplace built
               for running shoes, not random items.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">

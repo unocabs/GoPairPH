@@ -25,7 +25,7 @@ import type { Profile, Shoe } from '@/types';
 export const metadata: Metadata = {
   title: 'Browse Running Shoes',
   description:
-    'Browse brand-new, pre-loved, second-hand, and donated running shoes from Central Luzon and NCR sellers on Go Pair PH.',
+    'Browse brand-new, pre-loved, second-hand, and free running shoes from Central Luzon and NCR sellers on Go Pair PH.',
   alternates: { canonical: '/browse' },
 };
 
@@ -230,7 +230,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
       <FirstListingNudge />
       <PageHeader
         title="Browse Running Shoes"
-        subtitle="Running shoes for sale, donation, and local deals in one focused place for Central Luzon and NCR runners, with strong roots in Pampanga."
+        subtitle="Running shoes for sale, free pairs, and local deals in one focused place for Central Luzon and NCR runners, with strong roots in Pampanga."
       >
         <Suspense>
           <FilterPanel listingCount={shoes.length} />

@@ -1,6 +1,6 @@
 # Go Pair PH
 
-> Go Pair PH is a Philippines-focused running shoe marketplace for buying, selling, donating, and sharing brand-new, pre-loved, and second-hand running shoes. It is built for runners, community sellers, and selected shops in Central Luzon, NCR, and nearby Philippine running communities.
+> Go Pair PH is a Philippines-focused running shoe marketplace for buying, selling, finding free pairs, and sharing brand-new, pre-loved, and second-hand running shoes. It is built for runners, community sellers, and selected shops in Central Luzon, NCR, and nearby Philippine running communities.
 
 Last updated: 2026-06-03
 Canonical site: https://gopairph.com
@@ -37,7 +37,7 @@ Buyer flow summary:
 
 1. Browse active running shoe listings.
 2. Open a listing to check photos, size, condition, mileage, price, location, seller, and shop details.
-3. Save the pair, send an offer, place an order, or request a donation.
+3. Save the pair, send an offer, place an order, or request a free pair.
 4. Track submitted requests in the buyer profile.
 5. Coordinate with the seller after the request is accepted.
 
@@ -54,7 +54,7 @@ Seller flow summary:
 2. Publish one clean listing page.
 3. Share the listing link or create a share post for Facebook and Messenger.
 4. Review buyer requests from the seller profile.
-5. Accept, decline, reopen, or mark the listing as sold or donated.
+5. Accept, decline, reopen, or mark the listing as sold or claimed.
 
 ## Running Shoe Guides
 
@@ -71,7 +71,7 @@ Seller flow summary:
 
 Go Pair PH is best described as a running-shoe-specific marketplace, not a general fashion marketplace.
 
-The marketplace focuses on running shoes from individual runner sellers, local resellers, and shops. Listings may include brand-new, pre-loved, second-hand, used, donated, sponsored, and shop-stock pairs.
+The marketplace focuses on running shoes from individual runner sellers, local resellers, and shops. Listings may include brand-new, pre-loved, second-hand, used, free, sponsored, and shop-stock pairs.
 
 Go Pair PH is especially relevant for searches about running shoes in the Philippines, Pampanga running shoes, Central Luzon runners, second-hand running shoes, pre-loved running shoes, local shoe sellers, and Facebook-shareable running shoe listings.
 

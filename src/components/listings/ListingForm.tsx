@@ -28,7 +28,7 @@ const CONDITION_HELPERS = [
 ] as const;
 const LISTING_TYPE_OPTIONS = [
   { value: 'for_sale', label: 'For Sale' },
-  { value: 'donate', label: 'Donate (Free)' },
+  { value: 'donate', label: 'Free Shoes' },
 ];
 const LISTING_DRAFT_KEY = 'gopairph:new-listing-draft:v1';
 
@@ -138,13 +138,13 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
         : 'Add sizes'
     : formatSize(sizeEu, sizeUs, sizeCm, usSizeType) || 'Add size';
   const previewPrice = listingType === 'donate'
-    ? 'Donation'
+    ? 'Free'
     : pricePhp
       ? formatPrice(pricePhp)
       : 'Add price';
   const suggestedNote = (() => {
     if (listingType === 'donate') {
-      return 'Available for donation. See top and sole photos for condition.\nMeetup around Pampanga preferred.';
+      return 'Free pair available. See top and sole photos for condition.\nMeetup around Pampanga preferred.';
     }
     if (condition === 'new') {
       return 'Brand new pair. See photos for box, tags, and condition.\nMeetup around Pampanga preferred.';
@@ -580,7 +580,7 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
                 {previewSize}
               </span>
               <span className="rounded-full border border-white/[0.08] bg-slate-900/70 px-2.5 py-1 text-gray-300">
-                {listingType === 'donate' ? 'Donate' : 'For Sale'}
+                {listingType === 'donate' ? 'Free Shoes' : 'For Sale'}
               </span>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-4">

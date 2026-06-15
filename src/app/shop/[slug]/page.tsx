@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { getOfferCounts } from '@/lib/offers';
-import { getPublicUrl, formatListingName } from '@/lib/utils';
+import { getPublicUrl, formatListingName, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { getShopTheme } from '@/lib/shopTheme';
 import { getSavedListingCounts, getSavedListingIds } from '@/lib/savedListings';
 import { ListingGrid } from '@/components/listings/ListingGrid';
@@ -160,7 +160,7 @@ export default async function ShopLandingPage({ params, searchParams }: ShopLand
   const isOwner = currentProfile?.id === shop.owner_profile_id;
   const theme = getShopTheme(shop.background_color, shop.accent_color);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const shopLogoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
+  const shopLogoUrl = shop.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos', IMAGE_TRANSFORM_PRESETS.shopLogo) : null;
   const listingTitleById = new Map(carouselListings.map(listing => [listing.id, formatListingName(listing.brand, listing.model)]));
   const listingSlugById = new Map(carouselListings.map(listing => [listing.id, listing.slug]));
   const carouselItems = (shop.carousel_items ?? [])
@@ -168,7 +168,7 @@ export default async function ShopLandingPage({ params, searchParams }: ShopLand
     .slice(0, 4)
     .map(item => ({
       ...item,
-      imageUrl: getPublicUrl(supabaseUrl, item.image_storage_path, 'shop-logos'),
+      imageUrl: getPublicUrl(supabaseUrl, item.image_storage_path, 'shop-logos', IMAGE_TRANSFORM_PRESETS.shopCarousel),
       listingSlug: item.listing_id ? listingSlugById.get(item.listing_id) ?? null : null,
       listingTitle: item.listing_id ? listingTitleById.get(item.listing_id) ?? null : null,
     }));

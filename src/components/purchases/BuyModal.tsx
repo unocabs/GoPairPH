@@ -11,7 +11,7 @@ import { VariantSelector } from '@/components/listings/VariantSelector';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
 import { BuyerContactPrompt } from './BuyerContactPrompt';
 import { trackMarketplaceAction } from '@/lib/analytics';
-import { formatProfileLocation, getPublicUrl } from '@/lib/utils';
+import { formatProfileLocation, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { getFacebookContactUrl } from '@/lib/facebook';
 import type { Profile, ShoeVariant, Shop } from '@/types';
 
@@ -62,7 +62,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
   const isShopOrder = !!shop;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const sellerLocation = formatProfileLocation(seller);
-  const shopLogoUrl = shop?.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos') : null;
+  const shopLogoUrl = shop?.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos', IMAGE_TRANSFORM_PRESETS.shopLogo) : null;
   const shopFacebookUrl = getFacebookContactUrl(shop?.fb_page_url);
   const submitDisabled = showVariantSelector && availableVariants.length === 0;
   const actionLabel = isShopOrder ? 'Place Order' : 'Send Offer';
