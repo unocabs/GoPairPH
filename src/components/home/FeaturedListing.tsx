@@ -17,10 +17,14 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
   const seller = shoe.profiles;
   const sellerLocation = formatProfileLocation(seller);
   const listingName = formatListingName(shoe.brand, shoe.model);
+  const showSrp = shoe.listing_type === 'for_sale' && shoe.price_php != null && shoe.srp_php != null && shoe.srp_php >= shoe.price_php;
+  const discountPercent = showSrp && shoe.srp_php && shoe.price_php
+    ? Math.max(0, Math.round(((shoe.srp_php - shoe.price_php) / shoe.srp_php) * 100))
+    : 0;
 
   return (
     <article
-      className="group relative block w-full max-w-[500px] aspect-[4/5] overflow-hidden rounded-[24px] border border-white/10 bg-gray-950/70 shadow-[0_24px_80px_rgba(0,0,0,0.55),0_0_60px_rgba(20,184,166,0.12)] backdrop-blur-md transition-transform hover:scale-[1.01] sm:h-[420px] sm:aspect-auto sm:rounded-[28px]"
+      className="group relative block w-full max-w-[500px] aspect-[4/5] overflow-hidden rounded-[24px] border border-white/10 bg-gray-950/70 shadow-[0_24px_80px_rgba(0,0,0,0.55),0_0_60px_rgba(20,184,166,0.12)] backdrop-blur-md transition-transform hover:scale-[1.01] sm:h-[440px] sm:w-[500px] sm:aspect-auto sm:rounded-[28px]"
     >
       <Link
         href={getListingPath(shoe)}
@@ -81,7 +85,7 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
       </div>
 
       {/* MIDDLE: huge brand + model */}
-      <div className="pointer-events-none absolute left-5 right-5 bottom-[172px] sm:left-6 sm:right-6 sm:bottom-[140px]">
+      <div className="pointer-events-none absolute left-5 right-5 bottom-[172px] sm:left-6 sm:right-6 sm:bottom-[158px]">
         <div className="mb-1.5 font-mono text-[9px] uppercase tracking-[0.26em] text-teal-300 sm:mb-2 sm:text-[10px] sm:tracking-[0.3em]">
           Featured Listing
         </div>
@@ -126,6 +130,18 @@ export function FeaturedListing({ shoe }: FeaturedListingProps) {
                     {formatPrice(shoe.price_php)}
                   </span>
                 </div>
+                {showSrp && (
+                  <div className="mt-0.5 flex items-center gap-2">
+                    <span className="text-[10px] font-semibold text-stone-400 line-through sm:text-[11px]">
+                      {formatPrice(shoe.srp_php)}
+                    </span>
+                    {discountPercent > 0 && (
+                      <span className="text-[10px] font-bold uppercase leading-none text-red-400">
+                        {discountPercent}% OFF
+                      </span>
+                    )}
+                  </div>
+                )}
               </>
             ) : shoe.listing_type === 'donate' ? (
               <>

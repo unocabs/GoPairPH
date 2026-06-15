@@ -7,6 +7,7 @@ interface AdminNewListingEmailArgs {
   sellerName: string;
   shopName?: string | null;
   pricePhp?: number | null;
+  srpPhp?: number | null;
   listingType: string;
   condition: string;
   sizeLabel?: string;
@@ -20,6 +21,7 @@ export function renderAdminNewListingEmail({
   sellerName,
   shopName,
   pricePhp,
+  srpPhp,
   listingType,
   condition,
   sizeLabel,
@@ -27,6 +29,9 @@ export function renderAdminNewListingEmail({
   createdAt,
 }: AdminNewListingEmailArgs): string {
   const priceLabel = listingType === 'donate' ? 'Free Shoes' : formatPrice(pricePhp ?? null);
+  const srpLabel = listingType === 'for_sale' && srpPhp != null && pricePhp != null && srpPhp >= pricePhp
+    ? formatPrice(srpPhp)
+    : null;
   const conditionLabel = CONDITIONS[condition] ?? condition;
   const postedAt = new Date(createdAt).toLocaleString('en-PH', {
     dateStyle: 'medium',
@@ -51,6 +56,7 @@ export function renderAdminNewListingEmail({
               ${detailRow('Seller', escapeHtml(sellerName))}
               ${shopName ? detailRow('Shop', escapeHtml(shopName)) : ''}
               ${detailRow('Price', escapeHtml(priceLabel || 'Not provided'))}
+              ${srpLabel ? detailRow('SRP', escapeHtml(srpLabel)) : ''}
               ${detailRow('Condition', escapeHtml(conditionLabel))}
               ${sizeLabel ? detailRow('Size', escapeHtml(sizeLabel)) : ''}
               ${detailRow('Photos', `${photoCount}`)}
@@ -80,6 +86,7 @@ export function makeAdminNewListingEmailInput(args: {
   sellerName: string;
   shopName?: string | null;
   pricePhp?: number | null;
+  srpPhp?: number | null;
   listingType: string;
   condition: string;
   sizeEu?: number | null;
@@ -97,6 +104,7 @@ export function makeAdminNewListingEmailInput(args: {
     sellerName: args.sellerName,
     shopName: args.shopName,
     pricePhp: args.pricePhp,
+    srpPhp: args.srpPhp,
     listingType: args.listingType,
     condition: args.condition,
     sizeLabel,

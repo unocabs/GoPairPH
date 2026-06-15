@@ -2,6 +2,10 @@ import { z } from 'zod';
 import { normalizeFacebookUsername } from '@/lib/facebook';
 
 const usSizeTypeSchema = z.enum(['mens', 'womens', 'unisex', 'unknown']).optional().default('mens');
+const optionalPriceNumber = z.preprocess(
+  val => (val === '' || val == null ? null : Number(val)),
+  z.number().min(0).nullable().optional()
+);
 
 export const listingSchema = z.object({
   brand: z.string().min(1, 'Brand is required'),
@@ -14,6 +18,7 @@ export const listingSchema = z.object({
   ),
   listing_type: z.enum(['for_sale', 'donate']),
   price_php: z.coerce.number().min(0).optional().nullable(),
+  srp_php: optionalPriceNumber,
   is_negotiable: z.coerce.boolean().optional().default(false),
   description: z.string().optional().nullable(),
   size_eu: z.coerce.number().optional().nullable(),
@@ -26,6 +31,18 @@ export const listingSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'Price is required for sale listings',
       path: ['price_php'],
+    });
+  }
+  if (
+    data.listing_type === 'for_sale'
+    && data.srp_php != null
+    && data.price_php != null
+    && data.srp_php < data.price_php
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'SRP should be equal to or higher than the listing price',
+      path: ['srp_php'],
     });
   }
   if (!data.size_eu && !data.size_us && !data.size_cm) {

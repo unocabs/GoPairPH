@@ -101,6 +101,7 @@ export interface Shoe {
   mileage_km: number | null;
   listing_type: ListingType;
   price_php: number | null;
+  srp_php: number | null;
   is_negotiable: boolean;
   description: string | null;
   status: ListingStatus;
@@ -133,6 +134,8 @@ export interface PurchaseRequest {
   listing_id: string;
   buyer_id: string;
   message: string | null;
+  seller_message: string | null;
+  seller_message_at: string | null;
   offer_price_php: number | null;
   status: PurchaseRequestStatus;
   created_at: string;

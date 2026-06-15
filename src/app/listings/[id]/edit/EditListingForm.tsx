@@ -87,6 +87,7 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
       mileage_km: shoe.mileage_km,
       listing_type: shoe.listing_type,
       price_php: shoe.price_php ?? undefined,
+      srp_php: shoe.srp_php ?? undefined,
       is_negotiable: shoe.is_negotiable,
       description: shoe.description ?? undefined,
       // For shop listings, satisfy the schema's "at least one size" check with a
@@ -215,6 +216,7 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
           condition: data.condition, mileage_km: data.condition === 'new' ? 0 : (data.mileage_km ?? null),
           listing_type: isShopListing ? 'for_sale' : data.listing_type,
           price_php: isShopListing || data.listing_type === 'for_sale' ? data.price_php : null,
+          srp_php: isShopListing || data.listing_type === 'for_sale' ? (data.srp_php ?? null) : null,
           is_negotiable: isShopListing ? false : (data.listing_type === 'for_sale' ? !!data.is_negotiable : false),
           description: data.description,
           size_eu: isShopListing ? null : data.size_eu,
@@ -380,7 +382,17 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
         )}
         {(isShopListing || listingType === 'for_sale') && (
           <div className="space-y-2">
-            <Input label="Price (PHP)" type="number" min={0} required error={errors.price_php?.message} {...register('price_php')} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input label="Price (PHP)" type="number" min={0} required error={errors.price_php?.message} {...register('price_php')} />
+              <Input
+                label="SRP / Retail price (optional)"
+                type="number"
+                min={0}
+                hint="Use the original retail price if you know it. This helps buyers compare value."
+                error={errors.srp_php?.message}
+                {...register('srp_php')}
+              />
+            </div>
             <div className="rounded-lg border border-white/[0.08] bg-slate-950/40 px-3 py-2 text-xs leading-5 text-gray-500">
               If you lowered the price or clarified condition, share the listing again so buyers see the update.
               <a

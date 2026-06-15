@@ -63,6 +63,7 @@ export async function POST(request: Request) {
     sellerName: listing.profiles?.display_name ?? 'Go Pair PH seller',
     shopName: listing.shops?.name ?? null,
     pricePhp: listing.price_php,
+    srpPhp: listing.srp_php,
     listingType: listing.listing_type,
     condition: listing.condition,
     sizeEu: listing.shop_id ? inStockVariant?.size_eu ?? null : listing.size_eu,

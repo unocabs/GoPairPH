@@ -61,7 +61,7 @@ async function getOwnProfileData() {
       .from('purchase_requests')
       .select(purchaseSelect)
       .eq('buyer_id', profile.id)
-      .in('status', ['pending', 'accepted'])
+      .in('status', ['pending', 'accepted', 'declined'])
       .order('created_at', { ascending: false }),
   ]);
   const purchaseHistory = [

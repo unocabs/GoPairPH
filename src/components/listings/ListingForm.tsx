@@ -287,6 +287,7 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
           mileage_km: details.condition === 'new' ? 0 : (details.mileage_km ?? null),
           listing_type: isShop ? 'for_sale' : details.listing_type,
           price_php: isShop || details.listing_type === 'for_sale' ? details.price_php : null,
+          srp_php: isShop || details.listing_type === 'for_sale' ? (details.srp_php ?? null) : null,
           is_negotiable: isShop ? false : (details.listing_type === 'for_sale' ? !!details.is_negotiable : false),
           description: details.description,
           size_eu: isShop ? null : details.size_eu,
@@ -465,7 +466,18 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
 
             {(isShop || listingType === 'for_sale') && (
               <div className="space-y-2">
-                <Input label="Price (PHP)" type="number" min={0} required placeholder="e.g. 2500" error={errors.price_php?.message} {...register('price_php')} />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input label="Price (PHP)" type="number" min={0} required placeholder="e.g. 2500" error={errors.price_php?.message} {...register('price_php')} />
+                  <Input
+                    label="SRP / Retail price (optional)"
+                    type="number"
+                    min={0}
+                    placeholder="e.g. 9000"
+                    hint="Use the original retail price if you know it. This helps buyers compare value."
+                    error={errors.srp_php?.message}
+                    {...register('srp_php')}
+                  />
+                </div>
                 <div className="rounded-lg border border-teal-400/20 bg-teal-400/[0.06] px-3 py-2">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-xs leading-5 text-gray-400">

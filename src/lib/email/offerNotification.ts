@@ -41,6 +41,16 @@ interface RequestStatusChangeEmailData {
   request_link: string;
   /** Optional Messenger link to the seller for buyer→seller follow-up after accept. */
   messenger_link: string | null;
+  /** One-time status note from the seller. This is not a chat thread. */
+  seller_message?: string | null;
+}
+
+interface SellerNoteEmailData {
+  buyer_name: string;
+  seller_name: string;
+  listing_title: string;
+  seller_message: string;
+  request_link: string;
 }
 
 function escape(value: string): string {
@@ -553,9 +563,25 @@ export function renderRequestStatusChangeEmail(data: RequestStatusChangeEmailDat
       { label: 'Price', value: data.price_label },
       { label: 'Seller', value: data.seller_name },
     ],
-    message: null,
+    message: data.seller_message ? `Seller note: ${data.seller_message}` : null,
     ctaLabel,
     ctaHref,
     footer: "You're getting this because you have an active request on Go Pair PH.",
+  });
+}
+
+export function renderSellerNoteEmail(data: SellerNoteEmailData): string {
+  return renderSimpleEmail({
+    preheader: `${data.seller_name} added a note to your Go Pair PH offer.`,
+    headline: 'Seller added a note',
+    intro: `Hi ${data.buyer_name}, ${data.seller_name} added a one-time note to your offer. This is not a chat thread, so check the offer status on Go Pair PH.`,
+    rows: [
+      { label: 'Listing', value: data.listing_title },
+      { label: 'Seller', value: data.seller_name },
+    ],
+    message: data.seller_message,
+    ctaLabel: 'View Sent Offers',
+    ctaHref: data.request_link,
+    footer: "You're getting this because you sent an offer on Go Pair PH.",
   });
 }

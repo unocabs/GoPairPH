@@ -64,6 +64,10 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
   const canSave = !!currentProfileId && !isOwner;
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > new Date();
   const isFresh = Date.now() - new Date(shoe.created_at).getTime() < NEW_PILL_WINDOW_MS;
+  const showSrp = shoe.listing_type === 'for_sale' && shoe.price_php != null && shoe.srp_php != null && shoe.srp_php >= shoe.price_php;
+  const discountPercent = showSrp && shoe.srp_php && shoe.price_php
+    ? Math.max(0, Math.round(((shoe.srp_php - shoe.price_php) / shoe.srp_php) * 100))
+    : 0;
   const themedCardStyle = theme ? { backgroundColor: theme.surface, borderColor: isOwner ? theme.accent : theme.border } : undefined;
   const themedMutedStyle = theme ? { color: theme.mutedText } : undefined;
   const themedAccentStyle = theme ? { color: theme.accent } : undefined;
@@ -240,7 +244,21 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
 
           {shoe.listing_type === 'for_sale' && shoe.price_php && (
             <div className="mt-2 flex items-baseline justify-between gap-2">
-              <p className="font-bold text-teal-400 shrink-0" style={themedAccentStyle}>{formatPrice(shoe.price_php)}</p>
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <p className="font-bold text-teal-400 shrink-0" style={themedAccentStyle}>{formatPrice(shoe.price_php)}</p>
+                {showSrp && (
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-[11px] font-medium text-gray-600 line-through" style={themedMutedStyle}>
+                      {formatPrice(shoe.srp_php)}
+                    </p>
+                    {discountPercent > 0 && (
+                      <span className="text-[10px] font-bold uppercase leading-none text-red-400">
+                        {discountPercent}% OFF
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
               {offerCount === 0 ? (
                 <span></span>
               ) : (

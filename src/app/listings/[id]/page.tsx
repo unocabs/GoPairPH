@@ -360,6 +360,10 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const trustSignals = getListingTrustSignals(shoe);
   const completenessItems = getListingCompletenessItems(shoe);
   const completenessScore = getListingCompletenessScore(shoe);
+  const showSrp = shoe.listing_type === 'for_sale' && shoe.price_php != null && shoe.srp_php != null && shoe.srp_php >= shoe.price_php;
+  const discountPercent = showSrp && shoe.srp_php && shoe.price_php
+    ? Math.max(0, Math.round(((shoe.srp_php - shoe.price_php) / shoe.srp_php) * 100))
+    : 0;
 
   const now = new Date();
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > now;
@@ -778,12 +782,26 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           {/* Price / Free Shoes */}
           <div className="mt-4">
             {shoe.listing_type === 'for_sale' && shoe.price_php && (
-              <div className="flex items-baseline gap-2 flex-wrap">
-                <p className="text-3xl font-bold text-teal-400">{formatPrice(shoe.price_php)}</p>
-                {shoe.is_negotiable && (
-                  <span className="text-xs font-semibold uppercase tracking-wide text-amber-400 bg-amber-950 border border-amber-800 px-2 py-0.5 rounded-full">
-                    Negotiable
-                  </span>
+              <div className="space-y-1.5">
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <p className="text-3xl font-bold text-teal-400">{formatPrice(shoe.price_php)}</p>
+                  {shoe.is_negotiable && (
+                    <span className="text-xs font-semibold uppercase tracking-wide text-amber-400 bg-amber-950 border border-amber-800 px-2 py-0.5 rounded-full">
+                      Negotiable
+                    </span>
+                  )}
+                </div>
+                {showSrp && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-500 line-through">
+                      {formatPrice(shoe.srp_php)}
+                    </span>
+                    {discountPercent > 0 && (
+                      <span className="text-xs font-bold uppercase leading-none text-red-400">
+                        {discountPercent}% OFF
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             )}

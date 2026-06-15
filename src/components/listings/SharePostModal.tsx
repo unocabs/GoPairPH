@@ -750,11 +750,19 @@ function VerticalPriceRibbon({ shoe }: { shoe: Shoe }) {
       ? formatPrice(shoe.price_php)
       : 'Message';
   const displayLabel = truncateText(label, 12);
+  const showSrp = shoe.listing_type === 'for_sale' && shoe.price_php != null && shoe.srp_php != null && shoe.srp_php >= shoe.price_php;
 
   return (
     <div style={{ marginTop: 24, marginLeft: -42, width: 395, height: 110, borderRadius: '0 22px 22px 0', background: 'linear-gradient(90deg, rgba(13,148,136,0.96) 0%, rgba(15,118,110,0.92) 72%, rgba(13,148,136,0.62) 100%)', boxShadow: '0 18px 34px rgba(0,0,0,0.22)', display: 'flex', alignItems: 'center', paddingLeft: 56, paddingRight: 24, boxSizing: 'border-box', overflow: 'hidden' }}>
-      <div style={{ maxWidth: 310, color: '#f8fafc', fontSize: displayLabel.length > 9 ? 52 : 74, lineHeight: 1, fontWeight: 950, letterSpacing: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {displayLabel}
+      <div style={{ maxWidth: 310, overflow: 'hidden' }}>
+        <div style={{ color: '#f8fafc', fontSize: displayLabel.length > 9 ? 48 : 68, lineHeight: 1, fontWeight: 950, letterSpacing: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {displayLabel}
+        </div>
+        {showSrp && (
+          <div style={{ marginTop: 6, color: '#cbd5e1', fontSize: 15, lineHeight: 1, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            SRP {formatPrice(shoe.srp_php)}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1115,11 +1123,17 @@ function PriceBlock({ shoe, priceSize, tagSize = 11, alignEnd = false }: { shoe:
     );
   }
   if (shoe.price_php == null) return null;
+  const showSrp = shoe.srp_php != null && shoe.srp_php >= shoe.price_php;
   return (
     <div style={{ display: 'flex', flexDirection: alignEnd ? 'column' : 'row', alignItems: alignEnd ? 'flex-end' : 'baseline', gap: alignEnd ? 8 : 12 }}>
       <span style={{ fontSize: priceSize, fontWeight: 850, color: '#2dd4bf', letterSpacing: '-0.03em', lineHeight: 1 }}>
         {formatPrice(shoe.price_php)}
       </span>
+      {showSrp && (
+        <span style={{ fontSize: Math.max(10, tagSize), fontWeight: 700, color: '#94a3b8', lineHeight: 1, whiteSpace: 'nowrap' }}>
+          SRP {formatPrice(shoe.srp_php)}
+        </span>
+      )}
       {shoe.is_negotiable && (
         <span style={{ fontSize: tagSize, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fcd34d', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: 9999, padding: '3px 10px' }}>
           Negotiable

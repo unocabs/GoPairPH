@@ -114,6 +114,19 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
         <p className="text-sm text-gray-400 italic border-l-2 border-gray-700 pl-3">&quot;{request.message}&quot;</p>
       )}
 
+      {request.seller_message && (
+        <div className="rounded-lg border border-teal-400/20 bg-teal-400/[0.06] px-3 py-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-teal-200">Seller note</p>
+            {request.seller_message_at && (
+              <span className="text-[11px] text-gray-500">{formatRelativeDate(request.seller_message_at)}</span>
+            )}
+          </div>
+          <p className="mt-1 text-sm leading-6 text-gray-300">{request.seller_message}</p>
+          <p className="mt-1 text-[11px] leading-4 text-gray-500">One-time note only. This is not a chat thread.</p>
+        </div>
+      )}
+
       <div className="flex items-center gap-1.5 flex-wrap text-xs text-gray-500">
         <span>To</span>
         {seller ? (
@@ -128,6 +141,12 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
       {status === 'pending' && (
         <div className="rounded-lg border border-amber-400/20 bg-amber-400/[0.07] px-3 py-2 text-xs leading-5 text-amber-200">
           Waiting for seller response. If they accept, this pair becomes reserved for you while you coordinate the deal.
+        </div>
+      )}
+
+      {status === 'declined' && (
+        <div className="rounded-lg border border-gray-700 bg-slate-950/45 px-3 py-2 text-xs leading-5 text-gray-400">
+          This request was declined. You can keep browsing or send a new offer if the seller asks for different details.
         </div>
       )}
 
