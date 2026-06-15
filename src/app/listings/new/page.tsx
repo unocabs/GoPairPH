@@ -15,7 +15,7 @@ type DemandSignal = Pick<WishlistItem, 'id' | 'brand' | 'model' | 'size_eu' | 's
 const quickListingSteps = [
   {
     label: 'List',
-    title: 'Add your pair on GoPairPH.com',
+    title: 'Create one source listing',
     visual: 'listing',
   },
   {
@@ -25,7 +25,7 @@ const quickListingSteps = [
   },
   {
     label: 'Share',
-    title: 'Share your listing anywhere',
+    title: 'Share the same link anywhere',
     visual: 'share',
   },
 ] as const;
@@ -68,11 +68,11 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
-      <h1 className="text-2xl font-bold text-gray-100 mb-1">Sell your running shoes with one clean listing</h1>
+      <h1 className="text-2xl font-bold text-gray-100 mb-1">Create one clean listing for your running shoes</h1>
       <p className="max-w-2xl text-sm leading-6 text-gray-500 mb-3">
         {formShop
           ? `Posting as ${formShop.name}.`
-          : 'Add the important details, upload top and sole photos, then share your Go Pair PH listing to Facebook, Messenger, or running groups.'}
+          : 'Add the important details once, upload top and sole photos, then share your Go Pair PH link to Facebook, Marketplace, Messenger, or running groups.'}
       </p>
       <section className="mb-4 rounded-2xl border border-white/[0.08] bg-slate-950/55 p-4 shadow-lg shadow-black/10 sm:p-5">
         <div className="grid grid-cols-3 gap-3 sm:gap-5">
@@ -143,13 +143,14 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
           ))}
         </div>
         <p className="mt-4 text-center text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
-          List once. Share anywhere.
+          List once. Share anywhere. Keep shoe details clean.
         </p>
       </section>
       <div className="mb-8 flex flex-wrap gap-2 text-xs text-gray-400">
         <span className="rounded-full border border-teal-400/25 bg-teal-400/10 px-3 py-1 text-teal-200">About 2-3 minutes</span>
         <span className="rounded-full border border-white/[0.08] bg-slate-900/70 px-3 py-1">Clean share link</span>
         <span className="rounded-full border border-white/[0.08] bg-slate-900/70 px-3 py-1">FB-ready share image</span>
+        <span className="rounded-full border border-white/[0.08] bg-slate-900/70 px-3 py-1">No repeated details</span>
       </div>
       {result ? (
         <SellerContactGate

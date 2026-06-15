@@ -25,7 +25,7 @@ import {
 import type { Profile, Shoe } from '@/types';
 
 const HOME_TITLE = 'Go Pair PH — Buy and Sell Running Shoes';
-const HOME_DESCRIPTION = 'Buy and sell brand-new, pre-loved, and second-hand running shoes from Central Luzon and NCR sellers on Go Pair PH.';
+const HOME_DESCRIPTION = 'Buy and sell running shoes in one focused place. Sellers can create one clean Go Pair PH listing, then share it to Facebook, Messenger, Marketplace, and running groups.';
 
 type HomepageSiteSettings = {
   showHomepageActivityPublicly: boolean;
@@ -290,8 +290,9 @@ export default async function HomePage() {
                 <span className="text-teal-300">Running Shoes</span>
               </h1>
               <p className="mt-3 max-w-lg text-sm leading-6 text-gray-300/85 sm:mt-4 sm:text-lg sm:leading-8">
-                Buy brand-new, pre-loved, and second-hand running shoes from Central
-                Luzon and NCR sellers in one focused marketplace built for runners.
+                Buy and sell running shoes in one focused place. Sellers can create one
+                clean listing, then share it to Facebook, Marketplace, Messenger, and
+                running groups.
               </p>
               <div className="mt-6 flex flex-wrap gap-2.5 sm:mt-8 sm:gap-3">
                 <Link href="/browse">
@@ -302,7 +303,7 @@ export default async function HomePage() {
                 </Link>
               </div>
               <p className="mt-4 text-xs font-medium uppercase tracking-[0.18em] text-teal-300/80">
-                List once. Share anywhere.
+                List once. Share anywhere. Keep shoe details clean.
               </p>
               <div className="mt-4 max-w-md">
                 <PostListingFeedbackPrompt
@@ -326,6 +327,32 @@ export default async function HomePage() {
       </section>
 
       <HomeCarousel />
+
+      <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+        <SurfaceCard className="border-white/[0.08] bg-slate-950/55 p-4 shadow-[0_12px_35px_rgba(0,0,0,0.18)] sm:p-5">
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              {
+                title: 'One link for every post',
+                text: 'Post on Facebook for reach, but keep the full shoe details on one Go Pair PH listing link.',
+              },
+              {
+                title: 'Fewer repeated questions',
+                text: 'Size, price, condition, mileage, location, photos, and seller details stay in one place.',
+              },
+              {
+                title: 'Still searchable later',
+                text: 'FB posts get buried. Go Pair PH listings can be revisited, shared again, and found by runners.',
+              },
+            ].map((benefit) => (
+              <div key={benefit.title} className="min-w-0 rounded-xl border border-white/[0.08] bg-slate-950/45 p-3">
+                <p className="text-sm font-bold text-gray-100">{benefit.title}</p>
+                <p className="mt-1 text-xs leading-5 text-gray-500">{benefit.text}</p>
+              </div>
+            ))}
+          </div>
+        </SurfaceCard>
+      </section>
 
       {showMarketplaceActivity && (
         <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">

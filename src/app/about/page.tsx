@@ -5,7 +5,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'Go Pair PH is a focused running shoe marketplace for runners, community sellers, and shops across Central Luzon and NCR.',
+    'Go Pair PH helps runners create clean running shoe listings, share them anywhere, and browse focused running shoe deals across Central Luzon and NCR.',
   alternates: { canonical: '/about' },
 };
 
@@ -13,14 +13,15 @@ export default function AboutPage() {
   return (
     <InfoPage
       title="About Go Pair PH"
-      subtitle="A focused marketplace for runners, community sellers, and shops across Central Luzon and NCR."
+      subtitle="A clean listing tool and focused marketplace for runners, community sellers, and shops across Central Luzon and NCR."
     >
       <section>
         <h2 className="text-xl font-semibold text-gray-100">What we do</h2>
         <p>
-          Go Pair PH helps runners find and share running shoe listings in one focused place.
-          Brand-new or pre-loved, for sale or free, listings are organized around the
-          details runners actually care about.
+          Go Pair PH helps sellers create one clean running shoe listing, then share
+          that same link to Facebook, Marketplace, Messenger, running groups, or friends.
+          Buyers get one focused place to check brand-new, pre-loved, second-hand, and
+          free running shoes with the details runners actually care about.
         </p>
       </section>
 
@@ -28,8 +29,8 @@ export default function AboutPage() {
         <h2 className="text-xl font-semibold text-gray-100">Selected seller pages</h2>
         <p>
           Some approved sellers may have dedicated Go Pair PH pages, but the marketplace is
-          built first around helping runners find and share running shoe listings in one
-          focused place.
+          built first around helping runners create clean shoe listings, share them
+          anywhere, and keep the details easy to revisit after social posts get buried.
         </p>
       </section>
 
@@ -49,7 +50,8 @@ export default function AboutPage() {
         <ul className="list-disc list-inside space-y-1.5 text-gray-300">
           <li>Sign in with your Google account.</li>
           <li>Go to your Profile and add your Facebook username.</li>
-          <li>List a pair (with photos, size, mileage, and condition) for sale or as Free Shoes.</li>
+          <li>List a pair once with photos, size, mileage, condition, price, and location.</li>
+          <li>Share the same Go Pair PH link to Facebook, Marketplace, Messenger, or running groups.</li>
           <li>
             Browse listings from runners and sellers across Central Luzon and NCR,
             then coordinate the deal directly with the seller.
@@ -67,8 +69,8 @@ export default function AboutPage() {
         </p>
         <p>
           Our goal is to help individual runners and small local resellers share better,
-          cleaner listing links, build trust, and keep more good pairs moving inside the
-          running community.
+          cleaner listing links, build trust, reduce repeated questions, and keep more
+          good pairs moving inside the running community.
         </p>
       </section>
 

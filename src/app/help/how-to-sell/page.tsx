@@ -7,7 +7,7 @@ import { CanListWidget } from '@/components/listings/CanListWidget';
 
 export const metadata: Metadata = {
   title: 'How to Sell on Go Pair PH',
-  description: 'List your running shoes in minutes and connect with Central Luzon and NCR runners on Go Pair PH.',
+  description: 'Create one clean running shoe listing, then share the same Go Pair PH link to Facebook, Marketplace, Messenger, and running groups.',
   alternates: { canonical: '/help/how-to-sell' },
 };
 
@@ -44,7 +44,7 @@ const steps: ReadonlyArray<{
   {
     number: '4',
     title: 'Share Your Listing',
-    text: 'Publish your listing and share it to Facebook groups with one click.',
+    text: 'Publish your listing and share the same Go Pair PH link to Facebook groups, Marketplace, Messenger, or running chats.',
     icon: 'send',
     visual: 'share',
   },
@@ -77,12 +77,12 @@ const sellerBenefits: ReadonlyArray<{
   },
   {
     title: 'List once, share anywhere',
-    text: 'Create one clean pair link, then share it to FB groups, Facebook Marketplace, Messenger, or friends.',
+    text: 'Create one source link for the pair, then share it to FB groups, Facebook Marketplace, Messenger, or friends.',
     icon: 'send',
   },
   {
     title: 'Cleaner than a normal FB post',
-    text: 'Buyers can check photos, size, condition, mileage, price, and location in one place.',
+    text: 'Buyers can check photos, size, condition, mileage, price, and location without digging through comments.',
     icon: 'form',
   },
   {
@@ -101,8 +101,8 @@ const sellerBenefits: ReadonlyArray<{
     icon: 'user',
   },
   {
-    title: 'Your pair is easier to revisit',
-    text: 'FB posts can get buried, but your Go Pair PH link stays easy to share again.',
+    title: 'Your pair survives the feed',
+    text: 'FB posts can get buried, but your Go Pair PH link stays easy to revisit and share again.',
     icon: 'chat',
   },
 ];
@@ -206,7 +206,7 @@ function SellerBenefitsSection() {
               Why add your running shoes on Go Pair PH?
             </h2>
             <p className="mt-2 text-sm leading-5 text-gray-400 sm:mt-3 sm:text-base sm:leading-7">
-              Use Go Pair PH as a clean seller page, then keep sharing your pair wherever your buyers already are.
+              Use Go Pair PH as your clean source listing, then keep sharing your pair wherever your buyers already are.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row lg:shrink-0">
@@ -214,7 +214,7 @@ function SellerBenefitsSection() {
               href="/listings/new"
               className="inline-flex min-h-10 items-center justify-center rounded-lg bg-teal-500 px-3.5 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400 sm:px-4 sm:py-2.5"
             >
-              List Your Running Shoes
+              Create Shareable Listing
             </Link>
             <Link
               href="/price-guide"
@@ -257,7 +257,8 @@ function HeroSection() {
           How to Sell on <span className="text-teal-300">Go Pair PH</span>
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300 sm:mt-5 sm:text-lg sm:leading-8">
-          List your running shoes in minutes and connect with Central Luzon and NCR runners.
+          Create one clean listing for your pair, then share that Go Pair PH link to Facebook,
+          Marketplace, Messenger, and running groups without repeating all the details.
         </p>
         <div className="mt-5 flex flex-wrap gap-2.5 sm:mt-7 sm:gap-3">
           <Link

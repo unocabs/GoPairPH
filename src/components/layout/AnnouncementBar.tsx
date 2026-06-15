@@ -1,5 +1,5 @@
 export function AnnouncementBar() {
-  const message = 'Go Pair PH helps Central Luzon and NCR runners buy and sell running shoes in one focused marketplace.';
+  const message = 'List once. Share anywhere. Go Pair PH helps Central Luzon and NCR runners buy and sell running shoes with clean listing links.';
 
   return (
     <div className="overflow-hidden border-b border-gray-800 bg-black">

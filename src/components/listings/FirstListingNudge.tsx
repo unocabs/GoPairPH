@@ -49,7 +49,7 @@ export function FirstListingNudge() {
           <span className="text-xl leading-none" aria-hidden>👟</span>
           <div className="text-sm">
             <p className="font-semibold text-gray-100">Got a pair to sell?</p>
-            <p className="text-gray-400">List your first shoe in 2 minutes — reach runners looking for your exact pair.</p>
+            <p className="text-gray-400">Create one clean listing, then share the same link to Facebook, Messenger, or running groups.</p>
           </div>
         </div>
         <div className="flex items-center gap-2 sm:shrink-0">
@@ -57,7 +57,7 @@ export function FirstListingNudge() {
             href="/listings/new"
             className="inline-flex items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-500/15 transition-colors hover:bg-teal-400"
           >
-            + List a Shoe
+            Create Listing
           </Link>
           <button
             type="button"
