@@ -10,6 +10,7 @@ import { HeroFallback } from '@/components/home/HeroFallback';
 import { FeaturedListing } from '@/components/home/FeaturedListing';
 import { HomeCarousel } from '@/components/home/HomeCarousel';
 import { HomeListingGrid } from '@/components/home/HomeListingGrid';
+import { SellShoesChoiceModal } from '@/components/home/SellShoesChoiceModal';
 import { FirstListingNudge } from '@/components/listings/FirstListingNudge';
 import { LogoMark } from '@/components/brand/Logo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
@@ -299,9 +300,7 @@ export default async function HomePage() {
                 <Link href="/browse">
                   <Button size="lg" variant="secondary" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">Browse Running Shoes</Button>
                 </Link>
-                <Link href="/listings/new">
-                  <Button size="lg" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">List Your Shoes</Button>
-                </Link>
+                <SellShoesChoiceModal />
               </div>
               <p className="mt-4 text-xs font-medium uppercase tracking-[0.18em] text-teal-300/80">
                 List once. Share anywhere. Keep shoe details clean.

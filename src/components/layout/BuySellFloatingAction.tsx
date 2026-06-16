@@ -83,6 +83,7 @@ const GOFER_QUESTIONS: GoferQuestion[] = [
 function shouldHide(pathname: string | null) {
   if (!pathname) return false;
   if (pathname === '/listings/new') return true;
+  if (pathname === '/price-guide') return true;
   if (pathname.startsWith('/auth/')) return true;
   return /^\/listings\/[^/]+\/edit$/.test(pathname);
 }

@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { PriceGuideForm } from '@/components/pricing/PriceGuideForm';
 
-const title = 'Running Shoe Price Estimator Philippines';
+const title = 'Running Shoe Sellability & Price Estimator Philippines';
 const description =
-  'Not sure how much to sell your running shoes for? Use Go Pair PH to estimate a suggested resale range for brand-new and pre-loved running shoes in the Philippines.';
+  'Not sure how much to sell your running shoes for? Use Go Pair PH to estimate a resale range, prepare seller notes, and reuse the details when listing.';
 const image = '/guides/running-shoe-price-estimator-hero.jpg';
 
 export const metadata: Metadata = {
@@ -60,7 +59,7 @@ const faqJsonLd = {
 
 export default function PriceGuidePage() {
   return (
-    <main className="bg-slate-950">
+    <main className="overflow-x-hidden bg-slate-950">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
@@ -75,37 +74,29 @@ export default function PriceGuidePage() {
           }}
         />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(20,184,166,0.18),transparent_32%),radial-gradient(circle_at_82%_8%,rgba(59,130,246,0.12),transparent_30%)]" />
-        <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-          <div className="max-w-3xl">
+        <div className="relative mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10 lg:px-8">
+          <div className="max-w-[22.5rem] sm:max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">
-              Running Shoe Price Estimator
+              Running Shoe Sellability Guide
             </p>
-            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-gray-100 sm:text-5xl">
-              Price Your Running Shoes Before Selling
+            <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-gray-100 sm:text-4xl">
+              Know Your Resale Price
             </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-gray-400 sm:text-lg sm:leading-8">
-              Estimate a suggested price range for brand-new, second-hand, or pre-loved running shoes
-              before posting them.
+            <p className="mt-3 max-w-xl text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
+              Can&apos;t decide on the pricing? Get a live resale price range before listing.
             </p>
-            <div className="mt-5 flex flex-wrap gap-2 text-xs font-medium text-gray-300">
-              {['Nike', 'Adidas', 'ASICS', 'New Balance', 'Hoka', 'Puma'].map((brand) => (
-                <span key={brand} className="rounded-full border border-white/[0.08] bg-slate-950/60 px-3 py-1">
-                  {brand}
-                </span>
-              ))}
-            </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <section className="mx-4 w-[22.5rem] max-w-[calc(100vw-2rem)] py-4 sm:mx-auto sm:w-auto sm:max-w-6xl sm:px-6 sm:py-6 lg:px-8">
         <PriceGuideForm />
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-4 px-4 pb-10 sm:px-6 lg:grid-cols-3 lg:px-8">
+      <section className="mx-4 grid w-[22.5rem] max-w-[calc(100vw-2rem)] gap-4 pb-10 sm:mx-auto sm:w-auto sm:max-w-6xl sm:px-6 lg:grid-cols-3 lg:px-8">
         <InfoCard
           title="Built for sellers"
-          body="Use the range as a starting point before listing. It helps you avoid guessing too high or underselling too fast."
+          body="Use the range as a starting point before listing. Your estimator details can carry into the listing so your notes do not go wasted."
         />
         <InfoCard
           title="Not a certified value"
@@ -113,21 +104,6 @@ export default function PriceGuidePage() {
         />
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-teal-500/20 bg-teal-500/[0.06] p-5 text-center sm:p-7">
-          <h2 className="text-xl font-bold text-gray-100">Ready to sell after checking the price?</h2>
-          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-gray-400">
-            Create one clean Go Pair PH listing, then share it to Facebook groups,
-            Messenger, Marketplace, or running chats.
-          </p>
-          <Link
-            href="/listings/new"
-            className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400 sm:w-auto"
-          >
-            List Your Running Shoes
-          </Link>
-        </div>
-      </section>
     </main>
   );
 }

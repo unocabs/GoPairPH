@@ -48,6 +48,27 @@
   bottom: calc(1rem + env(safe-area-inset-bottom));
 }
 
+.sellability-card-in {
+  animation: sellability-card-in 460ms ease-out both;
+}
+
+.sellability-tip {
+  animation: sellability-tip-in 360ms ease-out both;
+}
+
+.sellability-live-pulse {
+  animation: sellability-live-pulse 1.8s ease-in-out infinite;
+}
+
+.sellability-mobile-dock {
+  transition: box-shadow 180ms ease, transform 180ms ease, border-color 180ms ease;
+}
+
+.sellability-mobile-dock-floating {
+  animation: sellability-mobile-dock-in 220ms ease-out both;
+  border-color: rgba(94, 234, 212, 0.36);
+}
+
 .go-pair-route-loader__track {
   position: relative;
   display: inline-flex;
@@ -108,9 +129,63 @@
   }
 }
 
+@keyframes sellability-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sellability-tip-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes sellability-live-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(45, 212, 191, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 22px rgba(45, 212, 191, 0.16);
+  }
+}
+
+@keyframes sellability-mobile-dock-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .go-pair-route-loader__mark {
     animation: go-pair-loader-pulse 1.1s ease-in-out infinite;
+  }
+
+  .sellability-card-in,
+  .sellability-tip,
+  .sellability-live-pulse,
+  .sellability-mobile-dock-floating {
+    animation: none;
   }
 }
 

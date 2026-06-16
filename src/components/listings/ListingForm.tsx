@@ -8,6 +8,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { listingSchema, type ListingFormData } from '@/lib/validations';
 import { BRANDS, CONDITIONS, US_SIZE_TYPE_OPTIONS } from '@/lib/constants';
+import {
+  PRICE_GUIDE_PREFILL_KEY,
+  buildPriceGuideDescription,
+  type PriceGuideListingPrefill,
+} from '@/lib/pricing/priceGuidePrefill';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
@@ -60,7 +65,7 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<ListingFormData>({
+  const { register, handleSubmit, watch, setValue, getValues, reset, formState: { errors } } = useForm<ListingFormData>({
     resolver: zodResolver(listingSchema) as Resolver<ListingFormData>,
     defaultValues: isShop
       ? { listing_type: 'for_sale', condition: 'new', is_negotiable: false, size_eu: 99, us_size_type: 'mens' /* placeholder; overridden to NULL on insert */ }
@@ -105,6 +110,42 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
     setValue('listing_type', 'for_sale', { shouldDirty: true, shouldValidate: true });
     setValue('price_php', parsed, { shouldDirty: true, shouldValidate: true });
   }, [searchParams, setValue]);
+
+  useEffect(() => {
+    if (searchParams.get('from') !== 'price-guide') return;
+
+    const rawPrefill = window.localStorage.getItem(PRICE_GUIDE_PREFILL_KEY);
+    if (!rawPrefill) return;
+
+    try {
+      const prefill = JSON.parse(rawPrefill) as PriceGuideListingPrefill;
+      const description = buildPriceGuideDescription(prefill);
+      const currentDescription = getValues('description');
+
+      if (prefill.brand) {
+        setValue('brand', prefill.brand, { shouldDirty: true, shouldValidate: true });
+      }
+      if (prefill.model) {
+        setValue('model', prefill.model, { shouldDirty: true, shouldValidate: true });
+      }
+      setValue('condition', prefill.condition, { shouldDirty: true, shouldValidate: true });
+      setValue('listing_type', 'for_sale', { shouldDirty: true, shouldValidate: true });
+      setValue('price_php', prefill.suggestedHigh, { shouldDirty: true, shouldValidate: true });
+      setValue('srp_php', prefill.retailPricePhp, { shouldDirty: true, shouldValidate: true });
+      if (prefill.mileage === 'unused') {
+        setValue('mileage_km', 0, { shouldDirty: true, shouldValidate: true });
+      }
+      setValue(
+        'description',
+        currentDescription ? `${description}\n\n${currentDescription}` : description,
+        { shouldDirty: true, shouldValidate: true },
+      );
+    } catch {
+      // Ignore malformed handoff data so the listing form stays usable.
+    } finally {
+      window.localStorage.removeItem(PRICE_GUIDE_PREFILL_KEY);
+    }
+  }, [getValues, searchParams, setValue]);
 
   const listingType = watch('listing_type');
   const condition = watch('condition');
