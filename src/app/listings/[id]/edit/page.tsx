@@ -24,14 +24,15 @@ async function getShoeForEdit(id: string): Promise<{ shoe: Shoe; profileId: stri
   return { shoe: shoe as Shoe, profileId: profile.id };
 }
 
-export default async function EditListingPage({ params }: { params: { id: string } }) {
+export default async function EditListingPage({ params, searchParams }: { params: { id: string }; searchParams?: { renew?: string } }) {
   const result = await getShoeForEdit(params.id);
   if (!result) redirect('/');
+  const renewAfterSave = searchParams?.renew === '1';
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="text-2xl font-bold text-gray-100 mb-8">Edit Listing</h1>
-      <EditListingForm shoe={result.shoe} />
+      <EditListingForm shoe={result.shoe} renewAfterSave={renewAfterSave} />
     </div>
   );
 }

@@ -11,7 +11,7 @@ import { ShopBadge } from '@/components/shop/ShopBadge';
 import { ListingTypeBadge } from '@/components/listings/ListingTypeBadge';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
-import { formatMileage, formatPrice, formatProfileLocation, formatSize, formatRelativeDate, getPublicUrl, formatListingName, getListingPath, getAbsoluteListingUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
+import { formatMileage, formatPrice, formatProfileLocation, formatSize, formatRelativeDate, getPublicUrl, formatListingName, getListingPath, getAbsoluteListingUrl, getListingFreshnessDate, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import type { Shoe, PurchaseRequest } from '@/types';
 import { Avatar } from '@/components/ui/Avatar';
@@ -325,7 +325,7 @@ async function getPurchaseContext(shoeId: string, profileId: string | null, isOw
   return null;
 }
 
-export default async function ListingDetailPage({ params, searchParams }: { params: { id: string }; searchParams?: { listed?: string; updated?: string; closed?: string } }) {
+export default async function ListingDetailPage({ params, searchParams }: { params: { id: string }; searchParams?: { listed?: string; updated?: string; renewed?: string; closed?: string } }) {
   const [shoe, currentProfile] = await Promise.all([
     getShoeByRouteParam(params.id),
     getCurrentProfile(),
@@ -372,6 +372,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const listingName = formatListingName(shoe.brand, shoe.model);
   const justListed = isOwner && searchParams?.listed === '1';
   const justUpdated = isOwner && searchParams?.updated === '1';
+  const justRenewed = isOwner && searchParams?.renewed === '1';
   const justClosedStatus = isOwner && (searchParams?.closed === 'sold' || searchParams?.closed === 'donated')
     ? searchParams.closed
     : null;
@@ -641,7 +642,24 @@ export default async function ListingDetailPage({ params, searchParams }: { para
         </SurfaceCard>
       )}
 
-      {justUpdated && !justListed && (
+      {justRenewed && !justListed && (
+        <SurfaceCard glow className="mb-6 border-teal-500/25 bg-teal-500/[0.05] p-4 sm:p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">Listing renewed</p>
+              <h2 className="mt-2 text-xl font-bold text-gray-100">Buyers will see this pair was checked recently.</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
+                This updates the checked timestamp without marking the listing as just posted.
+              </p>
+            </div>
+            <div className="shrink-0 rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 lg:w-[460px]">
+              <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner />
+            </div>
+          </div>
+        </SurfaceCard>
+      )}
+
+      {justUpdated && !justListed && !justRenewed && (
         <SurfaceCard glow className="mb-6 border-teal-500/25 bg-teal-500/[0.05] p-4 sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
@@ -658,7 +676,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
         </SurfaceCard>
       )}
 
-      {justClosedStatus && !justListed && !justUpdated && (
+      {justClosedStatus && !justListed && !justUpdated && !justRenewed && (
         <SurfaceCard glow className="mb-6 border-teal-500/25 bg-teal-500/[0.05] p-4 sm:p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-start gap-3">
@@ -855,7 +873,10 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               { label: 'Brand', value: shoe.brand === 'Other' ? shoe.model : shoe.brand },
               { label: 'Model', value: shoe.model },
               { label: 'Color', value: shoe.color },
-              { label: 'Listed', value: formatRelativeDate(shoe.created_at) },
+              {
+                label: shoe.renewed_at ? 'Checked' : 'Listed',
+                value: formatRelativeDate(getListingFreshnessDate(shoe)),
+              },
             ].map(({ label, value }) => (
               <div key={label}>
                 <dt className="text-xs font-medium text-gray-500">{label}</dt>

@@ -48,6 +48,7 @@ const HOME_LISTING_SELECT = `
   srp_php,
   status,
   created_at,
+  renewed_at,
   shop_id,
   has_stock,
   featured_until,

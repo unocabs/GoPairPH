@@ -153,6 +153,15 @@ export function formatRelativeDate(dateString: string): string {
   return formatAgo(Math.floor(diffDays / 365), 'year');
 }
 
+export function getListingFreshnessDate(listing: { created_at: string; renewed_at?: string | null }): string {
+  return listing.renewed_at ?? listing.created_at;
+}
+
+export function formatListingFreshness(listing: { created_at: string; renewed_at?: string | null }): string {
+  const relative = formatRelativeDate(getListingFreshnessDate(listing));
+  return listing.renewed_at ? `Checked ${relative.toLowerCase()}` : relative;
+}
+
 export function formatShortDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-PH', {
     month: 'short',

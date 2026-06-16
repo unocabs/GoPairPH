@@ -10,10 +10,10 @@ import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
 import {
   IMAGE_TRANSFORM_PRESETS,
   cn,
+  formatListingFreshness,
   formatListingName,
   formatMileage,
   formatPrice,
-  formatRelativeDate,
   formatSize,
   getListingPath,
   getPublicUrl,
@@ -142,7 +142,7 @@ export function HomeListingCard({
             </div>
           )}
 
-          <p className="mt-1.5 text-xs text-gray-600">{formatRelativeDate(shoe.created_at)}</p>
+          <p className="mt-1.5 text-xs text-gray-600">{formatListingFreshness(shoe)}</p>
         </div>
       </Link>
 

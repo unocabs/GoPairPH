@@ -40,7 +40,7 @@ type EditablePhoto = UploadedPhoto & {
   id?: string;
 };
 
-export function EditListingForm({ shoe }: { shoe: Shoe }) {
+export function EditListingForm({ shoe, renewAfterSave = false }: { shoe: Shoe; renewAfterSave?: boolean }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -224,6 +224,7 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
           size_cm: isShopListing ? null : data.size_cm,
           us_size_type: isShopListing ? 'mens' : (data.us_size_type ?? 'mens'),
           ...(isShopListing ? { listed_in_main_feed: listedInMainFeed } : {}),
+          ...(renewAfterSave ? { renewed_at: new Date().toISOString() } : {}),
         })
         .eq('id', shoe.id);
       if (err) throw err;
@@ -288,7 +289,7 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
           .remove(removedImages.map(image => image.storage_path));
       }
 
-      router.push(`${getListingPath(shoe)}?updated=1`);
+      router.push(`${getListingPath(shoe)}?${renewAfterSave ? 'renewed=1' : 'updated=1'}`);
       router.refresh();
     } catch (err) {
       const msg = (err as { message?: string })?.message ?? 'Failed to update';
@@ -303,9 +304,13 @@ export function EditListingForm({ shoe }: { shoe: Shoe }) {
       {error && <div className="rounded-lg bg-red-950 border border-red-800 p-3 text-sm text-red-400">{error}</div>}
 
       <div className="rounded-xl border border-teal-500/20 bg-teal-500/[0.04] p-4">
-        <p className="text-sm font-semibold text-gray-100">Update the details buyers scan first.</p>
+        <p className="text-sm font-semibold text-gray-100">
+          {renewAfterSave ? 'Update and renew this listing.' : 'Update the details buyers scan first.'}
+        </p>
         <p className="mt-1 text-xs leading-5 text-gray-500">
-          Keep price, condition, sizes, and notes accurate. If you changed something important, share the listing again after saving.
+          {renewAfterSave
+            ? 'Save any changes and buyers will see that this listing was checked recently.'
+            : 'Keep price, condition, sizes, and notes accurate. If you changed something important, share the listing again after saving.'}
         </p>
       </div>
 

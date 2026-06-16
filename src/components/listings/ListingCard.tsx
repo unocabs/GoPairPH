@@ -12,7 +12,7 @@ import { OutOfStockBadge } from '@/components/shop/OutOfStockBadge';
 import { ListingTypeBadge } from './ListingTypeBadge';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
-import { formatMileage, formatPrice, formatSize, getPublicUrl, formatRelativeDate, formatListingName, getListingPath, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
+import { formatMileage, formatPrice, formatSize, getPublicUrl, formatListingFreshness, formatListingName, getListingPath, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { BuyModal } from '@/components/purchases/BuyModal';
 import { DonateRequestModal } from '@/components/purchases/DonateRequestModal';
@@ -288,7 +288,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
             </div>
           )}
 
-          <p className="mt-1.5 text-xs text-gray-600" style={themedMutedStyle}>{formatRelativeDate(shoe.created_at)}</p>
+          <p className="mt-1.5 text-xs text-gray-600" style={themedMutedStyle}>{formatListingFreshness(shoe)}</p>
 
           {isOwner && shoe.status === 'active' && viewSummary && viewSummary.total > 0 && (
             <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-slate-800/70 border border-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-gray-300" title="Only you can see this">

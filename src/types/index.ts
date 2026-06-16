@@ -107,6 +107,8 @@ export interface Shoe {
   status: ListingStatus;
   created_at: string;
   updated_at: string;
+  renewed_at: string | null;
+  renewal_reminder_sent_at: string | null;
   profiles?: Profile;
   shoe_images?: ShoeImage[];
   is_featured: boolean;
