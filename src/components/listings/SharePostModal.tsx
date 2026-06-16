@@ -27,6 +27,11 @@ function truncateText(text: string | null | undefined, maxChars: number): string
   return `${normalized.slice(0, Math.max(0, maxChars - 3)).trimEnd()}...`;
 }
 
+function getDiscountPercent(pricePhp?: number | null, srpPhp?: number | null): number {
+  if (pricePhp == null || srpPhp == null || srpPhp <= pricePhp) return 0;
+  return Math.max(0, Math.round(((srpPhp - pricePhp) / srpPhp) * 100));
+}
+
 function appendEllipsis(text: string, maxChars: number): string {
   const base = text.replace(/\s+/g, ' ').trim();
   if (base.endsWith('...')) return truncateText(base, maxChars);
@@ -750,7 +755,8 @@ function VerticalPriceRibbon({ shoe }: { shoe: Shoe }) {
       ? formatPrice(shoe.price_php)
       : 'Message';
   const displayLabel = truncateText(label, 12);
-  const showSrp = shoe.listing_type === 'for_sale' && shoe.price_php != null && shoe.srp_php != null && shoe.srp_php >= shoe.price_php;
+  const discountPercent = getDiscountPercent(shoe.price_php, shoe.srp_php);
+  const showSrp = shoe.listing_type === 'for_sale' && discountPercent > 0;
 
   return (
     <div style={{ marginTop: 24, marginLeft: -42, width: 395, height: 110, borderRadius: '0 22px 22px 0', background: 'linear-gradient(90deg, rgba(13,148,136,0.96) 0%, rgba(15,118,110,0.92) 72%, rgba(13,148,136,0.62) 100%)', boxShadow: '0 18px 34px rgba(0,0,0,0.22)', display: 'flex', alignItems: 'center', paddingLeft: 56, paddingRight: 24, boxSizing: 'border-box', overflow: 'hidden' }}>
@@ -759,8 +765,13 @@ function VerticalPriceRibbon({ shoe }: { shoe: Shoe }) {
           {displayLabel}
         </div>
         {showSrp && (
-          <div style={{ marginTop: 6, color: '#cbd5e1', fontSize: 15, lineHeight: 1, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            SRP {formatPrice(shoe.srp_php)}
+          <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, lineHeight: 1, fontWeight: 850, letterSpacing: 0, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+            <span style={{ color: '#dbeafe', textDecoration: 'line-through', textDecorationThickness: 2, textDecorationColor: 'rgba(248,250,252,0.9)' }}>
+              {formatPrice(shoe.srp_php)}
+            </span>
+            <span style={{ color: '#fecaca', textShadow: '0 1px 2px rgba(127,29,29,0.45)' }}>
+              {discountPercent}% OFF
+            </span>
           </div>
         )}
       </div>
@@ -1123,15 +1134,21 @@ function PriceBlock({ shoe, priceSize, tagSize = 11, alignEnd = false }: { shoe:
     );
   }
   if (shoe.price_php == null) return null;
-  const showSrp = shoe.srp_php != null && shoe.srp_php >= shoe.price_php;
+  const discountPercent = getDiscountPercent(shoe.price_php, shoe.srp_php);
+  const showSrp = discountPercent > 0;
   return (
     <div style={{ display: 'flex', flexDirection: alignEnd ? 'column' : 'row', alignItems: alignEnd ? 'flex-end' : 'baseline', gap: alignEnd ? 8 : 12 }}>
       <span style={{ fontSize: priceSize, fontWeight: 850, color: '#2dd4bf', letterSpacing: '-0.03em', lineHeight: 1 }}>
         {formatPrice(shoe.price_php)}
       </span>
       {showSrp && (
-        <span style={{ fontSize: Math.max(10, tagSize), fontWeight: 700, color: '#94a3b8', lineHeight: 1, whiteSpace: 'nowrap' }}>
-          SRP {formatPrice(shoe.srp_php)}
+        <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8, fontSize: Math.max(10, tagSize), fontWeight: 760, lineHeight: 1, whiteSpace: 'nowrap' }}>
+          <span style={{ color: '#94a3b8', textDecoration: 'line-through', textDecorationThickness: 2, textDecorationColor: 'rgba(148,163,184,0.9)' }}>
+            {formatPrice(shoe.srp_php)}
+          </span>
+          <span style={{ color: '#f87171' }}>
+            {discountPercent}% OFF
+          </span>
         </span>
       )}
       {shoe.is_negotiable && (
