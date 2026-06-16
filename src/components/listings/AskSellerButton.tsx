@@ -3,7 +3,7 @@
 import { type CSSProperties, type ReactNode, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
-import { trackMarketplaceAction } from '@/lib/analytics';
+import { trackEvent, trackMarketplaceAction } from '@/lib/analytics';
 
 interface AskSellerButtonProps {
   contactUrl?: string | null;
@@ -32,6 +32,32 @@ const QUESTION_PRESETS = [
 function getAbsoluteHref(href?: string): string | null {
   if (!href || typeof window === 'undefined') return null;
   return new URL(href, window.location.origin).toString();
+}
+
+function isMessengerUrl(url?: string | null) {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, '').toLowerCase();
+    return host === 'm.me' || host === 'messenger.com';
+  } catch {
+    return url.includes('m.me/') || url.includes('messenger.com/');
+  }
+}
+
+function getFacebookProfileFallback(url?: string | null) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, '').toLowerCase();
+    if (host !== 'm.me' && host !== 'messenger.com') return null;
+    const username = parsed.pathname.split('/').filter(Boolean)[0];
+    if (!username) return null;
+    return `https://www.facebook.com/${username}`;
+  } catch {
+    const username = url.split('/').filter(Boolean).pop();
+    return username ? `https://www.facebook.com/${username}` : null;
+  }
 }
 
 export function AskSellerButton({
@@ -65,20 +91,45 @@ export function AskSellerButton({
     ].filter(Boolean).join('\n\n');
   }, [customMessage, listingHref, listingName, selectedQuestion, sellerName]);
 
-  async function handleCopyAndOpen() {
+  const isMessengerContact = isMessengerUrl(contactUrl);
+  const facebookProfileFallback = getFacebookProfileFallback(contactUrl);
+  const contactButtonLabel = isMessengerContact ? 'Open Messenger' : 'Open Contact';
+
+  async function handleCopyMessage() {
     try {
       await navigator.clipboard.writeText(message);
       setCopied(true);
+      trackEvent('ask_seller_copy_message', {
+        surface: 'ask_seller_modal',
+        is_shop: isShop,
+        listingHref,
+      });
     } catch {
       setCopied(false);
     }
+  }
+
+  function handleOpenContact() {
     setContactOpened(true);
+    trackEvent(isMessengerContact ? 'ask_seller_open_messenger' : 'ask_seller_open_contact', {
+      surface: 'ask_seller_modal',
+      is_shop: isShop,
+      listingHref,
+    });
     trackMarketplaceAction('outbound_click', {
-      destination: contactUrl?.includes('facebook.com') || contactUrl?.includes('m.me') ? 'messenger_or_facebook' : 'seller_contact',
+      destination: isMessengerContact ? 'messenger' : 'seller_contact',
       surface: 'ask_seller_modal',
       is_shop: isShop,
     });
-    if (contactUrl) window.open(contactUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  function handleOpenFacebookProfile() {
+    setContactOpened(true);
+    trackEvent('ask_seller_open_facebook_profile', {
+      surface: 'ask_seller_modal',
+      is_shop: isShop,
+      listingHref,
+    });
   }
 
   async function handleCopyListingLink() {
@@ -224,13 +275,15 @@ export function AskSellerButton({
             )}
 
             <div className="border-t border-gray-800 p-4">
-              {contactUrl && contactOpened && (
+              {contactUrl && (copied || contactOpened) && (
                 <div className="mb-3 rounded-xl border border-teal-400/25 bg-teal-400/[0.07] p-3">
                   <p className="text-sm font-semibold text-teal-100">
-                    {copied ? 'Message copied. Keep this listing handy.' : 'Contact opened. Keep this listing handy.'}
+                    {copied ? `Message copied. Tap ${contactButtonLabel}, then paste it in chat.` : 'Contact opened. Keep this listing handy.'}
                   </p>
                   <p className="mt-1 text-xs leading-5 text-gray-300">
-                    Sending the request on Go Pair PH keeps the pair, price, and status tied to the deal.
+                    {facebookProfileFallback
+                      ? 'If Messenger does not open correctly, use the Facebook profile fallback and paste the copied message there.'
+                      : 'If the contact link does not open correctly, keep this listing handy and try again from the profile page.'}
                   </p>
                   {listingHref && (
                     <div className="mt-3 grid grid-cols-2 gap-2">
@@ -252,13 +305,35 @@ export function AskSellerButton({
                 </div>
               )}
               {contactUrl ? (
-                <button
-                  type="button"
-                  onClick={handleCopyAndOpen}
-                  className="flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
-                >
-                  {contactOpened ? 'Copy message & open again' : 'Copy message & open contact'}
-                </button>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={handleCopyMessage}
+                    className="flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
+                  >
+                    {copied ? 'Message copied' : 'Copy Message'}
+                  </button>
+                  <a
+                    href={contactUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleOpenContact}
+                    className="flex w-full items-center justify-center rounded-xl border border-white/[0.12] bg-slate-950/55 px-4 py-3 text-sm font-semibold text-gray-100 transition-colors hover:border-teal-400/40 hover:bg-slate-900"
+                  >
+                    {contactButtonLabel}
+                  </a>
+                  {facebookProfileFallback && (
+                    <a
+                      href={facebookProfileFallback}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={handleOpenFacebookProfile}
+                      className="flex w-full items-center justify-center rounded-xl border border-white/[0.1] bg-slate-950/35 px-4 py-3 text-sm font-semibold text-gray-300 transition-colors hover:border-sky-400/35 hover:bg-slate-900 sm:col-span-2"
+                    >
+                      Open Facebook profile
+                    </a>
+                  )}
+                </div>
               ) : onSendOffer ? (
                 <button
                   type="button"
