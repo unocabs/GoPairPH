@@ -1,6 +1,10 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 
 const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+export const LISTING_RENEWAL_DAY_MS = 24 * 60 * 60 * 1000;
+export const LISTING_RENEWAL_FIRST_REMINDER_DAYS = 21;
+export const LISTING_RENEWAL_MIN_DAYS_SINCE_UPDATE = 14;
+export const LISTING_RENEWAL_REPEAT_REMINDER_DAYS = 30;
 
 interface ListingRenewalTokenPayload {
   listingId: string;
@@ -56,15 +60,16 @@ export function isListingRenewalCandidate(listing: {
   updated_at: string;
   renewal_reminder_sent_at?: string | null;
 }, now = Date.now()): boolean {
-  const twentyDaysAgo = now - 20 * 24 * 60 * 60 * 1000;
-  const fourteenDaysAgo = now - 14 * 24 * 60 * 60 * 1000;
+  const firstReminderCutoff = now - LISTING_RENEWAL_FIRST_REMINDER_DAYS * LISTING_RENEWAL_DAY_MS;
+  const updatedCutoff = now - LISTING_RENEWAL_MIN_DAYS_SINCE_UPDATE * LISTING_RENEWAL_DAY_MS;
+  const repeatReminderCutoff = now - LISTING_RENEWAL_REPEAT_REMINDER_DAYS * LISTING_RENEWAL_DAY_MS;
   const createdAt = new Date(listing.created_at).getTime();
   const updatedAt = new Date(listing.updated_at).getTime();
   const reminderSentAt = listing.renewal_reminder_sent_at
     ? new Date(listing.renewal_reminder_sent_at).getTime()
     : 0;
 
-  return createdAt <= twentyDaysAgo &&
-    updatedAt <= fourteenDaysAgo &&
-    (reminderSentAt === 0 || reminderSentAt <= fourteenDaysAgo);
+  return createdAt <= firstReminderCutoff &&
+    updatedAt <= updatedCutoff &&
+    (reminderSentAt === 0 || reminderSentAt <= repeatReminderCutoff);
 }

@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
 import { renderListingRenewalEmail } from '@/lib/email/listingRenewal';
 import { sendEmail } from '@/lib/email/resend';
-import { createListingRenewalToken, isListingRenewalCandidate } from '@/lib/listingRenewal';
+import {
+  LISTING_RENEWAL_DAY_MS,
+  LISTING_RENEWAL_FIRST_REMINDER_DAYS,
+  LISTING_RENEWAL_MIN_DAYS_SINCE_UPDATE,
+  LISTING_RENEWAL_REPEAT_REMINDER_DAYS,
+  createListingRenewalToken,
+  isListingRenewalCandidate,
+} from '@/lib/listingRenewal';
 import { createServiceClient } from '@/lib/supabase/server';
 import { getAbsoluteListingUrl } from '@/lib/utils';
 
 export const runtime = 'nodejs';
 
-const DAY_MS = 24 * 60 * 60 * 1000;
 const BATCH_LIMIT = 100;
 
 type RenewalListingRow = {
@@ -42,9 +48,9 @@ export async function GET(request: Request) {
 
   const service = createServiceClient();
   const now = Date.now();
-  const createdCutoff = new Date(now - 20 * DAY_MS).toISOString();
-  const updatedCutoff = new Date(now - 14 * DAY_MS).toISOString();
-  const reminderCutoff = new Date(now - 14 * DAY_MS).toISOString();
+  const createdCutoff = new Date(now - LISTING_RENEWAL_FIRST_REMINDER_DAYS * LISTING_RENEWAL_DAY_MS).toISOString();
+  const updatedCutoff = new Date(now - LISTING_RENEWAL_MIN_DAYS_SINCE_UPDATE * LISTING_RENEWAL_DAY_MS).toISOString();
+  const reminderCutoff = new Date(now - LISTING_RENEWAL_REPEAT_REMINDER_DAYS * LISTING_RENEWAL_DAY_MS).toISOString();
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com').replace(/\/$/, '');
 
   const { data, error } = await service
