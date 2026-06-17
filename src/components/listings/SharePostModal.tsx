@@ -375,6 +375,98 @@ function fitFontSize(text: string, base: number, compact: number, tight: number)
   return base;
 }
 
+function estimateWrappedLines(text: string | null | undefined, charsPerLine: number, maxLines: number): number {
+  const normalized = (text ?? '').replace(/\s+/g, ' ').trim();
+  if (!normalized) return 0;
+  return Math.min(maxLines, Math.max(1, Math.ceil(normalized.length / charsPerLine)));
+}
+
+function getVerticalDescriptionLines({
+  listingTitle,
+  titleSize,
+  shoe,
+  shareSize,
+  identityLocation,
+  isFeatured,
+  isSponsored,
+}: {
+  listingTitle: string;
+  titleSize: number;
+  shoe: Shoe;
+  shareSize: string;
+  identityLocation: string | null;
+  isFeatured: boolean;
+  isSponsored: boolean;
+}): number {
+  const detailsTop = 850;
+  const footerReserve = 92;
+  const availableHeight = MOBILE_CARD_H - detailsTop - footerReserve;
+  const titleCharsPerLine = titleSize >= 60 ? 15 : titleSize >= 52 ? 18 : 22;
+  const titleLines = estimateWrappedLines(listingTitle, titleCharsPerLine, 3);
+  const metaItems = [shoe.color, shareSize, identityLocation].filter(Boolean);
+  const metaChars = metaItems.join(' ').length;
+  const metaRows = Math.min(3, Math.max(1, metaItems.length, Math.ceil(metaChars / 30)));
+  const visibleBadges = 2 + (isFeatured ? 1 : 0) + (isSponsored ? 1 : 0);
+  const badgeRows = visibleBadges > 3 ? 2 : 1;
+
+  const usedHeight =
+    titleLines * titleSize * 1.02
+    + 20
+    + metaRows * 31
+    + 18
+    + badgeRows * 32
+    + 24;
+  const descriptionChromeHeight = 22 * 2 + 13 + 8 + 2;
+  const descriptionLineHeight = Math.ceil(21 * 1.34);
+  const safetyBuffer = 8;
+  const remainingHeight = availableHeight - usedHeight - descriptionChromeHeight - safetyBuffer;
+
+  if (remainingHeight < descriptionLineHeight) return 0;
+  return Math.min(3, Math.floor(remainingHeight / descriptionLineHeight));
+}
+
+function getHorizontalDescriptionLines({
+  listingTitle,
+  shoe,
+  shareSize,
+  identityLocation,
+  isFeatured,
+  isSponsored,
+}: {
+  listingTitle: string;
+  shoe: Shoe;
+  shareSize: string;
+  identityLocation: string | null;
+  isFeatured: boolean;
+  isSponsored: boolean;
+}): number {
+  const panelHeight = CARD_H - 34 - 30;
+  const footerReserve = 92;
+  const availableHeight = panelHeight - footerReserve;
+  const titleLines = estimateWrappedLines(listingTitle, 19, 3);
+  const visibleBadges = 2 + (isFeatured ? 1 : 0) + (isSponsored ? 1 : 0);
+  const badgeRows = visibleBadges > 3 ? 2 : 1;
+  const pillRows = [shareSize, shoe.shop_id ? null : formatMileage(shoe.mileage_km), identityLocation].filter(Boolean).length > 2 ? 2 : 1;
+
+  const usedHeight =
+    badgeRows * 24
+    + 18
+    + titleLines * 48 * 1.02
+    + 12
+    + 28
+    + 18
+    + 48
+    + 18
+    + pillRows * 28
+    + 18;
+  const descriptionChromeHeight = 14 * 2 + 11 + 8;
+  const descriptionLineHeight = 14 * 1.5;
+  const remainingHeight = availableHeight - usedHeight - descriptionChromeHeight;
+
+  if (remainingHeight < descriptionLineHeight) return 0;
+  return Math.min(4, Math.floor(remainingHeight / descriptionLineHeight));
+}
+
 const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
   { shoe, seller, shop, heroSrc, gallerySrcs, identitySrc, isFeatured, isSponsored, format },
   ref,
@@ -385,6 +477,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
   const identityLabel = shop ? 'Shop' : 'Seller';
   const shareSize = getShareSizeText(shoe);
   const hasDescription = !!shoe.description?.trim();
+  const listingTitle = formatListingName(shoe.brand, shoe.model);
 
   if (isMobile) {
     return (
@@ -405,6 +498,15 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
       />
     );
   }
+
+  const horizontalDescriptionLines = getHorizontalDescriptionLines({
+    listingTitle,
+    shoe,
+    shareSize,
+    identityLocation,
+    isFeatured,
+    isSponsored,
+  });
 
   return (
     <div
@@ -461,12 +563,16 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
           overflow: 'hidden',
         }}
       >
-        <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} />
-        <TitleBlock shoe={shoe} shareSize={shareSize} identityLocation={identityLocation} titleSize={48} metaSize={17} maxLines={3} />
-        <PriceBlock shoe={shoe} priceSize={42} />
-        <ShareDetailPills shoe={shoe} shareSize={shareSize} identityLocation={identityLocation} />
-        <DescriptionBlock description={shoe.description} maxLines={4} />
-        <div style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px solid rgba(148,163,184,0.18)' }}>
+        <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 18, overflow: 'hidden' }}>
+          <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} />
+          <TitleBlock shoe={shoe} shareSize={shareSize} identityLocation={identityLocation} titleSize={48} metaSize={17} maxLines={3} />
+          <PriceBlock shoe={shoe} priceSize={42} />
+          <ShareDetailPills shoe={shoe} shareSize={shareSize} identityLocation={identityLocation} />
+          {horizontalDescriptionLines > 0 && (
+            <DescriptionBlock description={shoe.description} maxLines={horizontalDescriptionLines} />
+          )}
+        </div>
+        <div style={{ flexShrink: 0, paddingTop: 12, borderTop: '1px solid rgba(148,163,184,0.18)' }}>
           <IdentityBlock identityName={identityName} identityLocation={identityLocation} identityLabel={identityLabel} identitySrc={identitySrc} seller={seller} compact />
           <QuietBrandFooter />
         </div>
@@ -513,6 +619,15 @@ const VerticalShareCard = forwardRef<HTMLDivElement, VerticalShareCardProps>(fun
   const colorSize = fitFontSize(shoe.color, 28, 24, 21);
   const sizeSize = fitFontSize(shareSize, 30, 25, 21);
   const soleDetailSrc = gallerySrcs.find(src => src && src !== heroSrc) ?? null;
+  const descriptionLines = getVerticalDescriptionLines({
+    listingTitle,
+    titleSize,
+    shoe,
+    shareSize,
+    identityLocation,
+    isFeatured,
+    isSponsored,
+  });
 
   return (
     <div
@@ -587,8 +702,8 @@ const VerticalShareCard = forwardRef<HTMLDivElement, VerticalShareCardProps>(fun
           />
         </div>
 
-        <div style={{ position: 'absolute', left: 500, right: 42, top: 850 }}>
-          <h1 style={{ margin: 0, color: '#f8fafc', fontSize: titleSize, lineHeight: 1.02, fontWeight: 900, letterSpacing: 0, overflowWrap: 'break-word' }}>
+        <div style={{ position: 'absolute', left: 500, right: 42, top: 850, bottom: 92, overflow: 'hidden' }}>
+          <h1 style={{ margin: 0, color: '#f8fafc', fontSize: titleSize, lineHeight: 1.02, fontWeight: 900, letterSpacing: 0, overflowWrap: 'break-word', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis', maxHeight: titleSize * 1.02 * 3 }}>
             {listingTitle}
           </h1>
           <div style={{ marginTop: 20, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px 16px', color: '#cbd5e1', fontWeight: 760 }}>
@@ -613,18 +728,20 @@ const VerticalShareCard = forwardRef<HTMLDivElement, VerticalShareCardProps>(fun
             <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} size="lg" />
           </div>
 
-          <div style={{ marginTop: 24 }}>
-            <DescriptionBlock
-              description={description}
-              maxLines={3}
-              labelSize={13}
-              bodySize={21}
-              lineHeight={1.34}
-              padding={22}
-              radius={18}
-              singleParagraph
-            />
-          </div>
+          {descriptionLines > 0 && (
+            <div style={{ marginTop: 24 }}>
+              <DescriptionBlock
+                description={description}
+                maxLines={descriptionLines}
+                labelSize={13}
+                bodySize={21}
+                lineHeight={1.34}
+                padding={22}
+                radius={18}
+                singleParagraph
+              />
+            </div>
+          )}
         </div>
       </div>
 
