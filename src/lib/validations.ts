@@ -25,6 +25,7 @@ export const listingSchema = z.object({
   size_us: z.coerce.number().optional().nullable(),
   size_cm: z.coerce.number().optional().nullable(),
   us_size_type: usSizeTypeSchema,
+  location_city: z.string().max(80).optional().nullable(),
 }).superRefine((data, ctx) => {
   if (data.listing_type === 'for_sale' && !data.price_php) {
     ctx.addIssue({

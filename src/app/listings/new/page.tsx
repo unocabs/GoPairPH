@@ -30,11 +30,11 @@ const quickListingSteps = [
   },
 ] as const;
 
-async function getProfileAndShop(): Promise<{ profileId: string; fbUsername: string | null; shop: Shop | null } | null> {
+async function getProfileAndShop(): Promise<{ profileId: string; fbUsername: string | null; locationCity: string | null; shop: Shop | null } | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data: profile } = await supabase.from('profiles').select('id, fb_username').eq('user_id', user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('id, fb_username, location_city').eq('user_id', user.id).single();
   if (!profile) return null;
   const { data: shop } = await supabase
     .from('shops')
@@ -42,7 +42,12 @@ async function getProfileAndShop(): Promise<{ profileId: string; fbUsername: str
     .eq('owner_profile_id', profile.id)
     .eq('status', 'active')
     .maybeSingle();
-  return { profileId: profile.id, fbUsername: profile.fb_username ?? null, shop: (shop as Shop) ?? null };
+  return {
+    profileId: profile.id,
+    fbUsername: profile.fb_username ?? null,
+    locationCity: profile.location_city ?? null,
+    shop: (shop as Shop) ?? null,
+  };
 }
 
 async function getDemandSignals(): Promise<DemandSignal[]> {
@@ -159,7 +164,12 @@ export default async function NewListingPage({ searchParams }: { searchParams?: 
           hasShopContact={!!getFacebookContactUrl(formShop?.fb_page_url)}
         >
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-            <ListingForm profileId={result.profileId} shop={formShop} hasMessengerContact={hasValidSellerContact} />
+            <ListingForm
+              profileId={result.profileId}
+              initialLocationCity={result.locationCity}
+              shop={formShop}
+              hasMessengerContact={hasValidSellerContact}
+            />
 
             <aside className="space-y-4 lg:sticky lg:top-24 lg:pt-[100px]">
               <CanListWidget compact />

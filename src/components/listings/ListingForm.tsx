@@ -45,11 +45,12 @@ function toOptionalNumber(value: unknown): number | null {
 
 interface ListingFormProps {
   profileId?: string | null;
+  initialLocationCity?: string | null;
   shop?: Shop | null;
   hasMessengerContact?: boolean;
 }
 
-export function ListingForm({ profileId, shop = null, hasMessengerContact = false }: ListingFormProps) {
+export function ListingForm({ profileId, initialLocationCity = null, shop = null, hasMessengerContact = false }: ListingFormProps) {
   const isShop = !!shop;
   const isGuest = !profileId;
 
@@ -69,7 +70,7 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
     resolver: zodResolver(listingSchema) as Resolver<ListingFormData>,
     defaultValues: isShop
       ? { listing_type: 'for_sale', condition: 'new', is_negotiable: false, size_eu: 99, us_size_type: 'mens' /* placeholder; overridden to NULL on insert */ }
-      : { listing_type: 'for_sale', us_size_type: 'mens' },
+      : { listing_type: 'for_sale', us_size_type: 'mens', location_city: initialLocationCity ?? '' },
   });
 
   // Keep schema-required fields satisfied for shop submissions even though we
@@ -149,6 +150,9 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
 
   const listingType = watch('listing_type');
   const condition = watch('condition');
+  const cameFromPriceGuide = searchParams.get('from') === 'price-guide';
+  const locationCity = (watch('location_city') ?? '').trim();
+  const locationLabel = isShop ? shop?.location?.trim() ?? '' : locationCity;
   const brand = watch('brand') ?? '';
   const model = watch('model') ?? '';
   const color = watch('color') ?? '';
@@ -184,25 +188,29 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
       ? formatPrice(pricePhp)
       : 'Add price';
   const suggestedNote = (() => {
+    const meetupLine = locationLabel
+      ? `Meetup around ${locationLabel} preferred.`
+      : 'Meetup or delivery details can be discussed with the buyer.';
     if (listingType === 'donate') {
-      return 'Free pair available. See top and sole photos for condition.\nMeetup around Pampanga preferred.';
+      return `Free pair available. See top and sole photos for condition.\n${meetupLine}`;
     }
     if (condition === 'new') {
-      return 'Brand new pair. See photos for box, tags, and condition.\nMeetup around Pampanga preferred.';
+      return `Brand new pair. See photos for box, tags, and condition.\n${meetupLine}`;
     }
     const usageLine = mileageKm != null
       ? `Used for approximately ${mileageKm.toLocaleString()} km.`
       : 'Mileage not tracked.';
-    return `${usageLine} See top and sole photos for condition.\nMeetup around Pampanga preferred.`;
+    return `${usageLine} See top and sole photos for condition.\n${meetupLine}`;
   })();
   const readinessItems = [
     { label: 'Details', done: hasCoreDetails },
     { label: 'Size', done: hasSize },
     { label: 'Price', done: hasPrice },
-    { label: 'Photos', done: false },
+    { label: 'Location', done: Boolean(locationLabel) },
   ];
   const strengthItems = [
     { label: 'Shoe details added', done: !!details },
+    { label: 'Location added', done: Boolean(locationLabel), optional: true },
     { label: 'Top photo uploaded', done: hasTopPhoto },
     { label: 'Sole photo uploaded', done: hasSolePhoto },
     { label: 'Extra angle added', done: hasExtraPhoto, optional: true },
@@ -316,6 +324,18 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
     setSubmitting(true);
     setError(null);
     try {
+      const cleanedLocationCity = !isShop ? details.location_city?.trim() : '';
+      if (cleanedLocationCity) {
+        const { error: profileLocationError } = await supabase
+          .from('profiles')
+          .update({
+            location: null,
+            location_city: cleanedLocationCity,
+          })
+          .eq('id', profileId);
+        if (profileLocationError) throw profileLocationError;
+      }
+
       const { data: insertedShoe, error: insertError } = await supabase
         .from('shoes')
         .insert({
@@ -423,28 +443,32 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
 
       {/* Step 1 */}
       {step === 1 && (
-        <form onSubmit={handleSubmit(onDetailsSubmit)} className="space-y-5">
-          <div className="rounded-xl border border-teal-500/20 bg-teal-500/[0.04] p-4">
+        <form onSubmit={handleSubmit(onDetailsSubmit)} className="space-y-4 sm:space-y-5">
+          <div className="rounded-xl border border-teal-500/20 bg-teal-500/[0.04] p-3 sm:p-4">
             <p className="text-sm font-semibold text-gray-100">Step 1: add the details buyers need first.</p>
             <p className="mt-1 text-xs leading-5 text-gray-500">
               Most sellers finish this part in under a minute. Start with the basics, then add photos.
             </p>
           </div>
 
-          <div className="space-y-4 rounded-xl border border-white/[0.08] bg-slate-950/45 p-4">
+          <div className="space-y-3 rounded-xl border border-white/[0.08] bg-slate-950/45 p-3 sm:space-y-4 sm:p-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-300">Main details</p>
               <p className="mt-1 text-xs text-gray-500">What buyers scan first.</p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Select label="Brand" required options={BRAND_OPTIONS} placeholder="Select brand" error={errors.brand?.message} {...register('brand')} />
+              <div className="w-1/2 sm:w-full">
+                <Select label="Brand" required options={BRAND_OPTIONS} placeholder="Select brand" error={errors.brand?.message} {...register('brand')} />
+              </div>
               <Input label="Model" placeholder="e.g. Pegasus 40" required hint="Use the box label or what buyers would search." error={errors.model?.message} {...register('model')} />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Input label="Colorway" placeholder="e.g. Black/White" required hint="A simple color is enough if you do not know the official colorway." error={errors.color?.message} {...register('color')} />
               <div className="space-y-2">
-                <Select label="Condition" required options={CONDITION_OPTIONS} hint="Pick the closest match. Photos will do the rest." error={errors.condition?.message} {...register('condition')} />
+                <div className="w-1/2 sm:w-full">
+                  <Select className="py-1.5 text-sm" label="Condition" required options={CONDITION_OPTIONS} hint="Pick the closest match. Photos will do the rest." error={errors.condition?.message} {...register('condition')} />
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   {CONDITION_HELPERS.map((option) => {
                     const active = condition === option.value;
@@ -453,7 +477,7 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
                         key={option.value}
                         type="button"
                         onClick={() => setValue('condition', option.value, { shouldDirty: true, shouldValidate: true })}
-                        className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                        className={`rounded-lg border px-2.5 py-1.5 text-left transition-colors ${
                           active
                             ? 'border-teal-400/50 bg-teal-400/10 text-teal-100'
                             : 'border-white/[0.08] bg-slate-950/45 text-gray-400 hover:border-teal-400/30 hover:text-gray-200'
@@ -469,7 +493,7 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
             </div>
           </div>
 
-          <div className="space-y-4 rounded-xl border border-white/[0.08] bg-slate-950/45 p-4">
+          <div className="space-y-3 rounded-xl border border-white/[0.08] bg-slate-950/45 p-3 sm:space-y-4 sm:p-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-300">Size and price</p>
               <p className="mt-1 text-xs text-gray-500">The fastest buyer filters.</p>
@@ -482,15 +506,17 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
                   <span className="ml-1 text-xs text-gray-500 font-normal">(fill one; EU, US, or CM)</span>
                 </p>
                 <div className="mb-3">
+                  <label htmlFor="listing-us-size-type" className="mb-1 block text-sm font-medium text-gray-300">US size type</label>
                   <Select
-                    label="US size type"
+                    id="listing-us-size-type"
+                    className="w-1/2 sm:w-full"
                     options={[...US_SIZE_TYPE_OPTIONS]}
-                    hint="US men's and women's sizes convert differently. Pick the label printed on the shoe box when possible."
                     value={usSizeType}
                     onChange={e => handleUsSizeTypeChange(e.target.value)}
                   />
+                  <p className="mt-1 text-xs text-gray-500">US men&apos;s and women&apos;s sizes convert differently. Pick the label printed on the shoe box when possible.</p>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid w-3/5 grid-cols-3 gap-2 sm:w-full sm:gap-3">
                   <Input label="EU" type="number" step={0.5} min={35} max={48} error={errors.size_eu?.message}
                     {...register('size_eu', { onChange: e => handleSizeEuChange(e.target.value) })} />
                   <Input label={usSizeType === 'womens' ? 'US W' : usSizeType === 'mens' ? 'US M' : 'US'} type="number" step={0.5} error={errors.size_us?.message}
@@ -502,39 +528,46 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
             )}
 
             {!isShop && (
-              <Select label="Listing Type" required options={LISTING_TYPE_OPTIONS} error={errors.listing_type?.message} {...register('listing_type')} />
+              <div className="w-1/2 sm:w-full">
+                <Select label="Listing Type" required options={LISTING_TYPE_OPTIONS} error={errors.listing_type?.message} {...register('listing_type')} />
+              </div>
             )}
 
             {(isShop || listingType === 'for_sale') && (
               <div className="space-y-2">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Input label="Price (PHP)" type="number" min={0} required placeholder="e.g. 2500" error={errors.price_php?.message} {...register('price_php')} />
-                  <Input
-                    label="SRP / Retail price (optional)"
-                    type="number"
-                    min={0}
-                    placeholder="e.g. 9000"
-                    hint="Use the original retail price if you know it. This helps buyers compare value."
-                    error={errors.srp_php?.message}
-                    {...register('srp_php')}
-                  />
-                </div>
-                <div className="rounded-lg border border-teal-400/20 bg-teal-400/[0.06] px-3 py-2">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-xs leading-5 text-gray-400">
-                      Not sure what to price it? Estimate a suggested resale range before listing.
-                    </p>
-                    <Link
-                      href="/price-guide"
-                      onClick={() => trackMarketplaceAction('price_estimator_open', {
-                        surface: 'new_listing_form',
-                      })}
-                      className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-lg border border-teal-400/30 bg-slate-950/55 px-3 py-1.5 text-xs font-semibold text-teal-200 transition-colors hover:bg-teal-400/10"
-                    >
-                      Check Price Estimator
-                    </Link>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <Input className="py-1.5" label="Price (PHP)" type="number" min={0} required placeholder="e.g. 2500" error={errors.price_php?.message} {...register('price_php')} />
+                  <div className="[&_label]:block [&_label]:truncate">
+                    <Input
+                      className="py-1.5"
+                      label="SRP / Retail price (optional)"
+                      type="number"
+                      min={0}
+                      placeholder="e.g. 9000"
+                      hint="Use the original retail price if you know it. This helps buyers compare value."
+                      error={errors.srp_php?.message}
+                      {...register('srp_php')}
+                    />
                   </div>
                 </div>
+                {!cameFromPriceGuide && (
+                  <div className="rounded-lg border border-teal-400/20 bg-teal-400/[0.06] px-3 py-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-xs leading-5 text-gray-400">
+                        Not sure what to price it? Estimate a suggested resale range before listing.
+                      </p>
+                      <Link
+                        href="/price-guide"
+                        onClick={() => trackMarketplaceAction('price_estimator_open', {
+                          surface: 'new_listing_form',
+                        })}
+                        className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-lg border border-teal-400/30 bg-slate-950/55 px-3 py-1.5 text-xs font-semibold text-teal-200 transition-colors hover:bg-teal-400/10"
+                      >
+                        Check Price Estimator
+                      </Link>
+                    </div>
+                  </div>
+                )}
                 {!isShop && (
                   <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
                     <input
@@ -542,35 +575,57 @@ export function ListingForm({ profileId, shop = null, hasMessengerContact = fals
                       className="h-4 w-4 rounded border-gray-700 bg-gray-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-gray-900"
                       {...register('is_negotiable')}
                     />
-                    <span>Negotiable <span className="text-gray-500">(buyers can suggest a different price)</span></span>
+                    <span>Negotiable</span>
                   </label>
                 )}
               </div>
             )}
           </div>
 
-          <div className="space-y-4 rounded-xl border border-white/[0.08] bg-slate-950/45 p-4">
+          <div className="space-y-3 rounded-xl border border-white/[0.08] bg-slate-950/45 p-3 sm:space-y-4 sm:p-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-300">Extra notes</p>
-              <p className="mt-1 text-xs text-gray-500">Helpful, but do not overthink this part.</p>
+              <p className="mt-1 text-xs text-gray-500">Location first, then any details buyers should know.</p>
             </div>
+            {!isShop && (
+              <div>
+                <div className="w-1/2 sm:w-full">
+                  <Input
+                    label="Location"
+                    placeholder="e.g. Angeles City"
+                    error={errors.location_city?.message}
+                    {...register('location_city')}
+                  />
+                </div>
+                {!errors.location_city?.message && (
+                  <p className="mt-1 text-xs text-gray-500">Shown on your profile and listings so buyers can plan meetup or delivery.</p>
+                )}
+              </div>
+            )}
             {isNew ? (
               <div className="rounded-lg border border-gray-800 bg-gray-800/50 px-4 py-3">
                 <p className="text-sm font-medium text-gray-400">Mileage (km)</p>
                 <p className="text-sm text-gray-500 mt-0.5">Automatically set to <span className="text-gray-300 font-medium">0 km</span> for new shoes.</p>
               </div>
             ) : (
-              <Input
-                label="Mileage (km)"
-                type="number"
-                min={0}
-                placeholder="e.g. 350"
-                hint="Leave blank if you do not track mileage; buyers will see Not Tracked."
-                error={errors.mileage_km?.message}
-                {...register('mileage_km')}
-              />
+              <div>
+                <div className="w-1/2 sm:w-full">
+                  <Input
+                    className="py-1.5"
+                    label="Mileage (km)"
+                    type="number"
+                    min={0}
+                    placeholder="e.g. 350"
+                    error={errors.mileage_km?.message}
+                    {...register('mileage_km')}
+                  />
+                </div>
+                {!errors.mileage_km?.message && (
+                  <p className="mt-1 text-xs text-gray-500">Leave blank if you do not track mileage; buyers will see Not Tracked.</p>
+                )}
+              </div>
             )}
-            <Textarea label="Description (optional)" rows={3} placeholder="Add any other details about the shoes..." {...register('description')} />
+            <Textarea label="Description (optional)" rows={4} placeholder="Add any other details about the shoes..." {...register('description')} />
             <div className="rounded-lg border border-white/[0.08] bg-slate-950/45 p-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
