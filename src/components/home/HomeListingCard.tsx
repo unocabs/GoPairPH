@@ -5,8 +5,10 @@ import Link from 'next/link';
 import type { Shoe } from '@/types';
 import type { PersonalizationBadges } from '@/lib/personalization';
 import { SaveListingButton } from '@/components/listings/SaveListingButton';
+import { GreatDealPill } from '@/components/listings/GreatDealPill';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
+import { getGreatDealEstimate } from '@/lib/pricing/greatDeal';
 import {
   IMAGE_TRANSFORM_PRESETS,
   cn,
@@ -52,6 +54,7 @@ export function HomeListingCard({
   const discountPercent = showSrp && shoe.srp_php && shoe.price_php
     ? Math.max(0, Math.round(((shoe.srp_php - shoe.price_php) / shoe.srp_php) * 100))
     : 0;
+  const greatDeal = getGreatDealEstimate(shoe);
 
   return (
     <article className="relative flex h-full flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-slate-900/72 shadow-[0_16px_50px_rgba(0,0,0,0.24)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-teal-400/30 hover:shadow-[0_22px_70px_rgba(0,0,0,0.34),0_0_30px_rgba(20,184,166,0.07)]">
@@ -84,6 +87,11 @@ export function HomeListingCard({
               <span className="text-[11px] font-bold leading-none tabular-nums">
                 {saveCount > 99 ? '99+' : saveCount}
               </span>
+            </div>
+          )}
+          {greatDeal && (
+            <div className="absolute bottom-2 left-2">
+              <GreatDealPill size="sm" />
             </div>
           )}
         </div>

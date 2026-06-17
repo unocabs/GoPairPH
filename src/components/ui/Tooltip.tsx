@@ -20,9 +20,40 @@ export function Tooltip({ content, children, trigger = 'hover', side = 'top' }: 
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const wrapperRef = useRef<HTMLSpanElement | null>(null);
   const tooltipRef = useRef<HTMLSpanElement | null>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showOnHover = trigger === 'hover' || trigger === 'both';
   const showOnClick = trigger === 'click' || trigger === 'both';
+
+  function clearCloseTimer() {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }
+
+  function showFromHover() {
+    clearCloseTimer();
+    setOpen(true);
+  }
+
+  function hideFromHover() {
+    clearCloseTimer();
+    setOpen(false);
+  }
+
+  function toggleFromClick() {
+    clearCloseTimer();
+    setOpen((current) => {
+      const next = !current;
+      if (next) {
+        closeTimerRef.current = setTimeout(() => setOpen(false), 3000);
+      }
+      return next;
+    });
+  }
+
+  useEffect(() => clearCloseTimer, []);
 
   // Compute viewport-relative position whenever the tooltip opens. Uses the
   // trigger's bounding rect so the portal-rendered tooltip lines up regardless
@@ -71,9 +102,9 @@ export function Tooltip({ content, children, trigger = 'hover', side = 'top' }: 
     <span
       ref={wrapperRef}
       className="relative inline-flex"
-      onMouseEnter={showOnHover ? () => setOpen(true) : undefined}
-      onMouseLeave={showOnHover ? () => setOpen(false) : undefined}
-      onClick={showOnClick ? () => setOpen(o => !o) : undefined}
+      onMouseEnter={showOnHover ? showFromHover : undefined}
+      onMouseLeave={showOnHover ? hideFromHover : undefined}
+      onClick={showOnClick ? toggleFromClick : undefined}
     >
       {children}
       {open && typeof document !== 'undefined' && createPortal(
@@ -86,7 +117,7 @@ export function Tooltip({ content, children, trigger = 'hover', side = 'top' }: 
             left: pos?.left ?? -9999,
             opacity: pos ? 1 : 0,
           }}
-          className="pointer-events-none z-[100] whitespace-nowrap rounded-lg border border-gray-700 bg-gray-900 px-3 py-1.5 text-[11px] font-medium text-gray-200 shadow-lg"
+          className="pointer-events-none z-[100] max-w-[calc(100vw-1rem)] whitespace-normal rounded-lg border border-gray-700 bg-gray-900 px-3 py-1.5 text-center text-[11px] font-medium text-gray-200 shadow-lg sm:max-w-xs"
         >
           {content}
         </span>,

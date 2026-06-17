@@ -19,6 +19,7 @@ import { DonateRequestModal } from '@/components/purchases/DonateRequestModal';
 import { SponsoredPill } from './SponsoredPill';
 import { NewPill } from './NewPill';
 import { FlaggedPill } from './FlaggedPill';
+import { GreatDealPill } from './GreatDealPill';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import { SaveListingButton } from './SaveListingButton';
 import { type ShopTheme } from '@/lib/shopTheme';
@@ -26,6 +27,7 @@ import { AskSellerButton } from './AskSellerButton';
 import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
 import type { PersonalizationBadges } from '@/lib/personalization';
 import { trackMarketplaceAction } from '@/lib/analytics';
+import { getGreatDealEstimate } from '@/lib/pricing/greatDeal';
 
 const NEW_PILL_WINDOW_MS = 24 * 60 * 60 * 1000;
 const SharePostModal = dynamic(
@@ -108,6 +110,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
   const hasTopPhoto = shoe.shoe_images?.some(img => img.view_type === 'top') ?? false;
   const hasSolePhoto = shoe.shoe_images?.some(img => img.view_type === 'sole') ?? false;
   const needsPhotoHelp = shoe.status === 'active' && (!hasTopPhoto || !hasSolePhoto);
+  const greatDeal = getGreatDealEstimate(shoe);
 
   function renderChatAction(sendOfferLabel: string, action: { onSendOffer?: () => void; sendOfferHref?: string }) {
     return (
@@ -175,15 +178,20 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
             {isSponsored && <SponsoredPill size="sm" />}
             {isFresh && shoe.status === 'active' && !isSponsored && <NewPill size="sm" />}
           </div>
-          {offerCount > 0 && shoe.status === 'active' && (
-            <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 px-2.5 py-1">
-              <span className="relative flex h-1.5 w-1.5 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-teal-400" />
-              </span>
-              <span className="text-[10px] font-medium text-white leading-none">
-                {offerCount === 1 ? '1 offer' : `${offerCount} offers`}{offerCount >= 10 ? ' 🔥' : ''}
-              </span>
+          {(greatDeal || (offerCount > 0 && shoe.status === 'active')) && (
+            <div className="absolute bottom-2 left-2 flex flex-col items-start gap-1">
+              {greatDeal && <GreatDealPill size="sm" />}
+              {offerCount > 0 && shoe.status === 'active' && (
+                <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-black/60 px-2.5 py-1 backdrop-blur-sm">
+                  <span className="relative flex h-1.5 w-1.5 shrink-0">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-teal-400" />
+                  </span>
+                  <span className="text-[10px] font-medium leading-none text-white">
+                    {offerCount === 1 ? '1 offer' : `${offerCount} offers`}{offerCount >= 10 ? ' 🔥' : ''}
+                  </span>
+                </div>
+              )}
             </div>
           )}
           {shoe.status !== 'active' && (

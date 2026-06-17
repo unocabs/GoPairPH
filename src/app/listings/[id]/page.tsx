@@ -33,6 +33,7 @@ import { PromoteListingButton } from '@/components/listings/PromoteListingButton
 import { SponsoredPill } from '@/components/listings/SponsoredPill';
 import { FeaturedPill } from '@/components/listings/FeaturedPill';
 import { FlaggedPill } from '@/components/listings/FlaggedPill';
+import { GreatDealPill } from '@/components/listings/GreatDealPill';
 import { QualityFlagNotice } from '@/components/listings/QualityFlagNotice';
 import { ListingTrustBadges } from '@/components/listings/ListingTrustBadges';
 import { ListingCompletenessCard } from '@/components/listings/ListingCompletenessCard';
@@ -50,6 +51,7 @@ import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
 import { listingLocationScore, listingMatchesPreferredSize, type PersonalizationProfile } from '@/lib/personalization';
 import { getCompletedSalesCount } from '@/lib/sales';
 import { getListingCompletenessItems, getListingCompletenessScore, getListingTrustSignals } from '@/lib/listingTrust';
+import { getGreatDealEstimate } from '@/lib/pricing/greatDeal';
 import type { Profile } from '@/types';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
@@ -364,6 +366,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const discountPercent = showSrp && shoe.srp_php && shoe.price_php
     ? Math.max(0, Math.round(((shoe.srp_php - shoe.price_php) / shoe.srp_php) * 100))
     : 0;
+  const greatDeal = getGreatDealEstimate(shoe);
 
   const now = new Date();
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > now;
@@ -410,6 +413,11 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const galleryOverlay = (
     <>
       {shoe.shops && shoe.shops.status === 'active' && <ShopLogoOverlay shop={shoe.shops} size="lg" />}
+      {greatDeal && (
+        <div className="absolute bottom-3 left-3 z-20">
+          <GreatDealPill size="md" />
+        </div>
+      )}
       {!isOwner && (
         <div className="absolute right-3 top-3 z-20">
           <SaveListingButton
