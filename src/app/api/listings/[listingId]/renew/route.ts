@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { verifyListingRenewalToken } from '@/lib/listingRenewal';
 import { createServiceClient } from '@/lib/supabase/server';
 import { getListingPath } from '@/lib/utils';
@@ -46,5 +47,12 @@ export async function GET(request: Request, { params }: { params: { listingId: s
     return redirectWithError(request, 'failed');
   }
 
-  return NextResponse.redirect(`${origin}${getListingPath(listing)}?renewed=1`);
+  const listingPath = getListingPath(listing);
+  revalidateTag('homepage-listings');
+  revalidateTag('homepage-featured-listing');
+  revalidatePath('/');
+  revalidatePath('/browse');
+  revalidatePath(listingPath);
+
+  return NextResponse.redirect(`${origin}${listingPath}?renewed=1`);
 }

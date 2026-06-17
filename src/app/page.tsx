@@ -140,7 +140,7 @@ const getHomepageListings = unstable_cache(async function getHomepageListings():
       if (aPhoto !== bPhoto) return aPhoto ? -1 : 1;
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-}, ['homepage-listings'], { revalidate: 60 });
+}, ['homepage-listings'], { revalidate: 60, tags: ['homepage-listings'] });
 
 function getRecommendedListings(profile: Profile | null, shoes: Shoe[]): Shoe[] {
   if (!profile?.personalized_browse_enabled) return [];
@@ -173,7 +173,7 @@ const getFeaturedListing = unstable_cache(async function getFeaturedListing(): P
     .limit(1)
     .maybeSingle();
   return (data as unknown as Shoe) ?? null;
-}, ['homepage-featured-listing'], { revalidate: 60 });
+}, ['homepage-featured-listing'], { revalidate: 60, tags: ['homepage-featured-listing'] });
 
 const getMarketplaceActivity = unstable_cache(async function getMarketplaceActivity(): Promise<{
   newListingsThisWeek: number;

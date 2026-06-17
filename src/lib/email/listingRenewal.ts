@@ -44,8 +44,7 @@ export function renderListingRenewalEmail({
             </tr>
             <tr>
               <td style="padding:12px 28px 4px;">
-                <p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.7;">Hi ${escape(sellerName)}, your <strong>${escape(listingName)}</strong> listing has been active for a while and has not been updated recently.</p>
-                <p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.7;">Renewing tells buyers the shoes are still being checked by the owner. It will show as checked recently, but it will not mark the listing as just posted.</p>
+                <p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.7;">Hi ${escape(sellerName)}, we care about keeping your <strong>${escape(listingName)}</strong> listing useful for buyers. If this pair is still available, give it a quick nudge so runners know it is still being checked.</p>
                 <p style="margin:0;color:#334155;font-size:15px;line-height:1.7;">If anything changed, update the price, condition, photos, or notes first.</p>
               </td>
             </tr>
@@ -66,8 +65,7 @@ export function renderListingRenewalEmail({
             </tr>
             <tr>
               <td style="padding:0 28px 28px;">
-                <p style="margin:0 0 10px;color:#64748b;font-size:12px;line-height:1.6;">You can also review the listing here: <a href="${escape(listingUrl)}" style="color:#0f766e;text-decoration:none;">${escape(listingUrl)}</a></p>
-                <p style="margin:0;color:#64748b;font-size:12px;line-height:1.6;">Go Pair PH sends this reminder only when a listing is old enough and has not been updated recently.</p>
+                <p style="margin:0;color:#64748b;font-size:12px;line-height:1.6;">You can also review the listing here: <a href="${escape(listingUrl)}" style="color:#0f766e;text-decoration:none;">${escape(listingUrl)}</a></p>
               </td>
             </tr>
           </table>
