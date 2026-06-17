@@ -32,53 +32,6 @@ function getDiscountPercent(pricePhp?: number | null, srpPhp?: number | null): n
   return Math.max(0, Math.round(((srpPhp - pricePhp) / srpPhp) * 100));
 }
 
-function appendEllipsis(text: string, maxChars: number): string {
-  const base = text.replace(/\s+/g, ' ').trim();
-  if (base.endsWith('...')) return truncateText(base, maxChars);
-  return truncateText(`${base}...`, maxChars);
-}
-
-function buildTruncatedDescriptionLines(description: string | null | undefined, maxLines: number, maxChars: number): string[] {
-  const normalized = (description ?? '').replace(/\s+/g, ' ').trim();
-  if (!normalized) return ['Message the seller for full details.'];
-
-  const words = normalized.split(' ');
-  const lines: string[] = [];
-  let current = '';
-  let usedWords = 0;
-
-  for (const word of words) {
-    const next = current ? `${current} ${word}` : word;
-    if (next.length <= maxChars) {
-      current = next;
-      usedWords += 1;
-      continue;
-    }
-
-    if (current) {
-      lines.push(current);
-      if (lines.length === maxLines) break;
-      current = word;
-      usedWords += 1;
-    } else {
-      lines.push(truncateText(word, maxChars));
-      usedWords += 1;
-      if (lines.length === maxLines) break;
-    }
-  }
-
-  if (lines.length < maxLines && current) {
-    lines.push(current);
-  }
-
-  const hasMore = usedWords < words.length || lines.some(line => line.length > maxChars);
-  if (hasMore && lines.length > 0) {
-    lines[lines.length - 1] = appendEllipsis(lines[lines.length - 1], maxChars);
-  }
-
-  return lines.slice(0, maxLines).map(line => truncateText(line, maxChars));
-}
-
 function waitForNextPaint(): Promise<void> {
   return new Promise(resolve => {
     requestAnimationFrame(() => {
@@ -274,7 +227,7 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
       >
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 sm:px-5 sm:py-3 border-b border-gray-800">
-          <h2 className="text-sm font-semibold text-gray-100">Share Post</h2>
+          <h2 className="text-sm font-semibold text-gray-100">Post This on Facebook</h2>
           <div className="flex items-center gap-1">
             {/* Download button — desktop only. Mobile users long-press the image. */}
             <button
@@ -336,7 +289,7 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={pngDataUrl}
-                alt={`${formatListingName(shoe.brand, shoe.model)} — Go Pair PH share post`}
+                alt={`${formatListingName(shoe.brand, shoe.model)} Facebook post image`}
                 className="block w-full h-full object-cover select-none"
                 draggable
               />
@@ -355,7 +308,7 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
           </div>
 
           <p className="mt-2 text-[11px] leading-4 text-gray-500 sm:mt-3 sm:text-xs">
-            <strong className="text-gray-300">Tip: Share it to your Facebook post or Facebook Marketplace listing.</strong> On mobile, long-press the image to save it. If the preview looks wrong, tap <strong className="text-gray-300">Reload</strong>.
+            <strong className="text-gray-300">Tip: Use this image with your Facebook post or Marketplace listing.</strong> On mobile, long-press the image to save it. If the preview looks wrong, tap <strong className="text-gray-300">Reload</strong>.
           </p>
 
           {/* Hidden source for html-to-image — rendered offscreen at native size. */}
@@ -416,12 +369,18 @@ function getShareSizeText(shoe: Shoe): string {
   return formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type);
 }
 
+function fitFontSize(text: string, base: number, compact: number, tight: number): number {
+  if (text.length > 30) return tight;
+  if (text.length > 20) return compact;
+  return base;
+}
+
 const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
   { shoe, seller, shop, heroSrc, gallerySrcs, identitySrc, isFeatured, isSponsored, format },
   ref,
 ) {
   const isMobile = format === 'mobile';
-  const identityName = shop?.name ?? seller?.display_name ?? 'Go Pair PH seller';
+  const identityName = shop?.name ?? seller?.display_name ?? 'Seller';
   const identityLocation = shop?.location ?? formatProfileLocation(seller);
   const identityLabel = shop ? 'Shop' : 'Seller';
   const shareSize = getShareSizeText(shoe);
@@ -454,46 +413,20 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
         width: CARD_W,
         height: CARD_H,
         display: 'flex',
-        background: '#020617',
+        background: '#07111f',
         fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
         color: '#f3f4f6',
       }}
     >
-      {/* Left panel */}
-      <div
-        style={{
-          width: '46%',
-          padding: 48,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 20,
-          background: 'linear-gradient(135deg, #020617 0%, #0b1220 50%, #042f2e 100%)',
-          borderRight: '1px solid rgba(20, 184, 166, 0.25)',
-          boxSizing: 'border-box',
-          overflow: 'hidden',
-        }}
-      >
-        <IdentityBlock identityName={identityName} identityLocation={identityLocation} identityLabel={identityLabel} identitySrc={identitySrc} seller={seller} compact />
-        <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} />
-        <TitleBlock shoe={shoe} shareSize={shareSize} identityLocation={identityLocation} titleSize={52} metaSize={18} maxLines={3} />
-        <PriceBlock shoe={shoe} priceSize={40} />
-        <ShareDetailPills shoe={shoe} shareSize={shareSize} identityLocation={identityLocation} />
-        <DescriptionBlock description={shoe.description} maxLines={5} />
-        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 9, color: '#94a3b8', fontSize: 13, fontWeight: 700 }}>
-          <LogoMark size={24} />
-          <span>Listed on <span style={{ color: '#f8fafc' }}>GoPair</span><span style={{ color: '#2dd4bf' }}>PH</span><span style={{ color: '#f8fafc' }}>.com</span></span>
-        </div>
-      </div>
-
-      {/* Right panel — hero photo */}
-      <div style={{ width: '54%', position: 'relative', background: '#020617' }}>
+      <div style={{ width: '58%', position: 'relative', background: '#020617', padding: 26, boxSizing: 'border-box' }}>
+        <div style={{ width: '100%', height: '100%', borderRadius: 28, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 24px 70px rgba(0,0,0,0.42)', background: '#0f172a' }}>
         {heroSrc ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={heroSrc}
             alt={formatListingName(shoe.brand, shoe.model)}
             crossOrigin="anonymous"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
           />
         ) : (
           <div
@@ -508,14 +441,35 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
               background: 'linear-gradient(135deg, #0b1220 0%, #042f2e 100%)',
             }}
           >
-            <div style={{ opacity: 0.3 }}>
-              <LogoMark size={120} />
-            </div>
             <span style={{ fontSize: 14, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 600 }}>
               No photo
             </span>
           </div>
         )}
+        </div>
+      </div>
+
+      <div
+        style={{
+          width: '42%',
+          padding: '34px 38px 30px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 18,
+          background: 'linear-gradient(155deg, #0f172a 0%, #07111f 58%, #0f2927 100%)',
+          boxSizing: 'border-box',
+          overflow: 'hidden',
+        }}
+      >
+        <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} />
+        <TitleBlock shoe={shoe} shareSize={shareSize} identityLocation={identityLocation} titleSize={48} metaSize={17} maxLines={3} />
+        <PriceBlock shoe={shoe} priceSize={42} />
+        <ShareDetailPills shoe={shoe} shareSize={shareSize} identityLocation={identityLocation} />
+        <DescriptionBlock description={shoe.description} maxLines={4} />
+        <div style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px solid rgba(148,163,184,0.18)' }}>
+          <IdentityBlock identityName={identityName} identityLocation={identityLocation} identityLabel={identityLabel} identitySrc={identitySrc} seller={seller} compact />
+          <QuietBrandFooter />
+        </div>
       </div>
     </div>
   );
@@ -553,17 +507,12 @@ const VerticalShareCard = forwardRef<HTMLDivElement, VerticalShareCardProps>(fun
   },
   ref,
 ) {
-  const thumbnailSrcs = gallerySrcs.slice(0, 3);
-  const description = hasDescription ? shoe.description : 'Message the seller for full details.';
-  const hideBrand = shoe.brand.trim().toLowerCase() === 'other';
-  const displayBrand = truncateText(shoe.brand, 18);
-  const displayModel = truncateText(shoe.model, 46);
-  const displayColor = truncateText(shoe.color, 28);
-  const displaySize = truncateText(shareSize, 24);
-  const displayLocation = truncateText(identityLocation ?? 'Ask seller for location', 31);
-  const modelTitleSize = hideBrand
-    ? displayModel.length > 13 ? 66 : 78
-    : displayModel.length > 13 ? 58 : 72;
+  const description = hasDescription ? shoe.description : 'Send a message for the full details.';
+  const listingTitle = formatListingName(shoe.brand, shoe.model);
+  const titleSize = fitFontSize(listingTitle, 66, 56, 46);
+  const colorSize = fitFontSize(shoe.color, 28, 24, 21);
+  const sizeSize = fitFontSize(shareSize, 30, 25, 21);
+  const soleDetailSrc = gallerySrcs.find(src => src && src !== heroSrc) ?? null;
 
   return (
     <div
@@ -572,333 +521,186 @@ const VerticalShareCard = forwardRef<HTMLDivElement, VerticalShareCardProps>(fun
         width: MOBILE_CARD_W,
         height: MOBILE_CARD_H,
         position: 'relative',
-        padding: '54px 42px 34px',
-        background: 'radial-gradient(circle at 38% 46%, rgba(20,184,166,0.26) 0, rgba(20,184,166,0.08) 28%, rgba(2,6,23,0) 50%), linear-gradient(145deg, #031b22 0%, #020617 44%, #033f3d 100%)',
+        padding: '42px 42px 34px',
+        background: 'linear-gradient(160deg, #020617 0%, #07111f 50%, #0f2927 100%)',
         fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
         color: '#f8fafc',
         overflow: 'hidden',
         boxSizing: 'border-box',
       }}
     >
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(45,212,191,0.12) 0%, rgba(2,6,23,0) 32%, rgba(45,212,191,0.13) 100%)' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(45,212,191,0.08) 0%, rgba(2,6,23,0) 32%, rgba(45,212,191,0.08) 100%)' }} />
 
-      <div style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: '386px 1fr', columnGap: 36 }}>
-        <div style={{ minWidth: 0 }}>
-          <IdentityBlock
+      <div style={{ position: 'static' }}>
+        <div
+          style={{
+            width: 790,
+            height: 790,
+            margin: '0 auto',
+            borderRadius: 34,
+            padding: 16,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.86), rgba(94,234,212,0.34), rgba(255,255,255,0.18))',
+            boxShadow: '0 34px 90px rgba(0,0,0,0.42)',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 24, overflow: 'hidden', background: 'radial-gradient(circle at 50% 42%, #1f2937 0%, #0f172a 58%, #020617 100%)' }}>
+            {heroSrc ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={heroSrc}
+                alt={listingTitle}
+                crossOrigin="anonymous"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+              />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, background: 'linear-gradient(135deg, #0b1220 0%, #042f2e 100%)' }}>
+                <div style={{ opacity: 0.26 }}><LogoMark size={110} /></div>
+                <span style={{ color: '#94a3b8', fontSize: 18, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em' }}>No photo</span>
+              </div>
+            )}
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(2,6,23,0) 42%, rgba(2,6,23,0.72) 100%)' }} />
+            <div style={{ position: 'absolute', left: 34, right: 34, bottom: 30, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: 24 }}>
+              <PriceBlock shoe={shoe} priceSize={58} tagSize={16} alignEnd />
+            </div>
+          </div>
+        </div>
+
+        <div style={{ position: 'absolute', left: 42, top: 850, width: 420 }}>
+          {soleDetailSrc && (
+            <div style={{ width: 420, height: 220, marginBottom: 14, borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(148,163,184,0.34)', background: '#0f172a', boxShadow: '0 18px 42px rgba(0,0,0,0.24)' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={soleDetailSrc}
+                alt={`${listingTitle} detail photo`}
+                crossOrigin="anonymous"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+              />
+            </div>
+          )}
+          <SellerPanel
             identityName={identityName}
             identityLocation={identityLocation}
             identityLabel={identityLabel}
             identitySrc={identitySrc}
             seller={seller}
-            avatarSize={68}
-            labelSize={14}
-            nameSize={25}
-            hostSize={18}
-            verifiedSize={11}
           />
+        </div>
 
-          <div style={{ marginTop: 26 }}>
+        <div style={{ position: 'absolute', left: 500, right: 42, top: 850 }}>
+          <h1 style={{ margin: 0, color: '#f8fafc', fontSize: titleSize, lineHeight: 1.02, fontWeight: 900, letterSpacing: 0, overflowWrap: 'break-word' }}>
+            {listingTitle}
+          </h1>
+          <div style={{ marginTop: 20, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px 16px', color: '#cbd5e1', fontWeight: 760 }}>
+            {shoe.color && (
+              <span style={{ fontSize: colorSize, lineHeight: 1.1, maxWidth: 420, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {shoe.color}
+              </span>
+            )}
+            {shareSize && (
+              <span style={{ color: '#f8fafc', fontSize: sizeSize, lineHeight: 1.1, fontWeight: 850, whiteSpace: 'nowrap' }}>
+                {shareSize}
+              </span>
+            )}
+            {identityLocation && (
+              <span style={{ color: '#a7f3d0', fontSize: 22, lineHeight: 1.1, fontWeight: 800, whiteSpace: 'nowrap' }}>
+                {identityLocation}
+              </span>
+            )}
+          </div>
+
+          <div style={{ marginTop: 18 }}>
             <BadgeRow shoe={shoe} isFeatured={isFeatured} isSponsored={isSponsored} size="lg" />
           </div>
 
-          <div style={{ marginTop: hideBrand ? 72 : 64, height: 410, overflow: 'hidden' }}>
-            {!hideBrand && (
-              <div style={{ color: '#f8fafc', fontSize: 80, lineHeight: 0.96, fontWeight: 900, letterSpacing: 0, maxWidth: 360, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {displayBrand}
-              </div>
-            )}
-            <div style={{ color: '#22d3c5', fontSize: modelTitleSize, lineHeight: 1.02, fontWeight: 900, letterSpacing: 0, marginTop: hideBrand ? 0 : 8, maxWidth: 360, overflow: 'hidden', overflowWrap: 'break-word' }}>
-              {displayModel}
-            </div>
-            <div style={{ width: 130, height: 4, background: '#22d3c5', marginTop: 28 }} />
-            <div style={{ marginTop: 28, color: '#a9b6c5', fontSize: 27, lineHeight: 1.22, fontWeight: 500, width: 340, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {displayColor}
-            </div>
-            {displaySize && (
-              <div style={{ marginTop: 8, color: '#f8fafc', fontSize: 29, lineHeight: 1.22, fontWeight: 850, width: 340, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {displaySize}
-              </div>
-            )}
-            <div style={{ marginTop: 10, color: identityLocation ? '#a9b6c5' : '#94a3b8', fontSize: 22, lineHeight: 1.22, fontWeight: 750, width: 340, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              Location: {displayLocation}
-            </div>
+          <div style={{ marginTop: 24 }}>
+            <DescriptionBlock
+              description={description}
+              maxLines={3}
+              labelSize={13}
+              bodySize={21}
+              lineHeight={1.34}
+              padding={22}
+              radius={18}
+              singleParagraph
+            />
           </div>
-
-          <div style={{ marginTop: 12 }}>
-            <VerticalDescriptionBlock description={description} />
-          </div>
-
-          <VerticalPriceRibbon shoe={shoe} />
-
-          <div style={{ marginTop: 14, width: 274, borderRadius: 14, border: '1px solid rgba(148,163,184,0.34)', background: 'rgba(2, 6, 23, 0.2)', padding: '16px 16px', display: 'flex', gap: 12, alignItems: 'flex-start', boxSizing: 'border-box' }}>
-            <FeatureIcon kind="shield" size={36} color="#22d3c5" />
-            <div>
-              <div style={{ color: '#22d3c5', fontSize: 16, lineHeight: 1.08, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0 }}>
-                Buy with confidence
-              </div>
-              <div style={{ marginTop: 10, color: '#d1d5db', fontSize: 18, lineHeight: 1.26 }}>
-                Quality shoes from our running community.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ paddingTop: 16 }}>
-          <VerticalImageFrame
-            src={heroSrc}
-            alt={formatListingName(shoe.brand, shoe.model)}
-            width={554}
-            height={680}
-            radius={22}
-            overlay={
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '10px 18px', borderRadius: 9999, background: 'rgba(15,23,42,0.72)', color: '#f8fafc', fontSize: 20, fontWeight: 850 }}>
-                <LogoMark size={32} />
-                <span><span>GoPair</span><span style={{ color: '#2dd4bf' }}>PH</span><span>.com</span></span>
-              </div>
-            }
-          />
-
-          {thumbnailSrcs.length > 0 && (
-          <div style={{ display: 'flex', gap: 14, marginTop: 28 }}>
-            {thumbnailSrcs.map((src, index) => (
-              <VerticalImageFrame
-                key={index}
-                src={src}
-                alt={`${formatListingName(shoe.brand, shoe.model)} photo ${index + 1}`}
-                width={178}
-                height={198}
-                radius={16}
-              />
-            ))}
-          </div>
-          )}
-
-          <ConditionInfoStrip condition={shoe.condition} />
         </div>
       </div>
 
-      <VerticalFooter />
+      <QuietBrandFooter absolute />
     </div>
   );
 });
 
-function VerticalImageFrame({
-  src,
-  alt,
-  width,
-  height,
-  radius,
-  overlay,
+function SellerPanel({
+  identityName,
+  identityLocation,
+  identityLabel,
+  identitySrc,
+  seller,
 }: {
-  src: string | null | undefined;
-  alt: string;
-  width: number;
-  height: number;
-  radius: number;
-  overlay?: React.ReactNode;
+  identityName: string;
+  identityLocation: string | null;
+  identityLabel: string;
+  identitySrc: string | null;
+  seller: Profile | null;
 }) {
   return (
     <div
       style={{
-        width,
-        height,
-        position: 'relative',
-        overflow: 'hidden',
-        borderRadius: radius,
-        border: '2px solid rgba(255,255,255,0.82)',
-        background: 'linear-gradient(135deg, #0b1220 0%, #042f2e 100%)',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.26)',
+        borderRadius: 22,
+        border: '1px solid rgba(148,163,184,0.24)',
+        background: 'rgba(15,23,42,0.66)',
+        padding: '24px 22px',
         boxSizing: 'border-box',
+        boxShadow: '0 18px 44px rgba(0,0,0,0.22)',
       }}
     >
-      {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt={alt}
-          crossOrigin="anonymous"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-        />
-      ) : (
-        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-          <div style={{ opacity: 0.28 }}><LogoMark size={76} /></div>
-          <span style={{ fontSize: 13, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0, fontWeight: 700 }}>No photo</span>
-        </div>
-      )}
-      {overlay && <div style={{ position: 'absolute', top: 18, left: 18 }}>{overlay}</div>}
-    </div>
-  );
-}
-
-function VerticalDescriptionBlock({ description }: { description: string | null }) {
-  const resolvedLines = buildTruncatedDescriptionLines(description, 4, 30);
-
-  return (
-    <div style={{ width: 340, height: 216, borderRadius: 14, border: '1px solid rgba(248,250,252,0.62)', background: 'rgba(2, 6, 23, 0.18)', padding: '26px 28px', boxSizing: 'border-box', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#22d3c5', fontSize: 15, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0 }}>
-        <FeatureIcon kind="details" size={34} color="#22d3c5" />
-        Description
-      </div>
-      <div style={{ marginTop: 26, color: '#e5e7eb', fontSize: 21, lineHeight: 1.42, overflow: 'hidden' }}>
-        {resolvedLines.map(line => (
-          <div key={line} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{line}</div>
-        ))}
+      <IdentityBlock
+        identityName={identityName}
+        identityLocation={identityLocation}
+        identityLabel={identityLabel}
+        identitySrc={identitySrc}
+        seller={seller}
+        compact
+        avatarSize={58}
+        labelSize={11}
+        nameSize={22}
+        hostSize={14}
+        verifiedSize={9}
+      />
+      <div style={{ marginTop: 18, color: '#94a3b8', fontSize: 15, lineHeight: 1.32, fontWeight: 650 }}>
+        Send a message for photos, fit notes, and handoff details.
       </div>
     </div>
   );
 }
 
-function VerticalPriceRibbon({ shoe }: { shoe: Shoe }) {
-  const label = shoe.listing_type === 'donate'
-    ? 'Free'
-    : shoe.price_php != null
-      ? formatPrice(shoe.price_php)
-      : 'Message';
-  const displayLabel = truncateText(label, 12);
-  const discountPercent = getDiscountPercent(shoe.price_php, shoe.srp_php);
-  const showSrp = shoe.listing_type === 'for_sale' && discountPercent > 0;
-
+function QuietBrandFooter({ absolute = false }: { absolute?: boolean }) {
   return (
-    <div style={{ marginTop: 24, marginLeft: -42, width: 395, height: 110, borderRadius: '0 22px 22px 0', background: 'linear-gradient(90deg, rgba(13,148,136,0.96) 0%, rgba(15,118,110,0.92) 72%, rgba(13,148,136,0.62) 100%)', boxShadow: '0 18px 34px rgba(0,0,0,0.22)', display: 'flex', alignItems: 'center', paddingLeft: 56, paddingRight: 24, boxSizing: 'border-box', overflow: 'hidden' }}>
-      <div style={{ maxWidth: 310, overflow: 'hidden' }}>
-        <div style={{ color: '#f8fafc', fontSize: displayLabel.length > 9 ? 48 : 68, lineHeight: 1, fontWeight: 950, letterSpacing: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {displayLabel}
-        </div>
-        {showSrp && (
-          <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, lineHeight: 1, fontWeight: 850, letterSpacing: 0, whiteSpace: 'nowrap', overflow: 'hidden' }}>
-            <span style={{ color: '#dbeafe', textDecoration: 'line-through', textDecorationThickness: 2, textDecorationColor: 'rgba(248,250,252,0.9)' }}>
-              {formatPrice(shoe.srp_php)}
-            </span>
-            <span style={{ color: '#fecaca', textShadow: '0 1px 2px rgba(127,29,29,0.45)' }}>
-              {discountPercent}% OFF
-            </span>
-          </div>
-        )}
-      </div>
+    <div
+      style={{
+        ...(absolute ? { position: 'absolute', left: 42, right: 42, bottom: 24 } : { marginTop: 12 }),
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 18,
+        borderTop: '1px solid rgba(148,163,184,0.18)',
+        paddingTop: absolute ? 14 : 10,
+        color: '#94a3b8',
+        fontSize: absolute ? 15 : 12,
+        lineHeight: 1,
+        fontWeight: 750,
+        zIndex: 2,
+      }}
+    >
+      <span>Full listing details</span>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: absolute ? 8 : 6, color: '#cbd5e1' }}>
+        <LogoMark size={absolute ? 22 : 16} />
+        <span>gopairph.com</span>
+      </span>
     </div>
-  );
-}
-
-const conditionStripDetails: Record<Condition, { body: string; color: string }> = {
-  new: { body: 'Brand-new pair, ready for first run.', color: '#059669' },
-  like_new: { body: 'Excellent condition, well cared for.', color: '#0284c7' },
-  good: { body: 'Solid pair with normal running wear.', color: '#475569' },
-  fair: { body: 'Budget pair with visible wear.', color: '#a16207' },
-};
-
-function ConditionInfoStrip({ condition }: { condition: Condition }) {
-  const details = conditionStripDetails[condition];
-  const items = [
-    {
-      title: CONDITIONS[condition],
-      body: details.body,
-      icon: 'shield',
-      color: details.color,
-    },
-    {
-      title: 'Clear Details',
-      body: 'Photos and notes ready.',
-      icon: 'details',
-      color: '#0f766e',
-    },
-    {
-      title: 'Easy Handoff',
-      body: 'Chat, ship, or meet up.',
-      icon: 'truck',
-      color: '#0f766e',
-    },
-    {
-      title: 'Runners Helping Runners',
-      body: 'Trusted sellers. Real community.',
-      icon: 'community',
-      color: '#0f766e',
-    },
-  ] as const;
-
-  return (
-    <div style={{ marginTop: 24, width: 554, height: 188, borderRadius: 20, background: '#f8fafc', color: '#111827', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', boxShadow: '0 18px 42px rgba(0,0,0,0.22)', border: '1px solid rgba(148,163,184,0.45)', overflow: 'hidden' }}>
-      {items.map((item, index) => (
-        <div key={item.title} style={{ position: 'relative', padding: '20px 8px 14px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {index > 0 && <div style={{ position: 'absolute', left: 0, top: 26, bottom: 26, width: 1, background: '#cbd5e1' }} />}
-          <FeatureIcon kind={item.icon} size={38} color={item.color} />
-          <div style={{ marginTop: 10, color: item.color, fontSize: item.title.length > 16 ? 11 : 14, lineHeight: 1.04, fontWeight: 950, textTransform: 'uppercase', letterSpacing: 0 }}>
-            {item.title}
-          </div>
-          <div style={{ marginTop: 8, color: '#334155', fontSize: 13, lineHeight: 1.14, fontWeight: 500 }}>
-            {item.body}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function VerticalFooter() {
-  return (
-    <div style={{ position: 'absolute', left: 42, right: 42, bottom: 22, height: 118, borderRadius: 18, border: '1px solid rgba(148,163,184,0.32)', background: 'rgba(2, 6, 23, 0.64)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 44px 0 34px', boxSizing: 'border-box', zIndex: 1 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 26 }}>
-        <LogoMark size={86} />
-        <div>
-          <div style={{ fontSize: 48, lineHeight: 1, fontWeight: 950, fontStyle: 'italic', letterSpacing: 0 }}>
-            <span style={{ color: '#f8fafc' }}>GO </span>
-            <span style={{ color: '#0f9488' }}>PAIR </span>
-            <span style={{ color: '#f8fafc' }}>PH</span>
-          </div>
-          <div style={{ marginTop: 12, color: '#f8fafc', fontSize: 13, lineHeight: 1, fontWeight: 850, textTransform: 'uppercase', letterSpacing: 0 }}>
-            Runners Helping Runners
-          </div>
-        </div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18, color: '#f8fafc', fontSize: 20, lineHeight: 1.28, fontStyle: 'italic', fontWeight: 600 }}>
-        <div style={{ width: 4, height: 46, background: '#22d3c5', transform: 'skew(-12deg)' }} />
-        <div>
-          <div>Find your next pair.</div>
-          <div>Run better <span style={{ color: '#22d3c5', fontWeight: 900 }}>together.</span></div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FeatureIcon({ kind, size, color }: { kind: 'shield' | 'details' | 'truck' | 'community'; size: number; color: string }) {
-  if (kind === 'details') {
-    return (
-      <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden>
-        <rect x="10" y="7" width="25" height="34" rx="3" stroke={color} strokeWidth="3" />
-        <path d="M18 17H29M18 24H29M18 31H25" stroke={color} strokeWidth="3" strokeLinecap="round" />
-        <path d="M33 31h6v10h-6z" stroke={color} strokeWidth="3" strokeLinejoin="round" />
-      </svg>
-    );
-  }
-
-  if (kind === 'truck') {
-    return (
-      <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden>
-        <path d="M7 14h23v18H7zM30 20h8l4 6v6H30z" stroke={color} strokeWidth="3" strokeLinejoin="round" />
-        <path d="M4 22h12M2 28h10" stroke={color} strokeWidth="3" strokeLinecap="round" />
-        <circle cx="16" cy="36" r="4" stroke={color} strokeWidth="3" />
-        <circle cx="36" cy="36" r="4" stroke={color} strokeWidth="3" />
-      </svg>
-    );
-  }
-
-  if (kind === 'community') {
-    return (
-      <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden>
-        <circle cx="16" cy="18" r="5" stroke={color} strokeWidth="3" />
-        <circle cx="32" cy="18" r="5" stroke={color} strokeWidth="3" />
-        <path d="M6 39c1-8 6-12 13-12M42 39c-1-8-6-12-13-12" stroke={color} strokeWidth="3" strokeLinecap="round" />
-        <path d="M18 34c2-4 10-4 12 0" stroke={color} strokeWidth="3" strokeLinecap="round" />
-        <path d="M20 9h8c5 0 9 3 9 8s-4 8-9 8h-1l-5 5v-5h-2c-5 0-9-3-9-8s4-8 9-8z" stroke={color} strokeWidth="2.5" strokeLinejoin="round" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden>
-      <path d="M24 5l15 6v12c0 10-6 17-15 21C15 40 9 33 9 23V11l15-6z" stroke={color} strokeWidth="3" strokeLinejoin="round" />
-      <path d="M17 24l5 5 10-12" stroke={color} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }
 
@@ -991,17 +793,11 @@ function IdentityBlock({
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: compact ? 3 : 7, maxWidth: compact ? 320 : 460, color: '#94a3b8', fontSize: resolvedHostSize, fontWeight: 700, overflow: 'hidden' }}>
-          <span style={{ flexShrink: 0 }}>
-            on <span style={{ color: '#f8fafc' }}>GoPair</span><span style={{ color: '#2dd4bf' }}>PH</span><span style={{ color: '#f8fafc' }}>.com</span>
-          </span>
-          {displayIdentityLocation && (
-            <>
-              <span style={{ color: '#334155', flexShrink: 0 }}>•</span>
-              <span style={{ minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayIdentityLocation}</span>
-            </>
-          )}
-        </div>
+        {displayIdentityLocation && (
+          <div style={{ marginTop: compact ? 3 : 7, maxWidth: compact ? 320 : 460, color: '#94a3b8', fontSize: resolvedHostSize, fontWeight: 700, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+            {displayIdentityLocation}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1063,7 +859,8 @@ function TitleBlock({
   maxLines?: number;
 }) {
   const displayColor = truncateText(shoe.color, 30);
-  const displayShareSize = truncateText(shareSize, 28);
+  const displayShareSize = shareSize.trim();
+  const displayShareSizeFont = fitFontSize(displayShareSize, metaSize, Math.max(11, metaSize - 3), Math.max(10, metaSize - 5));
   const displayLocation = truncateText(identityLocation, 28);
 
   return (
@@ -1076,7 +873,7 @@ function TitleBlock({
         {displayShareSize && (
           <>
             <span style={{ color: '#374151', flexShrink: 0 }}>•</span>
-            <span style={{ minWidth: 0, maxWidth: 190, color: '#d1d5db', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayShareSize}</span>
+            <span style={{ color: '#d1d5db', fontSize: displayShareSizeFont, fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>{displayShareSize}</span>
           </>
         )}
         {displayLocation && (
@@ -1094,7 +891,7 @@ function ShareDetailPills({ shoe, shareSize, identityLocation }: { shoe: Shoe; s
   const items = [
     shareSize ? { label: 'Size', value: shareSize } : null,
     !shoe.shop_id ? { label: 'Mileage', value: formatMileage(shoe.mileage_km) } : null,
-    { label: 'Location', value: identityLocation ?? 'Ask seller' },
+    identityLocation ? { label: 'Location', value: identityLocation } : null,
   ].filter(Boolean) as Array<{ label: string; value: string }>;
 
   return (
@@ -1109,16 +906,15 @@ function ShareDetailPills({ shoe, shareSize, identityLocation }: { shoe: Shoe; s
             background: item.label === 'Location' ? 'rgba(20, 184, 166, 0.1)' : 'rgba(15, 23, 42, 0.62)',
             padding: '7px 11px',
             color: '#cbd5e1',
-            fontSize: 12,
+            fontSize: item.label === 'Size' ? fitFontSize(item.value, 12, 10, 9) : 12,
             lineHeight: 1,
             fontWeight: 750,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
-            textOverflow: 'ellipsis',
           }}
         >
           <span style={{ color: item.label === 'Location' ? '#5eead4' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: 10 }}>{item.label}: </span>
-          {truncateText(item.value, item.label === 'Location' ? 24 : 18)}
+          {item.label === 'Size' ? item.value : truncateText(item.value, item.label === 'Location' ? 24 : 18)}
         </div>
       ))}
     </div>

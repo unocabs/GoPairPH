@@ -47,7 +47,7 @@ export function renderAdminNewListingEmail({
             <p style="margin:0 0 10px;color:#2dd4bf;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;">New Go Pair PH listing</p>
             <h1 style="margin:0;color:#f8fafc;font-size:28px;line-height:1.1;">${escapeHtml(listingName)}</h1>
             <p style="margin:12px 0 0;color:#94a3b8;font-size:15px;line-height:1.6;">
-              A seller posted a new pair. Open it to review, flag if needed, or generate a Share Post Kit asset.
+              A seller posted a new pair. Open it to review, flag if needed, or generate a Facebook post image.
             </p>
           </div>
 

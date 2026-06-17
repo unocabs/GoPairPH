@@ -14,13 +14,14 @@ interface ListingShareActionsProps {
   shoe: Shoe;
   seller?: Profile | null;
   isOwner?: boolean;
+  defaultOpen?: boolean;
   className?: string;
 }
 
-export function ListingShareActions({ shoe, seller, isOwner = false, className = '' }: ListingShareActionsProps) {
+export function ListingShareActions({ shoe, seller, isOwner = false, defaultOpen = false, className = '' }: ListingShareActionsProps) {
   const [copiedMessage, setCopiedMessage] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
-  const [kitOpen, setKitOpen] = useState(false);
+  const [kitOpen, setKitOpen] = useState(defaultOpen);
   const listingPath = getListingPath(shoe);
 
   function closeShareModal() {
@@ -46,7 +47,7 @@ export function ListingShareActions({ shoe, seller, isOwner = false, className =
     const url = `${window.location.origin}${listingPath}`;
     await copyText(
       buildListingCaption(shoe, url),
-      isOwner ? 'Caption copied. Paste it with your Go Pair PH link so buyers can check the full details.' : 'Caption copied.'
+      isOwner ? 'FB caption copied. Paste it with your listing link so buyers can check the full details.' : 'Caption copied.'
     );
     trackMarketplaceAction('copy_share_caption', {
       listing_id: shoe.id,
@@ -77,7 +78,7 @@ export function ListingShareActions({ shoe, seller, isOwner = false, className =
           <svg className="h-4 w-4 shrink-0 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h6m-8 8h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          Share Post Kit
+          Post This on Facebook
         </span>
         <svg
           className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${kitOpen ? 'rotate-180' : ''}`}
@@ -118,8 +119,8 @@ export function ListingShareActions({ shoe, seller, isOwner = false, className =
           >
             <StepIcon type="download" />
             <span className="min-w-0 flex-1">
-              <span className="block font-semibold">Share Post</span>
-              <span className="block truncate text-xs text-gray-500">Download the listing image.</span>
+              <span className="block font-semibold">Download Image</span>
+              <span className="block truncate text-xs text-gray-500">Use this with your FB post.</span>
             </span>
             <StepNumber>2</StepNumber>
           </button>
@@ -138,7 +139,7 @@ export function ListingShareActions({ shoe, seller, isOwner = false, className =
             <StepIcon type="group" />
             <span className="min-w-0 flex-1">
               <span className="block font-semibold">Share on FB Group</span>
-              <span className="block truncate text-xs text-gray-500">Open the Go Pair PH group first.</span>
+              <span className="block truncate text-xs text-gray-500">Post where runners already are.</span>
             </span>
             <StepNumber>3</StepNumber>
           </a>

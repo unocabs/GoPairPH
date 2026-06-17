@@ -210,7 +210,7 @@ export function OwnProfile({
                   onClick={() => setSharePostShoe(shareTarget)}
                   className="shrink-0 text-xs font-semibold text-teal-300 hover:text-teal-200"
                 >
-                  Share again
+                  Post again
                 </button>
               </div>
             ) : null}
