@@ -131,7 +131,11 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
   return (
     <div className="rounded-xl border border-white/[0.08] bg-slate-900/72 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.24)] backdrop-blur-sm sm:p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <form onSubmit={submitSearch} className="flex flex-col gap-2 sm:flex-row lg:flex-1">
+        <form
+          id="browse-search-form"
+          onSubmit={submitSearch}
+          className="flex flex-col gap-2 sm:flex-row lg:flex-1"
+        >
           <input
             id="browse-search"
             value={query}
@@ -141,7 +145,7 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
           />
           <button
             type="submit"
-            className="rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-500/15 transition-colors hover:bg-teal-400"
+            className="hidden rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-500/15 transition-colors hover:bg-teal-400 sm:inline-flex sm:w-auto sm:self-auto"
           >
             Search
           </button>
@@ -167,34 +171,41 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3 lg:hidden">
-        <div className="min-w-0">
-          <p className="text-xs text-gray-500">{listingLabel}</p>
+      <div className="mt-3 flex items-center gap-2 lg:hidden">
+        <button
+          type="submit"
+          form="browse-search-form"
+          className="w-1/3 shrink-0 rounded-lg bg-teal-500 px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-teal-500/15 transition-colors hover:bg-teal-400"
+        >
+          Search
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsOpen(open => !open)}
+          className="shrink-0 rounded-lg border border-white/[0.08] bg-slate-950/70 px-3 py-2 text-xs font-semibold text-gray-200 transition-colors hover:border-teal-400/35 hover:text-teal-200"
+          aria-expanded={isOpen}
+        >
+          {isOpen ? 'Hide filters' : '↓ Filter'}
+        </button>
+        <div className="min-w-0 flex-1 text-right">
+          <p className="truncate text-xs text-gray-500">{listingLabel}</p>
           {currentQuery.trim().length >= 2 && (
-            <div className="mt-1">
+            <div className="mt-1 flex justify-end">
               <SaveSearchButton keyword={currentQuery} />
             </div>
           )}
           {isPending && <p className="mt-0.5 text-[11px] text-teal-400">Updating...</p>}
         </div>
-        <button
-          type="button"
-          onClick={() => setIsOpen(open => !open)}
-          className="rounded-lg border border-white/[0.08] bg-slate-950/70 px-3 py-2 text-xs font-semibold text-gray-200 transition-colors hover:border-teal-400/35 hover:text-teal-200"
-          aria-expanded={isOpen}
-        >
-          {isOpen ? 'Hide filters' : '↓ Filter'}
-        </button>
       </div>
 
       <div className={`${isOpen ? 'block' : 'hidden'} mt-4`}>
-        <div className="grid gap-4 lg:grid-cols-[140px_minmax(150px,1fr)_minmax(150px,1fr)_minmax(160px,1fr)_minmax(260px,1.1fr)] lg:items-end">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-[140px_minmax(150px,1fr)_minmax(150px,1fr)_minmax(160px,1fr)_minmax(260px,1.1fr)] lg:items-end lg:gap-4">
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Type</p>
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-500 lg:mb-2 lg:text-xs">Type</p>
             <select
               value={params.get('type') ?? ''}
               onChange={e => updateParam('type', e.target.value)}
-              className="w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-sm text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-xs text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 lg:px-2 lg:py-1.5 lg:text-sm"
             >
               {typeOptions.map(option => (
                 <option key={option.value} value={option.value} className="bg-gray-800">
@@ -205,11 +216,11 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Brand</p>
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-500 lg:mb-2 lg:text-xs">Brand</p>
             <select
               value={params.get('brand') ?? ''}
               onChange={e => updateParam('brand', e.target.value)}
-              className="w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-sm text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-xs text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 lg:px-2 lg:py-1.5 lg:text-sm"
             >
               <option value="" className="bg-gray-800">All brands</option>
               {BRANDS.map(b => <option key={b} value={b} className="bg-gray-800">{b}</option>)}
@@ -217,11 +228,11 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Condition</p>
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-500 lg:mb-2 lg:text-xs">Condition</p>
             <select
               value={params.get('condition') ?? ''}
               onChange={e => updateParam('condition', e.target.value)}
-              className="w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-sm text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-xs text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 lg:px-2 lg:py-1.5 lg:text-sm"
             >
               <option value="" className="bg-gray-800">Any condition</option>
               {Object.entries(CONDITIONS).map(([v, l]) => <option key={v} value={v} className="bg-gray-800">{l}</option>)}
@@ -229,11 +240,11 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Sort</p>
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-500 lg:mb-2 lg:text-xs">Sort</p>
             <select
               value={currentSort}
               onChange={e => updateParam('sort', e.target.value === 'mixed' ? '' : e.target.value)}
-              className="w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-sm text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-xs text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 lg:px-2 lg:py-1.5 lg:text-sm"
             >
               <option value="mixed" className="bg-gray-800">Default</option>
               <option value="price_asc" className="bg-gray-800">Price: Ascending</option>
@@ -241,13 +252,13 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
             </select>
           </div>
 
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Size</p>
+          <div className="col-span-2">
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-500 lg:mb-2 lg:text-xs">Size</p>
             <div className="flex gap-2">
               <select
                 value={currentSizeUnit}
                 onChange={e => updateSizeUnit(e.target.value)}
-                className="w-20 rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-sm text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                className="w-20 shrink-0 rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-xs text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 lg:px-2 lg:py-1.5 lg:text-sm"
               >
                 {SIZE_UNITS.map(unit => (
                   <option key={unit.value} value={unit.value} className="bg-gray-800">
@@ -263,14 +274,14 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
                 min={selectedSizeUnit.min}
                 max={selectedSizeUnit.max}
                 step={0.5}
-                className="min-w-0 flex-1 rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-sm text-gray-200 placeholder-gray-600 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                className="w-20 min-w-0 shrink-0 rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 lg:w-auto lg:flex-1 lg:text-sm"
               />
             </div>
             {currentSizeUnit === 'us' && (
               <select
                 value={params.get('us_size_type') ?? ''}
                 onChange={e => updateParam('us_size_type', e.target.value)}
-                className="mt-2 w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-sm text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                className="mt-2 w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-2 py-1.5 text-xs text-gray-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 lg:px-2 lg:py-1.5 lg:text-sm"
               >
                 <option value="" className="bg-gray-800">Any US type</option>
                 {US_SIZE_TYPE_OPTIONS.map(option => (

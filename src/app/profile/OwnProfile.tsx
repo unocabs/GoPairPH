@@ -81,10 +81,14 @@ export function OwnProfile({
     if (!saved) setSavedListings(prev => prev.filter(shoe => shoe.id !== id));
   }
 
+  const activeSentOffersCount = sentOffers.filter(
+    offer => offer.status === 'pending' || offer.status === 'accepted'
+  ).length;
+
   const tabs: ReadonlyArray<{ key: ProfileTab; label: string; count: number; badgeTone?: 'default' | 'attention' }> = [
     { key: 'listings', label: 'My Listings', count: shoes.length },
     { key: 'purchases', label: 'Purchase Requests', count: purchaseRequests.length, badgeTone: 'attention' },
-    { key: 'offers', label: 'Sent Offers', count: sentOffers.length, badgeTone: 'attention' },
+    { key: 'offers', label: 'Sent Offers', count: activeSentOffersCount, badgeTone: 'attention' },
     { key: 'saved', label: 'Saved Pairs', count: savedListings.length },
     { key: 'searches', label: 'Saved Searches', count: savedSearches.length },
     { key: 'wishlist', label: 'Looking For', count: wishlist.length },
