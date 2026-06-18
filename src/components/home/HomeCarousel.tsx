@@ -17,6 +17,15 @@ type HomeCarouselSlide = {
 
 const slides: ReadonlyArray<HomeCarouselSlide> = [
   {
+    id: 'price-guide',
+    label: 'Price Guide',
+    title: 'Know what your running shoes may be worth',
+    body: 'Get a suggested resale range, sellability score, and fast-sale price before creating your listing.',
+    imageSrc: '/home-carousel/know-the-price.webp',
+    imageAlt: 'Go Pair PH Price Guide estimating a suggested resale range, sellability score, and fast-sale price for running shoes',
+    ctaHref: '/price-guide',
+  },
+  {
     id: 'central-luzon-ncr',
     label: 'Focused marketplace',
     title: 'Buy and sell running shoes nearby',
