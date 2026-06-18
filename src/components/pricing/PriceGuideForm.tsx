@@ -107,6 +107,7 @@ export function PriceGuideForm() {
   const [hasVisibleFlaws, setHasVisibleFlaws] = useState(false);
   const mobileSummaryRef = useRef<HTMLDivElement | null>(null);
   const fullResultRef = useRef<HTMLDivElement | null>(null);
+  const estimateGeneratedTrackedRef = useRef(false);
   const [isMobileResultLayout, setIsMobileResultLayout] = useState(false);
   const [mobileSummaryVisible, setMobileSummaryVisible] = useState(true);
   const [fullResultVisible, setFullResultVisible] = useState(false);
@@ -180,6 +181,37 @@ export function PriceGuideForm() {
       : 'No box is fine; make the photos and description clear.',
   ];
   const showFloatingDock = isMobileResultLayout && !mobileSummaryVisible && !fullResultVisible;
+
+  useEffect(() => {
+    if (!estimate || estimateGeneratedTrackedRef.current) return;
+
+    estimateGeneratedTrackedRef.current = true;
+    trackMarketplaceAction('price_estimate_generated', {
+      source: 'price_guide',
+      brand,
+      condition,
+      mileage,
+      age,
+      demand,
+      urgency,
+      has_box: hasBox,
+      has_receipt: hasReceipt,
+      has_visible_flaws: hasVisibleFlaws,
+      sellability_score: sellabilityScore,
+    });
+  }, [
+    age,
+    brand,
+    condition,
+    demand,
+    estimate,
+    hasBox,
+    hasReceipt,
+    hasVisibleFlaws,
+    mileage,
+    sellabilityScore,
+    urgency,
+  ]);
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 1023px)');

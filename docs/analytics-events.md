@@ -15,6 +15,7 @@ Go Pair PH sends lightweight Google Analytics events through the existing `gtag`
 - `marketplace_listing_create_start`: seller completed Step 1 details and moved toward photo upload or sign-in.
 - `marketplace_listing_draft_saved`: logged-out seller details were saved locally before sign-in.
 - `marketplace_listing_publish`: seller successfully published a listing.
+- `marketplace_post_publish_share_prompt_view`: seller saw the sharing checklist immediately after publishing a listing.
 - `marketplace_seller_request_status`: seller accepted, declined, reopened, or marked a request sold.
 
 ## Sharing And Off-Site Handoffs
@@ -31,14 +32,23 @@ Go Pair PH sends lightweight Google Analytics events through the existing `gtag`
 ## Price Estimator
 
 - `marketplace_price_estimator_open`: user clicked from listing creation to the price estimator.
-- `marketplace_price_estimate_submit`: user submitted the price estimator form.
+- `marketplace_price_estimate_generated`: user generated their first valid live estimate during a price-guide visit.
 - `marketplace_price_estimator_to_listing`: user clicked from estimator results to listing creation.
 
 ## Useful Funnel Questions
 
 - Do visitors who use the price estimator create listings?
+- How many published listings lead to a displayed share prompt, an opened share post, and a downloaded image?
 - Do listing cards or detail pages create more request starts?
 - How many request starts become submitted requests?
 - Do seller share actions lead to more listing views and buyer requests?
 - Are buyers coordinating through Messenger after a Go Pair PH request, or bypassing before requesting?
 - How many accepted requests become sold listings?
+
+## Recommended Funnels
+
+1. Price estimator: `/price-guide` page view → `marketplace_price_estimate_generated` → `marketplace_price_estimator_to_listing` → `marketplace_listing_create_start` → `marketplace_listing_publish`.
+2. Seller sharing: `marketplace_listing_publish` → `marketplace_post_publish_share_prompt_view` → `marketplace_share_post_start` → `marketplace_share_post_download`.
+3. Buyer request: `marketplace_request_start` → `marketplace_request_submit` → `marketplace_seller_request_status`.
+
+The prompt-view and estimate-generated events are funnel denominators, not final outcomes. Keep stronger outcomes such as listing publish, share post download, and request submit as the primary key-event candidates.

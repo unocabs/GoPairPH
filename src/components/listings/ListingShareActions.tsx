@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { SharePostModal } from './SharePostModal';
 import { getListingPath } from '@/lib/utils';
@@ -23,7 +23,19 @@ export function ListingShareActions({ shoe, seller, isOwner = false, defaultOpen
   const [copiedMessage, setCopiedMessage] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [kitOpen, setKitOpen] = useState(defaultOpen);
+  const postPublishPromptTrackedRef = useRef(false);
   const listingPath = getListingPath(shoe);
+
+  useEffect(() => {
+    if (!defaultOpen || !isOwner || postPublishPromptTrackedRef.current) return;
+
+    postPublishPromptTrackedRef.current = true;
+    trackMarketplaceAction('post_publish_share_prompt_view', {
+      listing_id: shoe.id,
+      listing_type: shoe.listing_type,
+      surface: 'listing_detail_post_publish',
+    });
+  }, [defaultOpen, isOwner, shoe.id, shoe.listing_type]);
 
   function closeShareModal() {
     setShareOpen(false);
