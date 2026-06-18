@@ -79,6 +79,20 @@ async function getOwnProfileData() {
     Array.from(new Set([...shoes, ...savedListings].map(shoe => shoe.id)))
   );
 
+  const { data: shareMetricRows } = shoeIds.length > 0
+    ? await supabase
+        .from('listing_share_metrics')
+        .select('caption_copy_count, image_download_count')
+        .in('listing_id', shoeIds)
+    : { data: [] };
+  const shareMetrics = (shareMetricRows ?? []).reduce(
+    (totals, row) => ({
+      captionCopies: totals.captionCopies + Number(row.caption_copy_count ?? 0),
+      imageDownloads: totals.imageDownloads + Number(row.image_download_count ?? 0),
+    }),
+    { captionCopies: 0, imageDownloads: 0 },
+  );
+
   // Most recent verification request (if any)
   const { data: verificationData } = await supabase
     .from('verification_requests')
@@ -102,6 +116,7 @@ async function getOwnProfileData() {
     latestVerification,
     viewCounts,
     savedListingCounts,
+    shareMetrics,
     completedSales,
   };
 }

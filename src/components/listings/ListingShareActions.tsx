@@ -6,6 +6,7 @@ import { SharePostModal } from './SharePostModal';
 import { getListingPath } from '@/lib/utils';
 import { buildListingCaption } from '@/lib/listingShare';
 import { trackMarketplaceAction } from '@/lib/analytics';
+import { recordListingShareMetric } from '@/lib/shareMetrics';
 import type { Shoe, Profile } from '@/types';
 
 const FB_GROUP_URL = 'https://www.facebook.com/groups/gopairph';
@@ -54,6 +55,7 @@ export function ListingShareActions({ shoe, seller, isOwner = false, defaultOpen
       surface: 'listing_detail_share_kit',
       is_owner: isOwner,
     });
+    if (isOwner) void recordListingShareMetric(shoe.id, 'caption_copy');
   }
 
   return (

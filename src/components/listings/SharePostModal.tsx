@@ -5,6 +5,7 @@ import * as htmlToImage from 'html-to-image';
 import { LogoMark } from '@/components/brand/Logo';
 import { CONDITIONS, LISTING_TYPE_LABELS } from '@/lib/constants';
 import { trackMarketplaceAction } from '@/lib/analytics';
+import { recordListingShareMetric } from '@/lib/shareMetrics';
 import { formatListingName, formatMileage, formatPrice, formatProfileLocation, formatSize, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import type { Condition, ListingType, Shoe, Profile, Shop } from '@/types';
 
@@ -80,6 +81,8 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
   const [error, setError] = useState<string | null>(null);
   const [format, setFormat] = useState<ShareFormat>('mobile');
   const [renderAttempt, setRenderAttempt] = useState(0);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastImageIntentAtRef = useRef(0);
 
   useEffect(() => {
     trackMarketplaceAction('share_post_open', {
@@ -120,6 +123,10 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  useEffect(() => () => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+  }, []);
 
   // Prefetch share-card images as data URLs so html-to-image can read them
   // without canvas tainting. If a prefetch fails (e.g. Google avatar 429,
@@ -200,6 +207,34 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
       .replace(/-+/g, '-');
   }
 
+  function clearLongPressTimer() {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }
+
+  function recordImageDownload(method: 'button' | 'long_press') {
+    const now = Date.now();
+    if (method === 'long_press' && now - lastImageIntentAtRef.current < 1500) return;
+    lastImageIntentAtRef.current = now;
+    trackMarketplaceAction('share_post_download', {
+      listing_id: shoe.id,
+      listing_type: shoe.listing_type,
+      format,
+      method,
+    });
+    void recordListingShareMetric(shoe.id, 'image_download');
+  }
+
+  function startLongPressTracking() {
+    clearLongPressTimer();
+    longPressTimerRef.current = setTimeout(() => {
+      recordImageDownload('long_press');
+      longPressTimerRef.current = null;
+    }, 650);
+  }
+
   function handleDownload() {
     if (!pngDataUrl) return;
     const a = document.createElement('a');
@@ -208,11 +243,7 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    trackMarketplaceAction('share_post_download', {
-      listing_id: shoe.id,
-      listing_type: shoe.listing_type,
-      format,
-    });
+    recordImageDownload('button');
     onDownloaded?.();
   }
 
@@ -292,6 +323,11 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
                 alt={`${formatListingName(shoe.brand, shoe.model)} Facebook post image`}
                 className="block w-full h-full object-cover select-none"
                 draggable
+                onContextMenu={() => recordImageDownload('long_press')}
+                onTouchStart={startLongPressTracking}
+                onTouchEnd={clearLongPressTimer}
+                onTouchCancel={clearLongPressTimer}
+                onTouchMove={clearLongPressTimer}
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">

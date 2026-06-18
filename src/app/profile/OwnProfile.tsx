@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { EditProfileModal } from '@/components/profile/EditProfileModal';
@@ -13,7 +14,7 @@ import { ManualSaleHistoryCard } from '@/components/purchases/ManualSaleHistoryC
 import { SentOfferCard } from '@/components/purchases/SentOfferCard';
 import { RequestVerificationButton } from '@/components/profile/RequestVerificationButton';
 import { SavedSearchesPanel } from '@/components/profile/SavedSearchesPanel';
-import { formatPrice, formatListingName } from '@/lib/utils';
+import { formatPrice, formatListingName, getListingPath, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { buildMessengerUrl } from '@/lib/facebook';
 import { Button } from '@/components/ui/Button';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
@@ -40,6 +41,7 @@ interface OwnProfileProps {
   latestVerification: VerificationRequest | null;
   viewCounts?: Record<string, { total: number; last7d: number }>;
   savedListingCounts?: Record<string, number>;
+  shareMetrics?: { captionCopies: number; imageDownloads: number };
   completedSales?: number;
   initialTab?: ProfileTab;
 }
@@ -57,6 +59,7 @@ export function OwnProfile({
   latestVerification,
   viewCounts,
   savedListingCounts,
+  shareMetrics,
   completedSales,
   initialTab,
 }: OwnProfileProps) {
@@ -68,6 +71,8 @@ export function OwnProfile({
   const [editOpen, setEditOpen] = useState(false);
   const [tab, setTab] = useState<ProfileTab>(initialTab ?? 'listings');
   const [sharePostShoe, setSharePostShoe] = useState<Shoe | null>(null);
+  const [profileLinkCopied, setProfileLinkCopied] = useState(false);
+  const tabsRef = useRef<HTMLDivElement>(null);
 
   function handlePurchaseRequestChanged(id: string) {
     setPurchaseRequests(prev => prev.filter(r => r.id !== id));
@@ -79,6 +84,13 @@ export function OwnProfile({
 
   function handleSavedListingChanged(id: string, saved: boolean) {
     if (!saved) setSavedListings(prev => prev.filter(shoe => shoe.id !== id));
+  }
+
+  function openTab(nextTab: ProfileTab, bringIntoView = false) {
+    setTab(nextTab);
+    if (bringIntoView) {
+      window.requestAnimationFrame(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    }
   }
 
   const activeSentOffersCount = sentOffers.filter(
@@ -104,121 +116,226 @@ export function OwnProfile({
     counts[request.listing_id] = (counts[request.listing_id] ?? 0) + 1;
     return counts;
   }, {});
-  const photoReadyCount = activeShoes.filter((shoe) => {
-    const images = shoe.shoe_images ?? [];
-    return images.some(image => image.view_type === 'top') && images.some(image => image.view_type === 'sole');
-  }).length;
   const shareTarget = activeShoes.find((shoe) => (viewCounts?.[shoe.id]?.total ?? 0) > 0) ?? activeShoes[0];
   const hasValidMessengerContact = !!buildMessengerUrl(profile.fb_username);
+  const totalListingSaves = activeShoes.reduce((sum, shoe) => sum + (savedListingCounts?.[shoe.id] ?? 0), 0);
+  const strongestListing = [...activeShoes].sort((a, b) => {
+    const viewDifference = (viewCounts?.[b.id]?.total ?? 0) - (viewCounts?.[a.id]?.total ?? 0);
+    if (viewDifference !== 0) return viewDifference;
+    const saveDifference = (savedListingCounts?.[b.id] ?? 0) - (savedListingCounts?.[a.id] ?? 0);
+    if (saveDifference !== 0) return saveDifference;
+    return (requestCountsByListing[b.id] ?? 0) - (requestCountsByListing[a.id] ?? 0);
+  })[0];
+  const strongestListingImage = strongestListing?.shoe_images?.find(image => image.view_type === 'top')
+    ?? strongestListing?.shoe_images?.[0];
+  const strongestListingImageUrl = strongestListingImage
+    ? getPublicUrl(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        strongestListingImage.storage_path,
+        'shoe-images',
+        IMAGE_TRANSFORM_PRESETS.listingCard,
+      )
+    : null;
+  const needsPhotoListing = activeShoes.find((shoe) => {
+    const images = shoe.shoe_images ?? [];
+    return !images.some(image => image.view_type === 'top') || !images.some(image => image.view_type === 'sole');
+  });
+
+  async function handleShareProfile() {
+    const url = `${window.location.origin}/profile/${profile.id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `${profile.display_name} on GoPairPH`, url });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    }
+    setProfileLinkCopied(true);
+    window.setTimeout(() => setProfileLinkCopied(false), 2000);
+  }
 
   return (
     <div>
-      {/* Profile header — stacks centered on mobile, row on sm+ */}
-      <SurfaceCard glow className="mb-8 flex flex-col items-center gap-4 p-5 sm:flex-row sm:items-start sm:gap-6 sm:p-6">
-        <div className="flex-1 w-full">
-          <ProfileHeader profile={profile} listingCount={shoes.length} wishlistCount={wishlist.length} completedSales={completedSales} isOwnProfile />
-          <div className="mt-3 flex justify-center sm:justify-start">
+      <SurfaceCard glow className="mb-4 overflow-hidden p-4 sm:mb-6 sm:p-6">
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <ProfileHeader profile={profile} listingCount={shoes.length} wishlistCount={wishlist.length} completedSales={completedSales} isOwnProfile />
+          </div>
+          <Button variant="outline" size="sm" className="h-9 shrink-0 px-2.5" onClick={() => setEditOpen(true)}>
+            Edit
+          </Button>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2 sm:ml-[92px]">
+          {!profile.is_verified && (
             <RequestVerificationButton
               profileId={profile.id}
               isVerified={profile.is_verified}
               existingRequest={latestVerification}
               fbUsername={profile.fb_username}
             />
-          </div>
+          )}
+          {!hasValidMessengerContact && (
+            <button
+              type="button"
+              onClick={() => setEditOpen(true)}
+              className="rounded-full border border-blue-400/20 bg-blue-500/[0.08] px-2.5 py-1 text-xs font-medium text-blue-200 hover:bg-blue-500/[0.14]"
+            >
+              Add Messenger contact
+            </button>
+          )}
         </div>
-        {/* Edit Profile sits below the centered block on mobile, to the right on sm+ */}
-        <div className="w-full sm:w-auto flex justify-center sm:block">
-          <Button variant="outline" onClick={() => setEditOpen(true)}>Edit Profile</Button>
+
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:ml-[92px] sm:flex sm:max-w-lg">
+          <Link href="/listings/new" className="min-w-0 sm:flex-1">
+            <Button className="h-10 w-full px-3 text-sm">+ Add a pair</Button>
+          </Link>
+          <Button variant="outline" className="h-10 w-full px-3 text-sm sm:flex-1" onClick={handleShareProfile}>
+            {profileLinkCopied ? 'Link copied' : 'Share profile'}
+          </Button>
         </div>
       </SurfaceCard>
 
-      {/* Tabs — horizontal scroll on mobile so 4 fit comfortably */}
-      <SurfaceCard className="-mx-4 mb-6 overflow-x-auto rounded-none border-x-0 border-gray-800/80 bg-slate-950/40 px-0 py-0 sm:mx-0 sm:rounded-xl sm:border-x sm:px-2">
-        <div className="flex gap-1 px-4 sm:px-0 min-w-max sm:min-w-0">
-          {tabs.map(({ key, label, count, badgeTone }) => {
-            const active = tab === key;
-            return (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={`flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                  active ? 'border-teal-500 text-teal-400' : 'border-transparent text-gray-500 hover:text-gray-300'
-                }`}
-              >
-                <span>{label}</span>
-                <span
-                  className={[
-                    'inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold leading-none tabular-nums',
-                    badgeTone === 'attention' && count > 0
-                      ? 'bg-sky-500 text-white'
-                      : active
-                        ? 'bg-teal-500/15 text-teal-300'
-                        : 'bg-gray-800 text-gray-400',
-                  ].join(' ')}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+      <SurfaceCard className="mb-4 overflow-hidden p-2 sm:mb-6 sm:p-3">
+        <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg bg-white/[0.08] sm:grid-cols-6">
+          {[
+            { label: 'Active', value: activeListings, tone: 'text-teal-300' },
+            { label: 'Views', value: totalListingViews, tone: 'text-sky-300' },
+            { label: 'Saves', value: totalListingSaves, tone: 'text-rose-300' },
+            { label: 'Offers', value: purchaseRequests.length, tone: purchaseRequests.length > 0 ? 'text-amber-300' : 'text-violet-300' },
+            { label: 'Caption copies', value: shareMetrics?.captionCopies ?? 0, tone: 'text-cyan-300' },
+            { label: 'Image downloads', value: shareMetrics?.imageDownloads ?? 0, tone: 'text-orange-300' },
+          ].map((metric) => (
+            <button
+              key={metric.label}
+              type="button"
+              onClick={metric.label === 'Offers' && purchaseRequests.length > 0 ? () => openTab('purchases', true) : undefined}
+              className={`min-w-0 bg-slate-900 px-1.5 py-2.5 text-center ${metric.label === 'Offers' && purchaseRequests.length > 0 ? 'cursor-pointer bg-amber-950/70' : 'cursor-default'}`}
+            >
+              <span className={`block truncate text-xl font-bold leading-none tabular-nums sm:text-2xl ${metric.tone}`}>{metric.value.toLocaleString()}</span>
+              <span className="mt-1.5 block min-h-6 text-[9px] font-medium uppercase leading-3 tracking-wide text-gray-500 sm:min-h-0 sm:text-[10px]">{metric.label}</span>
+            </button>
+          ))}
         </div>
+        {purchaseRequests.length > 0 && (
+          <button
+            type="button"
+            onClick={() => openTab('purchases', true)}
+            className="mt-2 flex w-full items-center justify-between rounded-lg border border-amber-400/20 bg-amber-500/[0.08] px-3 py-2 text-left text-xs font-semibold text-amber-100 hover:bg-amber-500/[0.13] sm:text-sm"
+          >
+            <span>{purchaseRequests.length} buyer offer{purchaseRequests.length === 1 ? '' : 's'} waiting</span>
+            <span>Review →</span>
+          </button>
+        )}
       </SurfaceCard>
+
+      {strongestListing && (
+        <SurfaceCard className="mb-4 overflow-hidden p-3 sm:mb-6 sm:p-4">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-300">Most active listing</p>
+            <span className="text-[11px] text-gray-500">Based on your activity</span>
+          </div>
+          <div className="flex gap-3 sm:items-center">
+            <Link href={getListingPath(strongestListing)} className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-900 sm:h-24 sm:w-32">
+              {strongestListingImageUrl ? (
+                <Image src={strongestListingImageUrl} alt={formatListingName(strongestListing.brand, strongestListing.model)} fill sizes="(max-width: 640px) 96px, 128px" className="object-cover" />
+              ) : (
+                <span className="flex h-full items-center justify-center text-2xl text-gray-700">👟</span>
+              )}
+            </Link>
+            <div className="min-w-0 flex-1">
+              <Link href={getListingPath(strongestListing)} className="block truncate font-semibold text-gray-100 hover:text-teal-300">
+                {formatListingName(strongestListing.brand, strongestListing.model)}
+              </Link>
+              <p className="mt-1 text-sm font-bold text-teal-300">
+                {strongestListing.price_php ? formatPrice(strongestListing.price_php) : 'For donation'}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-400">
+                <span>{viewCounts?.[strongestListing.id]?.total ?? 0} views</span>
+                <span>{savedListingCounts?.[strongestListing.id] ?? 0} saves</span>
+                <span>{requestCountsByListing[strongestListing.id] ?? 0} offers</span>
+              </div>
+            </div>
+            <button type="button" onClick={() => setSharePostShoe(strongestListing)} className="hidden shrink-0 rounded-lg border border-gray-700 px-3 py-2 text-xs font-semibold text-gray-300 hover:bg-gray-800 sm:block">
+              Share again
+            </button>
+          </div>
+        </SurfaceCard>
+      )}
+
+      {(needsPhotoListing || !hasValidMessengerContact || shareTarget) && (
+        <SurfaceCard className="mb-4 p-3 sm:mb-6 sm:p-4">
+          <p className="mb-2 text-sm font-semibold text-gray-100">Quick ways to improve your shop</p>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {needsPhotoListing && (
+              <Link href={`/listings/${needsPhotoListing.id}/edit#photos`} className="rounded-lg border border-white/[0.07] bg-slate-950/40 px-3 py-2.5 text-xs text-gray-300 hover:border-teal-400/25">
+                <strong className="block text-gray-100">Complete your photos</strong>
+                <span className="mt-0.5 block text-gray-500">Add top and sole views →</span>
+              </Link>
+            )}
+            {!hasValidMessengerContact && (
+              <button type="button" onClick={() => setEditOpen(true)} className="rounded-lg border border-white/[0.07] bg-slate-950/40 px-3 py-2.5 text-left text-xs text-gray-300 hover:border-blue-400/25">
+                <strong className="block text-gray-100">Make contact easier</strong>
+                <span className="mt-0.5 block text-gray-500">Add your Messenger username →</span>
+              </button>
+            )}
+            {shareTarget && (
+              <button type="button" onClick={() => setSharePostShoe(shareTarget)} className="rounded-lg border border-white/[0.07] bg-slate-950/40 px-3 py-2.5 text-left text-xs text-gray-300 hover:border-amber-400/25">
+                <strong className="block text-gray-100">Reach more buyers</strong>
+                <span className="mt-0.5 block text-gray-500">Share a listing on Facebook →</span>
+              </button>
+            )}
+          </div>
+        </SurfaceCard>
+      )}
+
+      <div ref={tabsRef} className="scroll-mt-20">
+        <SurfaceCard className="-mx-4 mb-4 overflow-x-auto rounded-none border-x-0 border-gray-800/80 bg-slate-950/40 px-0 py-0 sm:mx-0 sm:mb-6 sm:rounded-xl sm:border-x sm:px-2">
+          <div className="flex min-w-max gap-1 px-4 sm:min-w-0 sm:px-0">
+            {tabs.map(({ key, label, count, badgeTone }) => {
+              const active = tab === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => openTab(key)}
+                  className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${
+                    active ? 'border-teal-500 text-teal-400' : 'border-transparent text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  <span>{label}</span>
+                  <span
+                    className={[
+                      'inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold leading-none tabular-nums',
+                      badgeTone === 'attention' && count > 0
+                        ? 'bg-sky-500 text-white'
+                        : active
+                          ? 'bg-teal-500/15 text-teal-300'
+                          : 'bg-gray-800 text-gray-400',
+                    ].join(' ')}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </SurfaceCard>
+      </div>
 
       {tab === 'listings' && (
         <div>
-          <SurfaceCard className="mb-3 border-white/[0.08] bg-slate-950/45 p-3 sm:p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-gray-100">
-                  {activeListings > 0
-                    ? `${activeListings} active listing${activeListings === 1 ? '' : 's'}`
-                    : 'No active listings'}
-                </p>
-                <p className="mt-0.5 text-xs leading-5 text-gray-500">
-                  {activeListings > 0
-                    ? `${photoReadyCount} ${photoReadyCount === 1 ? 'has' : 'have'} top + sole photos`
-                    : 'Closed listings stay saved below'}
-                  <span className="mx-1.5 text-gray-700">·</span>
-                  {hasValidMessengerContact ? 'Messenger ready' : 'Add Messenger'}
-                  {closedShoes.length > 0 && (
-                    <>
-                      <span className="mx-1.5 text-gray-700">·</span>
-                      {closedShoes.length} closed
-                    </>
-                  )}
-                </p>
-              </div>
-              <Link href="/listings/new" className="shrink-0">
-                <Button size="sm" className="h-9 px-3 text-xs sm:text-sm">+ List</Button>
-              </Link>
-            </div>
-
-            {purchaseRequests.length > 0 ? (
-              <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-sky-500/25 bg-sky-500/[0.07] px-3 py-2">
-                <p className="min-w-0 truncate text-xs font-medium text-sky-200">
-                  Buyer request{purchaseRequests.length === 1 ? '' : 's'} waiting
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setTab('purchases')}
-                  className="shrink-0 text-xs font-semibold text-sky-100 hover:text-white"
-                >
-                  Review
-                </button>
-              </div>
-            ) : totalListingViews > 0 && shareTarget ? (
-              <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-white/[0.08] bg-slate-950/55 px-3 py-2">
-                <p className="min-w-0 truncate text-xs text-gray-400">Getting views</p>
-                <button
-                  type="button"
-                  onClick={() => setSharePostShoe(shareTarget)}
-                  className="shrink-0 text-xs font-semibold text-teal-300 hover:text-teal-200"
-                >
-                  Post again
-                </button>
-              </div>
-            ) : null}
-          </SurfaceCard>
           <ListingGrid
             shoes={orderedShoes}
             currentProfileId={profile.id}

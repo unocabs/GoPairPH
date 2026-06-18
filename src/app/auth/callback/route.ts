@@ -1,16 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
+import { getSafeNext, resolvePostSignInPath } from '@/lib/auth/postSignInRedirect';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 const AUTH_NEXT_COOKIE = 'auth_next';
-
-function getSafeNext(rawNext: string | null): string {
-  if (!rawNext || !rawNext.startsWith('/') || rawNext.startsWith('//')) {
-    return '/browse';
-  }
-
-  return rawNext;
-}
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -22,7 +15,11 @@ export async function GET(request: Request) {
     if (!error) {
       const cookieStore = cookies();
       const next = getSafeNext(searchParams.get('next') ?? cookieStore.get(AUTH_NEXT_COOKIE)?.value ?? null);
-      const response = NextResponse.redirect(`${origin}${next}`);
+      const { data: { user } } = await supabase.auth.getUser();
+      const destination = user
+        ? await resolvePostSignInPath(supabase, user.id, next)
+        : next;
+      const response = NextResponse.redirect(`${origin}${destination}`);
       response.cookies.set(AUTH_NEXT_COOKIE, '', {
         httpOnly: true,
         sameSite: 'lax',

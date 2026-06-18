@@ -1,15 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
+import { getSafeNext, resolvePostSignInPath } from '@/lib/auth/postSignInRedirect';
 import { NextResponse } from 'next/server';
 
 const AUTH_NEXT_COOKIE = 'auth_next';
-
-function getSafeNext(rawNext: string | null): string {
-  if (!rawNext || !rawNext.startsWith('/') || rawNext.startsWith('//')) {
-    return '/browse';
-  }
-
-  return rawNext;
-}
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -18,7 +11,8 @@ export async function GET(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (user) {
-    return NextResponse.redirect(`${origin}${next}`);
+    const destination = await resolvePostSignInPath(supabase, user.id, next);
+    return NextResponse.redirect(`${origin}${destination}`);
   }
 
   const { data, error } = await supabase.auth.signInWithOAuth({

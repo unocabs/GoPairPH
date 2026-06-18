@@ -20,23 +20,22 @@ export function ProfileHeader({ profile, listingCount, wishlistCount, completedS
   const profileLocation = formatProfileLocation(profile);
 
   return (
-    // Center on mobile, left-align from sm+
-    <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left gap-5">
+    <div className="flex items-start gap-3 text-left sm:gap-5">
       <Avatar
         src={profile.avatar_url}
         alt={profile.display_name}
-        size={80}
-        className="shrink-0 border-4 border-teal-400/40 shadow-[0_0_36px_rgba(20,184,166,0.16)]"
+        size={72}
+        className="shrink-0 border-2 border-teal-400/40 shadow-[0_0_28px_rgba(20,184,166,0.14)] sm:border-4"
         fallbackClassName="shrink-0"
       />
 
-      <div className="w-full sm:w-auto">
-        <h1 className="text-2xl font-bold text-gray-100 inline-flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+      <div className="min-w-0 flex-1 sm:w-auto">
+        <h1 className="inline-flex max-w-full flex-wrap items-center gap-1.5 text-xl font-bold leading-tight text-gray-100 sm:gap-2 sm:text-2xl">
           {profile.display_name}
           {profile.is_verified && <VerifiedBadge size="lg" />}
         </h1>
         {profileLocation && (
-          <p className="text-sm text-gray-400 mt-0.5 flex items-center gap-1 justify-center sm:justify-start">
+          <p className="mt-1 flex items-center gap-1 text-sm text-gray-400">
             <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -56,25 +55,20 @@ export function ProfileHeader({ profile, listingCount, wishlistCount, completedS
             </svg>
             {profile.fb_username}
           </a>
-        ) : isOwnProfile ? (
-          <p className="mt-1 text-xs text-gray-500">
-            Add your Facebook username in{' '}
-            <span className="text-gray-400">Edit Profile</span> so interested buyers can easily reach out to you.
-          </p>
         ) : null}
-        <p className="text-xs text-gray-500 mt-1">Member since {formatRelativeDate(profile.created_at)}</p>
+        <p className={`mt-1 text-xs text-gray-500 ${isOwnProfile ? 'hidden sm:block' : ''}`}>Member since {formatRelativeDate(profile.created_at)}</p>
         {!!completedSales && completedSales > 0 && (
           <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 px-2.5 py-0.5 text-xs font-semibold text-teal-300">
             <span aria-hidden>🤝</span>
             {completedSales} successful deal{completedSales === 1 ? '' : 's'}
           </p>
         )}
-        <div className="flex gap-4 mt-3 justify-center sm:justify-start text-sm">
+        <div className={`mt-3 gap-4 text-sm ${isOwnProfile ? 'hidden' : 'flex'}`}>
           <span><strong className="text-gray-100">{listingCount}</strong> <span className="text-gray-500">listings</span></span>
           <span><strong className="text-gray-100">{wishlistCount}</strong> <span className="text-gray-500">looking for</span></span>
         </div>
         {isOwnProfile && (
-          <p className="mt-2 max-w-xl text-xs leading-5 text-gray-500">
+          <p className="mt-2 hidden max-w-xl text-xs leading-5 text-gray-500 lg:block">
             Your seller profile is a reusable storefront for every link you share. Facebook posts
             move fast; your Go Pair PH profile keeps your listings, history, and trust signals together.
           </p>
