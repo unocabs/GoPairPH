@@ -147,7 +147,12 @@ export function BuySellFloatingAction() {
   useEffect(() => {
     function updateVisibility() {
       if (typeof window === 'undefined') return;
-      const shouldShow = window.scrollY > 80;
+      const pageHeight = Math.max(
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight
+      );
+      const distanceFromBottom = pageHeight - (window.scrollY + window.innerHeight);
+      const shouldShow = window.scrollY > 80 && distanceFromBottom > 80;
       setVisible(shouldShow);
       if (!shouldShow) {
         setOpen(false);
@@ -228,7 +233,7 @@ export function BuySellFloatingAction() {
   return createPortal(
     <div
       ref={wrapperRef}
-      className={`fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-[80] w-[min(calc(100vw-2rem),22rem)] transition-all duration-200 sm:right-5 md:bottom-6 md:right-6 ${
+      className={`fixed bottom-[max(0.5rem,env(safe-area-inset-bottom))] right-4 z-[80] w-[min(calc(100vw-2rem),22rem)] transition-all duration-200 sm:right-5 md:bottom-6 md:right-6 ${
         visible
           ? 'pointer-events-auto translate-y-0 opacity-100'
           : 'pointer-events-none translate-y-3 opacity-0'
