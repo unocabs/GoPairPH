@@ -19,6 +19,7 @@ import { buildMessengerUrl } from '@/lib/facebook';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { Tooltip } from '@/components/ui/Tooltip';
 import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest, SavedSearch } from '@/types';
 import Link from 'next/link';
 
@@ -297,22 +298,56 @@ export function OwnProfile({
       <SurfaceCard className="mb-4 overflow-hidden p-2 sm:mb-6 sm:p-3">
         <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg bg-white/[0.08] sm:grid-cols-6">
           {[
-            { label: 'Active', value: activeListings, tone: 'text-teal-300' },
-            { label: 'Views', value: totalListingViews, tone: 'text-sky-300' },
-            { label: 'Saves', value: totalListingSaves, tone: 'text-rose-300' },
-            { label: 'Offers', value: purchaseRequests.length, tone: purchaseRequests.length > 0 ? 'text-amber-300' : 'text-violet-300' },
-            { label: 'Caption copies', value: shareMetrics?.captionCopies ?? 0, tone: 'text-cyan-300' },
-            { label: 'Image downloads', value: shareMetrics?.imageDownloads ?? 0, tone: 'text-orange-300' },
+            {
+              label: 'Active',
+              value: activeListings,
+              tone: 'text-teal-300',
+              description: 'Your live pairs, ready for buyers to discover.',
+            },
+            {
+              label: 'Views',
+              value: totalListingViews,
+              tone: 'text-sky-300',
+              description: 'Total times your listings have been viewed.',
+            },
+            {
+              label: 'Saves',
+              value: totalListingSaves,
+              tone: 'text-rose-300',
+              description: 'Buyers saved your pairs—a great sign of interest.',
+            },
+            {
+              label: 'Offers',
+              value: purchaseRequests.length,
+              tone: purchaseRequests.length > 0 ? 'text-amber-300' : 'text-violet-300',
+              description: 'Pending and accepted buyer offers on your listings.',
+            },
+            {
+              label: 'Caption copies',
+              value: shareMetrics?.captionCopies ?? 0,
+              tone: 'text-cyan-300',
+              description: 'Captions you copied for Facebook. Sharing more often can help more buyers discover your listings. Keep it up!',
+            },
+            {
+              label: 'Image downloads',
+              value: shareMetrics?.imageDownloads ?? 0,
+              tone: 'text-orange-300',
+              description: "Share images you saved for Facebook. Posting them can help you reach more buyers and get more offers. Let's go!",
+            },
           ].map((metric) => (
-            <button
-              key={metric.label}
-              type="button"
-              onClick={metric.label === 'Offers' && purchaseRequests.length > 0 ? () => openTab('purchases', true) : undefined}
-              className={`min-w-0 bg-slate-900 px-1.5 py-2.5 text-center ${metric.label === 'Offers' && purchaseRequests.length > 0 ? 'cursor-pointer bg-amber-950/70' : 'cursor-default'}`}
-            >
-              <span className={`block truncate text-xl font-bold leading-none tabular-nums sm:text-2xl ${metric.tone}`}>{metric.value.toLocaleString()}</span>
-              <span className="mt-1.5 block min-h-6 text-[9px] font-medium uppercase leading-3 tracking-wide text-gray-500 sm:min-h-0 sm:text-[10px]">{metric.label}</span>
-            </button>
+            <Tooltip key={metric.label} trigger="both" content={metric.description}>
+              <button
+                type="button"
+                aria-label={`${metric.label}: ${metric.value.toLocaleString()}. ${metric.description}`}
+                className="h-full w-full min-w-0 cursor-help bg-slate-900 px-1.5 py-2.5 text-center transition-colors hover:bg-slate-800 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-500"
+              >
+                <span className={`block truncate text-xl font-bold leading-none tabular-nums sm:text-2xl ${metric.tone}`}>{metric.value.toLocaleString()}</span>
+                <span className="mt-1.5 flex min-h-6 items-start justify-center gap-0.5 text-[9px] font-medium uppercase leading-3 tracking-wide text-gray-500 sm:min-h-0 sm:text-[10px]">
+                  <span>{metric.label}</span>
+                  <span aria-hidden="true" className="text-[9px] normal-case text-gray-600">?</span>
+                </span>
+              </button>
+            </Tooltip>
           ))}
         </div>
         {purchaseRequests.length > 0 && (
