@@ -16,6 +16,7 @@ import { RequestVerificationButton } from '@/components/profile/RequestVerificat
 import { SavedSearchesPanel } from '@/components/profile/SavedSearchesPanel';
 import { formatPrice, formatListingName, getListingPath, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { buildMessengerUrl } from '@/lib/facebook';
+import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest, SavedSearch } from '@/types';
@@ -72,6 +73,10 @@ export function OwnProfile({
   const [tab, setTab] = useState<ProfileTab>(initialTab ?? 'listings');
   const [sharePostShoe, setSharePostShoe] = useState<Shoe | null>(null);
   const [profileLinkCopied, setProfileLinkCopied] = useState(false);
+  const [locationEditOpen, setLocationEditOpen] = useState(false);
+  const [locationCity, setLocationCity] = useState(initialProfile.location_city ?? '');
+  const [locationSaving, setLocationSaving] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
 
   function handlePurchaseRequestChanged(id: string) {
@@ -91,6 +96,50 @@ export function OwnProfile({
     if (bringIntoView) {
       window.requestAnimationFrame(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     }
+  }
+
+  function openLocationEditor() {
+    setLocationCity(profile.location_city ?? '');
+    setLocationError(null);
+    setLocationEditOpen(true);
+  }
+
+  function closeLocationEditor() {
+    if (locationSaving) return;
+    setLocationEditOpen(false);
+    setLocationError(null);
+  }
+
+  async function handleLocationSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const city = locationCity.trim();
+    if (!city) {
+      setLocationError('Please enter your city.');
+      return;
+    }
+    if (city.length > 80) {
+      setLocationError('City must be 80 characters or fewer.');
+      return;
+    }
+
+    setLocationSaving(true);
+    setLocationError(null);
+    const { data: updated, error } = await createClient()
+      .from('profiles')
+      .update({ location_city: city })
+      .eq('id', profile.id)
+      .select()
+      .single();
+
+    if (error || !updated) {
+      setLocationError(error?.message ?? 'Could not save your location.');
+      setLocationSaving(false);
+      return;
+    }
+
+    setProfile(updated as Profile);
+    setLocationSaving(false);
+    setLocationEditOpen(false);
   }
 
   const activeSentOffersCount = sentOffers.filter(
@@ -171,12 +220,49 @@ export function OwnProfile({
       <SurfaceCard glow className="mb-4 overflow-hidden p-4 sm:mb-6 sm:p-6">
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
-            <ProfileHeader profile={profile} listingCount={shoes.length} wishlistCount={wishlist.length} completedSales={completedSales} isOwnProfile />
+            <ProfileHeader
+              profile={profile}
+              listingCount={shoes.length}
+              wishlistCount={wishlist.length}
+              completedSales={completedSales}
+              isOwnProfile
+              onEditLocation={openLocationEditor}
+            />
           </div>
           <Button variant="outline" size="sm" className="h-9 shrink-0 px-2.5" onClick={() => setEditOpen(true)}>
             Edit
           </Button>
         </div>
+
+        {locationEditOpen && (
+          <form onSubmit={handleLocationSubmit} className="mt-3 rounded-xl border border-teal-400/20 bg-teal-500/[0.06] p-3 sm:ml-[92px] sm:max-w-lg">
+            <label htmlFor="inline-profile-city" className="text-xs font-semibold text-gray-200">Your city</label>
+            <div className="mt-1.5 flex flex-col gap-2 min-[380px]:flex-row">
+              <input
+                id="inline-profile-city"
+                value={locationCity}
+                onChange={(event) => {
+                  setLocationCity(event.target.value);
+                  if (locationError) setLocationError(null);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') closeLocationEditor();
+                }}
+                autoFocus
+                maxLength={80}
+                placeholder="e.g. Angeles City"
+                disabled={locationSaving}
+                className="h-10 min-w-0 flex-1 rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder-gray-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-60"
+              />
+              <div className="grid grid-cols-2 gap-2 min-[380px]:flex">
+                <Button type="button" size="sm" variant="ghost" className="h-10" onClick={closeLocationEditor} disabled={locationSaving}>Cancel</Button>
+                <Button type="submit" size="sm" className="h-10" loading={locationSaving}>Save</Button>
+              </div>
+            </div>
+            {locationError && <p className="mt-1.5 text-xs text-red-300" role="alert">{locationError}</p>}
+            <p className="mt-1.5 text-[11px] text-gray-500">Province and region can still be changed in Edit Profile.</p>
+          </form>
+        )}
 
         <div className="mt-3 flex flex-wrap items-center gap-2 sm:ml-[92px]">
           {!profile.is_verified && (

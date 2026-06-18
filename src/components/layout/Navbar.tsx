@@ -155,11 +155,9 @@ export function Navbar() {
             <Link href="/looking-for" className="rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors">
               Looking For
             </Link>
-            {user && (
-              <Link href="/listings/new" className="ml-2">
-                <Button size="sm">+ List a Shoe</Button>
-              </Link>
-            )}
+            <Link href="/listings/new" className="ml-2">
+              <Button size="sm">+ List a Shoe</Button>
+            </Link>
           </div>
 
           {/* Right side — avatar always visible; hamburger mobile-only */}
@@ -345,9 +343,9 @@ export function Navbar() {
             <Link href="/browse" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">GP Marketplace</Link>
             <Link href="/guides" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Guides</Link>
             <Link href="/looking-for" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Looking For</Link>
+            <Link href="/listings/new" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-semibold text-teal-400 hover:bg-gray-800">+ List a Shoe</Link>
             {user && (
               <>
-                <Link href="/listings/new" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-teal-400 hover:bg-gray-800">+ List a Shoe</Link>
                 {ownedShopSlug && (
                   <Link href="/shop/dashboard" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-teal-300 hover:bg-gray-800">Shop Dashboard</Link>
                 )}

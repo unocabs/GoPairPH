@@ -13,9 +13,10 @@ interface ProfileHeaderProps {
   /** Completed sales count, shown as a trust signal when > 0. */
   completedSales?: number;
   isOwnProfile?: boolean;
+  onEditLocation?: () => void;
 }
 
-export function ProfileHeader({ profile, listingCount, wishlistCount, completedSales, isOwnProfile }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, listingCount, wishlistCount, completedSales, isOwnProfile, onEditLocation }: ProfileHeaderProps) {
   const facebookUrl = getFacebookContactUrl(profile.fb_username);
   const profileLocation = formatProfileLocation(profile);
 
@@ -34,15 +35,25 @@ export function ProfileHeader({ profile, listingCount, wishlistCount, completedS
           {profile.display_name}
           {profile.is_verified && <VerifiedBadge size="lg" />}
         </h1>
-        {profileLocation && (
-          <p className="mt-1 flex items-center gap-1 text-sm text-gray-400">
-            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        {isOwnProfile && onEditLocation ? (
+          <button
+            type="button"
+            onClick={onEditLocation}
+            aria-label={profileLocation ? `Edit location: ${profileLocation}` : 'Add location'}
+            className={`mt-0.5 flex min-h-8 max-w-full items-center gap-1 rounded-md pr-2 text-left text-sm transition-colors hover:bg-gray-800 ${profileLocation ? 'text-gray-400 hover:text-gray-200' : 'font-semibold text-teal-300 hover:text-teal-200'}`}
+          >
+            <LocationIcon />
+            <span className="truncate">{profileLocation || 'Add Location'}</span>
+            <svg className="h-3.5 w-3.5 shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 11l6.586-6.586a2 2 0 112.828 2.828L11.828 13.83A4 4 0 019 15H7v-2a4 4 0 011.172-2.828L9 11z" />
             </svg>
+          </button>
+        ) : profileLocation ? (
+          <p className="mt-1 flex items-center gap-1 text-sm text-gray-400">
+            <LocationIcon />
             {profileLocation}
           </p>
-        )}
+        ) : null}
         {facebookUrl ? (
           <a
             href={facebookUrl}
@@ -75,5 +86,14 @@ export function ProfileHeader({ profile, listingCount, wishlistCount, completedS
         )}
       </div>
     </div>
+  );
+}
+
+function LocationIcon() {
+  return (
+    <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
   );
 }
