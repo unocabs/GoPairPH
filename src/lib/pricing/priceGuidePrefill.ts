@@ -49,18 +49,6 @@ const ageLabels: Record<PriceGuideAge, string> = {
   over_two_years: 'Over 2 years',
 };
 
-const demandLabels: Record<PriceGuideDemand, string> = {
-  popular: 'Popular / easy to sell',
-  normal: 'Normal demand',
-  niche: 'Niche / harder to sell',
-};
-
-const urgencyLabels: Record<PriceGuideUrgency, string> = {
-  best_price: 'Best price',
-  balanced: 'Balanced',
-  sell_fast: 'Sell fast',
-};
-
 function formatPeso(value: number): string {
   return `PHP ${Math.round(value).toLocaleString('en-PH')}`;
 }
@@ -71,19 +59,12 @@ function yesNo(value: boolean): string {
 
 export function buildPriceGuideDescription(prefill: PriceGuideListingPrefill): string {
   const lines = [
-    'Estimated using Go Pair PH Price Guide.',
-    '',
     `Original retail price: ${formatPeso(prefill.retailPricePhp)}`,
-    `Suggested resale range: ${formatPeso(prefill.suggestedLow)} - ${formatPeso(prefill.suggestedHigh)}`,
-    `Fast-sale price: ${formatPeso(prefill.fastSalePrice)}`,
     `Condition: ${conditionLabels[prefill.condition]}`,
-    `Target selling speed: ${urgencyLabels[prefill.urgency]}`,
     `Usage: ${mileageLabels[prefill.mileage]}`,
     `Age: ${ageLabels[prefill.age]}`,
-    `Demand: ${demandLabels[prefill.demand]}`,
     `Box included: ${yesNo(prefill.hasBox)}`,
     `Receipt/proof available: ${yesNo(prefill.hasReceipt)}`,
-    `Visible flaws: ${yesNo(prefill.hasVisibleFlaws)}`,
     '',
     'Seller note:',
   ];
