@@ -344,7 +344,11 @@ export function OwnProfile({
                 <span className={`block truncate text-xl font-bold leading-none tabular-nums sm:text-2xl ${metric.tone}`}>{metric.value.toLocaleString()}</span>
                 <span className="mt-1.5 flex min-h-6 items-start justify-center gap-0.5 text-[9px] font-medium uppercase leading-3 tracking-wide text-gray-500 sm:min-h-0 sm:text-[10px]">
                   <span>{metric.label}</span>
-                  <span aria-hidden="true" className="text-[9px] normal-case text-gray-600">?</span>
+                  <svg className="mt-px h-3 w-3 shrink-0 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" strokeWidth={2} />
+                    <path strokeLinecap="round" strokeWidth={2} d="M12 11v5" />
+                    <circle cx="12" cy="8" r="1" fill="currentColor" stroke="none" />
+                  </svg>
                 </span>
               </button>
             </Tooltip>
