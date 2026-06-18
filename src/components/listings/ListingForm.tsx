@@ -210,11 +210,11 @@ export function ListingForm({ profileId, initialLocationCity = null, shop = null
   ];
   const strengthItems = [
     { label: 'Shoe details added', done: !!details },
-    { label: 'Location added', done: Boolean(locationLabel), optional: true },
+    { label: 'Location added', done: Boolean(locationLabel) },
     { label: 'Top photo uploaded', done: hasTopPhoto },
     { label: 'Sole photo uploaded', done: hasSolePhoto },
     { label: 'Extra angle added', done: hasExtraPhoto, optional: true },
-    { label: 'Messenger contact added', done: hasMessengerContact, optional: true },
+    { label: 'Messenger contact added', done: hasMessengerContact },
   ];
   const requiredStrengthDone = strengthItems.filter(item => !item.optional).every(item => item.done);
   const strengthScore = strengthItems.filter(item => item.done).length;
