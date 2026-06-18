@@ -11,6 +11,7 @@ import { FeaturedListing } from '@/components/home/FeaturedListing';
 import { HomeCarousel } from '@/components/home/HomeCarousel';
 import { HomeListingGrid } from '@/components/home/HomeListingGrid';
 import { SellShoesChoiceModal } from '@/components/home/SellShoesChoiceModal';
+import { HeroTrackedLink } from '@/components/home/HeroTrackedLink';
 import { FirstListingNudge } from '@/components/listings/FirstListingNudge';
 import { LogoMark } from '@/components/brand/Logo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
@@ -54,6 +55,8 @@ const HOME_LISTING_SELECT = `
   has_stock,
   featured_until,
   sponsored_until,
+  is_negotiable,
+  quality_flagged_at,
   profiles!shoes_seller_id_fkey(
     id,
     display_name,
@@ -176,6 +179,7 @@ const getFeaturedListing = unstable_cache(async function getFeaturedListing(): P
 }, ['homepage-featured-listing'], { revalidate: 60, tags: ['homepage-featured-listing'] });
 
 const getMarketplaceActivity = unstable_cache(async function getMarketplaceActivity(): Promise<{
+  totalActiveListings: number;
   newListingsThisWeek: number;
   activePairRequests: number;
   soldOrReservedPairs: number;
@@ -185,7 +189,12 @@ const getMarketplaceActivity = unstable_cache(async function getMarketplaceActiv
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
 
-  const [newListingsRes, pairRequestsRes, soldReservedRes, recentSellerRes] = await Promise.all([
+  const [totalActiveRes, newListingsRes, pairRequestsRes, soldReservedRes, recentSellerRes] = await Promise.all([
+    supabase
+      .from('shoes')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'active')
+      .eq('has_stock', true),
     supabase
       .from('shoes')
       .select('id', { count: 'exact', head: true })
@@ -207,12 +216,92 @@ const getMarketplaceActivity = unstable_cache(async function getMarketplaceActiv
   ]);
 
   return {
+    totalActiveListings: totalActiveRes.count ?? 0,
     newListingsThisWeek: newListingsRes.count ?? 0,
     activePairRequests: pairRequestsRes.count ?? 0,
     soldOrReservedPairs: soldReservedRes.count ?? 0,
     recentSellers: new Set((recentSellerRes.data ?? []).map(row => row.seller_id)).size,
   };
 }, ['homepage-marketplace-activity'], { revalidate: 60 });
+
+function getDailyRearListings(shoes: Shoe[], featuredId: string | null): Shoe[] {
+  const daySeed = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+
+  function seededScore(value: string) {
+    let hash = 2166136261;
+    for (const character of `${daySeed}:${value}`) {
+      hash ^= character.charCodeAt(0);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  }
+
+  return shoes
+    .filter(shoe => (
+      shoe.id !== featuredId &&
+      !shoe.quality_flagged_at &&
+      (shoe.shoe_images?.length ?? 0) > 0
+    ))
+    .sort((a, b) => seededScore(a.id) - seededScore(b.id))
+    .slice(0, 2);
+}
+
+function HeroTrustIndicators({ totalActive }: { totalActive: number }) {
+  const indicators = [
+    {
+      label: 'Active Listings',
+      value: totalActive > 0 ? totalActive.toLocaleString() : 'Growing',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6.5h16M4 12h16M4 17.5h16M7 4v5M17 9v6M9 15v5" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Region Coverage',
+      value: 'Central Luzon & NCR',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+          <circle cx="12" cy="10" r="2.5" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Focused Marketplace',
+      value: 'Built For Runners',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+          <circle cx="14" cy="4.5" r="2" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="m12.5 8-3 4 3 2 2.5 5M12.5 8l3 3 3 .5M9.5 12 6 17H3" />
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-3 gap-1.5 border-t border-white/10 pt-3 sm:gap-3 sm:pt-4">
+      {indicators.map(indicator => (
+        <div key={indicator.label} className="flex min-w-0 items-center gap-2 sm:gap-2.5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-teal-400/25 bg-teal-400/10 text-teal-300 sm:h-9 sm:w-9">
+            <span className="h-4 w-4 sm:h-[18px] sm:w-[18px]">{indicator.icon}</span>
+          </span>
+          <span className="min-w-0">
+            <span className="block text-[9px] font-bold leading-tight text-gray-100 sm:text-xs">{indicator.value}</span>
+            <span className={`${indicator.label === 'Active Listings' ? 'block' : 'hidden sm:block'} text-[8px] leading-tight text-gray-500 sm:text-[10px]`}>
+              {indicator.label}
+            </span>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const getHomepageSiteSettings = unstable_cache(async function getHomepageSiteSettings(): Promise<HomepageSiteSettings> {
   const service = createServiceClient();
@@ -236,6 +325,7 @@ export default async function HomePage() {
     getHomepageSiteSettings(),
   ]);
   const recommendedShoes = getRecommendedListings(profile, homepageShoes).slice(0, 4);
+  const rearHeroListings = getDailyRearListings(homepageShoes, featured?.id ?? null);
   const recommendedIds = new Set(recommendedShoes.map((shoe) => shoe.id));
   const recentShoes = homepageShoes.filter((shoe) => !recommendedIds.has(shoe.id)).slice(0, 4);
   const displayedShoes = [...recommendedShoes, ...recentShoes];
@@ -251,7 +341,7 @@ export default async function HomePage() {
   const showMarketplaceActivity = Boolean(profile?.is_admin) || siteSettings.showHomepageActivityPublicly;
 
   return (
-    <div>
+    <div className="overflow-x-hidden">
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-gray-800 bg-[#020617]">
         <div
@@ -278,106 +368,67 @@ export default async function HomePage() {
           }}
         />
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-gray-950/70 to-transparent pointer-events-none" />
-        <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 lg:gap-10">
-            <div className="max-w-2xl">
-              <div className="flex items-center gap-2 mb-4">
-                <LogoMark size={40} />
+        <div className="relative mx-auto flex max-w-7xl px-4 py-5 sm:px-6 sm:py-10 lg:min-h-[500px] lg:items-center lg:px-8 lg:py-8 xl:min-h-[530px]">
+          <div className="grid w-full gap-4 sm:gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(560px,1.1fr)] lg:items-center lg:gap-8 xl:gap-12">
+            <div className="max-w-xl">
+              <div className="mb-3 flex items-center gap-2 sm:mb-4">
+                <LogoMark size={36} />
                 <span className="rounded-full border border-teal-400/30 bg-teal-400/10 px-3 py-1 text-xs font-semibold text-teal-300 shadow-[0_0_28px_rgba(20,184,166,0.12)] backdrop-blur-sm">
                   Go Pair PH Marketplace
                 </span>
               </div>
-              <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-gray-100 drop-shadow-[0_16px_36px_rgba(0,0,0,0.45)] sm:text-5xl">
+              <h1 className="text-[32px] font-extrabold leading-[1.02] tracking-tight text-gray-100 drop-shadow-[0_16px_36px_rgba(0,0,0,0.45)] sm:text-5xl lg:text-[58px] xl:text-[64px]">
                 Find Your Next<br />
-                <span className="text-teal-300">Running Shoes</span>
+                <span className="bg-gradient-to-r from-teal-300 via-teal-400 to-cyan-300 bg-clip-text text-transparent">Running Shoes</span>
               </h1>
-              <p className="mt-3 max-w-lg text-sm leading-6 text-gray-300/85 sm:mt-4 sm:text-lg sm:leading-8">
+              <p className="mt-3 max-w-lg text-[13px] leading-5 text-gray-300/85 sm:mt-4 sm:text-lg sm:leading-8">
                 Buy and sell running shoes in one focused place. Sellers can create one
                 clean listing, then share it to Facebook, Marketplace, Messenger, and
                 running groups.
               </p>
-              <div className="mt-6 flex flex-wrap gap-2.5 sm:mt-8 sm:gap-3">
-                <Link href="/browse">
-                  <Button size="lg" variant="secondary" className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base">Browse Running Shoes</Button>
-                </Link>
-                <SellShoesChoiceModal />
+              <div className="mt-4 grid grid-cols-2 gap-2.5 sm:mt-7 sm:flex sm:gap-3">
+                <HeroTrackedLink href="/browse" action="hero_marketplace_cta_click" className="min-w-0 sm:inline-flex">
+                  <Button size="lg" variant="secondary" className="h-full w-full px-3 py-2 text-xs sm:px-6 sm:py-3 sm:text-base">
+                    Browse Running Shoes
+                  </Button>
+                </HeroTrackedLink>
+                <SellShoesChoiceModal buttonClassName="h-full w-full bg-gradient-to-r from-teal-500 to-teal-400 px-3 text-xs shadow-[0_10px_30px_rgba(20,184,166,0.24)] hover:from-teal-400 hover:to-cyan-300 sm:w-auto sm:px-6 sm:text-base" />
               </div>
-              <p className="mt-4 text-xs font-medium uppercase tracking-[0.18em] text-teal-300/80">
-                List once. Share anywhere. Keep shoe details clean.
-              </p>
-              <div className="mt-4 max-w-md">
-                <PostListingFeedbackPrompt
-                  title="Got any feedback for Go Pair PH?"
-                  body="Got suggestions or something confusing? Send quick feedback."
-                  successBody="Thanks. Your feedback helps shape Go Pair PH."
-                  buttonLabel="Send Feedback"
-                  compact
-                  inline
-                />
+              <div className="mt-7 hidden lg:block">
+                <HeroTrustIndicators totalActive={activity.totalActiveListings} />
               </div>
             </div>
 
             {/* Right slot — featured listing if set, else marketplace pulse.
                 On mobile this stacks below the buttons; on lg+ it sits to the right. */}
-            <div className="flex w-full justify-center lg:w-auto lg:flex-1 lg:justify-end items-center">
-              {featured ? <FeaturedListing shoe={featured} /> : <HeroFallback />}
+            <div className="flex w-full items-center justify-center lg:justify-end">
+              {featured ? <FeaturedListing shoe={featured} rearShoes={rearHeroListings} /> : <HeroFallback />}
+            </div>
+
+            <div className="lg:hidden">
+              <HeroTrustIndicators totalActive={activity.totalActiveListings} />
             </div>
           </div>
         </div>
       </section>
 
-      <HomeCarousel />
-
-      <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
-        <SurfaceCard className="border-white/[0.08] bg-slate-950/55 p-4 shadow-[0_12px_35px_rgba(0,0,0,0.18)] sm:p-5">
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              {
-                title: 'One link for every post',
-                text: 'Post on Facebook for reach, but keep the full shoe details on one Go Pair PH listing link.',
-              },
-              {
-                title: 'Fewer repeated questions',
-                text: 'Size, price, condition, mileage, location, photos, and seller details stay in one place.',
-              },
-              {
-                title: 'Still searchable later',
-                text: 'FB posts get buried. Go Pair PH listings can be revisited, shared again, and found by runners.',
-              },
-            ].map((benefit) => (
-              <div key={benefit.title} className="min-w-0 rounded-xl border border-white/[0.08] bg-slate-950/45 p-3">
-                <p className="text-sm font-bold text-gray-100">{benefit.title}</p>
-                <p className="mt-1 text-xs leading-5 text-gray-500">{benefit.text}</p>
-              </div>
-            ))}
-          </div>
-        </SurfaceCard>
+      <section className="border-b border-white/[0.06] bg-slate-950/95">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-teal-300/80 sm:text-xs">
+            List once. Share anywhere. Keep shoe details clean.
+          </p>
+          <PostListingFeedbackPrompt
+            title="Got any feedback for Go Pair PH?"
+            body="Got suggestions or something confusing? Send quick feedback."
+            successBody="Thanks. Your feedback helps shape Go Pair PH."
+            buttonLabel="Send Feedback"
+            compact
+            inline
+          />
+        </div>
       </section>
 
-      {showMarketplaceActivity && (
-        <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {[
-              { label: 'New running shoes for sale this week', value: activity.newListingsThisWeek },
-              { label: 'Recent active sellers', value: activity.recentSellers },
-              { label: 'Looking for shoes', value: activity.activePairRequests },
-              { label: 'Sold, reserved, or claimed', value: activity.soldOrReservedPairs },
-            ].map((stat) => (
-              <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-slate-950/55 px-3 py-2.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] sm:px-4 sm:py-3">
-                <p className="text-lg font-bold tabular-nums text-gray-100 sm:text-xl">
-                  {stat.value.toLocaleString()}
-                  {stat.label === 'New running shoes for sale this week' && stat.value >= 2 ? (
-                    <span className="ml-1" aria-label="celebration">🎉</span>
-                  ) : null}
-                </p>
-                <p className="mt-0.5 text-[11px] leading-snug text-gray-500 sm:text-xs">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <FirstListingNudge />
+      <HomeCarousel />
 
       {recommendedShoes.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
@@ -434,6 +485,32 @@ export default async function HomePage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+        <SurfaceCard className="border-white/[0.08] bg-slate-950/55 p-4 shadow-[0_12px_35px_rgba(0,0,0,0.18)] sm:p-5">
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              {
+                title: 'One link for every post',
+                text: 'Post on Facebook for reach, but keep the full shoe details on one Go Pair PH listing link.',
+              },
+              {
+                title: 'Fewer repeated questions',
+                text: 'Size, price, condition, mileage, location, photos, and seller details stay in one place.',
+              },
+              {
+                title: 'Still searchable later',
+                text: 'FB posts get buried. Go Pair PH listings can be revisited, shared again, and found by runners.',
+              },
+            ].map((benefit) => (
+              <div key={benefit.title} className="min-w-0 rounded-xl border border-white/[0.08] bg-slate-950/45 p-3">
+                <p className="text-sm font-bold text-gray-100">{benefit.title}</p>
+                <p className="mt-1 text-xs leading-5 text-gray-500">{benefit.text}</p>
+              </div>
+            ))}
+          </div>
+        </SurfaceCard>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
         <SurfaceCard className="border-white/[0.08] bg-slate-950/55 p-4 sm:p-5">
           <div className="space-y-4">
             <div className="max-w-2xl">
@@ -459,7 +536,7 @@ export default async function HomePage() {
               </Link>
               <Link
                 href="/price-guide"
-                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-700 px-3.5 py-2 text-center text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-teal-300/50 bg-gradient-to-r from-teal-500 to-teal-400 px-3.5 py-2 text-center text-sm font-bold text-gray-950 shadow-[0_10px_28px_rgba(20,184,166,0.2)] transition-all hover:-translate-y-0.5 hover:from-teal-400 hover:to-cyan-300"
               >
                 Price Estimator
               </Link>
@@ -479,6 +556,31 @@ export default async function HomePage() {
           </div>
         </SurfaceCard>
       </section>
+
+      {showMarketplaceActivity && (
+        <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {[
+              { label: 'New running shoes for sale this week', value: activity.newListingsThisWeek },
+              { label: 'Recent active sellers', value: activity.recentSellers },
+              { label: 'Looking for shoes', value: activity.activePairRequests },
+              { label: 'Sold, reserved, or claimed', value: activity.soldOrReservedPairs },
+            ].map((stat) => (
+              <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-slate-950/55 px-3 py-2.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] sm:px-4 sm:py-3">
+                <p className="text-lg font-bold tabular-nums text-gray-100 sm:text-xl">
+                  {stat.value.toLocaleString()}
+                  {stat.label === 'New running shoes for sale this week' && stat.value >= 2 ? (
+                    <span className="ml-1" aria-label="celebration">🎉</span>
+                  ) : null}
+                </p>
+                <p className="mt-0.5 text-[11px] leading-snug text-gray-500 sm:text-xs">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <FirstListingNudge />
 
       {/* CTA banner */}
       <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">

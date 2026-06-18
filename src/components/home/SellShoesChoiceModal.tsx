@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { trackMarketplaceAction } from '@/lib/analytics';
+import { cn } from '@/lib/utils';
 
-export function SellShoesChoiceModal() {
+export function SellShoesChoiceModal({ buttonClassName }: { buttonClassName?: string }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export function SellShoesChoiceModal() {
         type="button"
         size="lg"
         onClick={handleOpen}
-        className="px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base"
+        className={cn('px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base', buttonClassName)}
       >
         Sell Your Shoes
       </Button>

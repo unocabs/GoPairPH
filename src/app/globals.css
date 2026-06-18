@@ -44,6 +44,12 @@
   }
 }
 
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .hero-feature-float {
+    animation: hero-feature-float 7s ease-in-out infinite;
+  }
+}
+
 .go-pair-route-loader {
   bottom: calc(1rem + env(safe-area-inset-bottom));
 }
@@ -126,6 +132,17 @@
   100% {
     opacity: 0;
     transform: translateX(24px) scale(0.95);
+  }
+}
+
+@keyframes hero-feature-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 0 -5px;
   }
 }
 
