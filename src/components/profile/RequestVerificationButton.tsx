@@ -211,7 +211,7 @@ export function RequestVerificationButton({
                 </p>
               )}
               <div className="flex gap-3">
-                <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
+                <Button type="button" variant="neutral" onClick={() => setOpen(false)} className="flex-1">
                   Cancel
                 </Button>
                 <Button

@@ -186,7 +186,7 @@ export function PostListingFeedbackPrompt({
               )}
 
               <div className="grid grid-cols-2 gap-2 pt-1">
-                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                <Button type="button" variant="neutral" onClick={() => setOpen(false)}>
                   Cancel
                 </Button>
                 <Button type="submit" loading={submitting}>

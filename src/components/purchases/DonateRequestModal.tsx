@@ -88,7 +88,7 @@ export function DonateRequestModal({ listingId, listingName, requesterId, reques
           {error && <p className="text-sm text-red-400">{error}</p>}
         </div>
         <div className="flex gap-3 px-5 py-4 border-t border-gray-800 shrink-0">
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
+          <Button type="button" variant="neutral" onClick={onClose} className="flex-1">Cancel</Button>
           <Button type="button" onClick={handleSubmit} loading={submitting} className="flex-1">
             Send Request
           </Button>

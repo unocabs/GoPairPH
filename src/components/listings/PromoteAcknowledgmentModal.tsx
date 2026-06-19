@@ -68,7 +68,7 @@ export function PromoteAcknowledgmentModal({ onClose, onProceed }: PromoteAcknow
         </div>
 
         <div className="flex gap-3 px-5 py-4 border-t border-gray-800 shrink-0">
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+          <Button type="button" variant="neutral" onClick={onClose} className="flex-1">
             Cancel
           </Button>
           <Button type="button" onClick={onProceed} className="flex-1">

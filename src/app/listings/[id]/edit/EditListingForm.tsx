@@ -492,7 +492,7 @@ export function EditListingForm({ shoe, renewAfterSave = false }: { shoe: Shoe; 
       </div>
 
       <div className="flex gap-3">
-        <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
+        <Button type="button" variant="neutral" onClick={() => router.back()}>Cancel</Button>
         <Button type="submit" loading={submitting}>Save Changes</Button>
       </div>
     </form>

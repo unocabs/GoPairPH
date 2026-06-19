@@ -324,7 +324,7 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
             <div className="pt-2 border-t border-gray-800">
               <Button
                 type="button"
-                variant="outline"
+                variant="neutral"
                 size="sm"
                 onClick={handleDelete}
                 loading={deleting}
@@ -374,7 +374,7 @@ export function WishlistItemModal({ initialItem, onClose }: WishlistItemModalPro
           </div>
 
           <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="outline" onClick={closeReportForm} disabled={submittingReport}>
+            <Button type="button" variant="neutral" onClick={closeReportForm} disabled={submittingReport}>
               Cancel
             </Button>
             <Button type="submit" loading={submittingReport} disabled={!reportTurnstileToken || submittingReport}>

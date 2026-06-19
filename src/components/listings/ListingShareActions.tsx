@@ -166,16 +166,16 @@ export function ListingShareActions({ shoe, seller, isOwner = false, defaultOpen
           }
         }}
         aria-expanded={kitOpen}
-        className="inline-flex min-h-10 w-full items-center justify-between gap-2 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm font-semibold text-gray-100 transition-colors hover:bg-gray-700"
+        className="inline-flex min-h-10 w-full items-center justify-between gap-2 rounded-lg border border-blue-400/45 bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-500/15 transition-colors hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
       >
         <span className="inline-flex items-center gap-2">
-          <svg className="h-4 w-4 shrink-0 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+          <svg className="h-4 w-4 shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h6m-8 8h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           Post This on Facebook
         </span>
         <svg
-          className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${kitOpen ? 'rotate-180' : ''}`}
+          className={`h-4 w-4 shrink-0 text-blue-100 transition-transform ${kitOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

@@ -14,7 +14,6 @@ type ShopWithOwner = Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'loc
 
 interface AdminDashboardProps {
   pending: VerificationRequest[];
-  recent: VerificationRequest[];
   verified: Profile[];
   verifiedProofs: VerificationRequest[];
   shops: ShopWithOwner[];
@@ -30,7 +29,7 @@ interface AdminDashboardProps {
   viewWindow: { startDate: string; endDate: string };
 }
 
-type Tab = 'pending' | 'recent' | 'verified' | 'shops' | 'soldListings' | 'views' | 'leadReports' | 'listingReports' | 'emailBlast' | 'settings';
+type Tab = 'pending' | 'verified' | 'shops' | 'soldListings' | 'views' | 'leadReports' | 'listingReports' | 'emailBlast' | 'settings';
 const ACCEPTED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 const LEAD_REPORT_REASON_LABELS: Record<WishlistOfferReportReason, string> = {
@@ -108,7 +107,6 @@ async function convertLogoToWebP(file: File): Promise<Blob> {
 
 export function AdminDashboard({
   pending,
-  recent,
   verified,
   verifiedProofs,
   shops,
@@ -129,7 +127,6 @@ export function AdminDashboard({
         {([
           { key: 'views', label: `Listing views (${listingViews.length})` },
           { key: 'pending', label: `Pending (${pending.length})` },
-          { key: 'recent', label: `Recent reviews` },
           { key: 'verified', label: `Verified users (${verified.length})` },
           { key: 'shops', label: `Shops (${shops.length})` },
           { key: 'soldListings', label: `Closed listings (${soldListings.length})` },
@@ -151,7 +148,6 @@ export function AdminDashboard({
       </div>
 
       {tab === 'pending' && <PendingList requests={pending} />}
-      {tab === 'recent' && <RecentList requests={recent} />}
       {tab === 'verified' && <VerifiedList users={verified} verificationProofs={verifiedProofs} />}
       {tab === 'shops' && <ShopsPanel shops={shops} profiles={profiles} />}
       {tab === 'soldListings' && <SoldListingsPanel listings={soldListings} />}
@@ -1385,42 +1381,6 @@ function PendingCard({ request }: { request: VerificationRequest }) {
           Approve &amp; Verify
         </button>
       </div>
-    </div>
-  );
-}
-
-function RecentList({ requests }: { requests: VerificationRequest[] }) {
-  if (requests.length === 0) {
-    return (
-      <div className="rounded-xl border-2 border-dashed border-gray-800 py-16 text-center">
-        <p className="text-gray-500">No reviews yet.</p>
-      </div>
-    );
-  }
-  return (
-    <div className="space-y-2">
-      {requests.map(req => (
-        <div key={req.id} className="rounded-lg border border-gray-800 bg-gray-900 p-3 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <Link href={`/profile/${req.user_id}`} target="_blank" className="text-sm font-medium text-gray-200 hover:text-teal-400">
-              {req.profiles?.display_name ?? 'Unknown'}
-            </Link>
-            {req.admin_notes && (
-              <p className="text-xs text-gray-500 italic truncate">&quot;{req.admin_notes}&quot;</p>
-            )}
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-              req.status === 'approved'
-                ? 'bg-green-950 text-green-400 border border-green-800'
-                : 'bg-gray-800 text-gray-500 border border-gray-700'
-            }`}>
-              {req.status}
-            </span>
-            <span className="text-xs text-gray-600">{req.reviewed_at ? formatRelativeDate(req.reviewed_at) : ''}</span>
-          </div>
-        </div>
-      ))}
     </div>
   );
 }

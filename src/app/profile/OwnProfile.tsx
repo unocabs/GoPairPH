@@ -393,7 +393,7 @@ export function OwnProfile({
                 <span>{requestCountsByListing[strongestListing.id] ?? 0} offers</span>
               </div>
             </div>
-            <button type="button" onClick={() => setSharePostShoe(strongestListing)} className="hidden shrink-0 rounded-lg border border-gray-700 px-3 py-2 text-xs font-semibold text-gray-300 hover:bg-gray-800 sm:block">
+            <button type="button" onClick={() => setSharePostShoe(strongestListing)} className="hidden shrink-0 rounded-lg border border-blue-400/45 bg-blue-500/10 px-3 py-2 text-xs font-semibold text-blue-100 transition-colors hover:bg-blue-500/20 sm:block">
               Share again
             </button>
           </div>
@@ -405,21 +405,21 @@ export function OwnProfile({
           <p className="mb-2 text-sm font-semibold text-gray-100">Quick ways to improve your shop</p>
           <div className="grid gap-2 sm:grid-cols-3">
             {needsPhotoListing && (
-              <Link href={`/listings/${needsPhotoListing.id}/edit#photos`} className="rounded-lg border border-white/[0.07] bg-slate-950/40 px-3 py-2.5 text-xs text-gray-300 hover:border-teal-400/25">
-                <strong className="block text-gray-100">Complete your photos</strong>
-                <span className="mt-0.5 block text-gray-500">Add top and sole views →</span>
+              <Link href={`/listings/${needsPhotoListing.id}/edit#photos`} className="rounded-lg border border-teal-400/25 bg-teal-500/[0.08] px-3 py-2.5 text-xs text-teal-100 transition-colors hover:border-teal-300/40 hover:bg-teal-500/[0.14]">
+                <strong className="block text-teal-50">Complete your photos</strong>
+                <span className="mt-0.5 block text-teal-200/65">Add top and sole views →</span>
               </Link>
             )}
             {!hasValidMessengerContact && (
-              <button type="button" onClick={() => setEditOpen(true)} className="rounded-lg border border-white/[0.07] bg-slate-950/40 px-3 py-2.5 text-left text-xs text-gray-300 hover:border-blue-400/25">
-                <strong className="block text-gray-100">Make contact easier</strong>
-                <span className="mt-0.5 block text-gray-500">Add your Messenger username →</span>
+              <button type="button" onClick={() => setEditOpen(true)} className="rounded-lg border border-sky-400/25 bg-sky-500/[0.08] px-3 py-2.5 text-left text-xs text-sky-100 transition-colors hover:border-sky-300/40 hover:bg-sky-500/[0.14]">
+                <strong className="block text-sky-50">Make contact easier</strong>
+                <span className="mt-0.5 block text-sky-200/65">Add your Messenger username →</span>
               </button>
             )}
             {shareTarget && (
-              <button type="button" onClick={() => setSharePostShoe(shareTarget)} className="rounded-lg border border-white/[0.07] bg-slate-950/40 px-3 py-2.5 text-left text-xs text-gray-300 hover:border-amber-400/25">
-                <strong className="block text-gray-100">Reach more buyers</strong>
-                <span className="mt-0.5 block text-gray-500">Share a listing on Facebook →</span>
+              <button type="button" onClick={() => setSharePostShoe(shareTarget)} className="rounded-lg border border-blue-400/25 bg-blue-500/[0.08] px-3 py-2.5 text-left text-xs text-blue-100 transition-colors hover:border-blue-300/40 hover:bg-blue-500/[0.14]">
+                <strong className="block text-blue-50">Reach more buyers</strong>
+                <span className="mt-0.5 block text-blue-200/65">Share a listing on Facebook →</span>
               </button>
             )}
           </div>

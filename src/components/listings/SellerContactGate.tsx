@@ -80,7 +80,7 @@ export function SellerContactGate({ profileId, initialFbUsername, hasShopContact
                 <Button type="button" onClick={handleSave} loading={saving} className="sm:flex-1">
                   Add Messenger
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setReady(true)} className="sm:flex-1">
+                <Button type="button" variant="neutral" onClick={() => setReady(true)} className="sm:flex-1">
                   Skip and List First
                 </Button>
               </div>

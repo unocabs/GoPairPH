@@ -245,7 +245,7 @@ export function EditProfileModal({ profile, onClose, onUpdated }: EditProfileMod
           </div>
 
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
+            <Button type="button" variant="neutral" onClick={onClose} className="flex-1">Cancel</Button>
             <Button type="submit" loading={submitting} className="flex-1">Save Changes</Button>
           </div>
         </form>

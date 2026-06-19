@@ -315,7 +315,7 @@ export function SavedSearchesPanel({ initialSearches }: SavedSearchesPanelProps)
               {editingSearch ? 'Save Changes' : 'Save Search'}
             </Button>
             {editingSearch && (
-              <Button type="button" variant="outline" onClick={resetForm} className="w-full sm:w-auto">
+              <Button type="button" variant="neutral" onClick={resetForm} className="w-full sm:w-auto">
                 Cancel
               </Button>
             )}

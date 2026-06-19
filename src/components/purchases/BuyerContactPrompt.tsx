@@ -64,7 +64,7 @@ export function BuyerContactPrompt({ profileId, initialFbUsername }: BuyerContac
             <Button type="button" size="sm" onClick={handleSave} loading={saving}>
               Save
             </Button>
-            <Button type="button" size="sm" variant="outline" onClick={() => setDismissed(true)}>
+            <Button type="button" size="sm" variant="neutral" onClick={() => setDismissed(true)}>
               Skip
             </Button>
           </div>

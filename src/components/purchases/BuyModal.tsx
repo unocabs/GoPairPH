@@ -284,7 +284,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
           {error && <p className="text-sm text-red-400">{error}</p>}
         </div>
         <div className="flex gap-3 px-5 py-4 border-t border-gray-800 shrink-0">
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
+          <Button type="button" variant="neutral" onClick={onClose} className="flex-1">Cancel</Button>
           <Button type="button" onClick={handleSubmit} loading={submitting} disabled={submitDisabled} className="flex-1">
             {submitDisabled ? 'Out of Stock' : actionLabel}
           </Button>

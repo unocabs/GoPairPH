@@ -276,7 +276,7 @@ export function PromoteListingModal({
         </div>
 
         <div className="px-5 py-4 border-t border-gray-800 shrink-0">
-          <Button variant="outline" onClick={onClose} className="w-full">Close</Button>
+          <Button variant="neutral" onClick={onClose} className="w-full">Close</Button>
         </div>
       </div>
     </div>
@@ -306,7 +306,7 @@ export function UnverifiedNotice({ onClose }: UnverifiedNoticeProps) {
           Only verified users can request Featured or Top Pick placements.
         </p>
         <div className="mt-4 flex gap-2">
-          <Button variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
+          <Button variant="neutral" onClick={onClose} className="flex-1">Cancel</Button>
           <Link href="/help/verification" className="flex-1">
             <Button className="w-full">Get Verified →</Button>
           </Link>
