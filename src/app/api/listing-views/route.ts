@@ -12,6 +12,7 @@ export const runtime = 'nodejs';
 const bodySchema = z.object({
   listing_id: z.string().uuid(),
   visitor_id: z.string().trim().min(12).max(128),
+  share_token: z.string().trim().min(12).max(64).optional(),
 });
 
 interface RecordViewResult {
@@ -67,10 +68,21 @@ export async function POST(request: Request) {
   }
 
   const visitorHash = hashVisitorId(parsed.visitor_id, parsed.listing_id);
+  const viewDate = getManilaDateString();
+  const { data: shareCampaign } = parsed.share_token
+    ? await service
+        .from('listing_share_campaigns')
+        .select('id')
+        .eq('token', parsed.share_token)
+        .eq('listing_id', parsed.listing_id)
+        .is('replaced_at', null)
+        .gt('expires_at', new Date().toISOString())
+        .maybeSingle()
+    : { data: null };
   const { data: record, error } = await service
     .rpc('record_listing_view', {
       p_listing_id: parsed.listing_id,
-      p_view_date: getManilaDateString(),
+      p_view_date: viewDate,
       p_visitor_hash: visitorHash,
     })
     .single();
@@ -81,6 +93,20 @@ export async function POST(request: Request) {
   }
 
   const result = record as RecordViewResult;
+  if (result.counted && shareCampaign?.id) {
+    const { error: attributionError } = await service
+      .from('listing_share_campaign_views')
+      .insert({
+        campaign_id: shareCampaign.id,
+        view_date: viewDate,
+        visitor_hash: visitorHash,
+      });
+
+    if (attributionError) {
+      console.error('[listing-views] share attribution failed:', attributionError);
+    }
+  }
+
   if (result.new_milestone > 0 || result.lifetime_milestone > 0) {
     try {
       const sellerProfile = Array.isArray(listing.profiles) ? listing.profiles[0] : listing.profiles;

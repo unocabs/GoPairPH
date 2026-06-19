@@ -69,36 +69,6 @@ export function getListingCompletenessScore(shoe: Shoe): { complete: number; tot
 export function getListingTrustSignals(shoe: Shoe): ListingTrustSignal[] {
   const signals: ListingTrustSignal[] = [];
 
-  if (hasTopPhoto(shoe) && hasSolePhoto(shoe)) {
-    signals.push({
-      key: 'photos_complete',
-      label: 'Photos complete',
-      shortLabel: 'Photos',
-      description: 'Top and sole photos are included.',
-      tone: 'teal',
-    });
-  }
-
-  if (getSellerLocationLabel(shoe)) {
-    signals.push({
-      key: 'location_added',
-      label: 'Location added',
-      shortLabel: 'Location',
-      description: 'Seller added a location buyers can use for planning.',
-      tone: 'slate',
-    });
-  }
-
-  if (getSellerContactUrl(shoe)) {
-    signals.push({
-      key: 'messenger_ready',
-      label: 'Contact ready',
-      shortLabel: 'Contact',
-      description: 'Seller added Messenger or a shop contact link.',
-      tone: 'blue',
-    });
-  }
-
   if (!shoe.shop_id && shoe.profiles?.is_verified) {
     signals.push({
       key: 'verified_seller',

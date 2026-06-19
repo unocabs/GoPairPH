@@ -19,7 +19,7 @@ function getVisitorId(): string | null {
   }
 }
 
-export function ListingViewTracker({ listingId }: { listingId: string }) {
+export function ListingViewTracker({ listingId, shareToken }: { listingId: string; shareToken?: string }) {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const visitorId = getVisitorId();
@@ -28,13 +28,17 @@ export function ListingViewTracker({ listingId }: { listingId: string }) {
       fetch('/api/listing-views', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listing_id: listingId, visitor_id: visitorId }),
+        body: JSON.stringify({
+          listing_id: listingId,
+          visitor_id: visitorId,
+          ...(shareToken ? { share_token: shareToken } : {}),
+        }),
         keepalive: true,
       }).catch(() => undefined);
     }, 1200);
 
     return () => window.clearTimeout(timer);
-  }, [listingId]);
+  }, [listingId, shareToken]);
 
   return null;
 }

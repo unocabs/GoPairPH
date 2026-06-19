@@ -18,6 +18,7 @@ import { Select } from '@/components/ui/Select';
 import { trackMarketplaceAction } from '@/lib/analytics';
 
 const brandOptions = BRANDS.map((brand) => ({ value: brand, label: brand }));
+const estimatorFieldClass = 'border-[#3B4A60] bg-[#243247] text-gray-100 placeholder:text-slate-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20';
 
 const conditionOptions: { value: PriceGuideCondition; label: string; helper: string; boost: string }[] = [
   { value: 'new', label: CONDITIONS.new, helper: 'Unused pair', boost: 'High trust' },
@@ -181,6 +182,7 @@ export function PriceGuideForm() {
       : 'No box is fine; make the photos and description clear.',
   ];
   const showFloatingDock = isMobileResultLayout && !mobileSummaryVisible && !fullResultVisible;
+  const showFloatingListingCta = showFloatingDock && !!estimate;
 
   useEffect(() => {
     if (!estimate || estimateGeneratedTrackedRef.current) return;
@@ -256,7 +258,7 @@ export function PriceGuideForm() {
     return () => observer.disconnect();
   }, [isMobileResultLayout]);
 
-  function saveListingPrefill() {
+  function saveListingPrefill(surface: 'inline_result' | 'floating_mobile') {
     if (!estimate || !canEstimate) return;
 
     const prefill: PriceGuideListingPrefill = {
@@ -283,6 +285,7 @@ export function PriceGuideForm() {
       // If storage is unavailable, the listing page still receives the price in the URL.
     }
     trackMarketplaceAction('price_estimator_to_listing', {
+      surface,
       brand,
       condition,
       urgency,
@@ -306,8 +309,18 @@ export function PriceGuideForm() {
         </div>
       )}
 
+      {showFloatingListingCta && (
+        <Link
+          href={`/listings/new?from=price-guide&price=${estimate.suggestedHigh}`}
+          onClick={() => saveListingPrefill('floating_mobile')}
+          className="sellability-mobile-cta-floating fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 right-3 z-30 mx-auto inline-flex min-h-12 max-w-[22.5rem] items-center justify-center rounded-lg border border-teal-300/30 bg-teal-500 px-4 py-2 text-center text-sm font-bold text-white shadow-[0_16px_44px_rgba(0,0,0,0.5)] transition-colors hover:bg-teal-400 lg:hidden"
+        >
+          List this shoe with these details
+        </Link>
+      )}
+
       <section className="min-w-0 space-y-4">
-        <div className="sellability-card-in rounded-2xl border border-teal-400/20 bg-slate-950/70 p-4 shadow-[0_22px_70px_rgba(0,0,0,0.28)] sm:p-5">
+        <div className="sellability-card-in rounded-2xl border border-teal-400/20 bg-[#0B1424] p-4 shadow-[0_22px_70px_rgba(0,0,0,0.28)] sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-teal-300">Listing lab</p>
@@ -324,23 +337,7 @@ export function PriceGuideForm() {
               active={canEstimate}
             />
           </div>
-        </div>
-
-        <div className="sellability-card-in rounded-2xl border border-white/[0.08] bg-slate-950/65 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '70ms' }}>
-          <SectionHeader step="01" title="Pair Details" body="Start with what buyers search and what they compare." />
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            <Select
-              label="Brand"
-              options={brandOptions}
-              value={brand}
-              onChange={(event) => setBrand(event.target.value)}
-            />
-            <Input
-              label="Model"
-              value={model}
-              onChange={(event) => setModel(event.target.value)}
-              placeholder="e.g. Pegasus 41"
-            />
+          <div className="mt-4 sm:max-w-sm">
             <Input
               label="Retail price"
               type="number"
@@ -351,11 +348,32 @@ export function PriceGuideForm() {
               placeholder="e.g. 8500"
               required
               hint="Original PH retail price."
+              className={`${estimatorFieldClass} ${!canEstimate ? 'price-estimator-start-glow' : ''}`}
             />
           </div>
         </div>
 
-        <div className="sellability-card-in rounded-2xl border border-white/[0.08] bg-slate-950/65 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '120ms' }}>
+        <div className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '70ms' }}>
+          <SectionHeader step="01" title="Pair Details" body="Start with what buyers search and what they compare." />
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Select
+              label="Brand"
+              options={brandOptions}
+              value={brand}
+              onChange={(event) => setBrand(event.target.value)}
+              className={estimatorFieldClass}
+            />
+            <Input
+              label="Model"
+              value={model}
+              onChange={(event) => setModel(event.target.value)}
+              placeholder="e.g. Pegasus 41"
+              className={estimatorFieldClass}
+            />
+          </div>
+        </div>
+
+        <div className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '120ms' }}>
           <SectionHeader step="02" title="Condition" body="Pick the closest truth. The score rewards clarity, not hype." />
           <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
             {conditionOptions.map((option) => (
@@ -372,7 +390,7 @@ export function PriceGuideForm() {
         </div>
 
         <div className="sellability-card-in grid gap-4 lg:grid-cols-2" style={{ animationDelay: '170ms' }}>
-          <div className="rounded-2xl border border-white/[0.08] bg-slate-950/65 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5">
+          <div className="rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5">
             <SectionHeader step="03" title="Usage" body="Mileage helps buyers judge outsole and foam life." />
             <div className="mt-4 grid grid-cols-2 gap-2">
               {mileageOptions.map((option) => (
@@ -387,7 +405,7 @@ export function PriceGuideForm() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/[0.08] bg-slate-950/65 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5">
+          <div className="rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5">
             <SectionHeader step="04" title="Age" body="Newer releases usually feel easier to move." />
             <div className="mt-4 grid grid-cols-2 gap-2">
               {ageOptions.map((option) => (
@@ -403,7 +421,7 @@ export function PriceGuideForm() {
           </div>
         </div>
 
-        <div className="sellability-card-in rounded-2xl border border-white/[0.08] bg-slate-950/65 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '220ms' }}>
+        <div className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '220ms' }}>
           <SectionHeader step="05" title="Selling Strategy" body="Tell the tool if you want speed, balance, or maximum value." />
           <div className="mt-4 grid gap-3 lg:grid-cols-[0.9fr_1.1fr]">
             <div>
@@ -437,7 +455,7 @@ export function PriceGuideForm() {
           </div>
         </div>
 
-        <div className="sellability-card-in rounded-2xl border border-white/[0.08] bg-slate-950/65 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '270ms' }}>
+        <div className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '270ms' }}>
           <SectionHeader step="06" title="Trust Extras" body="These do not become new listing fields. They travel into the description when you list." />
           <div className="mt-4 grid grid-cols-3 gap-2">
             <TrustToggle checked={hasBox} onChange={setHasBox} title="Has box" body="Useful for complete pairs" />
@@ -498,25 +516,11 @@ export function PriceGuideForm() {
                 </div>
               </div>
 
-              {estimate && (
-                <div className="mt-5">
-                  <p className="text-sm font-semibold text-gray-100">Smart tips</p>
-                  <ul className="mt-2 space-y-2 text-sm leading-5 text-gray-400">
-                    {[...estimate.reasons, ...tips].slice(0, 5).map((reason, index) => (
-                      <li key={reason} className="sellability-tip flex gap-2" style={{ animationDelay: `${index * 80}ms` }}>
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-300" />
-                        <span>{reason}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
               <div className="mt-6 grid gap-2">
                 {estimate ? (
                   <Link
                     href={`/listings/new?from=price-guide&price=${estimate.suggestedHigh}`}
-                    onClick={saveListingPrefill}
+                    onClick={() => saveListingPrefill('inline_result')}
                     className="inline-flex min-h-12 items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-teal-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-teal-400"
                   >
                     List this shoe with these details
@@ -533,6 +537,20 @@ export function PriceGuideForm() {
                   Check official retail links
                 </Link>
               </div>
+
+              {estimate && (
+                <div className="mt-5">
+                  <p className="text-sm font-semibold text-gray-100">Smart tips</p>
+                  <ul className="mt-2 space-y-2 text-sm leading-5 text-gray-400">
+                    {[...estimate.reasons, ...tips].slice(0, 5).map((reason, index) => (
+                      <li key={reason} className="sellability-tip flex gap-2" style={{ animationDelay: `${index * 80}ms` }}>
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-300" />
+                        <span>{reason}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -672,7 +690,7 @@ function ChoiceCard({
       className={`min-h-[92px] rounded-xl border p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[118px] sm:p-3 ${
         active
           ? 'border-teal-300/60 bg-teal-400/12 text-teal-50 shadow-[0_0_28px_rgba(45,212,191,0.12)]'
-          : 'border-white/[0.08] bg-slate-950/55 text-gray-400 hover:border-teal-400/30 hover:text-gray-200'
+          : 'border-[#314158] bg-[#18263A] text-gray-300 hover:border-teal-400/40 hover:text-gray-100'
       }`}
     >
       <span className="block text-xs font-extrabold sm:text-sm">{label}</span>
@@ -702,7 +720,7 @@ function MiniChoice({
       className={`min-h-[62px] rounded-lg border px-2.5 py-2 text-left transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[76px] sm:px-3 ${
         active
           ? 'border-teal-400/55 bg-teal-400/10 text-teal-100'
-          : 'border-white/[0.08] bg-slate-950/45 text-gray-400 hover:border-teal-400/30 hover:text-gray-200'
+          : 'border-[#314158] bg-[#18263A] text-gray-300 hover:border-teal-400/40 hover:text-gray-100'
       }`}
     >
       <span className="block text-[11px] font-bold leading-tight sm:text-xs">{label}</span>
@@ -733,7 +751,7 @@ function TrustToggle({
           ? warning
             ? 'border-amber-300/50 bg-amber-300/10 text-amber-100'
             : 'border-teal-400/50 bg-teal-400/10 text-teal-100'
-          : 'border-white/[0.08] bg-slate-950/45 text-gray-400 hover:border-teal-400/30 hover:text-gray-200'
+          : 'border-[#314158] bg-[#18263A] text-gray-300 hover:border-teal-400/40 hover:text-gray-100'
       }`}
     >
       <span className="flex items-center justify-between gap-1.5">

@@ -75,6 +75,16 @@
   animation: sellability-live-pulse 1.8s ease-in-out infinite;
 }
 
+.price-estimator-start-glow {
+  border-color: rgba(45, 212, 191, 0.72);
+  animation: price-estimator-start-glow 1.8s ease-in-out infinite;
+}
+
+.price-estimator-start-glow:focus {
+  animation: none;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.18);
+}
+
 .sellability-mobile-dock {
   transition: box-shadow 180ms ease, transform 180ms ease, border-color 180ms ease;
 }
@@ -82,6 +92,10 @@
 .sellability-mobile-dock-floating {
   animation: sellability-mobile-dock-in 220ms ease-out both;
   border-color: rgba(94, 234, 212, 0.36);
+}
+
+.sellability-mobile-cta-floating {
+  animation: sellability-mobile-cta-in 220ms ease-out both;
 }
 
 .go-pair-route-loader__track {
@@ -190,10 +204,33 @@
   }
 }
 
+@keyframes price-estimator-start-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.08), 0 0 10px rgba(45, 212, 191, 0.08);
+  }
+
+  50% {
+    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.16), 0 0 20px rgba(45, 212, 191, 0.18);
+  }
+}
+
 @keyframes sellability-mobile-dock-in {
   from {
     opacity: 0;
     transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sellability-mobile-cta-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 
   to {
@@ -210,8 +247,14 @@
   .sellability-card-in,
   .sellability-tip,
   .sellability-live-pulse,
-  .sellability-mobile-dock-floating {
+  .sellability-mobile-dock-floating,
+  .sellability-mobile-cta-floating,
+  .price-estimator-start-glow {
     animation: none;
+  }
+
+  .price-estimator-start-glow {
+    box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.14);
   }
 }
 

@@ -56,7 +56,7 @@ export function ReportListingButton({ listingId, listingName }: ReportListingBut
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex w-full items-center justify-center rounded-lg border border-white/[0.08] bg-slate-950/45 px-3 py-2 text-xs font-semibold text-gray-400 transition-colors hover:border-amber-300/25 hover:text-amber-100 sm:w-auto"
+        className="inline-flex w-1/3 items-center justify-center rounded-lg border border-white/[0.08] bg-slate-950/45 px-3 py-2 text-xs font-semibold text-gray-400 transition-colors hover:border-amber-300/25 hover:text-amber-100 sm:w-auto"
       >
         Report listing
       </button>

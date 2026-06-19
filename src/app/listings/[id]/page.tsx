@@ -327,7 +327,7 @@ async function getPurchaseContext(shoeId: string, profileId: string | null, isOw
   return null;
 }
 
-export default async function ListingDetailPage({ params, searchParams }: { params: { id: string }; searchParams?: { listed?: string; updated?: string; renewed?: string; closed?: string } }) {
+export default async function ListingDetailPage({ params, searchParams }: { params: { id: string }; searchParams?: { listed?: string; updated?: string; renewed?: string; closed?: string; share?: string } }) {
   const [shoe, currentProfile] = await Promise.all([
     getShoeByRouteParam(params.id),
     getCurrentProfile(),
@@ -595,7 +595,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
 
   return (
     <PageShell>
-      <ListingViewTracker listingId={shoe.id} />
+      <ListingViewTracker listingId={shoe.id} shareToken={searchParams?.share} />
       {productJsonLd && (
         <script
           type="application/ld+json"
@@ -619,9 +619,6 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               <p className="mt-2 max-w-2xl text-sm leading-6 text-teal-100/80">
                 Facebook gets the reach. Go Pair PH keeps the details clean.
               </p>
-            </div>
-            <div className="shrink-0 rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 lg:w-[460px]">
-              <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner defaultOpen />
             </div>
           </div>
 
@@ -660,9 +657,6 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 This updates the checked timestamp without marking the listing as just posted.
               </p>
             </div>
-            <div className="shrink-0 rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 lg:w-[460px]">
-              <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner />
-            </div>
           </div>
         </SurfaceCard>
       )}
@@ -676,9 +670,6 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
                 If you changed price, condition, sizes, or notes, share it again so runners see the latest details.
               </p>
-            </div>
-            <div className="shrink-0 rounded-xl border border-white/[0.08] bg-slate-950/55 p-3 lg:w-[460px]">
-              <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner />
             </div>
           </div>
         </SurfaceCard>
@@ -839,6 +830,17 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             )}
           </div>
 
+          <div className="mt-4 lg:hidden">
+            <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner={isOwner} />
+          </div>
+
+          <div className="hidden lg:block">
+            {renderBuyerCtas()}
+            <div className="mt-4">
+              <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner={isOwner} />
+            </div>
+          </div>
+
           {/* Available sizes — shop variant listings only */}
           {shoe.shop_id && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
             <div className="mt-5 rounded-xl border border-white/[0.08] bg-slate-950/55">
@@ -920,7 +922,6 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               </div>
               <div className="mt-3 space-y-2">
                 <ShopTrustPanel shop={shop} />
-                <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner={isOwner} />
                 {!isOwner && shopContactHref && (
                   <a
                     href={shopContactHref}
@@ -960,7 +961,6 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 </Link>
               </div>
               <SellerTrustPanel seller={seller} completedSales={sellerCompletedSales} />
-              <ListingShareActions shoe={shoe} seller={seller} isOwner={isOwner} className="mt-3" />
             </div>
           )}
 
@@ -1035,8 +1035,6 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               </Link>
             </div>
           )}
-
-          {renderBuyerCtas('hidden lg:block')}
 
           {/* Owner actions */}
           {isOwner && (
