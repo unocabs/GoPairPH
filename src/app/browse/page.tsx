@@ -230,7 +230,6 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
       <FirstListingNudge />
       <PageHeader
         title="Browse Running Shoes"
-        subtitle="Running shoes for sale, free pairs, and local deals in one focused place for Central Luzon and NCR runners, with strong roots in Pampanga."
       >
         <Suspense>
           <FilterPanel listingCount={shoes.length} />
