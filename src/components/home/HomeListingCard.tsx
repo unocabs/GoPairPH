@@ -6,6 +6,7 @@ import type { Shoe } from '@/types';
 import type { PersonalizationBadges } from '@/lib/personalization';
 import { SaveListingButton } from '@/components/listings/SaveListingButton';
 import { GreatDealPill } from '@/components/listings/GreatDealPill';
+import { NewPill } from '@/components/listings/NewPill';
 import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
 import { getGreatDealEstimate } from '@/lib/pricing/greatDeal';
@@ -20,6 +21,8 @@ import {
   getListingPath,
   getPublicUrl,
 } from '@/lib/utils';
+
+const NEW_PILL_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 interface HomeListingCardProps {
   shoe: Shoe;
@@ -55,6 +58,7 @@ export function HomeListingCard({
     ? Math.max(0, Math.round(((shoe.srp_php - shoe.price_php) / shoe.srp_php) * 100))
     : 0;
   const greatDeal = getGreatDealEstimate(shoe);
+  const isFresh = Date.now() - new Date(shoe.created_at).getTime() < NEW_PILL_WINDOW_MS;
 
   return (
     <article className="relative flex h-full flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-slate-900/72 shadow-[0_16px_50px_rgba(0,0,0,0.24)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-teal-400/30 hover:shadow-[0_22px_70px_rgba(0,0,0,0.34),0_0_30px_rgba(20,184,166,0.07)]">
@@ -72,6 +76,11 @@ export function HomeListingCard({
           ) : (
             <div className="flex h-full items-center justify-center bg-gradient-to-br from-gray-900 via-gray-900 to-teal-950/40 text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-600">
               No photo
+            </div>
+          )}
+          {isFresh && shoe.status === 'active' && (
+            <div className="absolute left-2 top-2">
+              <NewPill size="sm" />
             </div>
           )}
           {saveCount > 0 && (
