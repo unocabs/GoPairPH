@@ -19,6 +19,15 @@ function isGuestListingDraftResume(path: string): boolean {
   }
 }
 
+function isSavedSearchResume(path: string): boolean {
+  try {
+    const destination = new URL(path, 'https://gopairph.local');
+    return destination.pathname === '/browse' && destination.hash === '#save-search';
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Active sellers use their profile as a lightweight dashboard after sign-in.
  * Any lookup failure deliberately preserves the caller's contextual fallback so
@@ -32,7 +41,7 @@ export async function resolvePostSignInPath(
   // A guest has already completed step 1 and saved the details locally. Keep
   // this explicit continuation ahead of the normal active-seller dashboard
   // redirect so sign-in returns them to photo upload instead of /profile.
-  if (isGuestListingDraftResume(fallbackPath)) return fallbackPath;
+  if (isGuestListingDraftResume(fallbackPath) || isSavedSearchResume(fallbackPath)) return fallbackPath;
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')

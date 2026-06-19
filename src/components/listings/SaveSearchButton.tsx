@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 
 const PENDING_SAVED_SEARCH_KEY = 'gopair_pending_saved_search';
+const SAVE_SEARCH_TIP_DISMISSED_KEY = 'gopair_save_search_tip_dismissed_v1';
+const SAVE_SEARCH_TIP_DISMISSED_EVENT = 'gopair:save-search-tip-dismissed';
 
 interface SavedSearchLite {
   id: string;
@@ -19,7 +21,9 @@ export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
   const [signedIn, setSignedIn] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedKeywords, setSavedKeywords] = useState<Set<string>>(new Set());
-  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState('');
+  const [showTip, setShowTip] = useState(false);
   const canSave = trimmedKeyword.length >= 2;
   const normalizedKeyword = trimmedKeyword.toLowerCase();
   const alreadySaved = savedKeywords.has(normalizedKeyword);
@@ -27,7 +31,7 @@ export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    setMessage(null);
+    setError(null);
 
     fetch('/api/saved-searches')
       .then(async response => {
@@ -58,14 +62,52 @@ export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
   }, []);
 
   useEffect(() => {
-    setMessage(null);
+    setError(null);
+    setAnnouncement('');
   }, [normalizedKeyword]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || loading || !canSave || alreadySaved) return;
+
+    try {
+      if (window.localStorage.getItem(SAVE_SEARCH_TIP_DISMISSED_KEY) !== '1') {
+        setShowTip(true);
+      }
+    } catch {
+      setShowTip(true);
+    }
+
+    const closeTip = () => setShowTip(false);
+    window.addEventListener(SAVE_SEARCH_TIP_DISMISSED_EVENT, closeTip);
+    return () => window.removeEventListener(SAVE_SEARCH_TIP_DISMISSED_EVENT, closeTip);
+  }, [alreadySaved, canSave, loading]);
+
+  function dismissTip() {
+    setShowTip(false);
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(SAVE_SEARCH_TIP_DISMISSED_KEY, '1');
+    } catch {
+      // The current tooltip still closes when storage is unavailable.
+    }
+    window.dispatchEvent(new Event(SAVE_SEARCH_TIP_DISMISSED_EVENT));
+  }
+
+  function clearResumeHash() {
+    if (typeof window === 'undefined' || window.location.hash !== '#save-search') return;
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+  }
 
   function redirectToSignIn() {
     if (typeof window === 'undefined') return;
 
-    window.localStorage.setItem(PENDING_SAVED_SEARCH_KEY, trimmedKeyword);
-    const next = `${window.location.pathname}${window.location.search}`;
+    try {
+      window.localStorage.setItem(PENDING_SAVED_SEARCH_KEY, trimmedKeyword);
+    } catch {
+      // Sign-in can continue, but this browser cannot automatically resume.
+    }
+    dismissTip();
+    const next = `${window.location.pathname}${window.location.search}#save-search`;
     window.location.href = `/auth/sign-in?next=${encodeURIComponent(next)}`;
   }
 
@@ -77,8 +119,9 @@ export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
       return;
     }
 
+    dismissTip();
     setSaving(true);
-    setMessage(null);
+    setError(null);
 
     try {
       const response = await fetch('/api/saved-searches', {
@@ -102,9 +145,10 @@ export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
       }
 
       setSavedKeywords(previous => new Set(previous).add(normalizedKeyword));
-      setMessage('Saved. We’ll notify you for new matches. ✓');
+      setAnnouncement('Search saved. We’ll email you when a new listing matches it.');
+      clearResumeHash();
     } catch (error) {
-      setMessage((error as Error).message);
+      setError((error as Error).message);
     } finally {
       setSaving(false);
     }
@@ -112,12 +156,27 @@ export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (loading || !signedIn || !canSave || alreadySaved || saving) return;
+    if (loading || !signedIn || !canSave || saving) return;
 
-    const pendingKeyword = window.localStorage.getItem(PENDING_SAVED_SEARCH_KEY);
+    let pendingKeyword: string | null = null;
+    try {
+      pendingKeyword = window.localStorage.getItem(PENDING_SAVED_SEARCH_KEY);
+    } catch {
+      return;
+    }
     if (pendingKeyword?.trim().toLowerCase() !== normalizedKeyword) return;
 
-    window.localStorage.removeItem(PENDING_SAVED_SEARCH_KEY);
+    try {
+      window.localStorage.removeItem(PENDING_SAVED_SEARCH_KEY);
+    } catch {
+      // Continue saving even if this browser blocks storage cleanup.
+    }
+    if (alreadySaved) {
+      dismissTip();
+      clearResumeHash();
+      setAnnouncement('This search is already saved.');
+      return;
+    }
     void saveSearch();
   // saveSearch intentionally stays outside deps so this only reacts to auth/search state.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,31 +184,60 @@ export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
 
   if (!canSave || loading) return null;
 
-  if (message) {
-    return (
-      <span className="inline-flex max-w-full items-center rounded-full border border-teal-400/20 bg-teal-400/10 px-2.5 py-1 text-[11px] font-semibold text-teal-100">
-        {message}
-      </span>
-    );
-  }
-
-  if (alreadySaved) {
-    return (
-      <span className="inline-flex items-center rounded-full border border-teal-400/20 bg-teal-400/10 px-2.5 py-1 text-[11px] font-semibold text-teal-100">
-        Saved ✓
-      </span>
-    );
-  }
-
   return (
-    <button
-      type="button"
-      onClick={saveSearch}
-      disabled={saving}
-      className="inline-flex max-w-full items-center gap-1 rounded-full border border-white/[0.08] bg-slate-950/70 px-2.5 py-1 text-[11px] font-semibold text-gray-200 transition-colors hover:border-teal-400/35 hover:text-teal-200 disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      <span className="truncate">Save &quot;{trimmedKeyword}&quot;</span>
-      <span aria-hidden="true">{saving ? '...' : '+'}</span>
-    </button>
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        onClick={saveSearch}
+        disabled={saving || alreadySaved}
+        aria-label={alreadySaved ? `Search saved for ${trimmedKeyword}` : `Save search for ${trimmedKeyword}`}
+        aria-pressed={alreadySaved}
+        title={alreadySaved ? 'Search saved' : 'Save search'}
+        className={`relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:cursor-default ${
+          alreadySaved
+            ? 'border-teal-400/35 bg-teal-500/15 text-teal-200'
+            : 'border-sky-400/30 bg-sky-500/10 text-sky-100 hover:border-sky-300/50 hover:bg-sky-500/20'
+        }`}
+      >
+        {saving ? (
+          <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <circle className="opacity-25" cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" />
+            <path className="opacity-90" fill="currentColor" d="M12 3a9 9 0 0 1 9 9h-3a6 6 0 0 0-6-6V3Z" />
+          </svg>
+        ) : (
+          <svg className="h-[18px] w-[18px]" fill={alreadySaved ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z" />
+          </svg>
+        )}
+      </button>
+
+      {showTip && !alreadySaved && (
+        <span
+          role="dialog"
+          aria-label="About saved search alerts"
+          className="absolute right-0 top-full z-50 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-sky-400/25 bg-slate-900 p-3 pr-9 text-left text-xs leading-5 text-gray-200 shadow-2xl shadow-black/45"
+        >
+          Save this search and we&apos;ll email you when a new listing matches it.
+          <button
+            type="button"
+            onClick={dismissTip}
+            aria-label="Close saved search tip"
+            className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </span>
+      )}
+
+      {error && (
+        <span role="alert" className="absolute right-0 top-full z-40 mt-2 w-56 rounded-lg border border-red-500/25 bg-red-950 px-3 py-2 text-left text-[11px] leading-4 text-red-200 shadow-xl">
+          {error}
+        </span>
+      )}
+
+      <span className="sr-only" aria-live="polite">{announcement}</span>
+    </span>
   );
 }
