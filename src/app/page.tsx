@@ -10,6 +10,7 @@ import { HeroFallback } from '@/components/home/HeroFallback';
 import { FeaturedListing } from '@/components/home/FeaturedListing';
 import { HomeCarousel } from '@/components/home/HomeCarousel';
 import { HomeListingGrid } from '@/components/home/HomeListingGrid';
+import { MobileHeroSearch } from '@/components/home/MobileHeroSearch';
 import { SellShoesChoiceModal } from '@/components/home/SellShoesChoiceModal';
 import { HeroTrackedLink } from '@/components/home/HeroTrackedLink';
 import { FirstListingNudge } from '@/components/listings/FirstListingNudge';
@@ -369,39 +370,15 @@ export default async function HomePage() {
         />
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-gray-950/70 to-transparent pointer-events-none" />
         <div className="relative mx-auto flex max-w-7xl px-4 py-5 sm:px-6 sm:py-10 lg:min-h-[500px] lg:items-center lg:px-8 lg:py-8 xl:min-h-[530px]">
-          <div className="grid w-full gap-4 sm:gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(560px,1.1fr)] lg:items-center lg:gap-8 xl:gap-12">
-            <div className="max-w-xl">
+          <div className="grid min-w-0 w-full gap-4 sm:gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(560px,1.1fr)] lg:items-center lg:gap-8 xl:gap-12">
+            <div className="min-w-0 max-w-xl">
               <div className="mb-4 hidden items-center gap-2 md:flex">
                 <LogoMark size={36} />
                 <span className="rounded-full border border-teal-400/30 bg-teal-400/10 px-3 py-1 text-xs font-semibold text-teal-300 shadow-[0_0_28px_rgba(20,184,166,0.12)] backdrop-blur-sm">
                   Go Pair PH Marketplace
                 </span>
               </div>
-              <form
-                action="/browse"
-                method="get"
-                role="search"
-                className="mb-4 flex h-11 w-full items-center rounded-full border border-white/20 bg-white/95 p-1 shadow-[0_12px_36px_rgba(0,0,0,0.28)] md:hidden"
-              >
-                <label htmlFor="mobile-hero-search" className="sr-only">Search running shoes</label>
-                <input
-                  id="mobile-hero-search"
-                  type="search"
-                  name="q"
-                  autoComplete="off"
-                  placeholder="Search brand or model"
-                  className="h-full min-w-0 flex-1 bg-transparent px-3 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-500"
-                />
-                <button
-                  type="submit"
-                  aria-label="Search running shoes"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-500 text-white shadow-md shadow-teal-500/25 transition-colors hover:bg-teal-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700"
-                >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
-                  </svg>
-                </button>
-              </form>
+              <MobileHeroSearch />
               <h1 className="text-[32px] font-extrabold leading-[1.02] tracking-tight text-gray-100 drop-shadow-[0_16px_36px_rgba(0,0,0,0.45)] sm:text-5xl lg:text-[58px] xl:text-[64px]">
                 Find Your Next<br />
                 <span className="bg-gradient-to-r from-teal-300 via-teal-400 to-cyan-300 bg-clip-text text-transparent">Running Shoes</span>
@@ -411,7 +388,23 @@ export default async function HomePage() {
                 clean listing, then share it to Facebook, Marketplace, Messenger, and
                 running groups.
               </p>
-              <div className="mt-4 grid grid-cols-2 gap-2.5 sm:mt-7 sm:flex sm:gap-3">
+              <div className="mt-4 grid grid-cols-2 gap-2.5 md:hidden">
+                <HeroTrackedLink
+                  href="/listings/new"
+                  action="hero_sell_cta_click"
+                  className="inline-flex min-h-11 min-w-0 items-center justify-center rounded-lg bg-gradient-to-r from-teal-500 to-teal-400 px-2 py-2 text-center text-[11px] font-bold text-white shadow-[0_10px_30px_rgba(20,184,166,0.24)] transition-colors hover:from-teal-400 hover:to-cyan-300 sm:px-3 sm:text-xs"
+                >
+                  Sell Your Shoes
+                </HeroTrackedLink>
+                <HeroTrackedLink
+                  href="/price-guide"
+                  action="hero_price_estimator_cta_click"
+                  className="inline-flex min-h-11 min-w-0 items-center justify-center rounded-lg border border-sky-500/50 bg-sky-700 px-2 py-2 text-center text-[11px] font-bold text-white shadow-lg shadow-sky-500/20 transition-colors hover:bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:px-3 sm:text-xs"
+                >
+                  Check Resale Price
+                </HeroTrackedLink>
+              </div>
+              <div className="mt-7 hidden gap-3 md:flex">
                 <HeroTrackedLink href="/browse" action="hero_marketplace_cta_click" className="min-w-0 sm:inline-flex">
                   <Button size="lg" variant="secondary" className="h-full w-full px-3 py-2 text-xs sm:px-6 sm:py-3 sm:text-base">
                     Browse Running Shoes

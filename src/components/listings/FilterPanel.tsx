@@ -16,8 +16,9 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
   const params = useSearchParams();
   const paramsString = params.toString();
   const hasActiveControls = params.has('type') || params.has('brand') || params.has('condition') || params.has('size') || params.has('size_eu') || params.has('us_size_type') || params.has('q') || params.has('sort');
+  const hasActiveFilters = params.has('type') || params.has('brand') || params.has('condition') || params.has('size') || params.has('size_eu') || params.has('us_size_type') || params.has('sort');
   const currentQuery = params.get('q') ?? '';
-  const [isOpen, setIsOpen] = useState(hasActiveControls);
+  const [isOpen, setIsOpen] = useState(hasActiveFilters);
   const [query, setQuery] = useState(currentQuery);
   const currentSize = params.get('size') ?? params.get('size_eu') ?? '';
   const currentSizeUnit = SIZE_UNITS.some(unit => unit.value === params.get('size_unit'))
@@ -46,6 +47,7 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
   function clearAll() {
     setSize('');
     setQuery('');
+    setIsOpen(false);
     startTransition(() => {
       router.replace('/browse', { scroll: false });
     });
@@ -136,13 +138,20 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
           onSubmit={submitSearch}
           className="flex flex-col gap-2 sm:flex-row lg:flex-1"
         >
-          <input
-            id="browse-search"
-            value={query}
-            onChange={event => setQuery(event.target.value)}
-            placeholder="Search brand or model..."
-            className="min-w-0 flex-1 rounded-lg border border-white/[0.08] bg-slate-950/70 px-4 py-2.5 text-sm text-gray-200 placeholder-gray-600 shadow-inner shadow-black/20 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-          />
+          <div className="relative min-w-0 flex-1">
+            <input
+              id="browse-search"
+              value={query}
+              onChange={event => setQuery(event.target.value)}
+              placeholder="Search brand or model..."
+              className="w-full rounded-lg border border-white/[0.08] bg-slate-950/70 py-2.5 pl-4 pr-12 text-sm text-gray-200 placeholder-gray-600 shadow-inner shadow-black/20 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            />
+            {currentQuery.trim().length >= 2 && (
+              <div className="absolute right-1 top-1/2 z-10 -translate-y-1/2">
+                <SaveSearchButton keyword={currentQuery} />
+              </div>
+            )}
+          </div>
           <button
             type="submit"
             className="hidden rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-500/15 transition-colors hover:bg-teal-400 sm:inline-flex sm:w-auto sm:self-auto"
@@ -153,7 +162,6 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
 
         <div className="hidden items-center gap-3 lg:flex">
           <p className="text-xs text-gray-500">{listingLabel}</p>
-          {currentQuery.trim().length >= 2 && <SaveSearchButton keyword={currentQuery} />}
           {isPending && <p className="text-[11px] text-teal-400">Updating...</p>}
           {hasFilters && (
             <button onClick={clearAll} className="text-xs text-teal-400 transition-colors hover:text-teal-300">
@@ -189,11 +197,6 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
         </button>
         <div className="min-w-0 flex-1 text-right">
           <p className="truncate text-xs text-gray-500">{listingLabel}</p>
-          {currentQuery.trim().length >= 2 && (
-            <div className="mt-1 flex justify-end">
-              <SaveSearchButton keyword={currentQuery} />
-            </div>
-          )}
           {isPending && <p className="mt-0.5 text-[11px] text-teal-400">Updating...</p>}
         </div>
       </div>

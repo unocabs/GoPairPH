@@ -193,10 +193,10 @@ export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
         aria-label={alreadySaved ? `Search saved for ${trimmedKeyword}` : `Save search for ${trimmedKeyword}`}
         aria-pressed={alreadySaved}
         title={alreadySaved ? 'Search saved' : 'Save search'}
-        className={`relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:cursor-default ${
+        className={`relative inline-flex h-10 w-10 shrink-0 items-center justify-center transition-colors focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 disabled:cursor-default ${
           alreadySaved
-            ? 'border-teal-400/35 bg-teal-500/15 text-teal-200'
-            : 'border-sky-400/30 bg-sky-500/10 text-sky-100 hover:border-sky-300/50 hover:bg-sky-500/20'
+            ? 'text-teal-300'
+            : 'text-sky-200 hover:text-sky-100'
         }`}
       >
         {saving ? (
