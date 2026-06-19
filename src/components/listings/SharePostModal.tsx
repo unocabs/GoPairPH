@@ -975,20 +975,20 @@ function BadgeRow({ shoe, isFeatured, isSponsored, size = 'sm' }: { shoe: Shoe; 
   const conditionTone = conditionBadgeTones[shoe.condition];
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: size === 'lg' ? 10 : 8 }}>
-      <span style={{ display: 'inline-flex', alignItems: 'center', borderRadius: 9999, background: listingTone.background, border: `1px solid ${listingTone.border}`, color: listingTone.color, padding: badgePadding, fontSize: badgeFontSize, lineHeight: 1, fontWeight: 750 }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: size === 'lg' ? 10 : 8 }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', flex: '0 0 auto', whiteSpace: 'nowrap', boxSizing: 'border-box', borderRadius: 9999, background: listingTone.background, border: `1px solid ${listingTone.border}`, color: listingTone.color, padding: badgePadding, fontSize: badgeFontSize, lineHeight: 1, fontWeight: 750 }}>
         {LISTING_TYPE_LABELS[shoe.listing_type]}
       </span>
-      <span style={{ display: 'inline-flex', alignItems: 'center', borderRadius: 9999, background: conditionTone.background, border: `1px solid ${conditionTone.border}`, color: conditionTone.color, padding: badgePadding, fontSize: badgeFontSize, lineHeight: 1, fontWeight: 750 }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', flex: '0 0 auto', whiteSpace: 'nowrap', boxSizing: 'border-box', borderRadius: 9999, background: conditionTone.background, border: `1px solid ${conditionTone.border}`, color: conditionTone.color, padding: badgePadding, fontSize: badgeFontSize, lineHeight: 1, fontWeight: 750 }}>
         {CONDITIONS[shoe.condition]}
       </span>
       {isFeatured && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 9999, background: 'rgba(20, 184, 166, 0.15)', border: '1px solid rgba(20, 184, 166, 0.4)', color: '#5eead4', padding: badgePadding, fontSize: badgeFontSize, fontWeight: 700 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', flex: '0 0 auto', whiteSpace: 'nowrap', boxSizing: 'border-box', gap: 6, borderRadius: 9999, background: 'rgba(20, 184, 166, 0.15)', border: '1px solid rgba(20, 184, 166, 0.4)', color: '#5eead4', padding: badgePadding, fontSize: badgeFontSize, lineHeight: 1, fontWeight: 700 }}>
           ★ Featured
         </span>
       )}
       {isSponsored && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 9999, background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#fcd34d', padding: badgePadding, fontSize: badgeFontSize, fontWeight: 700 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', flex: '0 0 auto', whiteSpace: 'nowrap', boxSizing: 'border-box', gap: 6, borderRadius: 9999, background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#fcd34d', padding: badgePadding, fontSize: badgeFontSize, lineHeight: 1, fontWeight: 700 }}>
           ✦ Top Pick
         </span>
       )}
