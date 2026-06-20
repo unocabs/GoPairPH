@@ -45,34 +45,144 @@ function waitForNextPaint(): Promise<void> {
   });
 }
 
-async function waitForRenderedImages(root: HTMLElement): Promise<void> {
+function createAbortError(): Error {
+  const error = new Error('Image loading cancelled');
+  error.name = 'AbortError';
+  return error;
+}
+
+function waitForImageElement(image: HTMLImageElement, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+
+    function cleanup() {
+      image.removeEventListener('load', onLoad);
+      image.removeEventListener('error', onError);
+      signal?.removeEventListener('abort', onAbort);
+    }
+
+    function finish(callback: () => void) {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      callback();
+    }
+
+    function onAbort() {
+      finish(() => reject(createAbortError()));
+    }
+
+    function onError() {
+      finish(() => reject(new Error('An image could not be decoded.')));
+    }
+
+    async function verify() {
+      try {
+        if (typeof image.decode === 'function') await image.decode();
+        if (signal?.aborted) throw createAbortError();
+        if (image.naturalWidth <= 0 || image.naturalHeight <= 0) {
+          throw new Error('An image finished loading without visible dimensions.');
+        }
+        finish(() => resolve());
+      } catch (error) {
+        finish(() => reject(error));
+      }
+    }
+
+    function onLoad() {
+      void verify();
+    }
+
+    if (signal?.aborted) {
+      onAbort();
+      return;
+    }
+    signal?.addEventListener('abort', onAbort, { once: true });
+    image.addEventListener('load', onLoad, { once: true });
+    image.addEventListener('error', onError, { once: true });
+
+    if (image.complete) void verify();
+  });
+}
+
+async function waitForRenderedImages(root: HTMLElement, requireHero: boolean, signal: AbortSignal): Promise<void> {
   const images = Array.from(root.querySelectorAll('img'));
   await Promise.all(
     images.map(async image => {
       if (!image.currentSrc && !image.src) return;
-      if (!image.complete) {
-        await new Promise<void>(resolve => {
-          image.addEventListener('load', () => resolve(), { once: true });
-          image.addEventListener('error', () => resolve(), { once: true });
-        });
-      }
-      if (typeof image.decode === 'function') {
-        await image.decode().catch(() => undefined);
-      }
+      await waitForImageElement(image, signal);
     }),
   );
+
+  if (requireHero) {
+    const hero = root.querySelector<HTMLImageElement>('img[data-share-hero="true"]');
+    if (!hero || hero.naturalWidth <= 0 || hero.naturalHeight <= 0) {
+      throw new Error('The shoe photo is not ready to render.');
+    }
+  }
 }
 
-async function urlToDataUrl(url: string): Promise<string> {
-  const res = await fetch(url, { mode: 'cors' });
+async function urlToDataUrl(url: string, signal: AbortSignal, cache: RequestCache = 'default'): Promise<string> {
+  const res = await fetch(url, { mode: 'cors', signal, cache });
   if (!res.ok) throw new Error(`Failed to fetch image (${res.status})`);
+  const contentType = res.headers.get('content-type') ?? '';
+  if (contentType && !contentType.toLowerCase().startsWith('image/')) {
+    throw new Error('Fetched asset is not an image.');
+  }
   const blob = await res.blob();
-  return await new Promise<string>((resolve, reject) => {
+  if (!blob.size || (blob.type && !blob.type.toLowerCase().startsWith('image/'))) {
+    throw new Error('Fetched image is empty or invalid.');
+  }
+  const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error ?? new Error('FileReader failed'));
+    let settled = false;
+
+    function cleanup() {
+      signal.removeEventListener('abort', onAbort);
+    }
+    function finish(callback: () => void) {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      callback();
+    }
+    function onAbort() {
+      if (reader.readyState === FileReader.LOADING) reader.abort();
+      finish(() => reject(createAbortError()));
+    }
+
+    signal.addEventListener('abort', onAbort, { once: true });
+    reader.onload = () => finish(() => resolve(reader.result as string));
+    reader.onerror = () => finish(() => reject(reader.error ?? new Error('FileReader failed')));
+    reader.onabort = () => finish(() => reject(createAbortError()));
     reader.readAsDataURL(blob);
   });
+  if (!dataUrl.startsWith('data:image/')) throw new Error('Image conversion produced invalid data.');
+
+  const decoded = new Image();
+  decoded.src = dataUrl;
+  await waitForImageElement(decoded, signal);
+  return dataUrl;
+}
+
+async function loadRequiredHeroDataUrl(transformedUrl: string, originalUrl: string, signal: AbortSignal): Promise<string> {
+  const attempts: Array<{ url: string; cache: RequestCache }> = [
+    { url: transformedUrl, cache: 'default' },
+    { url: transformedUrl, cache: 'reload' },
+    { url: originalUrl, cache: 'reload' },
+  ];
+  let lastError: unknown = new Error('Shoe photo could not be loaded.');
+
+  for (const attempt of attempts) {
+    if (signal.aborted) throw createAbortError();
+    try {
+      return await urlToDataUrl(attempt.url, signal, attempt.cache);
+    } catch (error) {
+      if ((error as Error)?.name === 'AbortError') throw error;
+      lastError = error;
+    }
+  }
+  throw lastError;
 }
 
 export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, facebookCompleted = false, onFacebookGroupClick, onDownloaded }: SharePostModalProps) {
@@ -99,6 +209,7 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImg = shoe.shoe_images?.find(i => i.view_type === 'top') ?? shoe.shoe_images?.[0];
   const heroUrl = topImg ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.shareHero) : null;
+  const originalHeroUrl = topImg ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images') : null;
   const thumbnailImageUrls = useMemo(
     () => (shoe.shoe_images ?? [])
       .slice()
@@ -138,33 +249,53 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
   // CORS issue), fall back to null so the visual placeholder renders
   // instead of a broken <img>.
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
+    const { signal } = controller;
     setImagesReady(false);
     setHeroSrc(null);
     setIdentitySrc(null);
     setGallerySrcs([]);
     setPngDataUrl(null);
     setError(null);
-    Promise.all([
-      heroUrl ? urlToDataUrl(heroUrl).catch(() => null) : Promise.resolve(null),
-      identityImageUrl ? urlToDataUrl(identityImageUrl).catch(() => null) : Promise.resolve(null),
-      Promise.all(thumbnailImageUrls.map(url => urlToDataUrl(url).catch(() => null))),
-    ]).then(([hero, identity, gallery]) => {
-      if (cancelled) return;
-      setHeroSrc(hero);
-      setIdentitySrc(identity);
-      setGallerySrcs(gallery.filter((src): src is string => Boolean(src)));
-      setImagesReady(true);
-    });
+    async function loadAssets() {
+      try {
+        const [hero, identity, gallery] = await Promise.all([
+          heroUrl && originalHeroUrl
+            ? loadRequiredHeroDataUrl(heroUrl, originalHeroUrl, signal)
+            : Promise.resolve(null),
+          identityImageUrl ? urlToDataUrl(identityImageUrl, signal).catch(() => null) : Promise.resolve(null),
+          Promise.all(thumbnailImageUrls.map(url => urlToDataUrl(url, signal).catch(() => null))),
+        ]);
+        if (signal.aborted) return;
+        setHeroSrc(hero);
+        setIdentitySrc(identity);
+        setGallerySrcs(gallery.filter((src): src is string => Boolean(src)));
+        setImagesReady(true);
+      } catch (assetError) {
+        if (signal.aborted || (assetError as Error)?.name === 'AbortError') return;
+        setHeroSrc(null);
+        setImagesReady(false);
+        setError('Shoe photo could not load. Tap Reload.');
+        trackMarketplaceAction('share_post_asset_load_failed', {
+          listing_id: shoe.id,
+          listing_type: shoe.listing_type,
+          asset: 'hero',
+          format,
+        });
+      }
+    }
+
+    void loadAssets();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
-  }, [heroUrl, identityImageUrl, thumbnailImageUrlKey, thumbnailImageUrls]);
+  }, [format, heroUrl, identityImageUrl, originalHeroUrl, renderAttempt, shoe.id, shoe.listing_type, thumbnailImageUrlKey, thumbnailImageUrls]);
 
   // Render the card to PNG once images are ready.
   useEffect(() => {
     if (!imagesReady || !cardRef.current) return;
-    let cancelled = false;
+    const controller = new AbortController();
+    const { signal } = controller;
     const node = cardRef.current;
 
     async function renderShareImage() {
@@ -172,11 +303,13 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
       setError(null);
 
       await waitForNextPaint();
-      if (cancelled) return;
-      await waitForRenderedImages(node);
-      if (cancelled) return;
+      if (signal.aborted) return;
+      await document.fonts.ready;
+      if (signal.aborted) return;
+      await waitForRenderedImages(node, Boolean(topImg), signal);
+      if (signal.aborted) return;
       await waitForNextPaint();
-      if (cancelled) return;
+      if (signal.aborted) return;
 
       const url = await htmlToImage.toPng(node, {
         pixelRatio: 1,
@@ -185,7 +318,7 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
         cacheBust: true,
       });
 
-      if (cancelled) return;
+      if (signal.aborted) return;
       if (!url || !url.startsWith('data:image')) {
         setError('Could not generate share image');
         return;
@@ -195,15 +328,15 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
 
     renderShareImage().catch(err => {
       console.error('SharePost: render failed', err);
-      if (cancelled) return;
+      if (signal.aborted || (err as Error)?.name === 'AbortError') return;
       const e = err as Error;
       setError(e?.message || e?.name || 'Could not generate share image');
     });
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
-  }, [cardH, cardW, format, gallerySrcs, heroSrc, identitySrc, imagesReady, renderAttempt]);
+  }, [cardH, cardW, format, gallerySrcs, heroSrc, identitySrc, imagesReady, topImg]);
 
   function buildFilename(): string {
     return `${shoe.brand}-${shoe.model}-gopairph.png`
@@ -597,6 +730,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
             src={heroSrc}
             alt={formatListingName(shoe.brand, shoe.model)}
             crossOrigin="anonymous"
+            data-share-hero="true"
             style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
           />
         ) : (
@@ -735,6 +869,7 @@ const VerticalShareCard = forwardRef<HTMLDivElement, VerticalShareCardProps>(fun
                 src={heroSrc}
                 alt={listingTitle}
                 crossOrigin="anonymous"
+                data-share-hero="true"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
               />
             ) : (
