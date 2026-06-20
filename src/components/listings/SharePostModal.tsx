@@ -122,18 +122,8 @@ async function waitForRenderedImages(root: HTMLElement, requireHero: boolean, si
   }
 }
 
-async function urlToDataUrl(url: string, signal: AbortSignal, cache: RequestCache = 'default'): Promise<string> {
-  const res = await fetch(url, { mode: 'cors', signal, cache });
-  if (!res.ok) throw new Error(`Failed to fetch image (${res.status})`);
-  const contentType = res.headers.get('content-type') ?? '';
-  if (contentType && !contentType.toLowerCase().startsWith('image/')) {
-    throw new Error('Fetched asset is not an image.');
-  }
-  const blob = await res.blob();
-  if (!blob.size || (blob.type && !blob.type.toLowerCase().startsWith('image/'))) {
-    throw new Error('Fetched image is empty or invalid.');
-  }
-  const dataUrl = await new Promise<string>((resolve, reject) => {
+async function blobToDataUrl(blob: Blob, signal: AbortSignal): Promise<string> {
+  return await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     let settled = false;
 
@@ -157,12 +147,68 @@ async function urlToDataUrl(url: string, signal: AbortSignal, cache: RequestCach
     reader.onabort = () => finish(() => reject(createAbortError()));
     reader.readAsDataURL(blob);
   });
+}
+
+async function convertDataUrlToPng(dataUrl: string, signal: AbortSignal): Promise<string> {
+  if (dataUrl.startsWith('data:image/png')) return dataUrl;
+
+  const image = new Image();
+  image.src = dataUrl;
+  await waitForImageElement(image, signal);
+  if (signal.aborted) throw createAbortError();
+
+  const canvas = document.createElement('canvas');
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Could not prepare the shoe image for Safari.');
+  context.drawImage(image, 0, 0);
+
+  const pngBlob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(blob => {
+      canvas.width = 0;
+      canvas.height = 0;
+      if (signal.aborted) {
+        reject(createAbortError());
+      } else if (blob) {
+        resolve(blob);
+      } else {
+        reject(new Error('Could not convert the shoe image to PNG.'));
+      }
+    }, 'image/png');
+  });
+  const pngDataUrl = await blobToDataUrl(pngBlob, signal);
+  if (!pngDataUrl.startsWith('data:image/png')) throw new Error('PNG conversion produced invalid data.');
+
+  const decodedPng = new Image();
+  decodedPng.src = pngDataUrl;
+  await waitForImageElement(decodedPng, signal);
+  return pngDataUrl;
+}
+
+async function urlToDataUrl(
+  url: string,
+  signal: AbortSignal,
+  cache: RequestCache = 'default',
+  normalizeToPng = false,
+): Promise<string> {
+  const res = await fetch(url, { mode: 'cors', signal, cache });
+  if (!res.ok) throw new Error(`Failed to fetch image (${res.status})`);
+  const contentType = res.headers.get('content-type') ?? '';
+  if (contentType && !contentType.toLowerCase().startsWith('image/')) {
+    throw new Error('Fetched asset is not an image.');
+  }
+  const blob = await res.blob();
+  if (!blob.size || (blob.type && !blob.type.toLowerCase().startsWith('image/'))) {
+    throw new Error('Fetched image is empty or invalid.');
+  }
+  const dataUrl = await blobToDataUrl(blob, signal);
   if (!dataUrl.startsWith('data:image/')) throw new Error('Image conversion produced invalid data.');
 
   const decoded = new Image();
   decoded.src = dataUrl;
   await waitForImageElement(decoded, signal);
-  return dataUrl;
+  return normalizeToPng ? await convertDataUrlToPng(dataUrl, signal) : dataUrl;
 }
 
 async function loadRequiredHeroDataUrl(transformedUrl: string, originalUrl: string, signal: AbortSignal): Promise<string> {
@@ -176,7 +222,7 @@ async function loadRequiredHeroDataUrl(transformedUrl: string, originalUrl: stri
   for (const attempt of attempts) {
     if (signal.aborted) throw createAbortError();
     try {
-      return await urlToDataUrl(attempt.url, signal, attempt.cache);
+      return await urlToDataUrl(attempt.url, signal, attempt.cache, true);
     } catch (error) {
       if ((error as Error)?.name === 'AbortError') throw error;
       lastError = error;
@@ -264,7 +310,7 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
             ? loadRequiredHeroDataUrl(heroUrl, originalHeroUrl, signal)
             : Promise.resolve(null),
           identityImageUrl ? urlToDataUrl(identityImageUrl, signal).catch(() => null) : Promise.resolve(null),
-          Promise.all(thumbnailImageUrls.map(url => urlToDataUrl(url, signal).catch(() => null))),
+          Promise.all(thumbnailImageUrls.map(url => urlToDataUrl(url, signal, 'default', true).catch(() => null))),
         ]);
         if (signal.aborted) return;
         setHeroSrc(hero);

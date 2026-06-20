@@ -38,12 +38,17 @@ export function ListingShareActions({
   onImageDownloaded,
   onFacebookGroupClick,
 }: ListingShareActionsProps) {
-  const [copiedMessage, setCopiedMessage] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [kitOpen, setKitOpen] = useState(defaultOpen);
   const [campaign, setCampaign] = useState<ShareCampaignSummary | null>(null);
   const [resultsLoading, setResultsLoading] = useState(false);
   const [copyPending, setCopyPending] = useState(false);
+  const [captionModalOpen, setCaptionModalOpen] = useState(false);
+  const [captionDraft, setCaptionDraft] = useState('');
+  const [captionTrackingStarted, setCaptionTrackingStarted] = useState(false);
+  const [captionCopying, setCaptionCopying] = useState(false);
+  const [captionCopyError, setCaptionCopyError] = useState<string | null>(null);
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [trackingWarning, setTrackingWarning] = useState<string | null>(null);
   const [captionCompleted, setCaptionCompleted] = useState(false);
   const [imageCompleted, setImageCompleted] = useState(false);
@@ -99,7 +104,7 @@ export function ListingShareActions({
     setShareOpen(false);
   }
 
-  async function copyText(textToCopy: string, successMessage: string) {
+  async function copyText(textToCopy: string) {
     try {
       await navigator.clipboard.writeText(textToCopy);
     } catch {
@@ -107,18 +112,22 @@ export function ListingShareActions({
       ta.value = textToCopy;
       document.body.appendChild(ta);
       ta.select();
-      document.execCommand('copy');
+      const copied = document.execCommand('copy');
       document.body.removeChild(ta);
+      if (!copied) throw new Error('Clipboard copy failed');
     }
-    setCopiedMessage(successMessage);
-    setTimeout(() => setCopiedMessage(null), 3000);
   }
 
-  async function handleCopyCaption() {
+  async function openCaptionPreview() {
     if (copyPending) return;
+    const regularUrl = `${window.location.origin}${listingPath}`;
+    setCaptionDraft(buildListingCaption(shoe, regularUrl));
+    setCaptionTrackingStarted(false);
+    setCaptionCopyError(null);
+    setCaptionModalOpen(true);
     setCopyPending(true);
     setTrackingWarning(null);
-    let url = `${window.location.origin}${listingPath}`;
+    let url = regularUrl;
     let trackingStarted = false;
 
     if (isOwner) {
@@ -140,30 +149,37 @@ export function ListingShareActions({
         });
         trackingStarted = true;
       } catch {
-        setTrackingWarning('Caption copied with the regular listing link. Share results are unavailable this time.');
+        setTrackingWarning('Share results are unavailable. The regular listing link is ready to copy.');
       }
     }
 
+    setCaptionDraft(buildListingCaption(shoe, url));
+    setCaptionTrackingStarted(trackingStarted);
+    setCopyPending(false);
+  }
+
+  async function copyCaptionFromPreview() {
+    if (captionCopying || copyPending || !captionDraft.trim()) return;
+    setCaptionCopying(true);
+    setCaptionCopyError(null);
     try {
-      await copyText(
-        buildListingCaption(shoe, url),
-        isOwner
-          ? trackingStarted
-            ? 'FB caption copied. Share results will track visits from this link for 7 days.'
-            : 'FB caption copied. Paste it with your listing image.'
-          : 'Caption copied.'
-      );
+      await copyText(captionDraft);
       trackMarketplaceAction('copy_share_caption', {
         listing_id: shoe.id,
         surface: 'listing_detail_share_kit',
         is_owner: isOwner,
-        tracking_started: trackingStarted,
+        tracking_started: captionTrackingStarted,
       });
       if (isOwner) void recordListingShareMetric(shoe.id, 'caption_copy');
       setCaptionCompleted(true);
       onCaptionCopied?.();
+      setCaptionModalOpen(false);
+      setShowCopySuccess(true);
+      window.setTimeout(() => setShowCopySuccess(false), 2000);
+    } catch {
+      setCaptionCopyError('Could not copy the caption. Please try again.');
     } finally {
-      setCopyPending(false);
+      setCaptionCopying(false);
     }
   }
 
@@ -216,7 +232,7 @@ export function ListingShareActions({
         <div className="overflow-hidden rounded-xl border border-white/[0.08] bg-slate-950/55">
           <button
             type="button"
-            onClick={handleCopyCaption}
+            onClick={() => void openCaptionPreview()}
             disabled={copyPending}
             className="flex min-h-[4.25rem] w-full items-center gap-3 border-b border-white/[0.06] px-3 py-2.5 text-left text-sm text-gray-200 transition-colors hover:bg-slate-900 disabled:cursor-wait disabled:opacity-70"
           >
@@ -272,12 +288,6 @@ export function ListingShareActions({
         </div>
       )}
 
-      {copiedMessage && (
-        <p className="rounded-lg border border-green-800 bg-green-950 px-3 py-2 text-xs text-green-300">
-          {copiedMessage}
-        </p>
-      )}
-
       {trackingWarning && (
         <p className="rounded-lg border border-amber-800 bg-amber-950 px-3 py-2 text-xs text-amber-200">
           {trackingWarning}
@@ -300,6 +310,107 @@ export function ListingShareActions({
         document.body,
       )}
 
+      {captionModalOpen && typeof window !== 'undefined' && createPortal(
+        <CaptionPreviewModal
+          caption={captionDraft}
+          preparing={copyPending}
+          copying={captionCopying}
+          error={captionCopyError}
+          onCaptionChange={setCaptionDraft}
+          onClose={() => setCaptionModalOpen(false)}
+          onCopy={() => void copyCaptionFromPreview()}
+        />,
+        document.body,
+      )}
+
+      {showCopySuccess && typeof window !== 'undefined' && createPortal(
+        <div className="pointer-events-none fixed inset-0 z-[120] flex items-center justify-center px-4" role="status" aria-live="polite">
+          <div className="inline-flex items-center gap-2 rounded-full border border-teal-300/25 bg-slate-950/90 px-4 py-2.5 text-sm font-semibold text-teal-100 shadow-2xl shadow-black/35 backdrop-blur">
+            <svg className="h-5 w-5 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" strokeWidth="1.8" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="m8 12 2.5 2.5L16.5 8.5" />
+            </svg>
+            Copied Caption
+          </div>
+        </div>,
+        document.body,
+      )}
+
+    </div>
+  );
+}
+
+function CaptionPreviewModal({
+  caption,
+  preparing,
+  copying,
+  error,
+  onCaptionChange,
+  onClose,
+  onCopy,
+}: {
+  caption: string;
+  preparing: boolean;
+  copying: boolean;
+  error: string | null;
+  onCaptionChange: (caption: string) => void;
+  onClose: () => void;
+  onCopy: () => void;
+}) {
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape' && !copying) onClose();
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [copying, onClose]);
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" onClick={() => { if (!copying) onClose(); }}>
+      <section
+        className="w-full max-w-lg rounded-2xl border border-white/[0.1] bg-slate-950 p-4 shadow-2xl shadow-black/50 sm:p-5"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="facebook-caption-preview-title"
+        onClick={event => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <h2 id="facebook-caption-preview-title" className="text-lg font-bold text-gray-100">Facebook Caption Preview</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={copying}
+            aria-label="Close caption preview"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-white/[0.06] hover:text-gray-100 disabled:opacity-50"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <label htmlFor="facebook-caption-preview" className="mt-3 block text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Caption</label>
+        <textarea
+          id="facebook-caption-preview"
+          value={caption}
+          onChange={event => onCaptionChange(event.target.value)}
+          disabled={preparing || copying}
+          rows={12}
+          className="mt-2 w-full resize-y rounded-xl border border-white/[0.1] bg-slate-900 px-3 py-3 text-base leading-6 text-gray-100 outline-none transition-colors placeholder:text-gray-600 focus:border-teal-400/50 focus:ring-2 focus:ring-teal-400/15 disabled:cursor-wait disabled:opacity-65 sm:text-sm"
+          aria-describedby={error ? 'facebook-caption-copy-error' : undefined}
+        />
+        {preparing && <p className="mt-2 text-xs text-gray-500" aria-live="polite">Preparing your tracked listing link…</p>}
+        {error && <p id="facebook-caption-copy-error" className="mt-2 text-xs text-red-300" role="alert">{error}</p>}
+
+        <button
+          type="button"
+          onClick={onCopy}
+          disabled={preparing || copying || !caption.trim()}
+          className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          {copying ? 'Copying…' : 'Copy Caption'}
+        </button>
+      </section>
     </div>
   );
 }
