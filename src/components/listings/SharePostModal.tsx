@@ -149,8 +149,8 @@ async function blobToDataUrl(blob: Blob, signal: AbortSignal): Promise<string> {
   });
 }
 
-async function convertDataUrlToPng(dataUrl: string, signal: AbortSignal): Promise<string> {
-  if (dataUrl.startsWith('data:image/png')) return dataUrl;
+async function convertDataUrlToShareJpeg(dataUrl: string, signal: AbortSignal): Promise<string> {
+  if (dataUrl.startsWith('data:image/jpeg') || dataUrl.startsWith('data:image/jpg')) return dataUrl;
 
   const image = new Image();
   image.src = dataUrl;
@@ -162,9 +162,11 @@ async function convertDataUrlToPng(dataUrl: string, signal: AbortSignal): Promis
   canvas.height = image.naturalHeight;
   const context = canvas.getContext('2d');
   if (!context) throw new Error('Could not prepare the shoe image for Safari.');
+  context.fillStyle = '#0f172a';
+  context.fillRect(0, 0, canvas.width, canvas.height);
   context.drawImage(image, 0, 0);
 
-  const pngBlob = await new Promise<Blob>((resolve, reject) => {
+  const jpegBlob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(blob => {
       canvas.width = 0;
       canvas.height = 0;
@@ -173,24 +175,24 @@ async function convertDataUrlToPng(dataUrl: string, signal: AbortSignal): Promis
       } else if (blob) {
         resolve(blob);
       } else {
-        reject(new Error('Could not convert the shoe image to PNG.'));
+        reject(new Error('Could not prepare the shoe image for sharing.'));
       }
-    }, 'image/png');
+    }, 'image/jpeg', 0.84);
   });
-  const pngDataUrl = await blobToDataUrl(pngBlob, signal);
-  if (!pngDataUrl.startsWith('data:image/png')) throw new Error('PNG conversion produced invalid data.');
+  const jpegDataUrl = await blobToDataUrl(jpegBlob, signal);
+  if (!jpegDataUrl.startsWith('data:image/jpeg')) throw new Error('Share image conversion produced invalid data.');
 
-  const decodedPng = new Image();
-  decodedPng.src = pngDataUrl;
-  await waitForImageElement(decodedPng, signal);
-  return pngDataUrl;
+  const decodedJpeg = new Image();
+  decodedJpeg.src = jpegDataUrl;
+  await waitForImageElement(decodedJpeg, signal);
+  return jpegDataUrl;
 }
 
 async function urlToDataUrl(
   url: string,
   signal: AbortSignal,
   cache: RequestCache = 'default',
-  normalizeToPng = false,
+  normalizeForShare = false,
 ): Promise<string> {
   const res = await fetch(url, { mode: 'cors', signal, cache });
   if (!res.ok) throw new Error(`Failed to fetch image (${res.status})`);
@@ -208,7 +210,7 @@ async function urlToDataUrl(
   const decoded = new Image();
   decoded.src = dataUrl;
   await waitForImageElement(decoded, signal);
-  return normalizeToPng ? await convertDataUrlToPng(dataUrl, signal) : dataUrl;
+  return normalizeForShare ? await convertDataUrlToShareJpeg(dataUrl, signal) : dataUrl;
 }
 
 async function loadRequiredHeroDataUrl(transformedUrl: string, originalUrl: string, signal: AbortSignal): Promise<string> {
@@ -361,7 +363,7 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
         pixelRatio: 1,
         width: cardW,
         height: cardH,
-        cacheBust: true,
+        cacheBust: false,
       });
 
       if (signal.aborted) return;
@@ -441,10 +443,13 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
       <div
         className="w-full max-w-3xl rounded-xl sm:rounded-2xl bg-gray-900 border border-gray-700 shadow-2xl flex flex-col max-h-[96vh] sm:max-h-[92vh]"
         onClick={e => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="share-post-modal-title"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 sm:px-5 sm:py-3 border-b border-gray-800">
-          <h2 className="text-sm font-semibold text-gray-100">Post This on Facebook</h2>
+          <h2 id="share-post-modal-title" className="text-sm font-semibold text-gray-100">Post This on Facebook</h2>
           <div className="flex items-center gap-1">
             {/* Download button — desktop only. Mobile users long-press the image. */}
             <button
@@ -775,7 +780,6 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
           <img
             src={heroSrc}
             alt={formatListingName(shoe.brand, shoe.model)}
-            crossOrigin="anonymous"
             data-share-hero="true"
             style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
           />
@@ -914,7 +918,6 @@ const VerticalShareCard = forwardRef<HTMLDivElement, VerticalShareCardProps>(fun
               <img
                 src={heroSrc}
                 alt={listingTitle}
-                crossOrigin="anonymous"
                 data-share-hero="true"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
               />
@@ -938,7 +941,6 @@ const VerticalShareCard = forwardRef<HTMLDivElement, VerticalShareCardProps>(fun
               <img
                 src={soleDetailSrc}
                 alt={`${listingTitle} detail photo`}
-                crossOrigin="anonymous"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
               />
             </div>
@@ -1113,7 +1115,6 @@ function IdentityBlock({
           alt={identityName}
           width={resolvedAvatarSize}
           height={resolvedAvatarSize}
-          crossOrigin="anonymous"
           style={{ width: resolvedAvatarSize, height: resolvedAvatarSize, borderRadius: compact ? 14 : 20, objectFit: 'cover', border: '1px solid #374151', background: '#020617' }}
         />
       ) : (

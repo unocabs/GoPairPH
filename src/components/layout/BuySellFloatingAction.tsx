@@ -129,6 +129,7 @@ function getAnalyticsContext(pathname: string | null) {
 export function BuySellFloatingAction() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
@@ -137,6 +138,27 @@ export function BuySellFloatingAction() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    function updateModalState() {
+      const nextModalOpen = Boolean(document.querySelector('[role="dialog"][aria-modal="true"]'));
+      setModalOpen(nextModalOpen);
+      if (nextModalOpen) {
+        setOpen(false);
+        setSelectedQuestionId(null);
+      }
+    }
+
+    updateModalState();
+    const observer = new MutationObserver(updateModalState);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['role', 'aria-modal'],
+    });
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -228,7 +250,7 @@ export function BuySellFloatingAction() {
     });
   }
 
-  if (!mounted || shouldHide(pathname)) return null;
+  if (!mounted || modalOpen || shouldHide(pathname)) return null;
 
   return createPortal(
     <div
