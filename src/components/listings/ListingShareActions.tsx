@@ -294,10 +294,11 @@ export function ListingShareActions({
         </p>
       )}
 
-      {shareOpen && typeof window !== 'undefined' && createPortal(
+      {kitOpen && typeof window !== 'undefined' && createPortal(
         <SharePostModal
           shoe={shoe}
           seller={seller ?? null}
+          open={shareOpen}
           onClose={closeShareModal}
           onDownloadRecorded={() => {
             setImageCompleted(true);

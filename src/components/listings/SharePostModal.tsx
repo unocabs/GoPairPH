@@ -13,6 +13,7 @@ import type { Condition, ListingType, Shoe, Profile, Shop } from '@/types';
 interface SharePostModalProps {
   shoe: Shoe;
   seller: Profile | null;
+  open?: boolean;
   onClose: () => void;
   onDownloadRecorded?: () => void;
   facebookCompleted?: boolean;
@@ -25,6 +26,17 @@ const CARD_H = 675;
 const MOBILE_CARD_W = 1080;
 const MOBILE_CARD_H = 1350;
 type ShareFormat = 'mobile' | 'desktop';
+type PreparationPhase = 'idle' | 'loading_assets' | 'warming' | 'ready' | 'rendering' | 'success' | 'error';
+
+const INITIAL_PHASES: Record<ShareFormat, PreparationPhase> = {
+  mobile: 'idle',
+  desktop: 'idle',
+};
+
+const INITIAL_WARMED_FORMATS: Record<ShareFormat, boolean> = {
+  mobile: false,
+  desktop: false,
+};
 
 function truncateText(text: string | null | undefined, maxChars: number): string {
   const normalized = (text ?? '').replace(/\s+/g, ' ').trim();
@@ -233,26 +245,31 @@ async function loadRequiredHeroDataUrl(transformedUrl: string, originalUrl: stri
   throw lastError;
 }
 
-export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, facebookCompleted = false, onFacebookGroupClick, onDownloaded }: SharePostModalProps) {
+export function SharePostModal({ shoe, seller, open = true, onClose, onDownloadRecorded, facebookCompleted = false, onFacebookGroupClick, onDownloaded }: SharePostModalProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [heroSrc, setHeroSrc] = useState<string | null>(null);
   const [identitySrc, setIdentitySrc] = useState<string | null>(null);
   const [gallerySrcs, setGallerySrcs] = useState<string[]>([]);
   const [imagesReady, setImagesReady] = useState(false);
-  const [pngDataUrl, setPngDataUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [pngDataUrls, setPngDataUrls] = useState<Partial<Record<ShareFormat, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<ShareFormat, string>>>({});
+  const [phases, setPhases] = useState<Record<ShareFormat, PreparationPhase>>(INITIAL_PHASES);
+  const [warmedFormats, setWarmedFormats] = useState<Record<ShareFormat, boolean>>(INITIAL_WARMED_FORMATS);
   const [format, setFormat] = useState<ShareFormat>('mobile');
   const [renderAttempt, setRenderAttempt] = useState(0);
   const [showSaveHint, setShowSaveHint] = useState(true);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastImageIntentAtRef = useRef(0);
+  const reloadFormatRef = useRef<ShareFormat | null>(null);
+  const loadedShoeIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (!open) return;
     trackMarketplaceAction('share_post_open', {
       listing_id: shoe.id,
       listing_type: shoe.listing_type,
     });
-  }, [shoe.id, shoe.listing_type]);
+  }, [open, shoe.id, shoe.listing_type]);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImg = shoe.shoe_images?.find(i => i.view_type === 'top') ?? shoe.shoe_images?.[0];
@@ -274,6 +291,8 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
     : seller?.avatar_url ?? null;
   const cardW = format === 'mobile' ? MOBILE_CARD_W : CARD_W;
   const cardH = format === 'mobile' ? MOBILE_CARD_H : CARD_H;
+  const pngDataUrl = pngDataUrls[format] ?? null;
+  const error = errors[format] ?? null;
 
   const now = Date.now();
   const isFeatured = !!shoe.featured_until && new Date(shoe.featured_until).getTime() > now;
@@ -281,12 +300,13 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
 
   // Esc to close.
   useEffect(() => {
+    if (!open) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
     }
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, open]);
 
   useEffect(() => () => {
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
@@ -299,12 +319,21 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
+    const reloadFormat = reloadFormatRef.current;
+    const listingChanged = loadedShoeIdRef.current !== shoe.id;
+    loadedShoeIdRef.current = shoe.id;
     setImagesReady(false);
     setHeroSrc(null);
     setIdentitySrc(null);
     setGallerySrcs([]);
-    setPngDataUrl(null);
-    setError(null);
+    if (listingChanged) {
+      setPngDataUrls({});
+      setErrors({});
+      setWarmedFormats(INITIAL_WARMED_FORMATS);
+      setPhases({ mobile: 'loading_assets', desktop: 'loading_assets' });
+    } else if (reloadFormat) {
+      setPhases(previous => ({ ...previous, [reloadFormat]: 'loading_assets' }));
+    }
     async function loadAssets() {
       try {
         const [hero, identity, gallery] = await Promise.all([
@@ -319,16 +348,30 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
         setIdentitySrc(identity);
         setGallerySrcs(gallery.filter((src): src is string => Boolean(src)));
         setImagesReady(true);
+        setPhases(previous => reloadFormat
+          ? { ...previous, [reloadFormat]: 'idle' }
+          : INITIAL_PHASES);
+        reloadFormatRef.current = null;
       } catch (assetError) {
         if (signal.aborted || (assetError as Error)?.name === 'AbortError') return;
         setHeroSrc(null);
         setImagesReady(false);
-        setError('Shoe photo could not load. Tap Reload.');
+        if (reloadFormat) {
+          setErrors(previous => ({ ...previous, [reloadFormat]: 'Shoe photo could not load. Tap Reload.' }));
+          setPhases(previous => ({ ...previous, [reloadFormat]: 'error' }));
+        } else {
+          setErrors({
+            mobile: 'Shoe photo could not load. Tap Reload.',
+            desktop: 'Shoe photo could not load. Tap Reload.',
+          });
+          setPhases({ mobile: 'error', desktop: 'error' });
+        }
+        reloadFormatRef.current = null;
         trackMarketplaceAction('share_post_asset_load_failed', {
           listing_id: shoe.id,
           listing_type: shoe.listing_type,
           asset: 'hero',
-          format,
+          stage: 'asset_load',
         });
       }
     }
@@ -337,18 +380,21 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
     return () => {
       controller.abort();
     };
-  }, [format, heroUrl, identityImageUrl, originalHeroUrl, renderAttempt, shoe.id, shoe.listing_type, thumbnailImageUrlKey, thumbnailImageUrls]);
+  }, [heroUrl, identityImageUrl, originalHeroUrl, renderAttempt, shoe.id, shoe.listing_type, thumbnailImageUrlKey, thumbnailImageUrls]);
 
-  // Render the card to PNG once images are ready.
+  // Safari can rasterize the cloned SVG before nested data-URL images are
+  // painted on the first html-to-image pass. Exercise that exact path once,
+  // discard its canvas, then allow only the next pass to reach the preview.
   useEffect(() => {
-    if (!imagesReady || !cardRef.current) return;
+    if (!imagesReady || warmedFormats[format] || !cardRef.current) return;
     const controller = new AbortController();
     const { signal } = controller;
     const node = cardRef.current;
+    let active = true;
 
-    async function renderShareImage() {
-      setPngDataUrl(null);
-      setError(null);
+    async function warmShareImageRenderer() {
+      setPhases(previous => ({ ...previous, [format]: 'warming' }));
+      setErrors(previous => ({ ...previous, [format]: undefined }));
 
       await waitForNextPaint();
       if (signal.aborted) return;
@@ -359,6 +405,57 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
       await waitForNextPaint();
       if (signal.aborted) return;
 
+      const warmCanvas = await htmlToImage.toCanvas(node, {
+        pixelRatio: 1,
+        width: cardW,
+        height: cardH,
+        cacheBust: false,
+      });
+      warmCanvas.width = 0;
+      warmCanvas.height = 0;
+      if (!active || signal.aborted) return;
+      await waitForNextPaint();
+      if (!active || signal.aborted) return;
+      setWarmedFormats(previous => ({ ...previous, [format]: true }));
+      setPhases(previous => ({ ...previous, [format]: 'ready' }));
+    }
+
+    warmShareImageRenderer().catch(err => {
+      console.error('SharePost: warm-up failed', err);
+      if (!active || signal.aborted || (err as Error)?.name === 'AbortError') return;
+      const e = err as Error;
+      setErrors(previous => ({ ...previous, [format]: e?.message || e?.name || 'Could not prepare share image' }));
+      setPhases(previous => ({ ...previous, [format]: 'error' }));
+      trackMarketplaceAction('share_post_asset_load_failed', {
+        listing_id: shoe.id,
+        listing_type: shoe.listing_type,
+        stage: 'warmup',
+        format,
+      });
+    });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [cardH, cardW, format, gallerySrcs, heroSrc, identitySrc, imagesReady, shoe.id, shoe.listing_type, topImg, warmedFormats]);
+
+  // Generate the user-visible image only after the disposable warm-up pass.
+  useEffect(() => {
+    if (!open || !imagesReady || !warmedFormats[format] || pngDataUrls[format] || !cardRef.current) return;
+    const controller = new AbortController();
+    const { signal } = controller;
+    const node = cardRef.current;
+    let active = true;
+
+    async function renderShareImage() {
+      setPhases(previous => ({ ...previous, [format]: 'rendering' }));
+      setErrors(previous => ({ ...previous, [format]: undefined }));
+      await waitForNextPaint();
+      if (signal.aborted) return;
+      await waitForRenderedImages(node, Boolean(topImg), signal);
+      if (signal.aborted) return;
+
       const url = await htmlToImage.toPng(node, {
         pixelRatio: 1,
         width: cardW,
@@ -366,25 +463,31 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
         cacheBust: false,
       });
 
-      if (signal.aborted) return;
-      if (!url || !url.startsWith('data:image')) {
-        setError('Could not generate share image');
-        return;
-      }
-      setPngDataUrl(url);
+      if (!active || signal.aborted) return;
+      if (!url || !url.startsWith('data:image')) throw new Error('Could not generate share image');
+      setPngDataUrls(previous => ({ ...previous, [format]: url }));
+      setPhases(previous => ({ ...previous, [format]: 'success' }));
     }
 
     renderShareImage().catch(err => {
-      console.error('SharePost: render failed', err);
-      if (signal.aborted || (err as Error)?.name === 'AbortError') return;
+      console.error('SharePost: final render failed', err);
+      if (!active || signal.aborted || (err as Error)?.name === 'AbortError') return;
       const e = err as Error;
-      setError(e?.message || e?.name || 'Could not generate share image');
+      setErrors(previous => ({ ...previous, [format]: e?.message || e?.name || 'Could not generate share image' }));
+      setPhases(previous => ({ ...previous, [format]: 'error' }));
+      trackMarketplaceAction('share_post_asset_load_failed', {
+        listing_id: shoe.id,
+        listing_type: shoe.listing_type,
+        stage: 'final_render',
+        format,
+      });
     });
 
     return () => {
+      active = false;
       controller.abort();
     };
-  }, [cardH, cardW, format, gallerySrcs, heroSrc, identitySrc, imagesReady, topImg]);
+  }, [cardH, cardW, format, imagesReady, open, pngDataUrls, shoe.id, shoe.listing_type, topImg, warmedFormats]);
 
   function buildFilename(): string {
     return `${shoe.brand}-${shoe.model}-gopairph.png`
@@ -435,18 +538,61 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
     onDownloaded?.();
   }
 
+  function handleReload() {
+    reloadFormatRef.current = format;
+    setImagesReady(false);
+    setHeroSrc(null);
+    setIdentitySrc(null);
+    setGallerySrcs([]);
+    setPngDataUrls(previous => ({ ...previous, [format]: undefined }));
+    setErrors(previous => ({ ...previous, [format]: undefined }));
+    setWarmedFormats(previous => ({ ...previous, [format]: false }));
+    setPhases(previous => ({ ...previous, [format]: 'loading_assets' }));
+    setRenderAttempt(attempt => attempt + 1);
+  }
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-1.5 sm:p-4"
-      onClick={onClose}
-    >
+    <>
+      {/* Keep the native-size source mounted while the kit is expanded so the
+          first Safari rasterization can finish before the dialog is requested. */}
       <div
-        className="w-full max-w-3xl rounded-xl sm:rounded-2xl bg-gray-900 border border-gray-700 shadow-2xl flex flex-col max-h-[96vh] sm:max-h-[92vh]"
-        onClick={e => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="share-post-modal-title"
+        aria-hidden
+        style={{
+          position: 'fixed',
+          top: -100000,
+          left: 0,
+          width: cardW,
+          height: cardH,
+          pointerEvents: 'none',
+        }}
       >
+        <ShareCard
+          ref={cardRef}
+          shoe={shoe}
+          seller={seller}
+          shop={shop}
+          heroSrc={heroSrc}
+          gallerySrcs={gallerySrcs}
+          identitySrc={identitySrc}
+          isFeatured={isFeatured}
+          isSponsored={isSponsored}
+          format={format}
+        />
+      </div>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-1.5 sm:p-4"
+          onClick={onClose}
+        >
+          <div
+            className="w-full max-w-3xl rounded-xl sm:rounded-2xl bg-gray-900 border border-gray-700 shadow-2xl flex flex-col max-h-[96vh] sm:max-h-[92vh]"
+            onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="share-post-modal-title"
+            aria-busy={phases[format] !== 'success' && !error}
+          >
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 sm:px-5 sm:py-3 border-b border-gray-800">
           <h2 id="share-post-modal-title" className="text-sm font-semibold text-gray-100">Post This on Facebook</h2>
@@ -495,7 +641,7 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
             </button>
             <button
               type="button"
-              onClick={() => setRenderAttempt(attempt => attempt + 1)}
+              onClick={handleReload}
               className="ml-auto rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-100 sm:px-3"
             >
               Reload
@@ -564,32 +710,6 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
             Post to FB Group
           </a>
 
-          {/* Hidden source for html-to-image — rendered offscreen at native size. */}
-          <div
-            aria-hidden
-            style={{
-              position: 'fixed',
-              top: -100000,
-              left: 0,
-              width: cardW,
-              height: cardH,
-              pointerEvents: 'none',
-            }}
-          >
-            <ShareCard
-              ref={cardRef}
-              shoe={shoe}
-              seller={seller}
-              shop={shop}
-              heroSrc={heroSrc}
-              gallerySrcs={gallerySrcs}
-              identitySrc={identitySrc}
-              isFeatured={isFeatured}
-              isSponsored={isSponsored}
-              format={format}
-            />
-          </div>
-
           {error && pngDataUrl && (
             <p className="mt-3 rounded-lg bg-red-950 border border-red-800 px-3 py-2 text-xs text-red-300">
               {error}
@@ -598,6 +718,8 @@ export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, face
         </div>
       </div>
     </div>
+      )}
+    </>
   );
 }
 
