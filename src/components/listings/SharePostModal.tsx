@@ -5,6 +5,7 @@ import * as htmlToImage from 'html-to-image';
 import { LogoMark } from '@/components/brand/Logo';
 import { CONDITIONS, LISTING_TYPE_LABELS } from '@/lib/constants';
 import { trackMarketplaceAction } from '@/lib/analytics';
+import { FB_GROUP_URL } from '@/lib/listingShare';
 import { recordListingShareMetric } from '@/lib/shareMetrics';
 import { formatListingName, formatMileage, formatPrice, formatProfileLocation, formatSize, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import type { Condition, ListingType, Shoe, Profile, Shop } from '@/types';
@@ -13,6 +14,9 @@ interface SharePostModalProps {
   shoe: Shoe;
   seller: Profile | null;
   onClose: () => void;
+  onDownloadRecorded?: () => void;
+  facebookCompleted?: boolean;
+  onFacebookGroupClick?: () => void;
   onDownloaded?: () => void;
 }
 
@@ -71,7 +75,7 @@ async function urlToDataUrl(url: string): Promise<string> {
   });
 }
 
-export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePostModalProps) {
+export function SharePostModal({ shoe, seller, onClose, onDownloadRecorded, facebookCompleted = false, onFacebookGroupClick, onDownloaded }: SharePostModalProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [heroSrc, setHeroSrc] = useState<string | null>(null);
   const [identitySrc, setIdentitySrc] = useState<string | null>(null);
@@ -81,6 +85,7 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
   const [error, setError] = useState<string | null>(null);
   const [format, setFormat] = useState<ShareFormat>('mobile');
   const [renderAttempt, setRenderAttempt] = useState(0);
+  const [showSaveHint, setShowSaveHint] = useState(true);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastImageIntentAtRef = useRef(0);
 
@@ -218,6 +223,7 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
     const now = Date.now();
     if (method === 'long_press' && now - lastImageIntentAtRef.current < 1500) return;
     lastImageIntentAtRef.current = now;
+    setShowSaveHint(false);
     trackMarketplaceAction('share_post_download', {
       listing_id: shoe.id,
       listing_type: shoe.listing_type,
@@ -225,6 +231,7 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
       method,
     });
     void recordListingShareMetric(shoe.id, 'image_download');
+    onDownloadRecorded?.();
   }
 
   function startLongPressTracking() {
@@ -341,11 +348,37 @@ export function SharePostModal({ shoe, seller, onClose, onDownloaded }: SharePos
                 )}
               </div>
             )}
+            {pngDataUrl && showSaveHint && (
+              <div className="pointer-events-none absolute bottom-2 right-2 flex items-end gap-1.5 rounded-xl border border-white/15 bg-slate-950/85 px-2.5 py-2 text-white shadow-xl backdrop-blur-sm sm:hidden">
+                <svg className="h-9 w-9 -rotate-12 text-sky-200 motion-safe:animate-pulse" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+                  <path d="M17 39c-3.5-4.5-5.5-8-6-11-.4-2.2 2.4-3.3 3.8-1.6l2.2 2.8V10.5c0-2.6 4-2.6 4 0V24v-17c0-2.6 4-2.6 4 0v17V9.5c0-2.6 4-2.6 4 0V25 14c0-2.6 4-2.6 4 0v15l2.2-3.2c1.4-2 4.6-.5 3.8 1.8L35.5 39H17Z" fill="currentColor" stroke="#fff" strokeWidth="1.5" strokeLinejoin="round" />
+                  <path d="M17 35h19v7H17z" fill="#0ea5e9" stroke="#fff" strokeWidth="1.5" />
+                </svg>
+                <span className="pb-0.5 text-[11px] font-bold leading-4">Long Press<br />to Save</span>
+              </div>
+            )}
           </div>
 
           <p className="mt-2 text-[11px] leading-4 text-gray-500 sm:mt-3 sm:text-xs">
             <strong className="text-gray-300">Tip: Use this image with your Facebook post or Marketplace listing.</strong> On mobile, long-press the image to save it. If the preview looks wrong, tap <strong className="text-gray-300">Reload</strong>.
           </p>
+
+          <a
+            href={FB_GROUP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={onFacebookGroupClick}
+            className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-blue-400/45 bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-500/15 transition-colors hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 sm:mt-4"
+          >
+            <span className="flex h-6 w-6 items-center justify-center rounded-full border border-white/35 bg-white/10 text-xs" aria-hidden="true">
+              {facebookCompleted ? (
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="m5 12 4 4L19 6" />
+                </svg>
+              ) : '3'}
+            </span>
+            Post to FB Group
+          </a>
 
           {/* Hidden source for html-to-image — rendered offscreen at native size. */}
           <div

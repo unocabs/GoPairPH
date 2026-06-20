@@ -16,9 +16,10 @@ interface EditProfileModalProps {
   profile: Profile;
   onClose: () => void;
   onUpdated: (updated: Profile) => void;
+  initialFocus?: 'facebook';
 }
 
-export function EditProfileModal({ profile, onClose, onUpdated }: EditProfileModalProps) {
+export function EditProfileModal({ profile, onClose, onUpdated, initialFocus }: EditProfileModalProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showFbHelp, setShowFbHelp] = useState(false);
@@ -226,6 +227,7 @@ export function EditProfileModal({ profile, onClose, onUpdated }: EditProfileMod
               placeholder="e.g. john.doe.1"
               hint="Required — buyers will use this to contact you via Messenger"
               error={errors.fb_username?.message}
+              autoFocus={initialFocus === 'facebook'}
               {...register('fb_username')}
             />
             <button

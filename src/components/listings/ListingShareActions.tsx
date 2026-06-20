@@ -4,12 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { SharePostModal } from './SharePostModal';
 import { getListingPath } from '@/lib/utils';
-import { buildListingCaption } from '@/lib/listingShare';
+import { buildListingCaption, FB_GROUP_URL } from '@/lib/listingShare';
 import { trackMarketplaceAction } from '@/lib/analytics';
 import { recordListingShareMetric } from '@/lib/shareMetrics';
 import type { Shoe, Profile } from '@/types';
-
-const FB_GROUP_URL = 'https://www.facebook.com/groups/gopairph';
 
 interface ListingShareActionsProps {
   shoe: Shoe;
@@ -17,6 +15,10 @@ interface ListingShareActionsProps {
   isOwner?: boolean;
   defaultOpen?: boolean;
   className?: string;
+  facebookGroupLabel?: string;
+  onCaptionCopied?: () => void;
+  onImageDownloaded?: () => void;
+  onFacebookGroupClick?: () => void;
 }
 
 interface ShareCampaignSummary {
@@ -25,7 +27,17 @@ interface ShareCampaignSummary {
   attributed_views: number;
 }
 
-export function ListingShareActions({ shoe, seller, isOwner = false, defaultOpen = false, className = '' }: ListingShareActionsProps) {
+export function ListingShareActions({
+  shoe,
+  seller,
+  isOwner = false,
+  defaultOpen = false,
+  className = '',
+  facebookGroupLabel = 'Share on FB Group',
+  onCaptionCopied,
+  onImageDownloaded,
+  onFacebookGroupClick,
+}: ListingShareActionsProps) {
   const [copiedMessage, setCopiedMessage] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [kitOpen, setKitOpen] = useState(defaultOpen);
@@ -33,6 +45,9 @@ export function ListingShareActions({ shoe, seller, isOwner = false, defaultOpen
   const [resultsLoading, setResultsLoading] = useState(false);
   const [copyPending, setCopyPending] = useState(false);
   const [trackingWarning, setTrackingWarning] = useState<string | null>(null);
+  const [captionCompleted, setCaptionCompleted] = useState(false);
+  const [imageCompleted, setImageCompleted] = useState(false);
+  const [facebookCompleted, setFacebookCompleted] = useState(false);
   const postPublishPromptTrackedRef = useRef(false);
   const listingPath = getListingPath(shoe);
 
@@ -145,9 +160,21 @@ export function ListingShareActions({ shoe, seller, isOwner = false, defaultOpen
         tracking_started: trackingStarted,
       });
       if (isOwner) void recordListingShareMetric(shoe.id, 'caption_copy');
+      setCaptionCompleted(true);
+      onCaptionCopied?.();
     } finally {
       setCopyPending(false);
     }
+  }
+
+  function handleFacebookGroupClick(surface: 'listing_detail_share_kit' | 'share_post_modal') {
+    trackMarketplaceAction('outbound_click', {
+      destination: 'fb_group',
+      listing_id: shoe.id,
+      surface,
+    });
+    setFacebookCompleted(true);
+    onFacebookGroupClick?.();
   }
 
   return (
@@ -198,7 +225,7 @@ export function ListingShareActions({ shoe, seller, isOwner = false, defaultOpen
               <span className="block font-semibold">Copy FB Caption</span>
               <span className="block truncate text-xs text-gray-500">{copyPending ? 'Preparing your tracked link…' : 'Paste this into your Facebook post.'}</span>
             </span>
-            <StepNumber>1</StepNumber>
+            <StepNumber completed={captionCompleted}>1</StepNumber>
           </button>
 
           <button
@@ -217,26 +244,22 @@ export function ListingShareActions({ shoe, seller, isOwner = false, defaultOpen
               <span className="block font-semibold">Download Image</span>
               <span className="block truncate text-xs text-gray-500">Use this with your FB post.</span>
             </span>
-            <StepNumber>2</StepNumber>
+            <StepNumber completed={imageCompleted}>2</StepNumber>
           </button>
 
           <a
             href={FB_GROUP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => trackMarketplaceAction('outbound_click', {
-              destination: 'fb_group',
-              listing_id: shoe.id,
-              surface: 'listing_detail_share_kit',
-            })}
+            onClick={() => handleFacebookGroupClick('listing_detail_share_kit')}
             className="flex min-h-[4.25rem] w-full items-center gap-3 px-3 py-2.5 text-left text-sm text-gray-200 transition-colors hover:bg-slate-900"
           >
             <StepIcon type="group" />
             <span className="min-w-0 flex-1">
-              <span className="block font-semibold">Share on FB Group</span>
+              <span className="block font-semibold">{facebookGroupLabel}</span>
               <span className="block truncate text-xs text-gray-500">Post where runners already are.</span>
             </span>
-            <StepNumber>3</StepNumber>
+            <StepNumber completed={facebookCompleted}>3</StepNumber>
           </a>
 
           {isOwner && (campaign || resultsLoading) && (
@@ -266,6 +289,12 @@ export function ListingShareActions({ shoe, seller, isOwner = false, defaultOpen
           shoe={shoe}
           seller={seller ?? null}
           onClose={closeShareModal}
+          onDownloadRecorded={() => {
+            setImageCompleted(true);
+            onImageDownloaded?.();
+          }}
+          facebookCompleted={facebookCompleted}
+          onFacebookGroupClick={() => handleFacebookGroupClick('share_post_modal')}
           onDownloaded={closeShareModal}
         />,
         document.body,
@@ -360,10 +389,17 @@ function StepIcon({ type }: { type: 'caption' | 'download' | 'group' }) {
   );
 }
 
-function StepNumber({ children }: { children: string }) {
+function StepNumber({ children, completed = false }: { children: string; completed?: boolean }) {
   return (
-    <span className="flex h-8 w-6 shrink-0 items-center justify-center text-xs font-bold text-gray-600">
-      {children}
+    <span
+      className={`flex h-8 w-6 shrink-0 items-center justify-center text-xs font-bold ${completed ? 'text-teal-300' : 'text-gray-600'}`}
+      aria-label={completed ? `Step ${children} complete` : `Step ${children}`}
+    >
+      {completed ? (
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="m5 12 4 4L19 6" />
+        </svg>
+      ) : children}
     </span>
   );
 }

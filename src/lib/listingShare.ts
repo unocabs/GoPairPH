@@ -2,6 +2,8 @@ import { CONDITIONS } from './constants';
 import { formatListingName, formatMileage, formatPrice, formatProfileLocation, formatSize } from './utils';
 import type { Shoe } from '@/types';
 
+export const FB_GROUP_URL = 'https://www.facebook.com/groups/gopairph';
+
 export function buildListingCaption(shoe: Shoe, listingUrl: string): string {
   const listingName = formatListingName(shoe.brand, shoe.model);
   const size = formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type);

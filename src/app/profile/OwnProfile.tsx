@@ -71,6 +71,7 @@ export function OwnProfile({
   const [purchaseRequests, setPurchaseRequests] = useState(initialPurchaseRequests);
   const [sentOffers, setSentOffers] = useState(initialSentOffers);
   const [editOpen, setEditOpen] = useState(false);
+  const [editInitialFocus, setEditInitialFocus] = useState<'facebook' | undefined>();
   const [tab, setTab] = useState<ProfileTab>(initialTab ?? 'listings');
   const [sharePostShoe, setSharePostShoe] = useState<Shoe | null>(null);
   const [profileLinkCopied, setProfileLinkCopied] = useState(false);
@@ -228,9 +229,10 @@ export function OwnProfile({
               completedSales={completedSales}
               isOwnProfile
               onEditLocation={openLocationEditor}
+              onEditFacebook={() => { setEditInitialFocus('facebook'); setEditOpen(true); }}
             />
           </div>
-          <Button variant="outline" size="sm" className="h-9 shrink-0 px-2.5" onClick={() => setEditOpen(true)}>
+          <Button variant="outline" size="sm" className="h-9 shrink-0 px-2.5" onClick={() => { setEditInitialFocus(undefined); setEditOpen(true); }}>
             Edit
           </Button>
         </div>
@@ -273,15 +275,6 @@ export function OwnProfile({
               existingRequest={latestVerification}
               fbUsername={profile.fb_username}
             />
-          )}
-          {!hasValidMessengerContact && (
-            <button
-              type="button"
-              onClick={() => setEditOpen(true)}
-              className="rounded-full border border-blue-400/20 bg-blue-500/[0.08] px-2.5 py-1 text-xs font-medium text-blue-200 hover:bg-blue-500/[0.14]"
-            >
-              Add Messenger contact
-            </button>
           )}
         </div>
 
@@ -594,7 +587,7 @@ export function OwnProfile({
       )}
 
       {editOpen && (
-        <EditProfileModal profile={profile} onClose={() => setEditOpen(false)} onUpdated={setProfile} />
+        <EditProfileModal profile={profile} initialFocus={editInitialFocus} onClose={() => setEditOpen(false)} onUpdated={setProfile} />
       )}
       {sharePostShoe && typeof window !== 'undefined' && createPortal(
         <SharePostModal

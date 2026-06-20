@@ -13,7 +13,8 @@ export function getSafeNext(rawNext: string | null): string {
 function isGuestListingDraftResume(path: string): boolean {
   try {
     const destination = new URL(path, 'https://gopairph.local');
-    return destination.pathname === '/listings/new' && destination.searchParams.get('resume') === 'draft';
+    return (destination.pathname === '/listings/new' || destination.pathname === '/listings/new-v2')
+      && destination.searchParams.get('resume') === 'draft';
   } catch {
     return false;
   }

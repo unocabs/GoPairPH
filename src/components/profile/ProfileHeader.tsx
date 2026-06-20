@@ -14,9 +14,10 @@ interface ProfileHeaderProps {
   completedSales?: number;
   isOwnProfile?: boolean;
   onEditLocation?: () => void;
+  onEditFacebook?: () => void;
 }
 
-export function ProfileHeader({ profile, listingCount, wishlistCount, completedSales, isOwnProfile, onEditLocation }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, listingCount, wishlistCount, completedSales, isOwnProfile, onEditLocation, onEditFacebook }: ProfileHeaderProps) {
   const facebookUrl = getFacebookContactUrl(profile.fb_username);
   const profileLocation = formatProfileLocation(profile);
 
@@ -53,6 +54,15 @@ export function ProfileHeader({ profile, listingCount, wishlistCount, completedS
             <LocationIcon />
             {profileLocation}
           </p>
+        ) : isOwnProfile && onEditFacebook ? (
+          <button
+            type="button"
+            onClick={onEditFacebook}
+            className="mt-1 inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-md pr-2 text-left text-sm font-semibold text-blue-300 transition-colors hover:bg-blue-500/10 hover:text-blue-200"
+          >
+            <FacebookIcon />
+            <span className="truncate">Help buyers find you. Add FB username.</span>
+          </button>
         ) : null}
         {facebookUrl ? (
           <a
@@ -94,6 +104,14 @@ function LocationIcon() {
     <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+}
+
+function FacebookIcon() {
+  return (
+    <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.791-4.697 4.533-4.697 1.313 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z" />
     </svg>
   );
 }

@@ -92,32 +92,11 @@ export const SIZE_CONVERSIONS_BY_US_TYPE: Record<UsSizeType, SizeConversion[]> =
     { eu: 44, us: 11.5, cm: 28.5 },
     { eu: 44.5, us: 12.0, cm: 29.0 },
   ],
-  unisex: [
-    { eu: 35, us: 4.0, cm: 22.0 },
-    { eu: 35.5, us: 4.5, cm: 22.5 },
-    { eu: 36, us: 5.0, cm: 23.0 },
-    { eu: 36.5, us: 5.5, cm: 23.5 },
-    { eu: 37, us: 6.0, cm: 24.0 },
-    { eu: 37.5, us: 6.5, cm: 24.0 },
-    { eu: 38, us: 7.0, cm: 24.5 },
-    { eu: 38.5, us: 7.5, cm: 25.0 },
-    { eu: 39, us: 8.0, cm: 25.5 },
-    { eu: 40, us: 8.5, cm: 26.0 },
-    { eu: 40.5, us: 9.0, cm: 26.5 },
-    { eu: 41, us: 9.5, cm: 26.5 },
-    { eu: 42, us: 10.0, cm: 27.0 },
-    { eu: 42.5, us: 10.5, cm: 27.5 },
-    { eu: 43, us: 11.0, cm: 28.0 },
-    { eu: 44, us: 11.5, cm: 28.5 },
-    { eu: 44.5, us: 12.0, cm: 29.0 },
-    { eu: 45, us: 12.5, cm: 29.5 },
-    { eu: 45.5, us: 13.0, cm: 30.0 },
-    { eu: 46, us: 13.5, cm: 30.5 },
-    { eu: 47, us: 14.0, cm: 31.0 },
-  ],
+  unisex: [],
   unknown: [],
 };
 
-SIZE_CONVERSIONS_BY_US_TYPE.unknown = SIZE_CONVERSIONS_BY_US_TYPE.unisex;
+SIZE_CONVERSIONS_BY_US_TYPE.unisex = SIZE_CONVERSIONS_BY_US_TYPE.mens;
+SIZE_CONVERSIONS_BY_US_TYPE.unknown = SIZE_CONVERSIONS_BY_US_TYPE.mens;
 
-export const SIZE_CONVERSIONS = SIZE_CONVERSIONS_BY_US_TYPE.unisex;
+export const SIZE_CONVERSIONS = SIZE_CONVERSIONS_BY_US_TYPE.mens;
