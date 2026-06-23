@@ -6,7 +6,7 @@ import { SharePostModal } from './SharePostModal';
 import { getListingPath } from '@/lib/utils';
 import { buildListingCaption, FB_GROUP_URL } from '@/lib/listingShare';
 import { trackMarketplaceAction } from '@/lib/analytics';
-import { recordListingShareMetric } from '@/lib/shareMetrics';
+import { recordListingShareMetric, recordListingShareReward, type ListingShareReward } from '@/lib/shareMetrics';
 import type { Shoe, Profile } from '@/types';
 
 interface ListingShareActionsProps {
@@ -49,6 +49,7 @@ export function ListingShareActions({
   const [captionCopying, setCaptionCopying] = useState(false);
   const [captionCopyError, setCaptionCopyError] = useState<string | null>(null);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
+  const [rewardToast, setRewardToast] = useState<ListingShareReward>(null);
   const [trackingWarning, setTrackingWarning] = useState<string | null>(null);
   const [captionCompleted, setCaptionCompleted] = useState(false);
   const [imageCompleted, setImageCompleted] = useState(false);
@@ -170,7 +171,13 @@ export function ListingShareActions({
         is_owner: isOwner,
         tracking_started: captionTrackingStarted,
       });
-      if (isOwner) void recordListingShareMetric(shoe.id, 'caption_copy');
+      if (isOwner) {
+        const reward = await recordListingShareMetric(shoe.id, 'caption_copy');
+        if (reward) {
+          setRewardToast(reward);
+          window.setTimeout(() => setRewardToast(null), 2200);
+        }
+      }
       setCaptionCompleted(true);
       onCaptionCopied?.();
       setCaptionModalOpen(false);
@@ -190,6 +197,13 @@ export function ListingShareActions({
       surface,
     });
     setFacebookCompleted(true);
+    if (isOwner) {
+      void recordListingShareReward(shoe.id, 'fb_group_open').then(reward => {
+        if (!reward) return;
+        setRewardToast(reward);
+        window.setTimeout(() => setRewardToast(null), 2200);
+      });
+    }
     onFacebookGroupClick?.();
   }
 
@@ -300,8 +314,12 @@ export function ListingShareActions({
           seller={seller ?? null}
           open={shareOpen}
           onClose={closeShareModal}
-          onDownloadRecorded={() => {
+          onDownloadRecorded={(reward) => {
             setImageCompleted(true);
+            if (reward) {
+              setRewardToast(reward);
+              window.setTimeout(() => setRewardToast(null), 2200);
+            }
             onImageDownloaded?.();
           }}
           facebookCompleted={facebookCompleted}
@@ -332,6 +350,19 @@ export function ListingShareActions({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="m8 12 2.5 2.5L16.5 8.5" />
             </svg>
             Copied Caption
+          </div>
+        </div>,
+        document.body,
+      )}
+
+      {rewardToast && typeof window !== 'undefined' && createPortal(
+        <div className="pointer-events-none fixed inset-x-0 bottom-5 z-[130] flex justify-center px-4" role="status" aria-live="polite">
+          <div className={`rounded-full border px-4 py-2 text-sm font-semibold shadow-2xl backdrop-blur ${
+            rewardToast.awarded
+              ? 'border-amber-300/30 bg-amber-400/15 text-amber-100'
+              : 'border-slate-500/30 bg-slate-950/90 text-slate-200'
+          }`}>
+            {rewardToast.message}
           </div>
         </div>,
         document.body,

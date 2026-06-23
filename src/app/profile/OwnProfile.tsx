@@ -15,12 +15,13 @@ import { SentOfferCard } from '@/components/purchases/SentOfferCard';
 import { RequestVerificationButton } from '@/components/profile/RequestVerificationButton';
 import { SavedSearchesPanel } from '@/components/profile/SavedSearchesPanel';
 import { formatPrice, formatListingName, getListingPath, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
+import { formatGpCoins, getGpCoinTransactionLabel } from '@/lib/gpCoins';
 import { buildMessengerUrl } from '@/lib/facebook';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { Tooltip } from '@/components/ui/Tooltip';
-import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest, SavedSearch } from '@/types';
+import type { GpCoinTransaction, GpCoinWallet, Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest, SavedSearch } from '@/types';
 import Link from 'next/link';
 
 const SharePostModal = dynamic(
@@ -45,7 +46,108 @@ interface OwnProfileProps {
   savedListingCounts?: Record<string, number>;
   shareMetrics?: { captionCopies: number; imageDownloads: number };
   completedSales?: number;
+  gpCoinWallet?: GpCoinWallet | null;
+  gpCoinTransactions?: GpCoinTransaction[];
+  nextGpCoinsExpiring?: { remaining_amount: number; expires_at: string } | null;
   initialTab?: ProfileTab;
+}
+
+function GpCoinsPanel({
+  wallet,
+  transactions,
+  nextExpiring,
+}: {
+  wallet?: GpCoinWallet | null;
+  transactions: GpCoinTransaction[];
+  nextExpiring: { remaining_amount: number; expires_at: string } | null;
+}) {
+  const available = Number(wallet?.available_balance ?? 0);
+  const reserved = Number(wallet?.reserved_balance ?? 0);
+  const isNegative = available < 0;
+  const expiringLabel = nextExpiring
+    ? `${formatGpCoins(Number(nextExpiring.remaining_amount))} on ${new Intl.DateTimeFormat('en-PH', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'Asia/Manila',
+    }).format(new Date(nextExpiring.expires_at))}`
+    : 'None in the next bucket';
+
+  return (
+    <SurfaceCard className="mb-4 overflow-hidden p-4 sm:mb-6">
+      <div className="min-w-0">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-300">GoPair Coins</p>
+        <p className={`mt-2 text-3xl font-black tabular-nums ${isNegative ? 'text-red-300' : 'text-amber-100'}`}>
+          {formatGpCoins(available)}
+        </p>
+      </div>
+
+      {isNegative && (
+        <div className="mt-3 rounded-lg border border-red-400/25 bg-red-500/[0.08] px-3 py-2 text-xs leading-5 text-red-100">
+          Your coin balance is negative because a previous reward was reversed. Future earnings will bring it back up before coins can be redeemed.
+        </div>
+      )}
+
+      <details className="mt-4 rounded-lg border border-white/[0.08] bg-slate-950/35">
+        <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-gray-200">How to use and earn GP Coins</summary>
+        <div className="border-t border-white/[0.06] p-3">
+          <div className="rounded-lg border border-amber-300/20 bg-amber-300/[0.06] p-3">
+            <p className="text-sm font-semibold text-amber-100">Use GP Coins to promote your running shoes on the homepage.</p>
+            <p className="mt-1 text-xs leading-5 text-amber-100/75">
+              Open your active listings, choose the pair you want to boost, tap Promote Listing, then choose Featured on Home and apply your GP Coins at checkout.
+            </p>
+            <Link href="/profile#active-listings" className="mt-3 inline-flex min-h-9 items-center justify-center rounded-lg border border-amber-300/30 bg-slate-950/45 px-3 text-xs font-semibold text-amber-100 hover:bg-amber-300/10">
+              Choose an active pair
+            </Link>
+          </div>
+
+          <div className="mt-3 grid gap-2 text-xs leading-5 text-gray-400 sm:grid-cols-2">
+            <p>Publish a valid listing: 10 GP after 1 hour, max once per Manila day.</p>
+            <p>Renew a listing: 6 GP per eligible renewal.</p>
+            <p>Share Post Kit: copy/download/open FB group rewards, capped at 5 GP daily.</p>
+            <p>Coins expire after 6 months and are only usable inside Go Pair PH promotions.</p>
+          </div>
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="rounded-lg border border-white/[0.08] bg-slate-950/45 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500">Reserved</p>
+              <p className="mt-1 text-lg font-bold text-gray-100">{formatGpCoins(reserved)}</p>
+            </div>
+            <div className="rounded-lg border border-white/[0.08] bg-slate-950/45 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500">Next expiry</p>
+              <p className="mt-1 text-sm font-semibold leading-5 text-gray-100">{expiringLabel}</p>
+            </div>
+          </div>
+
+          <div className="mt-3 divide-y divide-white/[0.06]">
+            {transactions.length === 0 ? (
+              <p className="py-3 text-sm text-gray-500">No GP Coin activity yet.</p>
+            ) : transactions.slice(0, 8).map(transaction => {
+              const delta = transaction.available_delta + transaction.reserved_delta;
+              const sign = delta > 0 ? '+' : '';
+              return (
+                <div key={transaction.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-200">{getGpCoinTransactionLabel(transaction)}</p>
+                    <p className="text-xs text-gray-500">
+                      {new Intl.DateTimeFormat('en-PH', {
+                        month: 'short',
+                        day: 'numeric',
+                        timeZone: 'Asia/Manila',
+                      }).format(new Date(transaction.created_at))}
+                    </p>
+                  </div>
+                  <p className={`shrink-0 font-bold tabular-nums ${delta >= 0 ? 'text-amber-200' : 'text-gray-400'}`}>
+                    {sign}{delta} GP
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </details>
+    </SurfaceCard>
+  );
 }
 
 export function OwnProfile({
@@ -63,6 +165,9 @@ export function OwnProfile({
   savedListingCounts,
   shareMetrics,
   completedSales,
+  gpCoinWallet,
+  gpCoinTransactions = [],
+  nextGpCoinsExpiring = null,
   initialTab,
 }: OwnProfileProps) {
   const [profile, setProfile] = useState(initialProfile);
@@ -287,6 +392,12 @@ export function OwnProfile({
           </Button>
         </div>
       </SurfaceCard>
+
+      <GpCoinsPanel
+        wallet={gpCoinWallet}
+        transactions={gpCoinTransactions}
+        nextExpiring={nextGpCoinsExpiring}
+      />
 
       <SurfaceCard className="mb-4 overflow-hidden p-2 sm:mb-6 sm:p-3">
         <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg bg-white/[0.08] sm:grid-cols-6">

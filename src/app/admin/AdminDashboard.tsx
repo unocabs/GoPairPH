@@ -153,7 +153,7 @@ export function AdminDashboard({
       </div>
 
       {tab === 'pending' && <PendingList requests={pending} />}
-      {tab === 'promotions' && <FeaturedPromotionsPanel initialPromotions={promotions} />}
+      {tab === 'promotions' && <FeaturedPromotionsPanel initialPromotions={promotions} profiles={profiles} />}
       {tab === 'verified' && <VerifiedList users={verified} verificationProofs={verifiedProofs} />}
       {tab === 'shops' && <ShopsPanel shops={shops} profiles={profiles} />}
       {tab === 'soldListings' && <SoldListingsPanel listings={soldListings} />}
@@ -171,7 +171,7 @@ export function AdminDashboard({
   );
 }
 
-function FeaturedPromotionsPanel({ initialPromotions }: { initialPromotions: FeaturedPromotionOrder[] }) {
+function FeaturedPromotionsPanel({ initialPromotions, profiles }: { initialPromotions: FeaturedPromotionOrder[]; profiles: Profile[] }) {
   const router = useRouter();
   const [promotions, setPromotions] = useState(initialPromotions);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -245,6 +245,8 @@ function FeaturedPromotionsPanel({ initialPromotions }: { initialPromotions: Fea
         </div>
       )}
 
+      <GpCoinAdminAdjustPanel profiles={profiles} />
+
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -273,7 +275,7 @@ function FeaturedPromotionsPanel({ initialPromotions }: { initialPromotions: Fea
                 <div>
                   <p className="font-semibold text-gray-100">{order.listing ? formatListingName(order.listing.brand, order.listing.model) : 'Featured listing'}</p>
                   <p className="text-xs text-gray-500">
-                    #{order.queue_position ?? '—'} · {order.duration_days} days · {formatPrice(order.price_php)} · {labelFeaturedPromotionStatus(order)}
+                    #{order.queue_position ?? '—'} · {order.duration_days} days · {formatPrice(order.cash_amount_php ?? order.price_php)} cash · {order.coins_used > 0 ? `${order.coins_used} GP` : 'No coins'} · {labelFeaturedPromotionStatus(order)}
                   </p>
                 </div>
                 <p className="text-xs text-gray-400 sm:text-right">
@@ -304,7 +306,11 @@ function FeaturedPromotionsPanel({ initialPromotions }: { initialPromotions: Fea
                   <td className="py-2 pr-4">{order.listing ? formatListingName(order.listing.brand, order.listing.model) : 'Listing'}</td>
                   <td className="py-2 pr-4">{order.source === 'paid' ? 'Paid Featured' : 'Admin Pick'}</td>
                   <td className="py-2 pr-4 capitalize">{order.status.replaceAll('_', ' ')}</td>
-                  <td className="py-2 pr-4">{order.source === 'paid' ? `${labelPaymentMethod(order.payment_method)} · ${formatPrice(order.price_php)}` : 'No payment'}</td>
+                  <td className="py-2 pr-4">
+                    {order.source === 'paid'
+                      ? `${order.coin_payment_mode.replaceAll('_', ' ')} · ${order.coins_used} GP · ${formatPrice(order.cash_amount_php ?? order.price_php)} cash`
+                      : 'No payment'}
+                  </td>
                   <td className="py-2 pr-4">{formatDateTime(order.created_at)}</td>
                 </tr>
               ))}
@@ -313,6 +319,94 @@ function FeaturedPromotionsPanel({ initialPromotions }: { initialPromotions: Fea
         </div>
       </section>
     </div>
+  );
+}
+
+function GpCoinAdminAdjustPanel({ profiles }: { profiles: Profile[] }) {
+  const [profileId, setProfileId] = useState('');
+  const [amountDelta, setAmountDelta] = useState('');
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setMessage('');
+    setError('');
+    try {
+      const response = await fetch('/api/admin/gp-coins/adjust', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          profileId,
+          amountDelta: Number(amountDelta),
+          reason,
+        }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json.error ?? 'Could not adjust GP Coins.');
+      setMessage('GP Coin adjustment recorded.');
+      setAmountDelta('');
+      setReason('');
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-lg font-semibold text-gray-100">Manual GP Coin adjustment</h2>
+        <p className="text-sm text-gray-500">Use positive amounts to grant coins and negative amounts to reverse or claw back suspicious rewards.</p>
+      </div>
+      <form onSubmit={submit} className="mt-4 grid gap-3 lg:grid-cols-[1fr_140px_1.2fr_auto]">
+        <select
+          value={profileId}
+          onChange={event => setProfileId(event.target.value)}
+          required
+          className="min-h-10 rounded-lg border border-gray-700 bg-gray-950 px-3 text-sm text-gray-100 outline-none focus:border-teal-400"
+        >
+          <option value="">Choose profile</option>
+          {profiles.map(profile => (
+            <option key={profile.id} value={profile.id}>
+              {profile.display_name || profile.user_id}
+            </option>
+          ))}
+        </select>
+        <input
+          value={amountDelta}
+          onChange={event => setAmountDelta(event.target.value)}
+          type="number"
+          step={1}
+          placeholder="+10 or -10"
+          required
+          className="min-h-10 rounded-lg border border-gray-700 bg-gray-950 px-3 text-sm text-gray-100 outline-none focus:border-teal-400"
+        />
+        <input
+          value={reason}
+          onChange={event => setReason(event.target.value)}
+          placeholder="Reason shown in ledger metadata"
+          required
+          className="min-h-10 rounded-lg border border-gray-700 bg-gray-950 px-3 text-sm text-gray-100 outline-none focus:border-teal-400"
+        />
+        <button
+          type="submit"
+          disabled={busy}
+          className="min-h-10 rounded-lg bg-teal-600 px-4 text-sm font-semibold text-white hover:bg-teal-500 disabled:opacity-60"
+        >
+          {busy ? 'Saving...' : 'Adjust'}
+        </button>
+      </form>
+      {(message || error) && (
+        <p className={`mt-3 text-sm ${error ? 'text-red-300' : 'text-teal-300'}`}>
+          {error || message}
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -332,7 +426,7 @@ function PromotionReviewCard({
         <div>
           <p className="font-semibold text-gray-100">{listingName}</p>
           <p className="mt-1 text-xs text-gray-500">
-            {order.seller?.display_name ?? 'Seller'} · {order.duration_days} days · {formatPrice(order.price_php)} · {labelPaymentMethod(order.payment_method)}
+            {order.seller?.display_name ?? 'Seller'} · {order.duration_days} days · {order.coins_used} GP · {formatPrice(order.coin_discount_php)} discount · {formatPrice(order.cash_amount_php ?? order.price_php)} cash · {labelPaymentMethod(order.payment_method)}
           </p>
           <p className="mt-1 text-xs text-gray-500">
             Ref: <span className="font-mono text-gray-300">{order.transaction_reference ?? '—'}</span>

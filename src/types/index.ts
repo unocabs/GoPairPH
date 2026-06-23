@@ -141,6 +141,7 @@ export type FeaturedPromotionStatus =
   | 'superseded';
 export type FeaturedPromotionReviewStatus = 'not_required' | 'pending' | 'approved' | 'rejected';
 export type FeaturedPaymentMethod = 'gcash' | 'bpi';
+export type FeaturedCoinPaymentMode = 'cash_only' | 'mixed' | 'coins_only';
 
 export interface FeaturedPromotionOrder {
   id: string;
@@ -149,6 +150,10 @@ export interface FeaturedPromotionOrder {
   seller_id: string;
   duration_days: number;
   price_php: number;
+  coins_used: number;
+  coin_discount_php: number;
+  cash_amount_php: number;
+  coin_payment_mode: FeaturedCoinPaymentMode;
   payment_method: FeaturedPaymentMethod | null;
   transaction_reference: string | null;
   proof_storage_path: string | null;
@@ -163,6 +168,9 @@ export interface FeaturedPromotionOrder {
   ended_at: string | null;
   reviewed_by: string | null;
   reviewed_at: string | null;
+  coins_reserved_at: string | null;
+  coins_spent_at: string | null;
+  coins_released_at: string | null;
   admin_notes: string | null;
   replacement_reason: string | null;
   superseded_by_order_id: string | null;
@@ -171,6 +179,44 @@ export interface FeaturedPromotionOrder {
   updated_at: string;
   listing?: Pick<Shoe, 'id' | 'slug' | 'brand' | 'model' | 'status' | 'price_php' | 'featured_until'> | null;
   seller?: Pick<Profile, 'id' | 'display_name' | 'user_id' | 'is_verified'> | null;
+}
+
+export type GpCoinTransactionType =
+  | 'award'
+  | 'hold'
+  | 'spend'
+  | 'release'
+  | 'refund'
+  | 'expiration'
+  | 'reversal'
+  | 'admin_adjustment';
+
+export interface GpCoinWallet {
+  profile_id: string;
+  available_balance: number;
+  reserved_balance: number;
+  locked_at: string | null;
+  lock_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GpCoinTransaction {
+  id: string;
+  profile_id: string;
+  transaction_type: GpCoinTransactionType;
+  amount_coins: number;
+  available_delta: number;
+  reserved_delta: number;
+  available_balance_after: number;
+  reserved_balance_after: number;
+  idempotency_key: string;
+  listing_id: string | null;
+  featured_order_id: string | null;
+  related_transaction_id: string | null;
+  expires_at: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
 }
 
 export type PurchaseRequestStatus = 'pending' | 'accepted' | 'declined' | 'completed';

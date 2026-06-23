@@ -7,6 +7,7 @@ export const runtime = 'nodejs';
 interface RequestBody {
   listingId?: string;
   durationDays?: number;
+  coinsToUse?: number;
 }
 
 export async function POST(request: Request) {
@@ -45,10 +46,19 @@ export async function POST(request: Request) {
   }
 
   const pricePhp = getFeaturedPromotionPrice(body.durationDays);
+  const coinsToUse = Math.max(0, Math.floor(Number(body.coinsToUse ?? 0)));
+  if (coinsToUse % 2 !== 0) {
+    return NextResponse.json({ error: 'Use an even GP Coin amount.' }, { status: 400 });
+  }
+  if (coinsToUse > pricePhp * 2) {
+    return NextResponse.json({ error: 'GP Coins cannot exceed the Featured price.' }, { status: 400 });
+  }
+
   const { data, error } = await supabase.rpc('create_featured_paid_reservation', {
     p_listing_id: body.listingId,
     p_duration_days: body.durationDays,
     p_price_php: pricePhp,
+    p_coins_to_use: coinsToUse,
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });

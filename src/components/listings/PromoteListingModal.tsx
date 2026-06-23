@@ -5,8 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { createClient } from '@/lib/supabase/client';
+import { coinsToPesoDiscount, formatGpCoins, maxRedeemableCoins } from '@/lib/gpCoins';
 import { FEATURED_PAYMENT_PROOF_BUCKET, FEATURED_PROMOTION_PRICES } from '@/lib/featuredPromotions';
-import { formatShortDate } from '@/lib/utils';
+import { formatPrice, formatShortDate } from '@/lib/utils';
 import type { FeaturedPromotionOrder } from '@/types';
 
 const MESSENGER_URL = 'https://m.me/GoPairPH';
@@ -54,6 +55,7 @@ interface PromoteListingModalProps {
   ownFeaturedUntil: string | null;
   initialPlacement?: Placement;
   initialTier?: Tier;
+  gpCoinBalance?: number;
   onClose: () => void;
 }
 
@@ -68,6 +70,7 @@ export function PromoteListingModal({
   ownFeaturedUntil,
   initialPlacement,
   initialTier = '7d',
+  gpCoinBalance = 0,
   onClose,
 }: PromoteListingModalProps) {
   const [placement, setPlacement] = useState<Placement>(
@@ -77,6 +80,7 @@ export function PromoteListingModal({
   const [method, setMethod] = useState<PaymentMethod>('gcash');
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [transactionReference, setTransactionReference] = useState('');
+  const [coinsToUse, setCoinsToUse] = useState(0);
   const [submitState, setSubmitState] = useState<'idle' | 'reserving' | 'uploading' | 'submitting' | 'success'>('idle');
   const [submitError, setSubmitError] = useState('');
   const [submittedOrder, setSubmittedOrder] = useState<FeaturedPromotionOrder | null>(null);
@@ -85,17 +89,35 @@ export function PromoteListingModal({
   const isTopPick = placement === 'top_pick';
   const isFeatured = placement === 'featured';
   const isSubmitting = submitState === 'reserving' || submitState === 'uploading' || submitState === 'submitting';
+  const maxCoinsForFeatured = isFeatured ? maxRedeemableCoins(gpCoinBalance, selectedTier.price) : 0;
+  const safeCoinsToUse = Math.min(coinsToUse, maxCoinsForFeatured);
+  const coinDiscountPhp = coinsToPesoDiscount(safeCoinsToUse);
+  const cashAmountPhp = Math.max(0, selectedTier.price - coinDiscountPhp);
+  const isCoinOnlyFeatured = isFeatured && cashAmountPhp === 0 && safeCoinsToUse > 0;
+
+  function choosePlacement(nextPlacement: Placement) {
+    setPlacement(nextPlacement);
+    setTier('7d');
+    setCoinsToUse(0);
+  }
+
+  function chooseTier(nextTier: Tier) {
+    setTier(nextTier);
+    setCoinsToUse(0);
+  }
 
   async function submitFeaturedProof() {
-    if (!proofFile) {
+    if (safeCoinsToUse !== coinsToUse) setCoinsToUse(safeCoinsToUse);
+
+    if (!isCoinOnlyFeatured && !proofFile) {
       setSubmitError('Upload your payment screenshot first.');
       return;
     }
-    if (!['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'].includes(proofFile.type)) {
+    if (proofFile && !['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'].includes(proofFile.type)) {
       setSubmitError('Please upload an image screenshot.');
       return;
     }
-    if (proofFile.size > 8 * 1024 * 1024) {
+    if (proofFile && proofFile.size > 8 * 1024 * 1024) {
       setSubmitError('Please upload a screenshot below 8MB.');
       return;
     }
@@ -109,12 +131,25 @@ export function PromoteListingModal({
       const reserveResponse = await fetch('/api/promotions/featured/reserve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId, durationDays }),
+        body: JSON.stringify({ listingId, durationDays, coinsToUse: safeCoinsToUse }),
       });
       const reserveJson = await reserveResponse.json().catch(() => ({}));
       if (!reserveResponse.ok) throw new Error(reserveJson.error ?? 'Could not reserve Featured placement.');
       const order = reserveJson.order as FeaturedPromotionOrder;
 
+      if (isCoinOnlyFeatured) {
+        setSubmitState('submitting');
+        const coinResponse = await fetch(`/api/promotions/featured/${order.id}/coin-payment`, {
+          method: 'POST',
+        });
+        const coinJson = await coinResponse.json().catch(() => ({}));
+        if (!coinResponse.ok) throw new Error(coinJson.error ?? 'Could not complete GP Coin payment.');
+        setSubmittedOrder(coinJson.order as FeaturedPromotionOrder);
+        setSubmitState('success');
+        return;
+      }
+
+      if (!proofFile) throw new Error('Upload your payment screenshot first.');
       setSubmitState('uploading');
       const supabase = createClient();
       const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -230,8 +265,7 @@ export function PromoteListingModal({
                         key={key}
                         type="button"
                         onClick={() => {
-                          setPlacement(key);
-                          setTier('7d');
+                          choosePlacement(key);
                         }}
                         className={`rounded-lg border p-3 text-left transition-colors ${
                           active
@@ -260,7 +294,7 @@ export function PromoteListingModal({
                     return (
                       <button
                         key={key}
-                        onClick={() => setTier(key)}
+                        onClick={() => chooseTier(key)}
                         className={`rounded-lg border p-3 text-left transition-colors ${
                           active
                             ? 'border-teal-500 bg-teal-500/10'
@@ -277,9 +311,61 @@ export function PromoteListingModal({
                 </div>
               </section>
 
+              {isFeatured && (
+                <section>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">3. Use GP Coins</p>
+                  <div className="rounded-lg border border-amber-400/25 bg-amber-400/[0.07] p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-amber-100">{formatGpCoins(gpCoinBalance)} available</p>
+                        <p className="mt-1 text-xs leading-5 text-amber-100/70">Use GP Coins here to promote your running shoes on the Go Pair PH homepage.</p>
+                      </div>
+                      {maxCoinsForFeatured <= 0 && (
+                        <span className="shrink-0 rounded-full border border-amber-300/25 px-2 py-1 text-[11px] font-semibold text-amber-100/80">
+                          Earn first
+                        </span>
+                      )}
+                    </div>
+                    {maxCoinsForFeatured > 0 && (
+                      <div className="mt-3">
+                        <input
+                          type="range"
+                          min={0}
+                          max={maxCoinsForFeatured}
+                          step={2}
+                          value={safeCoinsToUse}
+                          onChange={event => setCoinsToUse(Number(event.target.value))}
+                          className="w-full accent-amber-400"
+                          aria-label="GP Coins to use"
+                        />
+                        <div className="mt-2 flex items-center justify-between text-xs text-amber-100/80">
+                          <button type="button" onClick={() => setCoinsToUse(0)} className="font-semibold hover:text-amber-50">Use 0</button>
+                          <button type="button" onClick={() => setCoinsToUse(maxCoinsForFeatured)} className="font-semibold hover:text-amber-50">Use max</button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                      <div className="rounded-lg bg-slate-950/45 p-2">
+                        <p className="text-gray-500">Coins</p>
+                        <p className="mt-0.5 font-bold text-gray-100">{safeCoinsToUse} GP</p>
+                      </div>
+                      <div className="rounded-lg bg-slate-950/45 p-2">
+                        <p className="text-gray-500">Discount</p>
+                        <p className="mt-0.5 font-bold text-gray-100">{formatPrice(coinDiscountPhp)}</p>
+                      </div>
+                      <div className="rounded-lg bg-slate-950/45 p-2">
+                        <p className="text-gray-500">Cash due</p>
+                        <p className="mt-0.5 font-bold text-gray-100">{formatPrice(cashAmountPhp)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
+
               {/* Step 3 — payment method */}
+              {(!isFeatured || cashAmountPhp > 0) && (
               <section>
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">3. Pay {selectedTier.priceLabel} via</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{isFeatured ? '4' : '3'}. Pay {formatPrice(cashAmountPhp || selectedTier.price)} via</p>
                 <div className="flex gap-2 mb-3">
                   {(['gcash', 'bpi'] as PaymentMethod[]).map(m => (
                     <button
@@ -307,14 +393,15 @@ export function PromoteListingModal({
                     />
                   </div>
                   <p className="mt-2 text-[11px] text-gray-500 text-center">
-                    Scan the QR or save this screenshot to pay {selectedTier.priceLabel}.
+                    Scan the QR or save this screenshot to pay {formatPrice(cashAmountPhp || selectedTier.price)}.
                   </p>
                 </div>
               </section>
+              )}
 
               {isFeatured ? (
                 <section>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">4. Upload proof</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{cashAmountPhp > 0 ? '5. Upload proof' : '4. Confirm GP Coin payment'}</p>
                   {submitState === 'success' && submittedOrder ? (
                     <div className="rounded-lg border border-teal-500/30 bg-teal-500/10 p-4">
                       <p className="text-sm font-semibold text-teal-200">Featured request received</p>
@@ -329,6 +416,7 @@ export function PromoteListingModal({
                     </div>
                   ) : (
                     <div className="space-y-3">
+                      {cashAmountPhp > 0 && (
                       <label className="block">
                         <span className="text-xs font-medium text-gray-300">Transaction reference</span>
                         <input
@@ -338,6 +426,8 @@ export function PromoteListingModal({
                           className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-base text-gray-100 outline-none focus:border-teal-400 sm:text-sm"
                         />
                       </label>
+                      )}
+                      {cashAmountPhp > 0 && (
                       <label className="block rounded-lg border border-dashed border-gray-700 bg-gray-950/60 p-3">
                         <span className="text-xs font-medium text-gray-300">Payment screenshot</span>
                         <input
@@ -350,6 +440,15 @@ export function PromoteListingModal({
                           <span className="mt-2 block truncate text-[11px] text-teal-300">{proofFile.name}</span>
                         )}
                       </label>
+                      )}
+                      {isCoinOnlyFeatured && (
+                        <div className="rounded-lg border border-amber-300/25 bg-amber-300/[0.08] p-3">
+                          <p className="text-sm font-semibold text-amber-100">No screenshot needed</p>
+                          <p className="mt-1 text-xs leading-5 text-amber-100/75">
+                            This Featured request will use {safeCoinsToUse} GP Coins and auto-approve if the 30-day full-coin limit is clear.
+                          </p>
+                        </div>
+                      )}
                       {submitError && <p className="text-xs text-red-400">{submitError}</p>}
                       <Button
                         type="button"
@@ -363,7 +462,7 @@ export function PromoteListingModal({
                             ? 'Uploading proof…'
                             : submitState === 'submitting'
                               ? 'Submitting…'
-                              : 'Submit Featured request'}
+                              : isCoinOnlyFeatured ? 'Use GP Coins and Feature' : 'Submit Featured request'}
                       </Button>
                       <p className="text-[10px] leading-4 text-gray-600">
                         Your position is reserved for 20 minutes while the proof is uploaded. Invalid proof can be removed after admin review.

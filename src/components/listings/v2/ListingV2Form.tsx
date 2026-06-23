@@ -294,6 +294,9 @@ export function ListingV2Form({ profileId, initialLocationCity = null, shop = nu
 
       trackMarketplaceAction('listing_publish', { listing_id: shoeId, listing_type: isShop ? 'shop' : details.listing_type, surface: 'new_listing_v2' });
       clearDraft();
+      void supabase.rpc('gp_coin_schedule_listing_publish_award', {
+        p_listing_id: shoeId,
+      });
       void Promise.allSettled([
         fetch('/api/admin/new-listing-notification', {
           method: 'POST',

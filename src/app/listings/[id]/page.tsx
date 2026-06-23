@@ -187,6 +187,18 @@ async function getCurrentProfile(): Promise<CurrentProfile | null> {
   return { ...(data as Profile), authEmail: user.email ?? null };
 }
 
+async function getGpCoinBalance(profileId: string | null): Promise<number> {
+  if (!profileId) return 0;
+  const supabase = createClient();
+  await supabase.rpc('gp_coin_expire_available', { p_profile_id: profileId });
+  const { data } = await supabase
+    .from('gp_coin_wallets')
+    .select('available_balance')
+    .eq('profile_id', profileId)
+    .maybeSingle();
+  return Math.max(0, Number(data?.available_balance ?? 0));
+}
+
 const listingDiscoverySelect = '*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)';
 
 function uniqueListings(listings: Shoe[], currentId: string): Shoe[] {
@@ -372,6 +384,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > now;
   const isFeatured = !!shoe.featured_until && new Date(shoe.featured_until) > now;
   const slotInfo = isOwner ? await getSponsoredSlotInfo() : null;
+  const gpCoinBalance = isOwner ? await getGpCoinBalance(currentProfileId) : 0;
   const listingName = formatListingName(shoe.brand, shoe.model);
   const justListed = isOwner && searchParams?.listed === '1';
   const justUpdated = isOwner && searchParams?.updated === '1';
@@ -1071,6 +1084,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                     ownSponsoredUntil={shoe.sponsored_until}
                     ownListingAlreadyFeatured={isFeatured}
                     ownFeaturedUntil={shoe.featured_until}
+                    gpCoinBalance={gpCoinBalance}
                   />
                 )}
                 {/* StatusButton returns null for reserved (handled by CompleteSaleButtons above) */}

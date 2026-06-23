@@ -47,6 +47,11 @@ export async function GET(request: Request, { params }: { params: { listingId: s
     return redirectWithError(request, 'failed');
   }
 
+  await service.rpc('gp_coin_award_listing_renewal', {
+    p_listing_id: token.listingId,
+    p_idempotency_key: `listing_renewal:${token.listingId}:${renewedAt}`,
+  });
+
   const listingPath = getListingPath(listing);
   revalidateTag('homepage-listings');
   revalidateTag('homepage-featured-listing');

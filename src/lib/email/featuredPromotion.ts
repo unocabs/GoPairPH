@@ -62,6 +62,10 @@ interface AdminProofEmailArgs extends FeaturedPromotionEmailBase {
   proofUrl: string | null;
   queuePosition: number | null;
   status: string;
+  coinsUsed?: number;
+  coinDiscountPhp?: number;
+  cashAmountPhp?: number;
+  paymentMode?: string;
 }
 
 export function renderAdminFeaturedProofEmail(args: AdminProofEmailArgs): string {
@@ -76,7 +80,11 @@ export function renderAdminFeaturedProofEmail(args: AdminProofEmailArgs): string
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:18px;border-collapse:collapse;">
       ${row('Seller', args.sellerName)}
       ${row('Duration', `${args.durationDays} days`)}
-      ${row('Amount', formatPrice(args.pricePhp))}
+      ${row('Featured price', formatPrice(args.pricePhp))}
+      ${row('GP Coins spent', `${(args.coinsUsed ?? 0).toLocaleString('en-PH')} GP`)}
+      ${row('Coin discount', formatPrice(args.coinDiscountPhp ?? 0))}
+      ${row('Cash amount', formatPrice(args.cashAmountPhp ?? args.pricePhp))}
+      ${row('Payment mode', args.paymentMode ?? 'Cash only')}
       ${row('Payment method', labelPaymentMethod(args.paymentMethod))}
       ${row('Transaction reference', args.transactionReference ?? 'Not provided')}
       ${row('Queue status', args.status)}

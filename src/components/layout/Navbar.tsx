@@ -24,6 +24,8 @@ export function Navbar() {
   const [sentOffersCount, setSentOffersCount] = useState(0);
   const [adminPendingCount, setAdminPendingCount] = useState(0);
   const [ownedShopSlug, setOwnedShopSlug] = useState<string | null>(null);
+  const [gpCoinBalance, setGpCoinBalance] = useState(0);
+  const [gpCoinModalOpen, setGpCoinModalOpen] = useState(false);
   const supabase = createClient();
   const router = useRouter();
   const pathname = usePathname();
@@ -38,6 +40,7 @@ export function Navbar() {
       setSentOffersCount(0);
       setAdminPendingCount(0);
       setOwnedShopSlug(null);
+      setGpCoinBalance(0);
       return;
     }
     (async () => {
@@ -84,6 +87,13 @@ export function Navbar() {
         .eq('owner_profile_id', profile.id)
         .maybeSingle();
       if (active) setOwnedShopSlug(ownedShop?.slug ?? null);
+
+      const { data: wallet } = await supabase
+        .from('gp_coin_wallets')
+        .select('available_balance')
+        .eq('profile_id', profile.id)
+        .maybeSingle();
+      if (active) setGpCoinBalance(Math.max(0, Number(wallet?.available_balance ?? 0)));
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,13 +154,21 @@ export function Navbar() {
             <Logo size="md" />
           </Link>
 
+          <div className="md:hidden">
+            <GpCoinPill
+              coins={gpCoinBalance}
+              signedIn={!!user}
+              onLoggedOutClick={() => setGpCoinModalOpen(true)}
+            />
+          </div>
+
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-1">
             <Link href="/browse" className="rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors">
               GP Marketplace
             </Link>
-            <Link href="/guides" className="rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors">
-              Guides
+            <Link href="/price-guide" className="rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors">
+              Check my Resale Price
             </Link>
             <Link href="/looking-for" className="rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors">
               Looking For
@@ -158,6 +176,11 @@ export function Navbar() {
             <Link href="/listings/new" className="ml-2">
               <Button size="sm">+ List a Shoe</Button>
             </Link>
+            <GpCoinPill
+              coins={gpCoinBalance}
+              signedIn={!!user}
+              onLoggedOutClick={() => setGpCoinModalOpen(true)}
+            />
           </div>
 
           {/* Right side — avatar always visible; hamburger mobile-only */}
@@ -341,7 +364,7 @@ export function Navbar() {
               </div>
             )}
             <Link href="/browse" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">GP Marketplace</Link>
-            <Link href="/guides" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Guides</Link>
+            <Link href="/price-guide" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Check my Resale Price</Link>
             <Link href="/looking-for" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Looking For</Link>
             <Link href="/listings/new" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-semibold text-teal-400 hover:bg-gray-800">+ List a Shoe</Link>
             {user && (
@@ -354,6 +377,90 @@ export function Navbar() {
           </div>
         )}
       </div>
+
+      {gpCoinModalOpen && (
+        <GpCoinIntroModal onClose={() => setGpCoinModalOpen(false)} />
+      )}
     </nav>
+  );
+}
+
+function GpCoinPill({
+  coins,
+  signedIn,
+  onLoggedOutClick,
+}: {
+  coins: number;
+  signedIn: boolean;
+  onLoggedOutClick: () => void;
+}) {
+  const className = 'inline-flex min-h-8 shrink-0 items-center justify-center rounded-full border border-amber-300/35 bg-amber-400/12 px-3 text-xs font-black tabular-nums text-amber-100 shadow-sm shadow-amber-950/20 transition-colors hover:bg-amber-400/18';
+  const label = `${coins.toLocaleString('en-PH')} GP +`;
+
+  if (!signedIn) {
+    return (
+      <button
+        type="button"
+        onClick={onLoggedOutClick}
+        className={className}
+        aria-label="Learn about GoPair Coins"
+      >
+        {label}
+      </button>
+    );
+  }
+
+  return (
+    <Link
+      href="/profile"
+      className={className}
+      aria-label={`${coins.toLocaleString('en-PH')} GP Coins`}
+    >
+      {label}
+    </Link>
+  );
+}
+
+function GpCoinIntroModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-4 pt-24"
+      onClick={event => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className="w-full max-w-sm rounded-2xl border border-gray-700 bg-gray-900 p-5 shadow-2xl shadow-black/50">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-300">GoPair Coins</p>
+            <h2 className="mt-2 text-lg font-bold text-gray-100">Earn coins when you sell</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-800 hover:text-gray-100"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <p className="mt-3 text-sm leading-6 text-gray-300">
+          Sell your running shoes in Go Pair PH and earn GoPair Coins. Add a new listing{' '}
+          <Link href="/listings/new" onClick={onClose} className="font-semibold text-amber-200 hover:text-amber-100">
+            here
+          </Link>
+          .
+        </p>
+        <Link
+          href="/listings/new"
+          onClick={onClose}
+          className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-teal-600 px-4 text-sm font-bold text-white transition-colors hover:bg-teal-500"
+        >
+          Add a new listing
+        </Link>
+      </div>
+    </div>
   );
 }

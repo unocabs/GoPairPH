@@ -16,6 +16,7 @@ interface PromoteListingButtonProps {
   ownSponsoredUntil: string | null;
   ownListingAlreadyFeatured: boolean;
   ownFeaturedUntil: string | null;
+  gpCoinBalance?: number;
 }
 
 export function PromoteListingButton({
@@ -28,6 +29,7 @@ export function PromoteListingButton({
   ownSponsoredUntil,
   ownListingAlreadyFeatured,
   ownFeaturedUntil,
+  gpCoinBalance = 0,
 }: PromoteListingButtonProps) {
   const [showAcknowledgment, setShowAcknowledgment] = useState(false);
   const [open, setOpen] = useState(false);
@@ -106,6 +108,7 @@ export function PromoteListingButton({
           ownSponsoredUntil={ownSponsoredUntil}
           ownListingAlreadyFeatured={ownListingAlreadyFeatured}
           ownFeaturedUntil={ownFeaturedUntil}
+          gpCoinBalance={gpCoinBalance}
           initialPlacement={autoFeatured ? 'featured' : undefined}
           initialTier="7d"
           onClose={() => setOpen(false)}

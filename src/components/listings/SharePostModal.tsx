@@ -6,7 +6,7 @@ import { LogoMark } from '@/components/brand/Logo';
 import { CONDITIONS, LISTING_TYPE_LABELS } from '@/lib/constants';
 import { trackMarketplaceAction } from '@/lib/analytics';
 import { FB_GROUP_URL } from '@/lib/listingShare';
-import { recordListingShareMetric } from '@/lib/shareMetrics';
+import { recordListingShareMetric, type ListingShareReward } from '@/lib/shareMetrics';
 import { formatListingName, formatMileage, formatPrice, formatProfileLocation, formatSize, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import type { Condition, ListingType, Shoe, Profile, Shop } from '@/types';
 
@@ -15,7 +15,7 @@ interface SharePostModalProps {
   seller: Profile | null;
   open?: boolean;
   onClose: () => void;
-  onDownloadRecorded?: () => void;
+  onDownloadRecorded?: (reward?: ListingShareReward) => void;
   facebookCompleted?: boolean;
   onFacebookGroupClick?: () => void;
   onDownloaded?: () => void;
@@ -514,8 +514,9 @@ export function SharePostModal({ shoe, seller, open = true, onClose, onDownloadR
       format,
       method,
     });
-    void recordListingShareMetric(shoe.id, 'image_download');
-    onDownloadRecorded?.();
+    void recordListingShareMetric(shoe.id, 'image_download').then(reward => {
+      onDownloadRecorded?.(reward);
+    });
   }
 
   function startLongPressTracking() {

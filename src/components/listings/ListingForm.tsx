@@ -395,6 +395,9 @@ export function ListingForm({ profileId, initialLocationCity = null, shop = null
         has_extra_photo: hasExtraPhoto,
         has_messenger_contact: hasMessengerContact,
       });
+      void supabase.rpc('gp_coin_schedule_listing_publish_award', {
+        p_listing_id: insertedShoe?.id ?? shoeId,
+      });
       await fetch('/api/admin/new-listing-notification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

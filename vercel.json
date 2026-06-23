@@ -7,6 +7,10 @@
     {
       "path": "/api/admin/reports/listing-views",
       "schedule": "0 9 * * 5"
+    },
+    {
+      "path": "/api/admin/gp-coins/process",
+      "schedule": "*/30 * * * *"
     }
   ]
 }

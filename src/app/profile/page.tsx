@@ -7,7 +7,7 @@ import { PageShell } from '@/components/layout/PageShell';
 import { getViewSummariesForListings } from '@/lib/listingViews';
 import { getCompletedSalesCount } from '@/lib/sales';
 import { getSavedListingCounts, getSavedListings } from '@/lib/savedListings';
-import type { Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest, SavedSearch } from '@/types';
+import type { GpCoinTransaction, GpCoinWallet, Profile, Shoe, WishlistItem, PurchaseRequest, VerificationRequest, SavedSearch } from '@/types';
 
 async function getOwnProfileData() {
   const supabase = createClient();
@@ -17,11 +17,23 @@ async function getOwnProfileData() {
   const { data: profile } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
   if (!profile) return null;
 
-  const [shoesRes, wishlistRes, savedSearchesRes, savedListings] = await Promise.all([
+  await supabase.rpc('gp_coin_expire_available', { p_profile_id: profile.id });
+
+  const [shoesRes, wishlistRes, savedSearchesRes, savedListings, coinWalletRes, coinTransactionsRes, expiringCoinBucketsRes] = await Promise.all([
     supabase.from('shoes').select('*, shoe_images(*), shops(*), shoe_variants(*)').eq('seller_id', profile.id).order('created_at', { ascending: false }),
     supabase.from('wishlist_items').select('*, wishlist_images(*), wishlist_offers(count)').eq('user_id', profile.id).order('created_at', { ascending: false }),
     supabase.from('saved_searches').select('*').eq('user_id', profile.id).order('created_at', { ascending: false }),
     getSavedListings(profile.id),
+    supabase.from('gp_coin_wallets').select('*').eq('profile_id', profile.id).maybeSingle(),
+    supabase.from('gp_coin_transactions').select('*').eq('profile_id', profile.id).order('created_at', { ascending: false }).limit(20),
+    supabase
+      .from('gp_coin_award_buckets')
+      .select('remaining_amount, expires_at')
+      .eq('profile_id', profile.id)
+      .gt('remaining_amount', 0)
+      .gt('expires_at', new Date().toISOString())
+      .order('expires_at', { ascending: true })
+      .limit(1),
   ]);
 
   const allShoes = (shoesRes.data as Shoe[]) ?? [];
@@ -118,6 +130,9 @@ async function getOwnProfileData() {
     savedListingCounts,
     shareMetrics,
     completedSales,
+    gpCoinWallet: (coinWalletRes.data as GpCoinWallet | null) ?? null,
+    gpCoinTransactions: (coinTransactionsRes.data as GpCoinTransaction[]) ?? [],
+    nextGpCoinsExpiring: ((expiringCoinBucketsRes.data?.[0] as { remaining_amount: number; expires_at: string } | undefined) ?? null),
   };
 }
 
