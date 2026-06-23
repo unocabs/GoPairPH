@@ -3,6 +3,7 @@ import type { Shoe } from '@/types';
 import { CONDITIONS } from '@/lib/constants';
 import { formatMileage, formatPrice, formatProfileLocation, formatSize, getPublicUrl, formatListingName, getListingPath, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { FeaturedPill } from '@/components/listings/FeaturedPill';
+import { FeaturedSpotlightInfoButton } from '@/components/home/FeaturedSpotlightInfoButton';
 import { HeroTrackedLink } from '@/components/home/HeroTrackedLink';
 
 interface FeaturedListingProps {
@@ -39,6 +40,7 @@ export function FeaturedListing({ shoe, rearShoes = [] }: FeaturedListingProps) 
         >
           <span className="sr-only">View featured listing: {listingName}</span>
         </HeroTrackedLink>
+        <FeaturedSpotlightInfoButton />
 
       {/* Background image (full bleed) */}
       <div className="absolute inset-0 bg-stone-900">

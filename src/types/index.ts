@@ -129,6 +129,50 @@ export interface Shoe {
   shoe_variants?: ShoeVariant[];
 }
 
+export type FeaturedPromotionSource = 'paid' | 'admin';
+export type FeaturedPromotionStatus =
+  | 'reserved'
+  | 'queued'
+  | 'active'
+  | 'completed'
+  | 'rejected'
+  | 'cancelled'
+  | 'refund_required'
+  | 'superseded';
+export type FeaturedPromotionReviewStatus = 'not_required' | 'pending' | 'approved' | 'rejected';
+export type FeaturedPaymentMethod = 'gcash' | 'bpi';
+
+export interface FeaturedPromotionOrder {
+  id: string;
+  source: FeaturedPromotionSource;
+  listing_id: string;
+  seller_id: string;
+  duration_days: number;
+  price_php: number;
+  payment_method: FeaturedPaymentMethod | null;
+  transaction_reference: string | null;
+  proof_storage_path: string | null;
+  proof_signed_url?: string | null;
+  scheduled_start_at: string | null;
+  scheduled_end_at: string | null;
+  queue_position: number | null;
+  status: FeaturedPromotionStatus;
+  review_status: FeaturedPromotionReviewStatus;
+  reserved_until: string | null;
+  activated_at: string | null;
+  ended_at: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  admin_notes: string | null;
+  replacement_reason: string | null;
+  superseded_by_order_id: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  listing?: Pick<Shoe, 'id' | 'slug' | 'brand' | 'model' | 'status' | 'price_php' | 'featured_until'> | null;
+  seller?: Pick<Profile, 'id' | 'display_name' | 'user_id' | 'is_verified'> | null;
+}
+
 export type PurchaseRequestStatus = 'pending' | 'accepted' | 'declined' | 'completed';
 
 export interface PurchaseRequest {

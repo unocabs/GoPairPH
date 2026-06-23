@@ -4,7 +4,8 @@ import { redirect } from 'next/navigation';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { AdminDashboard } from './AdminDashboard';
 import { getDashboardViewWindow, getListingViewSummaries } from '@/lib/listingViews';
-import type { ListingReport, VerificationRequest, Profile, Shoe, Shop, WishlistItem, WishlistOffer, WishlistOfferReport } from '@/types';
+import { FEATURED_PAYMENT_PROOF_BUCKET } from '@/lib/featuredPromotions';
+import type { FeaturedPromotionOrder, ListingReport, VerificationRequest, Profile, Shoe, Shop, WishlistItem, WishlistOffer, WishlistOfferReport } from '@/types';
 
 type PairRequestSummary = Pick<WishlistItem, 'id' | 'brand' | 'model'>;
 
@@ -104,7 +105,9 @@ async function loadAdminData() {
   if (!profile?.is_admin) return null;
 
   const viewWindow = getDashboardViewWindow();
-  const [pendingRes, verifiedRes, approvedVerificationRes, shopsRes, profilesRes, soldListingsRes, listingViews, leadReports, listingReports, siteSettingsRes] = await Promise.all([
+  await service.rpc('reconcile_featured_promotions');
+
+  const [pendingRes, verifiedRes, approvedVerificationRes, shopsRes, profilesRes, soldListingsRes, promotionsRes, listingViews, leadReports, listingReports, siteSettingsRes] = await Promise.all([
     supabase
       .from('verification_requests')
       .select('*, profiles:profiles!user_id(*)')
@@ -135,6 +138,11 @@ async function loadAdminData() {
       .in('status', ['sold', 'reserved', 'donated'])
       .order('updated_at', { ascending: false })
       .limit(10),
+    service
+      .from('featured_promotion_orders')
+      .select('*, listing:shoes!featured_promotion_orders_listing_id_fkey(id, slug, brand, model, status, price_php, featured_until), seller:profiles!featured_promotion_orders_seller_id_fkey(id, display_name, user_id, is_verified)')
+      .order('created_at', { ascending: false })
+      .limit(100),
     getListingViewSummaries({ ...viewWindow, limit: 100 }),
     loadOpenLeadReports(),
     loadOpenListingReports(),
@@ -145,6 +153,15 @@ async function loadAdminData() {
       .maybeSingle(),
   ]);
 
+  const promotions = ((promotionsRes.data ?? []) as unknown as FeaturedPromotionOrder[]);
+  const promotionsWithProofs = await Promise.all(promotions.map(async order => {
+    if (!order.proof_storage_path) return order;
+    const { data } = await service.storage
+      .from(FEATURED_PAYMENT_PROOF_BUCKET)
+      .createSignedUrl(order.proof_storage_path, 60 * 60);
+    return { ...order, proof_signed_url: data?.signedUrl ?? null };
+  }));
+
   return {
     pending: (pendingRes.data as VerificationRequest[]) ?? [],
     verified: (verifiedRes.data as Profile[]) ?? [],
@@ -152,6 +169,7 @@ async function loadAdminData() {
     shops: (shopsRes.data as (Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location_city' | 'location_province' | 'location_region'> | null })[]) ?? [],
     profiles: (profilesRes.data as Profile[]) ?? [],
     soldListings: ((soldListingsRes.data ?? []) as unknown as Shoe[]),
+    promotions: promotionsWithProofs,
     listingViews,
     leadReports,
     listingReports,

@@ -2,8 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import { formatShortDate } from '@/lib/utils';
+import { formatPrice, formatShortDate } from '@/lib/utils';
 
 interface FeatureToggleButtonProps {
   shoeId: string;
@@ -46,52 +45,69 @@ export function FeatureToggleButton({
   async function feature(days: number) {
     setError(null);
     if (!sellerIsVerified && !confirm('This seller is not verified. Continue anyway?')) return;
-    if (!confirm(`Feature this listing for ${days} days? It will replace whatever is currently featured on the home page.`)) return;
+    if (!confirm(`Feature this listing for ${days} days as an Admin Pick? Paid Featured promotions still take priority.`)) return;
 
-    const supabase = createClient();
-    const newUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+    const response = await fetch('/api/admin/promotions/featured/pick', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId: shoeId, durationDays: days }),
+    });
+    const json = await response.json().catch(() => ({}));
 
-    // Clear any existing featured row first.
-    const { error: clearErr } = await supabase
-      .from('shoes')
-      .update({ featured_until: null })
-      .gt('featured_until', new Date().toISOString());
+    if (response.status === 409) {
+      const paid = json.currentPaid;
+      const amount = paid?.price_php != null ? formatPrice(paid.price_php) : 'a paid amount';
+      const end = paid?.scheduled_end_at ? formatShortDate(paid.scheduled_end_at) : 'its scheduled end date';
+      const replace = confirm(
+        `Paid Featured promotion is active\n\nThis seller paid ${amount} for Featured placement until ${end}. Replacing it will end their paid promotion early and require a refund. This action will be recorded.\n\nReplace & Mark for Refund?`,
+      );
+      if (!replace) return;
 
-    if (clearErr) {
-      setError(clearErr.message);
+      const forcedResponse = await fetch('/api/admin/promotions/featured/pick', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listingId: shoeId,
+          durationDays: days,
+          forceReplacePaid: true,
+          reason: 'Admin replaced a paid Featured promotion from listing controls.',
+        }),
+      });
+      const forcedJson = await forcedResponse.json().catch(() => ({}));
+      if (!forcedResponse.ok) {
+        setError(forcedJson.error ?? 'Could not feature this listing.');
+        return;
+      }
+      setFeatured(true);
+      setUntil(forcedJson.order?.scheduled_end_at ?? null);
+      startTransition(() => router.refresh());
       return;
     }
 
-    const { data: updated, error: setErr } = await supabase
-      .from('shoes')
-      .update({ featured_until: newUntil })
-      .eq('id', shoeId)
-      .select('id, featured_until');
-
-    if (setErr) {
-      setError(setErr.message);
-      return;
-    }
-    if (!updated || updated.length === 0) {
-      setError('Update blocked by row-level security. Make sure your profile has is_admin = true.');
+    if (!response.ok) {
+      setError(json.error ?? 'Could not feature this listing.');
       return;
     }
 
     setFeatured(true);
-    setUntil(updated[0].featured_until ?? newUntil);
+    setUntil(json.order?.scheduled_end_at ?? null);
     startTransition(() => router.refresh());
   }
 
   async function unfeature() {
     if (!confirm('Remove this listing from the home-page spotlight?')) return;
     setError(null);
-    const supabase = createClient();
-    const { error: err } = await supabase
-      .from('shoes')
-      .update({ featured_until: null })
-      .eq('id', shoeId);
-    if (err) {
-      setError(err.message);
+    const response = await fetch('/api/admin/promotions/featured/pick', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        listingId: shoeId,
+        reason: 'Admin removed Featured placement from listing controls.',
+      }),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setError(json.error ?? 'Could not remove Featured placement.');
       return;
     }
     setFeatured(false);

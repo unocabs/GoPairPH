@@ -4,7 +4,10 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
+import { createClient } from '@/lib/supabase/client';
+import { FEATURED_PAYMENT_PROOF_BUCKET, FEATURED_PROMOTION_PRICES } from '@/lib/featuredPromotions';
 import { formatShortDate } from '@/lib/utils';
+import type { FeaturedPromotionOrder } from '@/types';
 
 const MESSENGER_URL = 'https://m.me/GoPairPH';
 const FB_PROFILE_URL = 'https://www.facebook.com/gopairph';
@@ -49,6 +52,8 @@ interface PromoteListingModalProps {
   ownSponsoredUntil: string | null;
   ownListingAlreadyFeatured: boolean;
   ownFeaturedUntil: string | null;
+  initialPlacement?: Placement;
+  initialTier?: Tier;
   onClose: () => void;
 }
 
@@ -61,21 +66,94 @@ export function PromoteListingModal({
   ownSponsoredUntil,
   ownListingAlreadyFeatured,
   ownFeaturedUntil,
+  initialPlacement,
+  initialTier = '7d',
   onClose,
 }: PromoteListingModalProps) {
   const [placement, setPlacement] = useState<Placement>(
-    (!slotsAvailable || ownListingAlreadySponsored) && !ownListingAlreadyFeatured ? 'featured' : 'top_pick',
+    initialPlacement ?? (((!slotsAvailable || ownListingAlreadySponsored) && !ownListingAlreadyFeatured) ? 'featured' : 'top_pick'),
   );
-  const [tier, setTier] = useState<Tier>('7d');
+  const [tier, setTier] = useState<Tier>(initialTier);
   const [method, setMethod] = useState<PaymentMethod>('gcash');
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [transactionReference, setTransactionReference] = useState('');
+  const [submitState, setSubmitState] = useState<'idle' | 'reserving' | 'uploading' | 'submitting' | 'success'>('idle');
+  const [submitError, setSubmitError] = useState('');
+  const [submittedOrder, setSubmittedOrder] = useState<FeaturedPromotionOrder | null>(null);
   const selectedPlacement = PLACEMENTS[placement];
   const selectedTier = selectedPlacement.tiers[tier];
   const isTopPick = placement === 'top_pick';
   const isFeatured = placement === 'featured';
+  const isSubmitting = submitState === 'reserving' || submitState === 'uploading' || submitState === 'submitting';
+
+  async function submitFeaturedProof() {
+    if (!proofFile) {
+      setSubmitError('Upload your payment screenshot first.');
+      return;
+    }
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'].includes(proofFile.type)) {
+      setSubmitError('Please upload an image screenshot.');
+      return;
+    }
+    if (proofFile.size > 8 * 1024 * 1024) {
+      setSubmitError('Please upload a screenshot below 8MB.');
+      return;
+    }
+
+    setSubmitError('');
+    setSubmittedOrder(null);
+
+    try {
+      setSubmitState('reserving');
+      const durationDays = selectedTier.days as keyof typeof FEATURED_PROMOTION_PRICES;
+      const reserveResponse = await fetch('/api/promotions/featured/reserve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId, durationDays }),
+      });
+      const reserveJson = await reserveResponse.json().catch(() => ({}));
+      if (!reserveResponse.ok) throw new Error(reserveJson.error ?? 'Could not reserve Featured placement.');
+      const order = reserveJson.order as FeaturedPromotionOrder;
+
+      setSubmitState('uploading');
+      const supabase = createClient();
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) throw new Error('Please sign in again before uploading proof.');
+      const extension = proofFile.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+      const storagePath = `${userData.user.id}/${order.id}-${Date.now()}.${extension}`;
+      const { error: uploadError } = await supabase.storage
+        .from(FEATURED_PAYMENT_PROOF_BUCKET)
+        .upload(storagePath, proofFile, {
+          cacheControl: '3600',
+          contentType: proofFile.type || 'image/jpeg',
+          upsert: false,
+        });
+      if (uploadError) throw new Error(uploadError.message);
+
+      setSubmitState('submitting');
+      const proofResponse = await fetch(`/api/promotions/featured/${order.id}/proof`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentMethod: method,
+          transactionReference: transactionReference.trim() || null,
+          proofStoragePath: storagePath,
+        }),
+      });
+      const proofJson = await proofResponse.json().catch(() => ({}));
+      if (!proofResponse.ok) throw new Error(proofJson.error ?? 'Could not submit payment proof.');
+
+      setSubmittedOrder(proofJson.order as FeaturedPromotionOrder);
+      setSubmitState('success');
+    } catch (error) {
+      setSubmitError((error as Error).message);
+      setSubmitState('idle');
+    }
+  }
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+      className="fixed inset-0 z-50 flex min-h-dvh items-center justify-center p-4 bg-black/70"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="w-full max-w-md rounded-2xl bg-gray-900 border border-gray-700 shadow-2xl flex flex-col max-h-[90vh]">
@@ -234,34 +312,94 @@ export function PromoteListingModal({
                 </div>
               </section>
 
-              {/* Step 4 — send proof */}
-              <section>
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">4. Send the screenshot</p>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  Send the receipt screenshot to Go Pair PH on Messenger with your listing link and selected placement.
-                </p>
-                <div className="mt-3 flex flex-col gap-2">
-                  <a
-                    href={MESSENGER_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition-colors"
-                  >
-                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
-                    </svg>
-                    Send proof via Messenger
-                  </a>
-                  <a
-                    href={FB_PROFILE_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-center text-xs text-gray-500 hover:text-teal-400 transition-colors"
-                  >
-                    or contact the admin on Facebook →
-                  </a>
-                </div>
-              </section>
+              {isFeatured ? (
+                <section>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">4. Upload proof</p>
+                  {submitState === 'success' && submittedOrder ? (
+                    <div className="rounded-lg border border-teal-500/30 bg-teal-500/10 p-4">
+                      <p className="text-sm font-semibold text-teal-200">Featured request received</p>
+                      <p className="mt-1 text-xs leading-5 text-teal-100/80">
+                        Your listing is {submittedOrder.status === 'active' ? 'now provisionally Featured' : 'in the Featured queue'} while admin reviews the proof.
+                      </p>
+                      {submittedOrder.scheduled_end_at && (
+                        <p className="mt-2 text-[11px] text-teal-200">
+                          Scheduled until {formatShortDate(submittedOrder.scheduled_end_at)}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <label className="block">
+                        <span className="text-xs font-medium text-gray-300">Transaction reference</span>
+                        <input
+                          value={transactionReference}
+                          onChange={event => setTransactionReference(event.target.value)}
+                          placeholder="GCash/BPI reference number"
+                          className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-base text-gray-100 outline-none focus:border-teal-400 sm:text-sm"
+                        />
+                      </label>
+                      <label className="block rounded-lg border border-dashed border-gray-700 bg-gray-950/60 p-3">
+                        <span className="text-xs font-medium text-gray-300">Payment screenshot</span>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                          onChange={event => setProofFile(event.target.files?.[0] ?? null)}
+                          className="mt-2 block w-full text-xs text-gray-400 file:mr-3 file:rounded-md file:border-0 file:bg-teal-500 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white"
+                        />
+                        {proofFile && (
+                          <span className="mt-2 block truncate text-[11px] text-teal-300">{proofFile.name}</span>
+                        )}
+                      </label>
+                      {submitError && <p className="text-xs text-red-400">{submitError}</p>}
+                      <Button
+                        type="button"
+                        onClick={submitFeaturedProof}
+                        disabled={isSubmitting}
+                        className="w-full"
+                      >
+                        {submitState === 'reserving'
+                          ? 'Reserving…'
+                          : submitState === 'uploading'
+                            ? 'Uploading proof…'
+                            : submitState === 'submitting'
+                              ? 'Submitting…'
+                              : 'Submit Featured request'}
+                      </Button>
+                      <p className="text-[10px] leading-4 text-gray-600">
+                        Your position is reserved for 20 minutes while the proof is uploaded. Invalid proof can be removed after admin review.
+                      </p>
+                    </div>
+                  )}
+                </section>
+              ) : (
+                <section>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">4. Send the screenshot</p>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    Send the receipt screenshot to Go Pair PH on Messenger with your listing link and selected placement.
+                  </p>
+                  <div className="mt-3 flex flex-col gap-2">
+                    <a
+                      href={MESSENGER_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition-colors"
+                    >
+                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
+                      </svg>
+                      Send proof via Messenger
+                    </a>
+                    <a
+                      href={FB_PROFILE_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-center text-xs text-gray-500 hover:text-teal-400 transition-colors"
+                    >
+                      or contact the admin on Facebook →
+                    </a>
+                  </div>
+                </section>
+              )}
 
               {/* Honesty footer */}
               <p className="text-[10px] text-gray-600 leading-relaxed">
@@ -303,12 +441,12 @@ export function UnverifiedNotice({ onClose }: UnverifiedNoticeProps) {
           </button>
         </div>
         <p className="text-sm text-gray-300 leading-relaxed">
-          Only verified users can request Featured or Top Pick placements.
+          Only verified users can request Featured or Top Pick placements. Request verification from your profile first.
         </p>
         <div className="mt-4 flex gap-2">
           <Button variant="neutral" onClick={onClose} className="flex-1">Cancel</Button>
-          <Link href="/help/verification" className="flex-1">
-            <Button className="w-full">Get Verified →</Button>
+          <Link href="/profile#verification" className="flex-1" onClick={onClose}>
+            <Button className="w-full">Request Verification</Button>
           </Link>
         </div>
       </div>

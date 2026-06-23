@@ -267,7 +267,7 @@ export function OwnProfile({
           </form>
         )}
 
-        <div className="mt-3 flex flex-wrap items-center gap-2 sm:ml-[92px]">
+        <div id="verification" tabIndex={-1} className="mt-3 flex scroll-mt-24 flex-wrap items-center gap-2 focus:outline-none sm:ml-[92px]">
           {!profile.is_verified && (
             <RequestVerificationButton
               profileId={profile.id}
@@ -453,7 +453,7 @@ export function OwnProfile({
       </div>
 
       {tab === 'listings' && (
-        <div>
+        <div id="active-listings" tabIndex={-1} className="scroll-mt-24 focus:outline-none">
           <ListingGrid
             shoes={orderedShoes}
             currentProfileId={profile.id}

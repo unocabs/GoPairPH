@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Tooltip } from '@/components/ui/Tooltip';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useSearchParams } from 'next/navigation';
 import { PromoteListingModal, UnverifiedNotice } from './PromoteListingModal';
 import { PromoteAcknowledgmentModal } from './PromoteAcknowledgmentModal';
 
@@ -31,6 +32,29 @@ export function PromoteListingButton({
   const [showAcknowledgment, setShowAcknowledgment] = useState(false);
   const [open, setOpen] = useState(false);
   const [showUnverified, setShowUnverified] = useState(false);
+  const [autoFeatured, setAutoFeatured] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const handledAutoOpen = useRef(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (handledAutoOpen.current || searchParams.get('promote') !== 'featured') return;
+    handledAutoOpen.current = true;
+    if (!isVerified) {
+      setShowUnverified(true);
+    } else {
+      setAutoFeatured(true);
+      setOpen(true);
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete('promote');
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+  }, [isVerified, searchParams]);
 
   function handleClick() {
     if (!isVerified) {
@@ -53,7 +77,7 @@ export function PromoteListingButton({
       className={`inline-flex w-full items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-base font-medium transition-colors sm:w-auto sm:text-sm ${
         isVerified
           ? 'border-amber-600/50 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
-          : 'border-gray-700 bg-gray-800/50 text-gray-500 cursor-help'
+          : 'border-teal-500/50 bg-teal-500/15 text-teal-200 hover:border-teal-300/60 hover:bg-teal-500/25 hover:text-teal-100'
       }`}
     >
       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,19 +87,8 @@ export function PromoteListingButton({
     </button>
   );
 
-  return (
+  const modalLayer = (
     <>
-      {isVerified ? (
-        button
-      ) : (
-        <Tooltip
-          trigger="both"
-          content="Only verified users can promote listings. Tap to learn more."
-        >
-          {button}
-        </Tooltip>
-      )}
-
       {showAcknowledgment && (
         <PromoteAcknowledgmentModal
           onClose={() => setShowAcknowledgment(false)}
@@ -93,11 +106,21 @@ export function PromoteListingButton({
           ownSponsoredUntil={ownSponsoredUntil}
           ownListingAlreadyFeatured={ownListingAlreadyFeatured}
           ownFeaturedUntil={ownFeaturedUntil}
+          initialPlacement={autoFeatured ? 'featured' : undefined}
+          initialTier="7d"
           onClose={() => setOpen(false)}
         />
       )}
 
       {showUnverified && <UnverifiedNotice onClose={() => setShowUnverified(false)} />}
+    </>
+  );
+
+  return (
+    <>
+      {button}
+
+      {mounted ? createPortal(modalLayer, document.body) : null}
     </>
   );
 }

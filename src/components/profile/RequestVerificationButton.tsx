@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import type { VerificationRequest } from '@/types';
@@ -47,6 +48,25 @@ export function RequestVerificationButton({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isVerified || submitted || existingRequest?.status === 'pending') return;
+
+    function openFromHash() {
+      if (window.location.hash === '#verification') {
+        setOpen(true);
+      }
+    }
+
+    openFromHash();
+    window.addEventListener('hashchange', openFromHash);
+    return () => window.removeEventListener('hashchange', openFromHash);
+  }, [existingRequest?.status, isVerified, submitted]);
 
   if (isVerified) return null;
 
@@ -111,23 +131,9 @@ export function RequestVerificationButton({
     ? 'Request verification again'
     : 'Request verification';
 
-  return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        className="text-xs text-sky-400 hover:text-sky-300 underline underline-offset-2"
-      >
-        {buttonLabel}
-      </button>
-      {existingRequest?.status === 'rejected' && existingRequest.admin_notes && (
-        <p className="text-xs text-gray-500 mt-1">
-          Previous request rejected: <span className="italic">&quot;{existingRequest.admin_notes}&quot;</span>
-        </p>
-      )}
-
-      {open && (
+  const modal = open ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+          className="fixed inset-0 z-50 flex min-h-dvh items-center justify-center p-4 bg-black/70"
           onClick={e => { if (e.target === e.currentTarget) setOpen(false); }}
         >
           <div className="w-full max-w-md rounded-2xl bg-gray-900 border border-gray-700 shadow-2xl flex flex-col max-h-[90vh]">
@@ -227,7 +233,23 @@ export function RequestVerificationButton({
             </div>
           </div>
         </div>
+  ) : null;
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="rounded-lg border border-teal-500/40 bg-teal-500/10 px-3 py-2 text-xs font-semibold text-teal-200 transition-colors hover:border-teal-300/60 hover:bg-teal-500/20 hover:text-teal-100"
+      >
+        {buttonLabel}
+      </button>
+      {existingRequest?.status === 'rejected' && existingRequest.admin_notes && (
+        <p className="text-xs text-gray-500 mt-1">
+          Previous request rejected: <span className="italic">&quot;{existingRequest.admin_notes}&quot;</span>
+        </p>
       )}
+
+      {mounted ? createPortal(modal, document.body) : null}
     </>
   );
 }

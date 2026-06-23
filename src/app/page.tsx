@@ -167,6 +167,7 @@ function getRecommendedListings(profile: Profile | null, shoes: Shoe[]): Shoe[] 
  */
 const getFeaturedListing = unstable_cache(async function getFeaturedListing(): Promise<Shoe | null> {
   const supabase = createPublicClient();
+  await supabase.rpc('reconcile_featured_promotions');
   const { data } = await supabase
     .from('shoes')
     .select(HOME_LISTING_SELECT)
