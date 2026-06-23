@@ -20,7 +20,11 @@ const FALLBACK: SpotlightCta = {
   message: 'Add your shoes to Go Pair PH. Selected listings may also be promoted for free.',
 };
 
-export function FeaturedSpotlightInfoButton() {
+interface FeaturedSpotlightInfoButtonProps {
+  className?: string;
+}
+
+export function FeaturedSpotlightInfoButton({ className }: FeaturedSpotlightInfoButtonProps) {
   const [open, setOpen] = useState(false);
   const [cta, setCta] = useState<SpotlightCta>(FALLBACK);
   const [loaded, setLoaded] = useState(false);
@@ -71,7 +75,7 @@ export function FeaturedSpotlightInfoButton() {
   }
 
   return (
-    <div ref={wrapperRef} className="absolute right-2 top-11 z-40 sm:right-4 sm:top-14">
+    <div ref={wrapperRef} className={className ?? 'absolute right-2 top-11 z-40 sm:right-4 sm:top-14'}>
       <button
         type="button"
         onClick={toggle}

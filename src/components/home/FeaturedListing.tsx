@@ -40,7 +40,6 @@ export function FeaturedListing({ shoe, rearShoes = [] }: FeaturedListingProps) 
         >
           <span className="sr-only">View featured listing: {listingName}</span>
         </HeroTrackedLink>
-        <FeaturedSpotlightInfoButton />
 
       {/* Background image (full bleed) */}
       <div className="absolute inset-0 bg-stone-900">
@@ -69,27 +68,33 @@ export function FeaturedListing({ shoe, rearShoes = [] }: FeaturedListingProps) 
         aria-hidden="true"
       />
 
-      {/* TOP: live spotlight indicator + location */}
-      <div className="pointer-events-none absolute left-3 right-3 top-3 flex items-center justify-between sm:left-5 sm:right-5 sm:top-5">
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inset-0 rounded-full bg-teal-400 animate-ping" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-400" />
-          </span>
-          <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-teal-300 sm:text-[10px] sm:tracking-[0.3em]">
-            Live Spotlight
-          </span>
-        </div>
-        {sellerLocation && (
-          <span className="rounded bg-black/30 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-stone-300 backdrop-blur-sm sm:text-[10px]">
-            {sellerLocation}
-          </span>
-        )}
-      </div>
+      {/* TOP HUD: Live Spotlight, Pair of the Week, tooltip, and optional location. */}
+      <div className="pointer-events-none absolute left-3 right-3 top-3 z-40 sm:left-5 sm:right-5 sm:top-5">
+        <div className="flex min-w-0 items-start justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2 pt-1">
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="absolute inset-0 rounded-full bg-teal-400 animate-ping" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-400" />
+            </span>
+            <span className="min-w-0 truncate whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.24em] text-teal-300 sm:text-[10px] sm:tracking-[0.3em]">
+              Live Spotlight
+            </span>
+          </div>
 
-      {/* TOP-RIGHT: pick-of-the-week badge */}
-      <div className="pointer-events-none absolute right-3 top-10 origin-top-right scale-[0.72] sm:right-5 sm:top-16 sm:scale-100">
-        <FeaturedPill compact featuredUntil={shoe.featured_until} />
+          <div className="flex max-w-[72%] shrink-0 flex-col items-end gap-1 sm:max-w-[68%]">
+            <div className="flex min-w-0 max-w-full items-center justify-end gap-1.5 sm:gap-2">
+              <div className="pointer-events-none min-w-0">
+                <FeaturedPill compact featuredUntil={shoe.featured_until} />
+              </div>
+              <FeaturedSpotlightInfoButton className="pointer-events-auto relative z-40 shrink-0" />
+            </div>
+            {sellerLocation && (
+              <span className="max-w-full truncate rounded bg-black/35 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-stone-300 backdrop-blur-sm sm:text-[10px]">
+                {sellerLocation}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* MIDDLE: huge brand + model */}
@@ -172,7 +177,7 @@ export function FeaturedListing({ shoe, rearShoes = [] }: FeaturedListingProps) 
           </div>
 
           {/* CTA */}
-          <span className="flex min-h-9 flex-none items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-500 to-teal-300 px-3 py-2 text-[11px] font-black uppercase tracking-wide text-gray-950 shadow-[0_10px_28px_rgba(20,184,166,0.24)] transition-all group-hover:scale-[1.03] group-hover:from-teal-400 group-hover:to-cyan-300 sm:min-h-11 sm:gap-2 sm:px-5 sm:py-3 sm:text-sm sm:tracking-wider">
+          <span className="flex min-h-9 flex-none items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-500 to-teal-300 px-3 py-2 text-[11px] font-black uppercase tracking-wide text-gray-950 shadow-[0_10px_28px_rgba(20,184,166,0.24)] transition-all group-hover:scale-[1.03] group-hover:from-teal-400 group-hover:to-cyan-300 sm:min-h-11 sm:gap-2 sm:px-5 sm:py-3 sm:text-sm sm:tracking-wider lg:min-h-9 lg:gap-1.5 lg:px-3 lg:py-2 lg:text-xs">
             View Pair
             <svg
               width="13"
@@ -191,11 +196,11 @@ export function FeaturedListing({ shoe, rearShoes = [] }: FeaturedListingProps) 
 
       {/* Decorative racing stripes */}
       <div
-        className="absolute right-10 top-0 h-16 w-1.5 bg-teal-400 sm:right-12 sm:h-20"
+        className="pointer-events-none absolute right-2 top-0 z-20 h-16 w-1.5 bg-teal-400 sm:right-3 sm:h-20"
         aria-hidden="true"
       />
       <div
-        className="absolute right-14 top-0 h-10 w-1 bg-orange-400 sm:right-16 sm:h-12"
+        className="pointer-events-none absolute right-6 top-0 z-20 h-10 w-1 bg-orange-400 sm:right-8 sm:h-12"
         aria-hidden="true"
       />
       </article>
