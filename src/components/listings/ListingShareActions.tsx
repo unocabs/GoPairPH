@@ -229,7 +229,7 @@ export function ListingShareActions({
           <svg className="h-4 w-4 shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h6m-8 8h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          Post This on Facebook
+          Share This on Facebook
         </span>
         <svg
           className={`h-4 w-4 shrink-0 text-blue-100 transition-transform ${kitOpen ? 'rotate-180' : ''}`}

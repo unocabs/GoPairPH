@@ -596,7 +596,7 @@ export function SharePostModal({ shoe, seller, open = true, onClose, onDownloadR
           >
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 sm:px-5 sm:py-3 border-b border-gray-800">
-          <h2 id="share-post-modal-title" className="text-sm font-semibold text-gray-100">Post This on Facebook</h2>
+          <h2 id="share-post-modal-title" className="text-sm font-semibold text-gray-100">Share This on Facebook</h2>
           <div className="flex items-center gap-1">
             {/* Download button — desktop only. Mobile users long-press the image. */}
             <button

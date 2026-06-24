@@ -72,7 +72,7 @@ const GOFER_QUESTIONS: GoferQuestion[] = [
     id: 'share_facebook',
     question: 'How do I share my listing on Facebook?',
     answer:
-      'After publishing a listing, open your listing page and use Post This on Facebook. Copy the caption, download the image, then post your listing link to Facebook groups, Marketplace, Messenger, or your own profile. The Facebook post gives you reach, while the Go Pair PH link keeps the details clean.',
+      'After publishing a listing, open your listing page and use Share This on Facebook. Copy the caption, download the image, then post your listing link to Facebook groups, Marketplace, Messenger, or your own profile. The Facebook post gives you reach, while the Go Pair PH link keeps the details clean.',
     ctas: [
       { label: 'List a Pair', href: '/listings/new', variant: 'primary' },
       { label: 'How to Sell', href: '/help/how-to-sell', variant: 'secondary' },

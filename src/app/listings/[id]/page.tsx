@@ -736,7 +736,12 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             listingPath={getListingPath(shoe)}
             overlay={galleryOverlay}
           />
-          {renderBuyerCtas('mt-1 lg:hidden')}
+          <div className="lg:hidden">
+            {renderBuyerCtas('mt-1')}
+            <div className="mt-4">
+              <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner={isOwner} />
+            </div>
+          </div>
         </div>
 
         {/* Details */}
@@ -841,10 +846,6 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 <p className="text-xs text-green-600 mt-0.5">Send a request to arrange pickup or shipping with the seller</p>
               </div>
             )}
-          </div>
-
-          <div className="mt-4 lg:hidden">
-            <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner={isOwner} />
           </div>
 
           <div className="hidden lg:block">

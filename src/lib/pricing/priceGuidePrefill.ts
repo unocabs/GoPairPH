@@ -53,18 +53,14 @@ function formatPeso(value: number): string {
   return `PHP ${Math.round(value).toLocaleString('en-PH')}`;
 }
 
-function yesNo(value: boolean): string {
-  return value ? 'Yes' : 'No';
-}
-
 export function buildPriceGuideDescription(prefill: PriceGuideListingPrefill): string {
   const lines = [
     `Original retail price: ${formatPeso(prefill.retailPricePhp)}`,
     `Condition: ${conditionLabels[prefill.condition]}`,
     `Usage: ${mileageLabels[prefill.mileage]}`,
     `Age: ${ageLabels[prefill.age]}`,
-    `Box included: ${yesNo(prefill.hasBox)}`,
-    `Receipt/proof available: ${yesNo(prefill.hasReceipt)}`,
+    prefill.hasBox ? 'Box included: Yes' : 'Box not included',
+    prefill.hasReceipt ? 'Receipt/proof available: Yes' : 'No receipt',
     '',
     'Seller note:',
   ];
