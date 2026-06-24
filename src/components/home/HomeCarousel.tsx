@@ -17,6 +17,15 @@ type HomeCarouselSlide = {
 
 const slides: ReadonlyArray<HomeCarouselSlide> = [
   {
+    id: 'gp-coins',
+    label: 'GoPair Coins',
+    title: 'Sell your shoes. Earn GP Coins.',
+    body: 'List and share your running shoes on Go Pair PH to earn GP Coins.',
+    imageSrc: '/home-carousel/gp-coins-carousel.png',
+    imageAlt: 'Go Pair PH carousel banner encouraging sellers to list running shoes, share with the Share Post Kit, and earn GP Coins',
+    ctaHref: '/listings/new',
+  },
+  {
     id: 'price-guide',
     label: 'Price Guide',
     title: 'Know what your running shoes may be worth',
