@@ -17,6 +17,8 @@ export function OwnerMoreActions({ shoeId, listingType, status }: OwnerMoreActio
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const canMarkDone = status === 'active' && (listingType === 'for_sale' || listingType === 'donate');
+  const canDelete = status !== 'sold';
+  const hasActions = canMarkDone || canDelete;
   const doneStatus = listingType === 'donate' ? 'donated' : 'sold';
   const doneLabel = listingType === 'donate' ? 'Mark as Claimed' : 'Mark Sold Outside Go Pair PH';
   const doneHint = listingType === 'donate' ? 'Pair has been claimed' : 'Pair found its next runner';
@@ -51,6 +53,8 @@ export function OwnerMoreActions({ shoeId, listingType, status }: OwnerMoreActio
     router.refresh();
   }
 
+  if (!hasActions) return null;
+
   return (
     <details className="relative w-full sm:w-auto">
       <summary className="list-none rounded-lg border border-gray-700 bg-transparent px-4 py-2 text-center text-base font-medium text-gray-300 transition-colors cursor-pointer hover:bg-gray-800 hover:text-gray-100 sm:text-left sm:text-sm [&::-webkit-details-marker]:hidden">
@@ -68,8 +72,8 @@ export function OwnerMoreActions({ shoeId, listingType, status }: OwnerMoreActio
             <span className="text-xs text-gray-500">{doneHint}</span>
           </button>
         )}
-        <div className="my-2 h-px bg-gray-800" />
-        <DeleteListingButton shoeId={shoeId} compact />
+        {canMarkDone && canDelete && <div className="my-2 h-px bg-gray-800" />}
+        {canDelete && <DeleteListingButton shoeId={shoeId} compact />}
         {error && <p className="mt-2 px-3 text-xs text-red-400">{error}</p>}
       </div>
     </details>

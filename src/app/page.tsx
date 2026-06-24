@@ -51,6 +51,7 @@ const HOME_LISTING_SELECT = `
   srp_php,
   status,
   created_at,
+  updated_at,
   renewed_at,
   shop_id,
   has_stock,
@@ -90,6 +91,14 @@ const HOME_LISTING_SELECT = `
     updated_at
   )
 `;
+
+const RECENTLY_SOLD_LIMIT = 4;
+const RECENTLY_SOLD_LOOKAHEAD_LIMIT = 24;
+const DEFAULT_RECENTLY_SOLD_EXCLUDED_EMAILS = [
+  'rgiancabrera@gmail.com',
+  'rgianmcabrera@gmail.com',
+  'pandarunningclub@gmail.com',
+];
 
 export const metadata: Metadata = {
   title: { absolute: HOME_TITLE },
@@ -145,6 +154,69 @@ const getHomepageListings = unstable_cache(async function getHomepageListings():
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 }, ['homepage-listings'], { revalidate: 60, tags: ['homepage-listings'] });
+
+function getRecentlySoldExcludedEmails() {
+  return (process.env.HOMEPAGE_RECENTLY_SOLD_EXCLUDED_EMAILS ?? DEFAULT_RECENTLY_SOLD_EXCLUDED_EMAILS.join(','))
+    .split(',')
+    .map(email => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+async function getExcludedSellerIdsByEmail(service: ReturnType<typeof createServiceClient>, emails: string[]) {
+  const targetEmails = new Set(emails);
+  if (targetEmails.size === 0) return [];
+
+  const userIds: string[] = [];
+  const perPage = 1000;
+  for (let page = 1; page < 50 && targetEmails.size > 0; page += 1) {
+    const { data, error } = await service.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+
+    const users = data.users ?? [];
+    for (const user of users) {
+      const email = user.email?.toLowerCase();
+      if (email && targetEmails.has(email)) {
+        userIds.push(user.id);
+        targetEmails.delete(email);
+      }
+    }
+
+    if (users.length < perPage) break;
+  }
+
+  if (userIds.length === 0) return [];
+
+  const { data, error } = await service
+    .from('profiles')
+    .select('id')
+    .in('user_id', userIds);
+
+  if (error) throw error;
+  return ((data as Array<{ id: string }> | null) ?? []).map(profile => profile.id);
+}
+
+const getRecentlySoldListings = unstable_cache(async function getRecentlySoldListings(): Promise<Shoe[]> {
+  const service = createServiceClient();
+
+  try {
+    const excludedSellerIds = new Set(await getExcludedSellerIdsByEmail(service, getRecentlySoldExcludedEmails()));
+    const { data, error } = await service
+      .from('shoes')
+      .select(HOME_LISTING_SELECT)
+      .eq('status', 'sold')
+      .order('updated_at', { ascending: false })
+      .limit(RECENTLY_SOLD_LOOKAHEAD_LIMIT);
+
+    if (error) throw error;
+
+    return ((data as unknown as Shoe[]) ?? [])
+      .filter(shoe => !excludedSellerIds.has(shoe.seller_id))
+      .slice(0, RECENTLY_SOLD_LIMIT);
+  } catch (error) {
+    console.error('Unable to load recently sold homepage listings:', error);
+    return [];
+  }
+}, ['homepage-recently-sold-listings'], { revalidate: 300, tags: ['homepage-recently-sold-listings'] });
 
 function getRecommendedListings(profile: Profile | null, shoes: Shoe[]): Shoe[] {
   if (!profile?.personalized_browse_enabled) return [];
@@ -319,9 +391,10 @@ const getHomepageSiteSettings = unstable_cache(async function getHomepageSiteSet
 }, ['homepage-site-settings'], { revalidate: 60 });
 
 export default async function HomePage() {
-  const [profile, homepageShoes, featured, activity, siteSettings] = await Promise.all([
+  const [profile, homepageShoes, recentlySoldShoes, featured, activity, siteSettings] = await Promise.all([
     getCurrentProfile(),
     getHomepageListings(),
+    getRecentlySoldListings(),
     getFeaturedListing(),
     getMarketplaceActivity(),
     getHomepageSiteSettings(),
@@ -491,6 +564,31 @@ export default async function HomePage() {
           </Link>
         </div>
       </section>
+
+      {recentlySoldShoes.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-300">
+                Marketplace sold listings
+              </p>
+              <h2 className="mt-1 text-2xl font-bold text-gray-100">Recently Sold</h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
+                Sold running shoes in Go Pair PH.
+              </p>
+            </div>
+            <Link href="/browse" className="text-sm font-medium text-teal-400 transition-colors hover:text-teal-300">
+              Browse available pairs →
+            </Link>
+          </div>
+          <HomeListingGrid
+            shoes={recentlySoldShoes}
+            currentProfileId={profile?.id}
+            showSaveActions={false}
+            emptyMessage="No recently sold pairs yet."
+          />
+        </section>
+      )}
 
       <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
         <Image

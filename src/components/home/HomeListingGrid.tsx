@@ -10,6 +10,7 @@ interface HomeListingGridProps {
   savedListingIds?: Set<string>;
   savedListingCounts?: Record<string, number>;
   personalizationBadges?: Record<string, PersonalizationBadges>;
+  showSaveActions?: boolean;
 }
 
 export function HomeListingGrid({
@@ -19,6 +20,7 @@ export function HomeListingGrid({
   savedListingIds,
   savedListingCounts,
   personalizationBadges,
+  showSaveActions = true,
 }: HomeListingGridProps) {
   if (shoes.length === 0) {
     return (
@@ -39,6 +41,7 @@ export function HomeListingGrid({
           isSaved={savedListingIds?.has(shoe.id) ?? false}
           saveCount={savedListingCounts?.[shoe.id] ?? 0}
           personalizationBadges={personalizationBadges?.[shoe.id]}
+          showSaveAction={showSaveActions}
         />
       ))}
     </div>

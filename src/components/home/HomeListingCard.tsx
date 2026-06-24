@@ -17,6 +17,7 @@ import {
   formatListingName,
   formatMileage,
   formatPrice,
+  formatRelativeDate,
   formatSize,
   getListingPath,
   getPublicUrl,
@@ -30,6 +31,7 @@ interface HomeListingCardProps {
   isSaved?: boolean;
   saveCount?: number;
   personalizationBadges?: PersonalizationBadges;
+  showSaveAction?: boolean;
 }
 
 export function HomeListingCard({
@@ -38,14 +40,16 @@ export function HomeListingCard({
   isSaved = false,
   saveCount = 0,
   personalizationBadges,
+  showSaveAction = true,
 }: HomeListingCardProps) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImage = shoe.shoe_images?.find(img => img.view_type === 'top') ?? shoe.shoe_images?.[0];
   const imageUrl = topImage
     ? getPublicUrl(supabaseUrl, topImage.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.listingCard)
     : null;
+  const isActive = shoe.status === 'active';
   const isOwner = !!currentProfileId && shoe.seller_id === currentProfileId;
-  const canSave = !!currentProfileId && !isOwner;
+  const canSave = showSaveAction && isActive && !!currentProfileId && !isOwner;
   const listingPath = getListingPath(shoe);
   const signInHref = `/auth/sign-in?next=${encodeURIComponent(listingPath)}`;
   const listingName = formatListingName(shoe.brand, shoe.model);
@@ -59,6 +63,9 @@ export function HomeListingCard({
     : 0;
   const greatDeal = getGreatDealEstimate(shoe);
   const isFresh = Date.now() - new Date(shoe.created_at).getTime() < NEW_PILL_WINDOW_MS;
+  const freshnessLabel = shoe.status === 'sold'
+    ? `Sold ${formatRelativeDate(shoe.updated_at).toLowerCase()}`
+    : formatListingFreshness(shoe);
 
   return (
     <article className="relative flex h-full flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-slate-900/72 shadow-[0_16px_50px_rgba(0,0,0,0.24)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-teal-400/30 hover:shadow-[0_22px_70px_rgba(0,0,0,0.34),0_0_30px_rgba(20,184,166,0.07)]">
@@ -98,9 +105,22 @@ export function HomeListingCard({
               </span>
             </div>
           )}
-          {greatDeal && (
+          {greatDeal && isActive && (
             <div className="absolute bottom-2 left-2">
               <GreatDealPill size="sm" />
+            </div>
+          )}
+          {!isActive && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-950/42 backdrop-blur-[1px]">
+              <span className="rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm font-black uppercase tracking-[0.22em] text-white shadow-[0_12px_30px_rgba(0,0,0,0.35)] sm:text-base">
+                {shoe.status === 'sold'
+                  ? 'Sold'
+                  : shoe.status === 'donated'
+                    ? 'Claimed'
+                    : shoe.status === 'reserved'
+                      ? 'Deal Pending'
+                      : shoe.status}
+              </span>
             </div>
           )}
         </div>
@@ -159,11 +179,11 @@ export function HomeListingCard({
             </div>
           )}
 
-          <p className="mt-1.5 text-xs text-gray-600">{formatListingFreshness(shoe)}</p>
+          <p className="mt-1.5 text-xs text-gray-600">{freshnessLabel}</p>
         </div>
       </Link>
 
-      {!isOwner && (
+      {showSaveAction && isActive && !isOwner && (
         <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square">
           <div className="pointer-events-auto absolute right-2 top-2">
             <SaveListingButton
