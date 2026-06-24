@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/admin/listing-renewal-reminders",
-      "schedule": "0 0 * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/admin/reports/listing-views",
@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/admin/gp-coins/process",
-      "schedule": "*/30 * * * *"
+      "schedule": "0 1 * * *"
     }
   ]
 }
