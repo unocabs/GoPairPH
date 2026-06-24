@@ -24,6 +24,14 @@ const guides: Guide[] = [
     imageCredit: 'Josiah Mackenzie, CC BY 2.0, via Wikimedia Commons',
   },
   {
+    href: '/where-to-sell-used-running-shoes-philippines',
+    title: 'Where to Sell Used Running Shoes in the Philippines',
+    description:
+      'Compare the usual Facebook-first selling workflow with one clean Go Pair PH listing link sellers can share anywhere.',
+    category: 'Seller Guide',
+    image: '/guides/where-to-sell-used-running-shoes-philippines-hero.webp',
+  },
+  {
     href: '/buy-and-sell-running-shoes-pampanga',
     title: 'Buy and Sell Running Shoes in Pampanga',
     description:
