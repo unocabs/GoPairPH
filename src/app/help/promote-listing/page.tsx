@@ -54,7 +54,7 @@ export default function PromoteListingPage() {
         <ol className="list-decimal list-inside space-y-1.5">
           <li>Open your listing, click <strong>Promote Listing</strong>, then choose <strong>Featured on Home</strong>.</li>
           <li>Pick a duration: <strong>7 days (₱50)</strong> or <strong>30 days (₱150)</strong>.</li>
-          <li>Pay via GCash or BPI, then send the receipt screenshot to Go Pair PH on Messenger with your listing link and selected placement.</li>
+          <li>Choose whether to use GP Coins, cash, or a mix of both. If there is a cash balance, pay via GCash or BPI and upload the receipt screenshot.</li>
           <li>An admin confirms availability, then activates your Featured slot within 24 hours after payment confirmation.</li>
           <li>Your listing appears on the home page with a clear <strong>★ Featured</strong> tag until the window ends or the item sells.</li>
         </ol>
@@ -62,6 +62,22 @@ export default function PromoteListingPage() {
           Featured is separate from Top Pick. Featured highlights your listing on the home page,
           while Top Pick lifts it near the top of Browse.
         </p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-gray-100">Using GP Coins for Featured</h2>
+        <p>
+          GP Coins can be used for <strong>Featured on Home</strong>. They help lower the cash amount
+          needed to promote your running shoes on the Go Pair PH home page.
+        </p>
+        <ul className="list-disc list-inside space-y-1.5">
+          <li><strong>Cash only:</strong> pay the full Featured price with GCash or BPI.</li>
+          <li><strong>GP Coins + cash:</strong> use coins for part of the Featured price, then pay the remaining balance with GCash or BPI.</li>
+          <li><strong>GP Coins only:</strong> if your balance covers the full Featured price, no payment screenshot is needed.</li>
+          <li>If any cash remains, upload the payment screenshot so an admin can review the Featured request.</li>
+          <li>GP Coins do not apply to Top Pick. Top Pick is paid with cash only.</li>
+          <li>GP Coins are Go Pair PH promotional credits. They cannot be withdrawn, transferred, or exchanged for cash.</li>
+        </ul>
       </section>
 
       <section>

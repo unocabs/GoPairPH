@@ -40,15 +40,15 @@ export function PromoteAcknowledgmentModal({ onClose, onProceed }: PromoteAcknow
             </li>
             <li className="flex gap-2">
               <span className="text-teal-400 shrink-0">•</span>
-              <span>Top Pick is <strong>₱30 / 7 days</strong> or <strong>₱100 / 30 days</strong>.</span>
+              <span>Top Pick is <strong>₱30 / 7 days</strong> or <strong>₱100 / 30 days</strong>, paid with cash only.</span>
             </li>
             <li className="flex gap-2">
               <span className="text-teal-400 shrink-0">•</span>
-              <span>Pay via <strong>GCash</strong> or <strong>BPI</strong> in the next step.</span>
+              <span>For Featured, you can use GP Coins to lower the cash amount, or pay fully with GP Coins if your balance is enough.</span>
             </li>
             <li className="flex gap-2">
               <span className="text-teal-400 shrink-0">•</span>
-              <span>Send the receipt screenshot to Go Pair PH on Messenger with your listing link and selected placement.</span>
+              <span>If there is a cash balance, pay via <strong>GCash</strong> or <strong>BPI</strong> in the next step and upload the receipt screenshot.</span>
             </li>
           </ul>
 

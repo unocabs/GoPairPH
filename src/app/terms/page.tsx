@@ -116,6 +116,8 @@ export default function TermsPage() {
           traffic, ranking duration beyond the stated window, or buyer behavior. We may
           still lower the priority of promoted listings that lack clear photos, appear
           misleading, have no images, violate rules, or create trust concerns.
+          GoPair Coins are promotional credits that may be applied to eligible Featured
+          placements; they are not cash, withdrawable, or transferable.
         </p>
       </section>
 
