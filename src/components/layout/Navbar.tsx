@@ -10,6 +10,71 @@ import { Button } from '@/components/ui/Button';
 import { useRouter, usePathname } from 'next/navigation';
 import { Logo } from '@/components/brand/Logo';
 
+type SupabaseClient = ReturnType<typeof createClient>;
+type CountResponse = {
+  count: number | null;
+  error: { message?: string } | null;
+};
+
+async function safeAdminActionCount(label: string, query: PromiseLike<CountResponse>): Promise<number> {
+  try {
+    const { count, error } = await query;
+    if (error) {
+      console.warn(`[navbar] could not load admin ${label} count:`, error.message);
+      return 0;
+    }
+    return count ?? 0;
+  } catch (error) {
+    console.warn(`[navbar] could not load admin ${label} count:`, error);
+    return 0;
+  }
+}
+
+async function loadAdminPendingActionCount(supabase: SupabaseClient): Promise<number> {
+  const now = new Date().toISOString();
+  const counts = await Promise.all([
+    safeAdminActionCount(
+      'verification',
+      supabase
+        .from('verification_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending')
+    ),
+    safeAdminActionCount(
+      'featured promotion review',
+      supabase
+        .from('featured_promotion_orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('source', 'paid')
+        .eq('review_status', 'pending')
+    ),
+    safeAdminActionCount(
+      'listing report',
+      supabase
+        .from('listing_reports')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'open')
+    ),
+    safeAdminActionCount(
+      'lead report',
+      supabase
+        .from('wishlist_offer_reports')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'open')
+    ),
+    safeAdminActionCount(
+      'due GP Coin award',
+      supabase
+        .from('gp_coin_pending_awards')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending')
+        .lte('eligible_at', now)
+    ),
+  ]);
+
+  return counts.reduce((total, count) => total + count, 0);
+}
+
 export function Navbar() {
   const { user, profile, loading } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -30,7 +95,7 @@ export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Fetch pending purchase-request count for the signed-in seller.
+  // Fetch attention counts for the signed-in user.
   // Re-runs on session change and on route change (so accepting/declining a
   // request on /profile updates the badge after the page navigates).
   useEffect(() => {
@@ -70,13 +135,9 @@ export function Navbar() {
         .in('status', ['pending', 'accepted']);
       if (active) setSentOffersCount(outgoingCount ?? 0);
 
-      // Admin-only: count pending verification requests waiting for review.
       if (profile.is_admin) {
-        const { count: adminCount } = await supabase
-          .from('verification_requests')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'pending');
-        if (active) setAdminPendingCount(adminCount ?? 0);
+        const adminCount = await loadAdminPendingActionCount(supabase);
+        if (active) setAdminPendingCount(adminCount);
       } else if (active) {
         setAdminPendingCount(0);
       }
@@ -97,7 +158,7 @@ export function Navbar() {
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.id, pathname]);
+  }, [profile?.id, profile?.is_admin, pathname]);
 
   useEffect(() => {
     let active = true;
