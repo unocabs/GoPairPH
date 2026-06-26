@@ -486,7 +486,7 @@ function SoldMock() {
           </div>
         </div>
         <div className="rounded-xl border border-white/[0.08] bg-slate-900/70 p-2 text-sm text-gray-300">
-          {['Mark as Sold', 'Edit Listing', 'Delete Listing'].map((action) => (
+          {['Mark as Sold', 'Edit Listing', 'Remove Listing'].map((action) => (
             <div key={action} className="rounded-lg px-3 py-2 hover:bg-slate-800">{action}</div>
           ))}
         </div>

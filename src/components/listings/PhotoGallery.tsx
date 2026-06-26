@@ -75,7 +75,7 @@ export function PhotoGallery({ images, isOwner = false, listingPath, overlay }: 
               Buyers are much more likely to purchase listings with clear top and sole photos.
             </p>
             <p className="text-xs text-gray-500">
-              To add photos, please delete this listing and create a new one.
+              Edit this listing to add or update photos.
             </p>
           </div>
         )}

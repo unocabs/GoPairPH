@@ -17,8 +17,8 @@ export function OwnerMoreActions({ shoeId, listingType, status }: OwnerMoreActio
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const canMarkDone = status === 'active' && (listingType === 'for_sale' || listingType === 'donate');
-  const canDelete = status !== 'sold';
-  const hasActions = canMarkDone || canDelete;
+  const canRemove = status !== 'sold' && status !== 'archived';
+  const hasActions = canMarkDone || canRemove;
   const doneStatus = listingType === 'donate' ? 'donated' : 'sold';
   const doneLabel = listingType === 'donate' ? 'Mark as Claimed' : 'Mark Sold Outside Go Pair PH';
   const doneHint = listingType === 'donate' ? 'Pair has been claimed' : 'Pair found its next runner';
@@ -72,8 +72,8 @@ export function OwnerMoreActions({ shoeId, listingType, status }: OwnerMoreActio
             <span className="text-xs text-gray-500">{doneHint}</span>
           </button>
         )}
-        {canMarkDone && canDelete && <div className="my-2 h-px bg-gray-800" />}
-        {canDelete && <DeleteListingButton shoeId={shoeId} compact />}
+        {canMarkDone && canRemove && <div className="my-2 h-px bg-gray-800" />}
+        {canRemove && <DeleteListingButton shoeId={shoeId} compact />}
         {error && <p className="mt-2 px-3 text-xs text-red-400">{error}</p>}
       </div>
     </details>
