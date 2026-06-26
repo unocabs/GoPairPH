@@ -116,7 +116,7 @@ export function HomeListingCard({
                 {shoe.status === 'sold'
                   ? 'Sold'
                   : shoe.status === 'donated'
-                    ? 'Claimed'
+                    ? 'Donated'
                     : shoe.status === 'reserved'
                       ? 'Deal Pending'
                       : shoe.status}

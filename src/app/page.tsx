@@ -203,7 +203,7 @@ const getRecentlySoldListings = unstable_cache(async function getRecentlySoldLis
     const { data, error } = await service
       .from('shoes')
       .select(HOME_LISTING_SELECT)
-      .eq('status', 'sold')
+      .in('status', ['sold', 'donated'])
       .order('updated_at', { ascending: false })
       .limit(RECENTLY_SOLD_LOOKAHEAD_LIMIT);
 
@@ -574,7 +574,7 @@ export default async function HomePage() {
               </p>
               <h2 className="mt-1 text-2xl font-bold text-gray-100">Recently Sold</h2>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-                Sold running shoes in Go Pair PH.
+                Recently closed pairs in Go Pair PH.
               </p>
             </div>
             <Link href="/browse" className="text-sm font-medium text-teal-400 transition-colors hover:text-teal-300">
