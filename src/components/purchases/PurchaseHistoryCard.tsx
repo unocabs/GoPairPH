@@ -16,6 +16,7 @@ export function PurchaseHistoryCard({ request, currentProfileId }: PurchaseHisto
   const shoe = request.listing;
   const topImg = shoe?.shoe_images?.find(i => i.view_type === 'top') ?? shoe?.shoe_images?.[0];
   const imgUrl = topImg ? getPublicUrl(supabaseUrl, topImg.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.purchaseThumb) : null;
+  const listingName = shoe ? formatListingName(shoe.brand, shoe.model) : 'Shoe listing';
 
   const otherProfile = iWasBuyer ? shoe?.profiles : request.profiles;
   const otherProfileId = iWasBuyer ? shoe?.seller_id : request.buyer_id;
@@ -25,7 +26,7 @@ export function PurchaseHistoryCard({ request, currentProfileId }: PurchaseHisto
       <div className="flex items-center gap-3">
         <div className="relative h-14 w-14 rounded-lg overflow-hidden bg-gray-800 shrink-0">
           {imgUrl ? (
-            <Image src={imgUrl} alt={shoe?.model ?? ''} fill className="object-cover" sizes="56px" />
+            <Image src={imgUrl} alt={listingName} fill className="object-cover" sizes="56px" />
           ) : (
             <div className="h-full flex items-center justify-center text-gray-700">
               <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,7 +42,7 @@ export function PurchaseHistoryCard({ request, currentProfileId }: PurchaseHisto
           {shoe ? (
             <Link href={getListingPath(shoe)}>
               <p className="text-sm font-semibold text-gray-200 truncate hover:text-teal-400 transition-colors">
-                {formatListingName(shoe.brand, shoe.model)}
+                {listingName}
               </p>
               <p className="text-xs text-gray-500">{formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type)}</p>
             </Link>

@@ -9,13 +9,14 @@ import { getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 
 interface PhotoGalleryProps {
   images: ShoeImage[];
+  listingName: string;
   isOwner?: boolean;
   listingPath?: string;
   /** Optional overlay node (e.g. shop logo) rendered on top of the hero image. */
   overlay?: React.ReactNode;
 }
 
-export function PhotoGallery({ images, isOwner = false, listingPath, overlay }: PhotoGalleryProps) {
+export function PhotoGallery({ images, listingName, isOwner = false, listingPath, overlay }: PhotoGalleryProps) {
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -57,6 +58,7 @@ export function PhotoGallery({ images, isOwner = false, listingPath, overlay }: 
 
   const slides = sorted.map(img => ({
     src: getPublicUrl(supabaseUrl, img.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.detailLightbox),
+    alt: getListingImageAlt(listingName, img.view_type),
   }));
 
   if (sorted.length === 0) {
@@ -99,7 +101,7 @@ export function PhotoGallery({ images, isOwner = false, listingPath, overlay }: 
         >
           <Image
             src={getPublicUrl(supabaseUrl, main.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.detailMain)}
-            alt="Main shoe photo"
+            alt={getListingImageAlt(listingName, main.view_type)}
             fill
             className="object-cover hover:scale-105 transition-transform"
             sizes="(min-width: 1024px) 50vw, 100vw"
@@ -127,7 +129,7 @@ export function PhotoGallery({ images, isOwner = false, listingPath, overlay }: 
               >
                 <Image
                   src={getPublicUrl(supabaseUrl, img.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.detailThumb)}
-                  alt={img.view_type}
+                  alt={getListingImageAlt(listingName, img.view_type)}
                   fill
                   className="object-cover"
                   sizes="64px"
@@ -151,6 +153,11 @@ export function PhotoGallery({ images, isOwner = false, listingPath, overlay }: 
       />
     </div>
   );
+}
+
+function getListingImageAlt(listingName: string, viewType?: string): string {
+  const normalizedView = viewType?.replace(/_/g, ' ').trim();
+  return normalizedView ? `${listingName} ${normalizedView} photo` : listingName;
 }
 
 function CopyUrlOverlayButton({

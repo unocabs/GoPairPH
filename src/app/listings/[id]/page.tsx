@@ -732,6 +732,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
         <div className="min-w-0">
           <PhotoGallery
             images={shoe.shoe_images ?? []}
+            listingName={formatListingName(shoe.brand, shoe.model)}
             isOwner={isOwner}
             listingPath={getListingPath(shoe)}
             overlay={galleryOverlay}
