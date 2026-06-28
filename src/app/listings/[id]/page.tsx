@@ -606,6 +606,36 @@ export default async function ListingDetailPage({ params, searchParams }: { para
     </div>
   );
 
+  const renderOwnerCtas = (className = '', autoOpenPromotion = true) => (
+    <div className={cn('grid gap-2 sm:grid-flow-col sm:auto-cols-fr', className)}>
+      {shoe.status === 'active' && slotInfo && (
+        <PromoteListingButton
+          listingId={shoe.id}
+          listingName={listingName}
+          isVerified={isVerified}
+          slotsAvailable={slotInfo.slotsAvailable || isSponsored}
+          nextSlotOpensAt={slotInfo.nextSlotOpensAt}
+          ownListingAlreadySponsored={isSponsored}
+          ownSponsoredUntil={shoe.sponsored_until}
+          ownListingAlreadyFeatured={isFeatured}
+          ownFeaturedUntil={shoe.featured_until}
+          gpCoinBalance={gpCoinBalance}
+          autoOpenFromSearchParams={autoOpenPromotion}
+        />
+      )}
+      {shoe.status === 'active' && (
+        <Link
+          href={`/listings/${shoe.id}/edit`}
+          className="inline-flex w-full items-center justify-center rounded-lg border border-gray-700 bg-transparent px-4 py-2 text-base font-medium text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-100 sm:text-sm"
+        >
+          Edit Listing
+        </Link>
+      )}
+      <StatusButton shoeId={shoe.id} currentStatus={shoe.status} listingType={shoe.listing_type} />
+      <OwnerMoreActions shoeId={shoe.id} listingType={shoe.listing_type} status={shoe.status} />
+    </div>
+  );
+
   return (
     <PageShell>
       <ListingViewTracker listingId={shoe.id} shareToken={searchParams?.share} />
@@ -738,7 +768,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             overlay={galleryOverlay}
           />
           <div className="lg:hidden">
-            {renderBuyerCtas('mt-1')}
+            {isOwner ? renderOwnerCtas('mt-4', false) : renderBuyerCtas('mt-1')}
             <div className="mt-4">
               <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner={isOwner} />
             </div>
@@ -850,7 +880,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           </div>
 
           <div className="hidden lg:block">
-            {renderBuyerCtas()}
+            {isOwner ? renderOwnerCtas('mt-4') : renderBuyerCtas()}
             <div className="mt-4">
               <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner={isOwner} />
             </div>
@@ -1051,47 +1081,15 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             </div>
           )}
 
-          {/* Owner actions */}
-          {isOwner && (
-            <div className="mt-5 space-y-4">
-              {shoe.status === 'active' && viewSummary && viewSummary.total > 0 && (
-                <div className="rounded-xl border border-white/[0.08] bg-slate-950/45 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">Find more offers</p>
-                  <h3 className="mt-2 text-sm font-semibold text-gray-100">Your listing is getting seen.</h3>
-                  <p className="mt-1 text-xs leading-5 text-gray-400">
-                    Fresh shares can bring it back to Facebook groups, Facebook Marketplace, Messenger, and running chats.
-                  </p>
-                  <div className="mt-3 rounded-lg border border-teal-400/20 bg-teal-400/[0.06] px-3 py-2">
-                    <p className="text-xs font-semibold text-teal-100">Post this on Facebook again to bring buyers back to the full listing.</p>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex flex-wrap items-start gap-2 max-sm:[&>a]:w-full max-sm:[&>a>button]:w-full max-sm:[&>button]:w-full">
-                {shoe.status === 'active' && (
-                  <Link href={`/listings/${shoe.id}/edit`}>
-                    <button className="rounded-lg border border-gray-700 bg-transparent px-4 py-2 text-base font-medium text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors sm:text-sm">
-                      Edit Listing
-                    </button>
-                  </Link>
-                )}
-                {shoe.status === 'active' && slotInfo && (
-                  <PromoteListingButton
-                    listingId={shoe.id}
-                    listingName={listingName}
-                    isVerified={isVerified}
-                    slotsAvailable={slotInfo.slotsAvailable || isSponsored}
-                    nextSlotOpensAt={slotInfo.nextSlotOpensAt}
-                    ownListingAlreadySponsored={isSponsored}
-                    ownSponsoredUntil={shoe.sponsored_until}
-                    ownListingAlreadyFeatured={isFeatured}
-                    ownFeaturedUntil={shoe.featured_until}
-                    gpCoinBalance={gpCoinBalance}
-                  />
-                )}
-                {/* StatusButton returns null for reserved (handled by CompleteSaleButtons above) */}
-                <StatusButton shoeId={shoe.id} currentStatus={shoe.status} listingType={shoe.listing_type} />
-                <OwnerMoreActions shoeId={shoe.id} listingType={shoe.listing_type} status={shoe.status} />
+          {isOwner && shoe.status === 'active' && viewSummary && viewSummary.total > 0 && (
+            <div className="mt-5 rounded-xl border border-white/[0.08] bg-slate-950/45 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">Find more offers</p>
+              <h3 className="mt-2 text-sm font-semibold text-gray-100">Your listing is getting seen.</h3>
+              <p className="mt-1 text-xs leading-5 text-gray-400">
+                Fresh shares can bring it back to Facebook groups, Facebook Marketplace, Messenger, and running chats.
+              </p>
+              <div className="mt-3 rounded-lg border border-teal-400/20 bg-teal-400/[0.06] px-3 py-2">
+                <p className="text-xs font-semibold text-teal-100">Post this on Facebook again to bring buyers back to the full listing.</p>
               </div>
             </div>
           )}

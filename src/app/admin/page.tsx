@@ -148,7 +148,7 @@ async function loadAdminData() {
     loadOpenListingReports(),
     service
       .from('site_settings')
-      .select('show_active_visitors_publicly, show_homepage_activity_publicly')
+      .select('show_homepage_activity_publicly')
       .eq('id', true)
       .maybeSingle(),
   ]);
@@ -174,7 +174,6 @@ async function loadAdminData() {
     leadReports,
     listingReports,
     siteSettings: {
-      showActiveVisitorsPublicly: Boolean(siteSettingsRes.data?.show_active_visitors_publicly),
       showHomepageActivityPublicly: Boolean(siteSettingsRes.data?.show_homepage_activity_publicly),
     },
     viewWindow,

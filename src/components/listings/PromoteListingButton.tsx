@@ -17,6 +17,7 @@ interface PromoteListingButtonProps {
   ownListingAlreadyFeatured: boolean;
   ownFeaturedUntil: string | null;
   gpCoinBalance?: number;
+  autoOpenFromSearchParams?: boolean;
 }
 
 export function PromoteListingButton({
@@ -30,6 +31,7 @@ export function PromoteListingButton({
   ownListingAlreadyFeatured,
   ownFeaturedUntil,
   gpCoinBalance = 0,
+  autoOpenFromSearchParams = true,
 }: PromoteListingButtonProps) {
   const [showAcknowledgment, setShowAcknowledgment] = useState(false);
   const [open, setOpen] = useState(false);
@@ -44,7 +46,7 @@ export function PromoteListingButton({
   }, []);
 
   useEffect(() => {
-    if (handledAutoOpen.current || searchParams.get('promote') !== 'featured') return;
+    if (!autoOpenFromSearchParams || handledAutoOpen.current || searchParams.get('promote') !== 'featured') return;
     handledAutoOpen.current = true;
     if (!isVerified) {
       setShowUnverified(true);
@@ -56,7 +58,7 @@ export function PromoteListingButton({
     const url = new URL(window.location.href);
     url.searchParams.delete('promote');
     window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
-  }, [isVerified, searchParams]);
+  }, [autoOpenFromSearchParams, isVerified, searchParams]);
 
   function handleClick() {
     if (!isVerified) {

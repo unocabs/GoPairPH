@@ -79,12 +79,6 @@ export function Navbar() {
   const { user, profile, loading } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [visitorPresence, setVisitorPresence] = useState<{
-    activeVisitors: number | null;
-    visible: boolean;
-    showActiveVisitorsPublicly: boolean;
-    isAdmin: boolean;
-  } | null>(null);
   const [pendingRequestCount, setPendingRequestCount] = useState(0);
   const [sentOffersCount, setSentOffersCount] = useState(0);
   const [adminPendingCount, setAdminPendingCount] = useState(0);
@@ -160,36 +154,6 @@ export function Navbar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id, profile?.is_admin, pathname]);
 
-  useEffect(() => {
-    let active = true;
-
-    async function loadVisitorPresence() {
-      try {
-        const response = await fetch('/api/visitor-presence', { cache: 'no-store' });
-        if (!response.ok) return;
-        const data = await response.json();
-        if (active) {
-          setVisitorPresence({
-            activeVisitors: typeof data.activeVisitors === 'number' ? data.activeVisitors : null,
-            visible: Boolean(data.visible),
-            showActiveVisitorsPublicly: Boolean(data.showActiveVisitorsPublicly),
-            isAdmin: Boolean(data.isAdmin),
-          });
-        }
-      } catch {
-        if (active) setVisitorPresence(null);
-      }
-    }
-
-    const timeout = window.setTimeout(loadVisitorPresence, 1_200);
-    const interval = window.setInterval(loadVisitorPresence, 60_000);
-    return () => {
-      active = false;
-      window.clearTimeout(timeout);
-      window.clearInterval(interval);
-    };
-  }, [profile?.is_admin, pathname]);
-
   async function handleSignOut() {
     await supabase.auth.signOut();
     router.push('/');
@@ -202,9 +166,6 @@ export function Navbar() {
       : `${window.location.pathname}${window.location.search}`;
     window.location.href = `/auth/sign-in?next=${encodeURIComponent(next)}`;
   }
-
-  const showActiveVisitors =
-    visitorPresence?.visible && typeof visitorPresence.activeVisitors === 'number';
 
   return (
     <nav className="sticky top-0 z-40 border-b border-gray-800 bg-gray-950/90 backdrop-blur-md">
@@ -246,12 +207,6 @@ export function Navbar() {
 
           {/* Right side — avatar always visible; hamburger mobile-only */}
           <div className="flex items-center gap-2">
-            {showActiveVisitors && (
-              <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1.5 text-xs font-semibold text-teal-200">
-                <span className="h-1.5 w-1.5 rounded-full bg-teal-300" />
-                Active now: {visitorPresence.activeVisitors}
-              </span>
-            )}
             {/* Avatar / auth */}
             {loading ? (
               <div className="h-9 w-9 animate-pulse rounded-full bg-gray-800" />
@@ -418,12 +373,6 @@ export function Navbar() {
         {/* Mobile menu */}
         {mobileOpen && (
           <div className="md:hidden border-t border-gray-800 py-3 flex flex-col gap-1">
-            {showActiveVisitors && (
-              <div className="mx-3 mb-2 inline-flex w-fit items-center gap-1.5 rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1.5 text-xs font-semibold text-teal-200">
-                <span className="h-1.5 w-1.5 rounded-full bg-teal-300" />
-                Active now: {visitorPresence.activeVisitors}
-              </div>
-            )}
             <Link href="/browse" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">GP Marketplace</Link>
             <Link href="/price-guide" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Check my Resale Price</Link>
             <Link href="/looking-for" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Looking For</Link>

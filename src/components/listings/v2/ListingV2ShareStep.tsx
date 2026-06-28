@@ -40,7 +40,7 @@ export function ListingV2ShareStep({ shoe, seller }: { shoe: Shoe; seller: Profi
     } catch {
       // Navigation should not depend on storage cleanup.
     }
-    router.push('/profile');
+    router.push(`/profile?from=listing&listing=${encodeURIComponent(shoe.id)}`);
   }
 
   return (

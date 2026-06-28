@@ -73,9 +73,7 @@ export function PromoteListingModal({
   gpCoinBalance = 0,
   onClose,
 }: PromoteListingModalProps) {
-  const [placement, setPlacement] = useState<Placement>(
-    initialPlacement ?? (((!slotsAvailable || ownListingAlreadySponsored) && !ownListingAlreadyFeatured) ? 'featured' : 'top_pick'),
-  );
+  const [placement, setPlacement] = useState<Placement>(initialPlacement ?? 'featured');
   const [tier, setTier] = useState<Tier>(initialTier);
   const [method, setMethod] = useState<PaymentMethod>('gcash');
   const [proofFile, setProofFile] = useState<File | null>(null);

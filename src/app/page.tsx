@@ -216,7 +216,7 @@ const getRecentlySoldListings = unstable_cache(async function getRecentlySoldLis
     console.error('Unable to load recently sold homepage listings:', error);
     return [];
   }
-}, ['homepage-recently-sold-listings'], { revalidate: 300, tags: ['homepage-recently-sold-listings'] });
+}, ['homepage-recently-sold-listings'], { revalidate: 3600, tags: ['homepage-recently-sold-listings'] });
 
 function getRecommendedListings(profile: Profile | null, shoes: Shoe[]): Shoe[] {
   if (!profile?.personalized_browse_enabled) return [];
@@ -296,7 +296,7 @@ const getMarketplaceActivity = unstable_cache(async function getMarketplaceActiv
     soldOrReservedPairs: soldReservedRes.count ?? 0,
     recentSellers: new Set((recentSellerRes.data ?? []).map(row => row.seller_id)).size,
   };
-}, ['homepage-marketplace-activity'], { revalidate: 60 });
+}, ['homepage-marketplace-activity'], { revalidate: 300 });
 
 function getDailyRearListings(shoes: Shoe[], featuredId: string | null): Shoe[] {
   const daySeed = new Intl.DateTimeFormat('en-CA', {
@@ -388,7 +388,7 @@ const getHomepageSiteSettings = unstable_cache(async function getHomepageSiteSet
   return {
     showHomepageActivityPublicly: Boolean(data?.show_homepage_activity_publicly),
   };
-}, ['homepage-site-settings'], { revalidate: 60 });
+}, ['homepage-site-settings'], { revalidate: 300 });
 
 export default async function HomePage() {
   const [profile, homepageShoes, recentlySoldShoes, featured, activity, siteSettings] = await Promise.all([

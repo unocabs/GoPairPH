@@ -1,34 +1,12 @@
-import { createHash } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 
-const ACTIVE_WINDOW_MINUTES = 5;
-
-const heartbeatSchema = z.object({
-  visitorId: z.string().trim().min(12).max(128),
-});
-
 const visibilitySchema = z.object({
-  showActiveVisitorsPublicly: z.boolean().optional(),
-  showHomepageActivityPublicly: z.boolean().optional(),
-}).refine(
-  value => value.showActiveVisitorsPublicly !== undefined || value.showHomepageActivityPublicly !== undefined,
-  'At least one setting is required'
-);
-
-function hashVisitorId(visitorId: string): string {
-  const secret = process.env.VISITOR_PRESENCE_SECRET
-    ?? process.env.VIEW_TRACKING_SECRET
-    ?? process.env.SUPABASE_SERVICE_ROLE_KEY
-    ?? 'gopairph-visitor-presence';
-
-  return createHash('sha256')
-    .update(`${secret}:${visitorId}`)
-    .digest('hex');
-}
+  showHomepageActivityPublicly: z.boolean(),
+});
 
 async function getCurrentProfile() {
   const supabase = createClient();
@@ -42,72 +20,6 @@ async function getCurrentProfile() {
     .maybeSingle();
 
   return (profile as { id: string; is_admin: boolean } | null) ?? null;
-}
-
-async function readVisitorPresence(profile: { is_admin: boolean } | null) {
-  const service = createServiceClient();
-  const activeSince = new Date(Date.now() - ACTIVE_WINDOW_MINUTES * 60 * 1000).toISOString();
-
-  await service
-    .from('visitor_presence')
-    .delete()
-    .lt('last_seen_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-
-  const [{ data: settings }, { count }] = await Promise.all([
-    service
-      .from('site_settings')
-      .select('show_active_visitors_publicly, show_homepage_activity_publicly')
-      .eq('id', true)
-      .maybeSingle(),
-    service
-      .from('visitor_presence')
-      .select('visitor_hash', { count: 'exact', head: true })
-      .eq('is_admin', false)
-      .gte('last_seen_at', activeSince),
-  ]);
-
-  const showPublicly = Boolean(settings?.show_active_visitors_publicly);
-  const isAdmin = Boolean(profile?.is_admin);
-  const visible = isAdmin || showPublicly;
-
-  return {
-    activeVisitors: visible ? count ?? 0 : null,
-    showActiveVisitorsPublicly: showPublicly,
-    showHomepageActivityPublicly: Boolean(settings?.show_homepage_activity_publicly),
-    visible,
-    isAdmin,
-  };
-}
-
-export async function GET() {
-  const profile = await getCurrentProfile();
-  const response = await readVisitorPresence(profile);
-  return NextResponse.json(response);
-}
-
-export async function POST(request: Request) {
-  let parsed: z.infer<typeof heartbeatSchema>;
-  try {
-    parsed = heartbeatSchema.parse(await request.json());
-  } catch {
-    return NextResponse.json({ ok: false }, { status: 200 });
-  }
-
-  const profile = await getCurrentProfile();
-  const service = createServiceClient();
-  const visitorHash = hashVisitorId(parsed.visitorId);
-
-  await service
-    .from('visitor_presence')
-    .upsert({
-      visitor_hash: visitorHash,
-      profile_id: profile?.id ?? null,
-      is_admin: Boolean(profile?.is_admin),
-      last_seen_at: new Date().toISOString(),
-    }, { onConflict: 'visitor_hash' });
-
-  const response = await readVisitorPresence(profile);
-  return NextResponse.json({ ok: true, ...response });
 }
 
 export async function PATCH(request: Request) {
@@ -124,35 +36,21 @@ export async function PATCH(request: Request) {
   }
 
   const service = createServiceClient();
-  const updatePayload: {
-    id: true;
-    show_active_visitors_publicly?: boolean;
-    show_homepage_activity_publicly?: boolean;
-    updated_by: string;
-    updated_at: string;
-  } = {
-    id: true,
-    updated_by: profile.id,
-    updated_at: new Date().toISOString(),
-  };
-
-  if (parsed.showActiveVisitorsPublicly !== undefined) {
-    updatePayload.show_active_visitors_publicly = parsed.showActiveVisitorsPublicly;
-  }
-
-  if (parsed.showHomepageActivityPublicly !== undefined) {
-    updatePayload.show_homepage_activity_publicly = parsed.showHomepageActivityPublicly;
-  }
-
   const { error } = await service
     .from('site_settings')
-    .upsert(updatePayload, { onConflict: 'id' });
+    .upsert({
+      id: true,
+      show_homepage_activity_publicly: parsed.showHomepageActivityPublicly,
+      updated_by: profile.id,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'id' });
 
   if (error) {
-    console.error('[visitor-presence] setting update failed:', error);
+    console.error('[site-settings] update failed:', error);
     return NextResponse.json({ error: 'Could not update setting' }, { status: 500 });
   }
 
-  const response = await readVisitorPresence(profile);
-  return NextResponse.json(response);
+  return NextResponse.json({
+    showHomepageActivityPublicly: parsed.showHomepageActivityPublicly,
+  });
 }

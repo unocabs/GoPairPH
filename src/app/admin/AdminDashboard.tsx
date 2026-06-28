@@ -25,7 +25,6 @@ interface AdminDashboardProps {
   leadReports: WishlistOfferReport[];
   listingReports: ListingReport[];
   siteSettings: {
-    showActiveVisitorsPublicly: boolean;
     showHomepageActivityPublicly: boolean;
   };
   viewWindow: { startDate: string; endDate: string };
@@ -163,7 +162,6 @@ export function AdminDashboard({
       {tab === 'emailBlast' && <EmailBlastPanel />}
       {tab === 'settings' && (
         <AdminSettingsPanel
-          initialShowActiveVisitorsPublicly={siteSettings.showActiveVisitorsPublicly}
           initialShowHomepageActivityPublicly={siteSettings.showHomepageActivityPublicly}
         />
       )}
@@ -662,46 +660,33 @@ function EmailBlastPanel() {
 }
 
 function AdminSettingsPanel({
-  initialShowActiveVisitorsPublicly,
   initialShowHomepageActivityPublicly,
 }: {
-  initialShowActiveVisitorsPublicly: boolean;
   initialShowHomepageActivityPublicly: boolean;
 }) {
-  const [settings, setSettings] = useState({
-    activeVisitors: initialShowActiveVisitorsPublicly,
-    homepageActivity: initialShowHomepageActivityPublicly,
-  });
-  const [savingKey, setSavingKey] = useState<'activeVisitors' | 'homepageActivity' | null>(null);
+  const [homepageActivity, setHomepageActivity] = useState(initialShowHomepageActivityPublicly);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
-  async function handleToggle(key: 'activeVisitors' | 'homepageActivity', next: boolean) {
-    setSettings(current => ({ ...current, [key]: next }));
-    setSavingKey(key);
+  async function handleToggle(next: boolean) {
+    setHomepageActivity(next);
+    setSaving(true);
     setMessage('');
 
     try {
       const response = await fetch('/api/visitor-presence', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(
-          key === 'activeVisitors'
-            ? { showActiveVisitorsPublicly: next }
-            : { showHomepageActivityPublicly: next }
-        ),
+        body: JSON.stringify({ showHomepageActivityPublicly: next }),
       });
 
       if (!response.ok) throw new Error('Could not update setting.');
-      setMessage(
-        key === 'activeVisitors'
-          ? (next ? 'Active visitor count is now public.' : 'Active visitor count is now admin-only.')
-          : (next ? 'Homepage activity stats are now public.' : 'Homepage activity stats are now admin-only.')
-      );
+      setMessage(next ? 'Homepage activity stats are now public.' : 'Homepage activity stats are now admin-only.');
     } catch {
-      setSettings(current => ({ ...current, [key]: !next }));
+      setHomepageActivity(!next);
       setMessage('Could not update this setting. Please try again.');
     } finally {
-      setSavingKey(null);
+      setSaving(false);
     }
   }
 
@@ -710,28 +695,9 @@ function AdminSettingsPanel({
       <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
         <p className="text-sm font-semibold text-gray-100">Public activity signals</p>
         <p className="mt-1 text-xs leading-5 text-gray-500">
-          Admins always see these signals. Turn them on publicly only when the numbers are strong enough to build trust.
+          Admins always see these stats. Turn them on publicly only when the numbers are strong enough to build trust.
         </p>
       </div>
-
-      <label className="flex flex-col gap-4 rounded-xl border border-gray-800 bg-gray-900 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="font-semibold text-gray-100">Show active visitors publicly</p>
-          <p className="mt-1 text-sm leading-6 text-gray-500">
-            Visitors are counted approximately when their browser has been active in the last 5 minutes.
-          </p>
-        </div>
-        <span className="inline-flex items-center gap-3">
-          <span className="text-sm font-medium text-gray-400">{settings.activeVisitors ? 'Public' : 'Admin-only'}</span>
-          <input
-            type="checkbox"
-            checked={settings.activeVisitors}
-            onChange={(event) => handleToggle('activeVisitors', event.target.checked)}
-            disabled={savingKey === 'activeVisitors'}
-            className="h-5 w-5 rounded border-gray-700 bg-gray-950 text-teal-500 focus:ring-teal-500"
-          />
-        </span>
-      </label>
 
       <label className="flex flex-col gap-4 rounded-xl border border-gray-800 bg-gray-900 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -741,12 +707,12 @@ function AdminSettingsPanel({
           </p>
         </div>
         <span className="inline-flex items-center gap-3">
-          <span className="text-sm font-medium text-gray-400">{settings.homepageActivity ? 'Public' : 'Admin-only'}</span>
+          <span className="text-sm font-medium text-gray-400">{homepageActivity ? 'Public' : 'Admin-only'}</span>
           <input
             type="checkbox"
-            checked={settings.homepageActivity}
-            onChange={(event) => handleToggle('homepageActivity', event.target.checked)}
-            disabled={savingKey === 'homepageActivity'}
+            checked={homepageActivity}
+            onChange={(event) => handleToggle(event.target.checked)}
+            disabled={saving}
             className="h-5 w-5 rounded border-gray-700 bg-gray-950 text-teal-500 focus:ring-teal-500"
           />
         </span>

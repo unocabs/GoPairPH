@@ -33,6 +33,15 @@ function hashVisitorId(visitorId: string, listingId: string): string {
     .digest('hex');
 }
 
+function hasSupabaseAuthCookie(request: Request): boolean {
+  return (request.headers.get('cookie') ?? '')
+    .split(';')
+    .some(cookie => {
+      const name = cookie.trim().split('=', 1)[0];
+      return name.startsWith('sb-') && name.includes('auth-token');
+    });
+}
+
 export async function POST(request: Request) {
   let parsed: z.infer<typeof bodySchema>;
   try {
@@ -42,7 +51,6 @@ export async function POST(request: Request) {
   }
 
   const service = createServiceClient();
-  const supabase = createClient();
 
   const { data: listing } = await service
     .from('shoes')
@@ -54,16 +62,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ counted: false }, { status: 200 });
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, is_admin')
-      .eq('user_id', user.id)
-      .maybeSingle();
+  if (hasSupabaseAuthCookie(request)) {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, is_admin')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-    if (profile?.is_admin || profile?.id === listing.seller_id) {
-      return NextResponse.json({ counted: false }, { status: 200 });
+      if (profile?.is_admin || profile?.id === listing.seller_id) {
+        return NextResponse.json({ counted: false }, { status: 200 });
+      }
     }
   }
 

@@ -139,17 +139,22 @@ async function getOwnProfileData() {
 type ProfileTab = 'listings' | 'purchases' | 'offers' | 'sales' | 'wishlist' | 'saved' | 'searches';
 const VALID_TABS: ProfileTab[] = ['listings', 'purchases', 'offers', 'sales', 'wishlist', 'saved', 'searches'];
 
-export default async function ProfilePage({ searchParams }: { searchParams: { tab?: string } }) {
+export default async function ProfilePage({ searchParams }: { searchParams: { tab?: string; from?: string; listing?: string } }) {
   const data = await getOwnProfileData();
   if (!data) redirect('/');
 
   const initialTab: ProfileTab = VALID_TABS.includes(searchParams.tab as ProfileTab)
     ? (searchParams.tab as ProfileTab)
     : 'listings';
+  const postListingId = searchParams.from === 'listing'
+    && searchParams.listing
+    && data.shoes.some(shoe => shoe.id === searchParams.listing)
+    ? searchParams.listing
+    : undefined;
 
   return (
     <PageShell>
-      <OwnProfile {...data} initialTab={initialTab} />
+      <OwnProfile {...data} initialTab={initialTab} postListingId={postListingId} />
     </PageShell>
   );
 }

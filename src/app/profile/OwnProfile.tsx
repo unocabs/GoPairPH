@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
@@ -17,6 +17,7 @@ import { SavedSearchesPanel } from '@/components/profile/SavedSearchesPanel';
 import { formatPrice, formatListingName, getListingPath, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { formatGpCoins, getGpCoinTransactionLabel } from '@/lib/gpCoins';
 import { buildMessengerUrl } from '@/lib/facebook';
+import { trackMarketplaceAction } from '@/lib/analytics';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
@@ -50,6 +51,7 @@ interface OwnProfileProps {
   gpCoinTransactions?: GpCoinTransaction[];
   nextGpCoinsExpiring?: { remaining_amount: number; expires_at: string } | null;
   initialTab?: ProfileTab;
+  postListingId?: string;
 }
 
 function GpCoinsPanel({
@@ -169,6 +171,7 @@ export function OwnProfile({
   gpCoinTransactions = [],
   nextGpCoinsExpiring = null,
   initialTab,
+  postListingId,
 }: OwnProfileProps) {
   const [profile, setProfile] = useState(initialProfile);
   const [wishlist] = useState(initialWishlist);
@@ -185,6 +188,7 @@ export function OwnProfile({
   const [locationSaving, setLocationSaving] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
+  const messengerPromptTrackedRef = useRef(false);
 
   function handlePurchaseRequestChanged(id: string) {
     setPurchaseRequests(prev => prev.filter(r => r.id !== id));
@@ -274,6 +278,7 @@ export function OwnProfile({
   }, {});
   const shareTarget = activeShoes.find((shoe) => (viewCounts?.[shoe.id]?.total ?? 0) > 0) ?? activeShoes[0];
   const hasValidMessengerContact = !!buildMessengerUrl(profile.fb_username);
+  const showPostListingMessengerPrompt = !!postListingId && !hasValidMessengerContact;
   const totalListingSaves = activeShoes.reduce((sum, shoe) => sum + (savedListingCounts?.[shoe.id] ?? 0), 0);
   const strongestListing = [...activeShoes].sort((a, b) => {
     const viewDifference = (viewCounts?.[b.id]?.total ?? 0) - (viewCounts?.[a.id]?.total ?? 0);
@@ -296,6 +301,24 @@ export function OwnProfile({
     const images = shoe.shoe_images ?? [];
     return !images.some(image => image.view_type === 'top') || !images.some(image => image.view_type === 'sole');
   });
+
+  useEffect(() => {
+    if (!showPostListingMessengerPrompt || messengerPromptTrackedRef.current) return;
+    messengerPromptTrackedRef.current = true;
+    trackMarketplaceAction('post_listing_messenger_prompt_view', {
+      listing_id: postListingId,
+      surface: 'profile_post_listing',
+    });
+  }, [postListingId, showPostListingMessengerPrompt]);
+
+  function openPostListingMessengerEditor() {
+    trackMarketplaceAction('post_listing_messenger_prompt_click', {
+      listing_id: postListingId,
+      surface: 'profile_post_listing',
+    });
+    setEditInitialFocus('facebook');
+    setEditOpen(true);
+  }
 
   async function handleShareProfile() {
     const url = `${window.location.origin}/profile/${profile.id}`;
@@ -392,6 +415,33 @@ export function OwnProfile({
           </Button>
         </div>
       </SurfaceCard>
+
+      {showPostListingMessengerPrompt && (
+        <SurfaceCard glow className="mb-4 border-sky-400/25 bg-sky-500/[0.06] p-4 sm:mb-6 sm:p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-500/15 text-blue-200 ring-1 ring-blue-400/25" aria-hidden="true">
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
+                </svg>
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-300">One last seller setup</p>
+                <h2 className="mt-1.5 text-lg font-bold leading-6 text-gray-100">Your listing is live—make it easy for buyers to reach you.</h2>
+                <p className="mt-1.5 max-w-2xl text-sm leading-6 text-gray-400">
+                  Buyers are more likely to ask about a pair and send an offer when the seller is easy to contact. Add Messenger so interested runners can reach you quickly.
+                </p>
+              </div>
+            </div>
+            <div className="shrink-0 sm:w-44">
+              <Button type="button" onClick={openPostListingMessengerEditor} className="w-full">
+                Add Messenger
+              </Button>
+              <p className="mt-1.5 text-center text-[11px] text-gray-500">Takes about a minute</p>
+            </div>
+          </div>
+        </SurfaceCard>
+      )}
 
       <GpCoinsPanel
         wallet={gpCoinWallet}
@@ -504,7 +554,7 @@ export function OwnProfile({
         </SurfaceCard>
       )}
 
-      {(needsPhotoListing || !hasValidMessengerContact || shareTarget) && (
+      {(needsPhotoListing || (!hasValidMessengerContact && !showPostListingMessengerPrompt) || shareTarget) && (
         <SurfaceCard className="mb-4 p-3 sm:mb-6 sm:p-4">
           <p className="mb-2 text-sm font-semibold text-gray-100">Quick ways to improve your shop</p>
           <div className="grid gap-2 sm:grid-cols-3">
@@ -514,8 +564,8 @@ export function OwnProfile({
                 <span className="mt-0.5 block text-teal-200/65">Add top and sole views →</span>
               </Link>
             )}
-            {!hasValidMessengerContact && (
-              <button type="button" onClick={() => setEditOpen(true)} className="rounded-lg border border-sky-400/25 bg-sky-500/[0.08] px-3 py-2.5 text-left text-xs text-sky-100 transition-colors hover:border-sky-300/40 hover:bg-sky-500/[0.14]">
+            {!hasValidMessengerContact && !showPostListingMessengerPrompt && (
+              <button type="button" onClick={() => { setEditInitialFocus('facebook'); setEditOpen(true); }} className="rounded-lg border border-sky-400/25 bg-sky-500/[0.08] px-3 py-2.5 text-left text-xs text-sky-100 transition-colors hover:border-sky-300/40 hover:bg-sky-500/[0.14]">
                 <strong className="block text-sky-50">Make contact easier</strong>
                 <span className="mt-0.5 block text-sky-200/65">Add your Messenger username →</span>
               </button>
