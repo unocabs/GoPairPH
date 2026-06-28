@@ -530,8 +530,8 @@ function EmailBlastPanel() {
       <div className="rounded-xl border border-amber-500/25 bg-amber-950/20 p-4">
         <p className="text-sm font-semibold text-amber-100">One-time reactivation blast</p>
         <p className="mt-1 text-sm leading-6 text-amber-100/75">
-          Preview first, send yourself a test, then type the exact confirmation phrase before sending to all users.
-          Each recipient gets a private email, not a shared recipient list.
+          Preview first, send yourself a test, then type the exact confirmation phrase before sending to opted-in users.
+          Suppressed addresses are excluded, and each recipient gets a private email with one-click unsubscribe.
         </p>
       </div>
 

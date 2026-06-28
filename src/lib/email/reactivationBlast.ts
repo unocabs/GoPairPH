@@ -10,6 +10,7 @@ export const REACTIVATION_CORRECTION_PREVIEW =
 interface ReactivationBlastEmailArgs {
   recipientName?: string | null;
   siteUrl: string;
+  unsubscribeUrl?: string;
 }
 
 function escape(value: string): string {
@@ -30,6 +31,7 @@ function firstName(name?: string | null): string {
 export function renderReactivationBlastEmail({
   recipientName,
   siteUrl,
+  unsubscribeUrl,
 }: ReactivationBlastEmailArgs): string {
   const baseUrl = siteUrl.replace(/\/$/, '');
   const name = firstName(recipientName);
@@ -37,6 +39,7 @@ export function renderReactivationBlastEmail({
   const listUrl = `${baseUrl}/listings/new`;
   const browseUrl = `${baseUrl}/browse`;
   const findUrl = `${baseUrl}/find-my-pair`;
+  const optOutUrl = unsubscribeUrl ?? `${baseUrl}/profile`;
 
   return `
 <!doctype html>
@@ -85,7 +88,8 @@ export function renderReactivationBlastEmail({
             </tr>
             <tr>
               <td style="background:#f1f5f9;border-top:1px solid #e2e8f0;padding:18px 28px;color:#64748b;font-size:12px;line-height:1.6;">
-                You are receiving this because you created a Go Pair PH account. If you do not want non-essential Go Pair PH updates, reply "unsubscribe" and we will remove you from future blasts.
+                You are receiving this because you opted in to Go Pair PH news and community updates.<br>
+                <a href="${escape(optOutUrl)}" style="color:#475569;text-decoration:underline;">Unsubscribe from promotional emails</a>
               </td>
             </tr>
           </table>
@@ -96,7 +100,7 @@ export function renderReactivationBlastEmail({
 </html>`;
 }
 
-export function renderReactivationBlastText({ recipientName, siteUrl }: ReactivationBlastEmailArgs): string {
+export function renderReactivationBlastText({ recipientName, siteUrl, unsubscribeUrl }: ReactivationBlastEmailArgs): string {
   const baseUrl = siteUrl.replace(/\/$/, '');
   const name = firstName(recipientName);
 
@@ -127,12 +131,14 @@ List once. Search cleaner. Share anywhere.
 Go Pair PH
 Runners helping runners.
 
-You are receiving this because you created a Go Pair PH account. If you do not want non-essential Go Pair PH updates, reply "unsubscribe" and we will remove you from future blasts.`;
+You are receiving this because you opted in to Go Pair PH news and community updates.
+Unsubscribe: ${unsubscribeUrl ?? `${baseUrl}/profile`}`;
 }
 
 export function renderReactivationCorrectionEmail({
   recipientName,
   siteUrl,
+  unsubscribeUrl,
 }: ReactivationBlastEmailArgs): string {
   const baseUrl = siteUrl.replace(/\/$/, '');
   const name = firstName(recipientName);
@@ -140,6 +146,7 @@ export function renderReactivationCorrectionEmail({
   const listUrl = `${baseUrl}/listings/new`;
   const browseUrl = `${baseUrl}/browse`;
   const findUrl = `${baseUrl}/find-my-pair`;
+  const optOutUrl = unsubscribeUrl ?? `${baseUrl}/profile`;
 
   return `
 <!doctype html>
@@ -181,7 +188,8 @@ export function renderReactivationCorrectionEmail({
             </tr>
             <tr>
               <td style="background:#f1f5f9;border-top:1px solid #e2e8f0;padding:18px 28px;color:#64748b;font-size:12px;line-height:1.6;">
-                You are receiving this because you created a Go Pair PH account. If you do not want non-essential Go Pair PH updates, reply "unsubscribe" and we will remove you from future blasts.
+                You are receiving this because you opted in to Go Pair PH news and community updates.<br>
+                <a href="${escape(optOutUrl)}" style="color:#475569;text-decoration:underline;">Unsubscribe from promotional emails</a>
               </td>
             </tr>
           </table>
@@ -195,6 +203,7 @@ export function renderReactivationCorrectionEmail({
 export function renderReactivationCorrectionText({
   recipientName,
   siteUrl,
+  unsubscribeUrl,
 }: ReactivationBlastEmailArgs): string {
   const baseUrl = siteUrl.replace(/\/$/, '');
   const name = firstName(recipientName);
@@ -216,5 +225,6 @@ Use Go Pair PH to find, list, and share running shoes in one cleaner place.
 Thanks for your patience,
 Go Pair PH
 
-You are receiving this because you created a Go Pair PH account. If you do not want non-essential Go Pair PH updates, reply "unsubscribe" and we will remove you from future blasts.`;
+You are receiving this because you opted in to Go Pair PH news and community updates.
+Unsubscribe: ${unsubscribeUrl ?? `${baseUrl}/profile`}`;
 }

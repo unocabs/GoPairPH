@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { renderListingPublishedEmail } from '@/lib/email/listingPublished';
-import { sendEmail } from '@/lib/email/resend';
+import { sendTransactionalEmail } from '@/lib/email/resend';
 import { formatListingName, getAbsoluteListingUrl } from '@/lib/utils';
 
 export const runtime = 'nodejs';
@@ -27,7 +27,8 @@ export async function POST(_request: Request, { params }: { params: { listingId:
   const listingName = formatListingName(listing.brand, listing.model);
   const listingUrl = getAbsoluteListingUrl(siteUrl, listing);
   try {
-    await sendEmail({
+    await sendTransactionalEmail({
+      category: 'listing_published',
       to: user.email,
       subject: `Your Go Pair PH listing is live: ${listingName}`,
       html: renderListingPublishedEmail({ listingName, listingUrl }),

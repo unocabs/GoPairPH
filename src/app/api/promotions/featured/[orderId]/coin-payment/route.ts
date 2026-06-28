@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { renderAdminFeaturedProofEmail, renderSellerFeaturedSubmittedEmail } from '@/lib/email/featuredPromotion';
-import { sendEmail } from '@/lib/email/resend';
+import { sendTransactionalEmail } from '@/lib/email/resend';
 import { getAdminEmails } from '@/lib/featuredPromotions';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { formatListingName, getAbsoluteListingUrl } from '@/lib/utils';
@@ -45,7 +45,8 @@ export async function POST(_request: Request, { params }: { params: { orderId: s
   try {
     const admins = await getAdminEmails(service);
     if (admins.length > 0) {
-      await sendEmail({
+      await sendTransactionalEmail({
+        category: 'featured_promotion',
         to: admins,
         subject: `Featured paid with GP Coins: ${listingName}`,
         html: renderAdminFeaturedProofEmail({
@@ -75,7 +76,8 @@ export async function POST(_request: Request, { params }: { params: { orderId: s
 
   try {
     if (user.email) {
-      await sendEmail({
+      await sendTransactionalEmail({
+        category: 'featured_promotion',
         to: user.email,
         subject: `Your Featured request is approved: ${listingName}`,
         html: renderSellerFeaturedSubmittedEmail({

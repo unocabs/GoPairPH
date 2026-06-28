@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
-import { sendEmail } from '@/lib/email/resend';
+import { sendTransactionalEmail } from '@/lib/email/resend';
 import { makeSavedSearchEmailMatch, renderSavedSearchAlertEmail } from '@/lib/email/savedSearchAlerts';
 import { formatProfileLocation, formatSize, getAbsoluteListingUrl } from '@/lib/utils';
 import { hasPreferredSize, profileSizeMatchesRow, type PersonalizationProfile } from '@/lib/personalization';
@@ -334,7 +334,8 @@ export async function GET(request: Request) {
 
     const hasOnlyProfileMatches = digestMatches.every(match => match.source === 'profile_match');
 
-    await sendEmail({
+    await sendTransactionalEmail({
+      category: 'saved_search',
       to: email,
       subject: hasOnlyProfileMatches
         ? 'New running shoes in your size - Go Pair PH'

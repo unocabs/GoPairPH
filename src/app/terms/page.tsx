@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <InfoPage title="Terms of Service" lastUpdated="May 2026">
+    <InfoPage title="Terms of Service" lastUpdated="June 2026">
       <section>
         <h2 className="text-xl font-semibold text-gray-100">1. Acceptance of terms</h2>
         <p>
@@ -160,8 +160,8 @@ export default function TermsPage() {
           By using Go Pair PH, you agree that we may send transactional and service-related
           messages, including sign-in/account messages, offers, orders, free-pair requests,
           shop updates, saved-search alerts, listing-view milestones, safety notices, and
-          support replies. You may opt out of non-essential marketing messages where that
-          option is available.
+          support replies. Promotional and community-update emails require your separate
+          opt-in and can be disabled at any time from your profile or an unsubscribe link.
         </p>
       </section>
 

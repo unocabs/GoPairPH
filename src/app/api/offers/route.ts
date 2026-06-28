@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { renderOfferEmail, renderShopOrderEmail, renderDonationRequestEmail } from '@/lib/email/offerNotification';
-import { sendOfferEmail } from '@/lib/email/resend';
+import { sendTransactionalEmail } from '@/lib/email/resend';
 import { formatCondition, formatListingName, formatMileage, formatSize } from '@/lib/utils';
 
 const bodySchema = z.object({
@@ -172,7 +172,8 @@ async function sendNotification({ buyerId, listingId, message, offerPricePhp, va
       requester_message: message,
       request_link: offerLink,
     });
-    await sendOfferEmail({
+    await sendTransactionalEmail({
+      category: 'marketplace_offer',
       to: sellerEmail,
       subject: `New free pair request: ${listingTitle} — Go Pair PH`,
       html,
@@ -202,7 +203,8 @@ async function sendNotification({ buyerId, listingId, message, offerPricePhp, va
       order_link: offerLink,
     });
 
-    await sendOfferEmail({
+    await sendTransactionalEmail({
+      category: 'marketplace_order',
       to: sellerEmail,
       subject: `New shop order: ${listingTitle} — Go Pair PH`,
       html,
@@ -223,7 +225,8 @@ async function sendNotification({ buyerId, listingId, message, offerPricePhp, va
     offer_link: offerLink,
   });
 
-  await sendOfferEmail({
+  await sendTransactionalEmail({
+    category: 'marketplace_offer',
     to: sellerEmail,
     subject: `New offer on ${listingTitle} — Go Pair PH`,
     html,

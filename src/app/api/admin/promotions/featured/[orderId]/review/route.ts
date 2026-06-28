@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { renderSellerFeaturedReviewEmail } from '@/lib/email/featuredPromotion';
-import { sendEmail } from '@/lib/email/resend';
+import { sendTransactionalEmail } from '@/lib/email/resend';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { formatListingName, getAbsoluteListingUrl } from '@/lib/utils';
 import type { FeaturedPromotionOrder } from '@/types';
@@ -67,7 +67,8 @@ export async function PATCH(request: Request, { params }: { params: { orderId: s
         if (authData.user?.email) {
           const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com').replace(/\/$/, '');
           const listingName = formatListingName(listing.brand, listing.model);
-          await sendEmail({
+          await sendTransactionalEmail({
+            category: 'featured_promotion',
             to: authData.user.email,
             subject: body.action === 'approve'
               ? `Your Featured listing is approved: ${listingName}`

@@ -25,6 +25,7 @@ export function EditProfileModal({ profile, onClose, onUpdated, initialFocus }: 
   const [showFbHelp, setShowFbHelp] = useState(false);
   const [personalizedBrowseEnabled, setPersonalizedBrowseEnabled] = useState(profile.personalized_browse_enabled ?? true);
   const [profileMatchEmailEnabled, setProfileMatchEmailEnabled] = useState(profile.profile_match_email_enabled ?? true);
+  const [marketingEmailEnabled, setMarketingEmailEnabled] = useState(profile.marketing_email_enabled ?? false);
   const supabase = createClient();
 
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<ProfileFormInput, unknown, ProfileFormData>({
@@ -93,6 +94,7 @@ export function EditProfileModal({ profile, onClose, onUpdated, initialFocus }: 
         return;
       }
 
+      const marketingPreferenceChanged = marketingEmailEnabled !== (profile.marketing_email_enabled ?? false);
       const { data: updated, error: err } = await supabase
         .from('profiles')
         .update({
@@ -108,6 +110,11 @@ export function EditProfileModal({ profile, onClose, onUpdated, initialFocus }: 
           preferred_us_size_type: data.preferred_us_size_type ?? 'mens',
           personalized_browse_enabled: personalizedBrowseEnabled,
           profile_match_email_enabled: profileMatchEmailEnabled,
+          ...(marketingPreferenceChanged ? {
+            marketing_email_enabled: marketingEmailEnabled,
+            marketing_email_consent_at: marketingEmailEnabled ? new Date().toISOString() : profile.marketing_email_consent_at,
+            marketing_email_unsubscribed_at: marketingEmailEnabled ? null : new Date().toISOString(),
+          } : {}),
         })
         .eq('id', profile.id)
         .select()
@@ -217,6 +224,14 @@ export function EditProfileModal({ profile, onClose, onUpdated, initialFocus }: 
                 checked={profileMatchEmailEnabled}
                 onChange={(event) => setProfileMatchEmailEnabled(event.target.checked)}
               />
+              <PreferenceToggle
+                label="Send me occasional Go Pair PH news and community updates"
+                checked={marketingEmailEnabled}
+                onChange={(event) => setMarketingEmailEnabled(event.target.checked)}
+              />
+              <p className="px-1 text-[11px] leading-4 text-gray-500">
+                Optional. Marketplace offers, order updates, and other essential account emails are unaffected.
+              </p>
             </div>
           </div>
 

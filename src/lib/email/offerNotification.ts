@@ -267,8 +267,6 @@ export function renderOfferEmail(data: OfferEmailData): string {
                         You're receiving this email because you have an active listing on <strong>Go Pair PH</strong>.
                       </p>
                       <p style="color: #6b7280; font-size: 13px; line-height: 20px; margin: 0 0 16px 0; font-family: 'Segoe UI', Arial, sans-serif;">
-                        <a href="https://gopairph.com/browse" style="color: #0d9488; text-decoration: none; font-weight: 500;">Browse</a>
-                        &nbsp;·&nbsp;
                         <a href="https://gopairph.com/safety" style="color: #0d9488; text-decoration: none; font-weight: 500;">Safety Guide</a>
                         &nbsp;·&nbsp;
                         <a href="https://gopairph.com/contact" style="color: #0d9488; text-decoration: none; font-weight: 500;">Contact</a>

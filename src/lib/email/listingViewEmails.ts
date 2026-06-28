@@ -63,7 +63,7 @@ export function renderListingViewMilestoneEmail({
               <td style="padding:12px 28px 4px;">
                 <p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.7;">Hi ${escape(sellerName)}, good news. Your <strong>${escape(listingName)}</strong> listing is being seen by runners on Go Pair PH.</p>
                 <p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.7;">It just hit <strong>${formatNumber(milestone)} views today</strong>. That means your pair is in front of people who are actively looking right now.</p>
-                <p style="margin:0;color:#334155;font-size:15px;line-height:1.7;">To keep the momentum going, share your Go Pair PH listing link again in Facebook groups, Marketplace, Messenger, or Reddit.</p>
+                <p style="margin:0;color:#334155;font-size:15px;line-height:1.7;">Open your listing to review its current details and any new activity.</p>
               </td>
             </tr>
             <tr>
@@ -73,7 +73,7 @@ export function renderListingViewMilestoneEmail({
             </tr>
             <tr>
               <td style="padding:0 28px 28px;">
-                <p style="margin:0;color:#64748b;font-size:12px;line-height:1.6;">Go Pair PH keeps your shoe details, photos, and offers organized in one shareable page.</p>
+                <p style="margin:0;color:#64748b;font-size:12px;line-height:1.6;">This notice was sent because your active listing reached a view milestone.</p>
               </td>
             </tr>
           </table>
@@ -120,8 +120,7 @@ export function renderListingViewLifetimeMilestoneEmail({
             <tr>
               <td style="padding:12px 28px 4px;">
                 <p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.7;">Hi ${escape(sellerName)}, milestone unlocked. Your <strong>${escape(listingName)}</strong> listing has now been viewed by <strong>${formatNumber(milestone)} unique runners</strong> on Go Pair PH since you posted it.</p>
-                <p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.7;">That's real interest — this kind of traction usually means the listing is well-priced and well-described. Keep an eye out for incoming offers.</p>
-                <p style="margin:0;color:#334155;font-size:15px;line-height:1.7;">Want to push it further? Reshare the link in running groups and on Marketplace. The more eyes, the faster it sells.</p>
+                <p style="margin:0;color:#334155;font-size:15px;line-height:1.7;">Open your listing to review its current details and any new activity.</p>
               </td>
             </tr>
             <tr>

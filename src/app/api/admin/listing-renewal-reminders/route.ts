@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { renderListingRenewalEmail } from '@/lib/email/listingRenewal';
-import { sendEmail } from '@/lib/email/resend';
+import { sendTransactionalEmail } from '@/lib/email/resend';
 import {
   LISTING_RENEWAL_DAY_MS,
   LISTING_RENEWAL_FIRST_REMINDER_DAYS,
@@ -101,7 +101,8 @@ export async function GET(request: Request) {
       const updatePath = `/listings/${listing.id}/edit?renew=1`;
       const updateAndRenewUrl = `${siteUrl}/auth/sign-in?next=${encodeURIComponent(updatePath)}`;
 
-      await sendEmail({
+      await sendTransactionalEmail({
+        category: 'listing_renewal',
         to: email,
         subject: `Renew your ${listing.brand} ${listing.model} listing`,
         html: renderListingRenewalEmail({

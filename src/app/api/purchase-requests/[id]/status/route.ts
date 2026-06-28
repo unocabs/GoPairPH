@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { renderRequestStatusChangeEmail, renderSellerNoteEmail } from '@/lib/email/offerNotification';
-import { sendOfferEmail } from '@/lib/email/resend';
+import { sendTransactionalEmail } from '@/lib/email/resend';
 import { formatListingName, formatPrice, getListingPath } from '@/lib/utils';
 import { buildMessengerUrl } from '@/lib/facebook';
 
@@ -127,7 +127,7 @@ export async function POST(request: Request, { params }: RouteContext) {
       ? `${sellerName} accepted your request — ${listingTitle}`
       : `Update on your request — ${listingTitle}`;
 
-    await sendOfferEmail({ to: buyerEmail, subject, html });
+    await sendTransactionalEmail({ category: 'request_status', to: buyerEmail, subject, html });
   } catch (err) {
     console.error('[purchase-requests/status] buyer notification failed:', err);
   }
@@ -213,7 +213,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       request_link: requestLink,
     });
 
-    await sendOfferEmail({
+    await sendTransactionalEmail({
+      category: 'seller_note',
       to: buyerEmail,
       subject: `${sellerName} added a note — ${listingTitle}`,
       html,

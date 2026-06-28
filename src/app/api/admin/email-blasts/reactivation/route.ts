@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
-import { getResendClient } from '@/lib/email/resend';
+import {
+  getEmailTags,
+  getMarketingEmailDefaults,
+  getMarketingHeaders,
+  getResendClient,
+  sendMarketingEmail,
+} from '@/lib/email/resend';
+import { createMarketingUnsubscribeToken } from '@/lib/email/unsubscribe';
 import {
   REACTIVATION_CORRECTION_BLAST_ID,
   REACTIVATION_CORRECTION_PREVIEW,
@@ -39,6 +46,7 @@ interface BlastRecipient {
 interface ProfileLite {
   user_id: string;
   display_name: string | null;
+  marketing_email_enabled: boolean;
 }
 
 export async function POST(request: Request) {
@@ -85,34 +93,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'RESEND_API_KEY is not configured' }, { status: 500 });
   }
 
-  const from = process.env.RESEND_FROM_EMAIL ?? 'Go Pair PH <offers@gopairph.com>';
-  const replyTo = process.env.RESEND_REPLY_TO_EMAIL ?? process.env.RESEND_FROM_EMAIL ?? 'hello@gopairph.com';
-
   if (mode === 'test') {
     const testEmail = body.testEmail?.trim();
     if (!testEmail || !isLikelyEmail(testEmail)) {
       return NextResponse.json({ error: 'Enter a valid test email' }, { status: 400 });
     }
 
-    const { data, error } = await resend.emails.send({
-      from,
-      to: [testEmail],
-      replyTo,
+    await sendMarketingEmail({
+      to: testEmail,
       subject: `[TEST] ${campaign.subject}`,
       html,
       text,
-      headers: {
-        'X-GoPairPH-Blast': `${campaign.id}-test`,
-      },
+      campaign: `${campaign.id}-test`,
     });
-
-    if (error) {
-      return NextResponse.json({ error: error.message ?? JSON.stringify(error) }, { status: 502 });
-    }
 
     return NextResponse.json({
       sent: 1,
-      id: data?.id,
       recipientCount: recipients.length,
       sample,
     });
@@ -133,27 +129,33 @@ export async function POST(request: Request) {
   const chunks = chunk(recipients, BATCH_SIZE);
   let sent = 0;
   const batchIds: string[] = [];
+  const { from, replyTo } = getMarketingEmailDefaults();
 
   for (let index = 0; index < chunks.length; index += 1) {
     const batch = chunks[index];
     const { data, error } = await resend.batch.send(
-      batch.map(recipient => ({
-        from,
-        to: [recipient.email],
-        replyTo,
-        subject: campaign.subject,
-        html: campaign.renderHtml({
-          recipientName: recipient.displayName,
-          siteUrl,
-        }),
-        text: campaign.renderText({
-          recipientName: recipient.displayName,
-          siteUrl,
-        }),
-        headers: {
-          'X-GoPairPH-Blast': campaign.id,
-        },
-      })),
+      batch.map(recipient => {
+        const unsubscribeToken = createMarketingUnsubscribeToken({ userId: recipient.userId, email: recipient.email });
+        const unsubscribeUrl = `${siteUrl}/api/email/unsubscribe/${encodeURIComponent(unsubscribeToken)}`;
+        return {
+          from,
+          to: [recipient.email],
+          replyTo,
+          subject: campaign.subject,
+          html: campaign.renderHtml({
+            recipientName: recipient.displayName,
+            siteUrl,
+            unsubscribeUrl,
+          }),
+          text: campaign.renderText({
+            recipientName: recipient.displayName,
+            siteUrl,
+            unsubscribeUrl,
+          }),
+          headers: getMarketingHeaders(campaign.id, unsubscribeUrl),
+          tags: getEmailTags('marketing', campaign.id, { user_id: recipient.userId }),
+        };
+      }),
       {
         batchValidation: 'strict',
         idempotencyKey: `${campaign.id}/chunk-${index + 1}`,
@@ -270,10 +272,11 @@ async function getBlastRecipients(service: ReturnType<typeof createServiceClient
   const ids = users.map(user => user.id);
   const profiles = new Map<string, ProfileLite>();
   for (const idChunk of chunk(ids, 100)) {
-    const { data } = await service
+    const { data, error } = await service
       .from('profiles')
-      .select('user_id, display_name')
+      .select('user_id, display_name, marketing_email_enabled')
       .in('user_id', idChunk);
+    if (error) throw error;
 
     for (const profile of (data as ProfileLite[] | null) ?? []) {
       profiles.set(profile.user_id, profile);
@@ -281,12 +284,13 @@ async function getBlastRecipients(service: ReturnType<typeof createServiceClient
   }
 
   const seen = new Set<string>();
-  return users
+  const eligible = users
     .map(user => {
       const email = user.email?.trim().toLowerCase();
       if (!email || !isLikelyEmail(email) || seen.has(email)) return null;
       seen.add(email);
       const profile = profiles.get(user.id);
+      if (!profile?.marketing_email_enabled) return null;
       return {
         userId: user.id,
         email,
@@ -294,6 +298,17 @@ async function getBlastRecipients(service: ReturnType<typeof createServiceClient
       };
     })
     .filter((recipient): recipient is BlastRecipient => Boolean(recipient));
+
+  const suppressed = new Set<string>();
+  for (const emailChunk of chunk(eligible.map(recipient => recipient.email), 100)) {
+    const { data, error } = await service
+      .from('email_suppressions')
+      .select('email')
+      .in('email', emailChunk);
+    if (error) throw error;
+    for (const row of data ?? []) suppressed.add(row.email.toLowerCase());
+  }
+  return eligible.filter(recipient => !suppressed.has(recipient.email));
 }
 
 function chunk<T>(items: T[], size: number): T[][] {

@@ -20,6 +20,9 @@ export interface Profile {
   preferred_us_size_type: UsSizeType;
   personalized_browse_enabled: boolean;
   profile_match_email_enabled: boolean;
+  marketing_email_enabled: boolean;
+  marketing_email_consent_at: string | null;
+  marketing_email_unsubscribed_at: string | null;
   is_verified: boolean;
   is_admin: boolean;
   created_at: string;

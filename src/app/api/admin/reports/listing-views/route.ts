@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { renderAdminListingViewsReportEmail } from '@/lib/email/listingViewEmails';
-import { sendEmail } from '@/lib/email/resend';
+import { sendTransactionalEmail } from '@/lib/email/resend';
 import { getListingViewSummaries, getWeeklyReportWindow } from '@/lib/listingViews';
 import { createServiceClient } from '@/lib/supabase/server';
 
@@ -77,7 +77,8 @@ export async function GET(request: Request) {
       })),
     });
 
-    await Promise.all(Array.from(emails).map(email => sendEmail({
+    await Promise.all(Array.from(emails).map(email => sendTransactionalEmail({
+      category: 'admin_notification',
       to: email,
       subject: `Weekly listing views — Go Pair PH`,
       html,

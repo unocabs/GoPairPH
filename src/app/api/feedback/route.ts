@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { feedbackSchema } from '@/lib/validations';
-import { sendEmail } from '@/lib/email/resend';
+import { sendTransactionalEmail } from '@/lib/email/resend';
 import { renderFeedbackEmail } from '@/lib/email/feedback';
 import { formatListingName, getAbsoluteListingUrl } from '@/lib/utils';
 
@@ -66,7 +66,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    await sendEmail({
+    await sendTransactionalEmail({
+      category: 'feedback',
       to: FEEDBACK_TO_EMAIL,
       subject: `Go Pair PH feedback: ${row.category.replaceAll('_', ' ')}`,
       html: renderFeedbackEmail({

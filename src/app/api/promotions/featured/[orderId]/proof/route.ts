@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sendEmail } from '@/lib/email/resend';
+import { sendTransactionalEmail } from '@/lib/email/resend';
 import { renderAdminFeaturedProofEmail, renderSellerFeaturedSubmittedEmail } from '@/lib/email/featuredPromotion';
 import {
   FEATURED_PAYMENT_PROOF_BUCKET,
@@ -77,7 +77,8 @@ export async function POST(request: Request, { params }: { params: { orderId: st
   try {
     const admins = await getAdminEmails(service);
     if (admins.length > 0) {
-      await sendEmail({
+      await sendTransactionalEmail({
+        category: 'featured_promotion',
         to: admins,
         subject: `Featured proof submitted: ${listingName}`,
         html: renderAdminFeaturedProofEmail({
@@ -107,7 +108,8 @@ export async function POST(request: Request, { params }: { params: { orderId: st
 
   try {
     if (user.email) {
-      await sendEmail({
+      await sendTransactionalEmail({
+        category: 'featured_promotion',
         to: user.email,
         subject: `Your Featured request was received: ${listingName}`,
         html: renderSellerFeaturedSubmittedEmail({

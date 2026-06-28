@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { renderWishlistLeadNotificationEmail, makeWishlistLeadRequestTitle, makeWishlistLeadSizeLabel } from '@/lib/email/wishlistLeadNotification';
-import { sendEmail } from '@/lib/email/resend';
+import { sendTransactionalEmail } from '@/lib/email/resend';
 import { offerSchema } from '@/lib/validations';
 import { verifyTurnstile } from '@/lib/turnstile';
 
@@ -174,7 +174,8 @@ async function sendLeadNotification({
     usSizeType: request.us_size_type,
   });
 
-  await sendEmail({
+  await sendTransactionalEmail({
+    category: 'wishlist_lead',
     to: ownerEmail,
     subject: `New lead for your Looking For post — ${requestTitle}`,
     html: renderWishlistLeadNotificationEmail({

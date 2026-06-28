@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { getManilaDateString } from '@/lib/listingViews';
 import { renderListingViewMilestoneEmail, renderListingViewLifetimeMilestoneEmail } from '@/lib/email/listingViewEmails';
-import { sendEmail } from '@/lib/email/resend';
+import { sendTransactionalEmail } from '@/lib/email/resend';
 import { getAbsoluteListingUrl } from '@/lib/utils';
 
 export const runtime = 'nodejs';
@@ -120,7 +120,8 @@ export async function POST(request: Request) {
           const sellerName = sellerProfile?.display_name ?? 'there';
 
           if (result.new_milestone > 0) {
-            await sendEmail({
+            await sendTransactionalEmail({
+              category: 'listing_milestone',
               to: sellerEmail,
               subject: 'Your running shoes are getting noticed on Go Pair PH',
               html: renderListingViewMilestoneEmail({
@@ -136,7 +137,8 @@ export async function POST(request: Request) {
           // Lifetime milestone tiers are one-time per threshold. Sent separately
           // so the copy can lean into the cumulative achievement, not today's activity.
           if (result.lifetime_milestone > 0) {
-            await sendEmail({
+            await sendTransactionalEmail({
+              category: 'listing_milestone',
               to: sellerEmail,
               subject: `${result.lifetime_milestone} runners have viewed your pair — Go Pair PH`,
               html: renderListingViewLifetimeMilestoneEmail({

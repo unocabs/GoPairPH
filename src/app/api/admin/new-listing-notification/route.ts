@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { makeAdminNewListingEmailInput, renderAdminNewListingEmail } from '@/lib/email/adminNewListing';
-import { sendEmail } from '@/lib/email/resend';
+import { sendTransactionalEmail } from '@/lib/email/resend';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { getAbsoluteListingUrl } from '@/lib/utils';
 
@@ -75,7 +75,8 @@ export async function POST(request: Request) {
   });
 
   const html = renderAdminNewListingEmail(emailInput);
-  await sendEmail({
+  await sendTransactionalEmail({
+    category: 'admin_notification',
     to: emails,
     subject: `New listing: ${emailInput.listingName}`,
     html,
