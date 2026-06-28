@@ -195,8 +195,8 @@ export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
         title={alreadySaved ? 'Search saved' : 'Save search'}
         className={`relative inline-flex h-10 w-10 shrink-0 items-center justify-center transition-colors focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 disabled:cursor-default ${
           alreadySaved
-            ? 'text-teal-300'
-            : 'text-sky-200 hover:text-sky-100'
+            ? 'text-teal-700'
+            : 'text-slate-600 hover:text-slate-950'
         }`}
       >
         {saving ? (

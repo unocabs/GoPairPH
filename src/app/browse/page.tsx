@@ -49,6 +49,17 @@ type SortKey = 'mixed' | 'price_asc' | 'price_desc';
 const FRESH_LISTING_WINDOW_MS = 24 * 60 * 60 * 1000;
 const BROWSE_BATCH_SIZE = 24;
 const BROWSE_MAX_VISIBLE = 240;
+const SEARCH_QUERY_MAX_LENGTH = 80;
+
+function getSearchTokens(rawQuery: string | undefined): string[] {
+  return (rawQuery ?? '')
+    .slice(0, SEARCH_QUERY_MAX_LENGTH)
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    // Treat user-entered LIKE wildcard characters literally.
+    .map(token => token.replace(/[\\%_]/g, '\\$&'));
+}
 
 function parseSort(raw: string | undefined): SortKey {
   if (raw === 'price_asc' || raw === 'price_desc') return raw;
@@ -129,9 +140,15 @@ async function getListings(searchParams: BrowsePageProps['searchParams'], profil
     query = query.eq(sizeFilter.column, sizeFilter.value);
     if (sizeFilter.usSizeType) query = query.eq('us_size_type', sizeFilter.usSizeType);
   }
-  if (searchParams.q) query = query.or(`brand.ilike.%${searchParams.q}%,model.ilike.%${searchParams.q}%`);
+  getSearchTokens(searchParams.q).forEach((token) => {
+    query = query.ilike('search_text', `%${token}%`);
+  });
 
-  const { data } = await query.limit(BROWSE_MAX_VISIBLE);
+  const { data, error } = await query.limit(BROWSE_MAX_VISIBLE);
+  if (error) {
+    console.error('[browse] Failed to load listings', error);
+    throw new Error('Unable to load marketplace listings right now.');
+  }
   const all = (data as Shoe[]) ?? [];
 
   // Sort within quality buckets. Image-backed sponsored listings lead, fresh
