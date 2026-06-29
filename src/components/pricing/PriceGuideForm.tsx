@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { BRANDS, CONDITIONS } from '@/lib/constants';
 import {
   estimateRunningShoePrice,
@@ -95,7 +96,8 @@ function clamp(value: number, min: number, max: number) {
 }
 
 export function PriceGuideForm() {
-  const [brand, setBrand] = useState('Adidas');
+  const router = useRouter();
+  const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
   const [retailPrice, setRetailPrice] = useState('');
   const [condition, setCondition] = useState<PriceGuideCondition>('like_new');
@@ -112,9 +114,18 @@ export function PriceGuideForm() {
   const [isMobileResultLayout, setIsMobileResultLayout] = useState(false);
   const [mobileSummaryVisible, setMobileSummaryVisible] = useState(true);
   const [fullResultVisible, setFullResultVisible] = useState(false);
+  const [listingModalOpen, setListingModalOpen] = useState(false);
+  const [listingPriceChoice, setListingPriceChoice] = useState<'suggested_range' | 'fast_sale'>('suggested_range');
+  const [rangePrice, setRangePrice] = useState(0);
+  const [modalSurface, setModalSurface] = useState<'inline_result' | 'floating_mobile'>('inline_result');
+  const modalCloseRef = useRef<HTMLButtonElement | null>(null);
+  const modalTriggerRef = useRef<HTMLElement | null>(null);
 
   const retailNumber = Number(retailPrice);
-  const canEstimate = Number.isFinite(retailNumber) && retailNumber >= 500;
+  const hasValidRetailPrice = Number.isFinite(retailNumber) && retailNumber >= 500;
+  const hasBrand = brand.trim().length > 0;
+  const hasModel = model.trim().length > 0;
+  const canEstimate = hasValidRetailPrice && hasBrand && hasModel;
 
   const estimate = useMemo(() => {
     if (!canEstimate) return null;
@@ -182,7 +193,7 @@ export function PriceGuideForm() {
       : 'No box is fine; make the photos and description clear.',
   ];
   const showFloatingDock = isMobileResultLayout && !mobileSummaryVisible && !fullResultVisible;
-  const showFloatingListingCta = showFloatingDock && !!estimate;
+  const showFloatingListingCta = showFloatingDock && !!estimate && !listingModalOpen;
 
   useEffect(() => {
     if (!estimate || estimateGeneratedTrackedRef.current) return;
@@ -258,7 +269,50 @@ export function PriceGuideForm() {
     return () => observer.disconnect();
   }, [isMobileResultLayout]);
 
-  function saveListingPrefill(surface: 'inline_result' | 'floating_mobile') {
+  useEffect(() => {
+    if (!listingModalOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusFrame = window.requestAnimationFrame(() => modalCloseRef.current?.focus());
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setListingModalOpen(false);
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      modalTriggerRef.current?.focus();
+    };
+  }, [listingModalOpen]);
+
+  function openListingModal(surface: 'inline_result' | 'floating_mobile') {
+    if (!estimate) return;
+
+    modalTriggerRef.current = document.activeElement as HTMLElement | null;
+    setModalSurface(surface);
+    setListingPriceChoice('suggested_range');
+    setRangePrice(estimate.suggestedHigh);
+    setListingModalOpen(true);
+    trackMarketplaceAction('price_estimator_listing_modal_open', {
+      surface,
+      brand,
+      sellability_score: sellabilityScore,
+    });
+  }
+
+  function chooseListingPrice(choice: 'suggested_range' | 'fast_sale') {
+    setListingPriceChoice(choice);
+    trackMarketplaceAction('price_estimator_price_option_select', {
+      surface: modalSurface,
+      option: choice,
+    });
+  }
+
+  function saveListingPrefill(surface: 'inline_result' | 'floating_mobile', selectedPricePhp: number) {
     if (!estimate || !canEstimate) return;
 
     const prefill: PriceGuideListingPrefill = {
@@ -276,6 +330,7 @@ export function PriceGuideForm() {
       suggestedLow: estimate.suggestedLow,
       suggestedHigh: estimate.suggestedHigh,
       fastSalePrice: estimate.fastSalePrice,
+      selectedPricePhp,
       createdAt: Date.now(),
     };
 
@@ -293,7 +348,24 @@ export function PriceGuideForm() {
       has_receipt: hasReceipt,
       has_visible_flaws: hasVisibleFlaws,
       sellability_score: sellabilityScore,
+      selected_price_php: selectedPricePhp,
+      price_option: listingPriceChoice,
     });
+  }
+
+  function confirmListingPrice() {
+    if (!estimate) return;
+
+    const selectedPrice = listingPriceChoice === 'fast_sale' ? estimate.fastSalePrice : rangePrice;
+    trackMarketplaceAction('price_estimator_price_confirm', {
+      surface: modalSurface,
+      option: listingPriceChoice,
+      selected_price_php: selectedPrice,
+      range_slider_value: rangePrice,
+    });
+    saveListingPrefill(modalSurface, selectedPrice);
+    setListingModalOpen(false);
+    router.push(`/listings/new?from=price-guide&price=${selectedPrice}`);
   }
 
   return (
@@ -310,13 +382,15 @@ export function PriceGuideForm() {
       )}
 
       {showFloatingListingCta && (
-        <Link
-          href={`/listings/new?from=price-guide&price=${estimate.suggestedHigh}`}
-          onClick={() => saveListingPrefill('floating_mobile')}
-          className="sellability-mobile-cta-floating fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 right-3 z-30 mx-auto inline-flex min-h-12 max-w-[22.5rem] items-center justify-center rounded-lg border border-teal-300/30 bg-teal-500 px-4 py-2 text-center text-sm font-bold text-white shadow-[0_16px_44px_rgba(0,0,0,0.5)] transition-colors hover:bg-teal-400 lg:hidden"
-        >
-          List this shoe with these details
-        </Link>
+        <div className="sellability-mobile-cta-floating fixed inset-x-0 bottom-0 z-30 border-t border-white/[0.06] bg-slate-950/90 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
+          <button
+            type="button"
+            onClick={() => openListingModal('floating_mobile')}
+            className="mx-auto flex min-h-12 w-full max-w-[22.5rem] items-center justify-center rounded-lg border border-teal-300/30 bg-teal-500 px-4 py-2 text-center text-sm font-bold text-white shadow-[0_16px_44px_rgba(0,0,0,0.5)] transition-colors hover:bg-teal-400"
+          >
+            Sell this shoe with these details
+          </button>
+        </div>
       )}
 
       <section className="min-w-0 space-y-4">
@@ -330,14 +404,7 @@ export function PriceGuideForm() {
               {canEstimate ? 'Live estimate on' : 'Add retail price to start'}
             </div>
           </div>
-          <div ref={mobileSummaryRef} className="mt-4 lg:hidden">
-            <CompactScoreDock
-              score={sellabilityScore}
-              estimate={estimate}
-              active={canEstimate}
-            />
-          </div>
-          <div className="mt-4 sm:max-w-sm">
+          <div className="mt-4 grid gap-3 sm:grid-cols-3 sm:gap-4">
             <Input
               label="Retail price"
               type="number"
@@ -348,33 +415,37 @@ export function PriceGuideForm() {
               placeholder="e.g. 8500"
               required
               hint="Original PH retail price."
-              className={`${estimatorFieldClass} ${!canEstimate ? 'price-estimator-start-glow' : ''}`}
+              className={`${estimatorFieldClass} ${!hasValidRetailPrice ? 'price-estimator-start-glow' : ''}`}
             />
-          </div>
-        </div>
-
-        <div className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '70ms' }}>
-          <SectionHeader step="01" title="Pair Details" body="Start with what buyers search and what they compare." />
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Select
               label="Brand"
               options={brandOptions}
+              placeholder="Choose Brand"
               value={brand}
               onChange={(event) => setBrand(event.target.value)}
-              className={estimatorFieldClass}
+              required
+              className={`${estimatorFieldClass} ${!hasBrand ? 'price-estimator-start-glow' : ''}`}
             />
             <Input
               label="Model"
               value={model}
               onChange={(event) => setModel(event.target.value)}
               placeholder="e.g. Pegasus 41"
-              className={estimatorFieldClass}
+              required
+              className={`${estimatorFieldClass} ${!hasModel ? 'price-estimator-start-glow' : ''}`}
+            />
+          </div>
+          <div ref={mobileSummaryRef} className="mt-3 lg:hidden">
+            <CompactScoreDock
+              score={sellabilityScore}
+              estimate={estimate}
+              active={canEstimate}
             />
           </div>
         </div>
 
-        <div className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '120ms' }}>
-          <SectionHeader step="02" title="Condition" body="Pick the closest truth. The score rewards clarity, not hype." />
+        <div className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '70ms' }}>
+          <SectionHeader step="01" title="Condition" body="Pick the closest truth. The score rewards clarity, not hype." />
           <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
             {conditionOptions.map((option) => (
               <ChoiceCard
@@ -389,9 +460,9 @@ export function PriceGuideForm() {
           </div>
         </div>
 
-        <div className="sellability-card-in grid gap-4 lg:grid-cols-2" style={{ animationDelay: '170ms' }}>
+        <div className="sellability-card-in grid gap-4 lg:grid-cols-2" style={{ animationDelay: '120ms' }}>
           <div className="rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5">
-            <SectionHeader step="03" title="Usage" body="Mileage helps buyers judge outsole and foam life." />
+            <SectionHeader step="02" title="Usage" body="Mileage helps buyers judge outsole and foam life." />
             <div className="mt-4 grid grid-cols-2 gap-2">
               {mileageOptions.map((option) => (
                 <MiniChoice
@@ -406,7 +477,7 @@ export function PriceGuideForm() {
           </div>
 
           <div className="rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5">
-            <SectionHeader step="04" title="Age" body="Newer releases usually feel easier to move." />
+            <SectionHeader step="03" title="Age" body="Newer releases usually feel easier to move." />
             <div className="mt-4 grid grid-cols-2 gap-2">
               {ageOptions.map((option) => (
                 <MiniChoice
@@ -421,8 +492,8 @@ export function PriceGuideForm() {
           </div>
         </div>
 
-        <div className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '220ms' }}>
-          <SectionHeader step="05" title="Selling Strategy" body="Tell the tool if you want speed, balance, or maximum value." />
+        <div className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '170ms' }}>
+          <SectionHeader step="04" title="Selling Strategy" body="Tell the tool if you want speed, balance, or maximum value." />
           <div className="mt-4 grid gap-3 lg:grid-cols-[0.9fr_1.1fr]">
             <div>
               <p className="text-sm font-medium text-gray-300">Buyer demand</p>
@@ -455,8 +526,8 @@ export function PriceGuideForm() {
           </div>
         </div>
 
-        <div className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '270ms' }}>
-          <SectionHeader step="06" title="Trust Extras" body="These do not become new listing fields. They travel into the description when you list." />
+        <div className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '220ms' }}>
+          <SectionHeader step="05" title="Trust Extras" body="These do not become new listing fields. They travel into the description when you list." />
           <div className="mt-4 grid grid-cols-3 gap-2">
             <TrustToggle checked={hasBox} onChange={setHasBox} title="Has box" body="Useful for complete pairs" />
             <TrustToggle checked={hasReceipt} onChange={setHasReceipt} title="Has receipt" body="Adds proof and confidence" />
@@ -467,34 +538,33 @@ export function PriceGuideForm() {
 
       <aside ref={fullResultRef} className="min-w-0 lg:sticky lg:top-24">
         <div className="sellability-card-in overflow-hidden rounded-2xl border border-teal-400/20 bg-[#06111d] shadow-[0_26px_90px_rgba(0,0,0,0.42)]">
-          <div className="relative p-5 sm:p-6">
+          <div className="relative p-4 sm:p-6">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(45,212,191,0.18),transparent_34%),radial-gradient(circle_at_90%_20%,rgba(59,130,246,0.10),transparent_30%)]" />
             <div className="relative">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-teal-300">Live sellability</p>
-              <div className="mt-4 grid grid-cols-[132px_1fr] items-center gap-4">
+              <div className="mt-3 grid grid-cols-[104px_1fr] items-center gap-3 sm:mt-4 sm:grid-cols-[132px_1fr] sm:gap-4">
                 <ScoreRing score={sellabilityScore} active={canEstimate} />
                 <div>
-                  <h2 className="text-xl font-extrabold tracking-tight text-gray-100">{canEstimate ? scoreLabel : 'Waiting for price'}</h2>
-                  <p className="mt-2 text-sm leading-6 text-gray-400">{bestMove}</p>
+                  <h2 className="text-lg font-extrabold tracking-tight text-gray-100 sm:text-xl">{canEstimate ? scoreLabel : 'Waiting for price'}</h2>
+                  <p className="mt-1.5 text-xs leading-5 text-gray-400 sm:mt-2 sm:text-sm sm:leading-6">{bestMove}</p>
                 </div>
               </div>
 
-              <div className={`mt-5 grid gap-3 transition-all duration-500 ${canEstimate ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-55'}`}>
-                <div className="rounded-xl border border-white/[0.08] bg-slate-950/60 p-4">
+              <div className={`mt-4 grid gap-2.5 transition-all duration-500 sm:mt-5 sm:gap-3 ${canEstimate ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-55'}`}>
+                <div className="rounded-xl border border-white/[0.08] bg-slate-950/60 p-3 sm:p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Suggested range</p>
-                  <p className="mt-2 text-2xl font-extrabold text-gray-100">
+                  <p className="mt-1.5 text-xl font-extrabold text-gray-100 sm:mt-2 sm:text-2xl">
                     {estimate ? `${formatPrice(estimate.suggestedLow)} - ${formatPrice(estimate.suggestedHigh)}` : 'Add retail price'}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <MetricCard label="Fast sale" value={estimate ? formatPrice(estimate.fastSalePrice) : 'Pending'} />
+                  <MetricCard label="Fast sale" value={estimate ? formatPrice(estimate.fastSalePrice) : 'Pending'} lightning />
                   <MetricCard label="Confidence" value={estimate ? estimate.confidence : 'Pending'} />
                 </div>
               </div>
 
-              <div className="mt-5 rounded-xl border border-white/[0.08] bg-slate-950/60 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Live listing preview</p>
-                <h3 className="mt-2 truncate text-lg font-extrabold text-gray-100">
+              <div className="mt-4 rounded-xl border border-teal-400/20 bg-teal-400/[0.06] p-3 sm:mt-5 sm:p-4">
+                <h3 className="truncate text-lg font-extrabold text-gray-100">
                   {brand} {model || 'Running Shoe'}
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">{selectedConditionLabel} · {selectedMileageLabel}</p>
@@ -505,8 +575,8 @@ export function PriceGuideForm() {
                 </div>
               </div>
 
-              <div className="mt-5 rounded-xl border border-teal-400/20 bg-teal-400/[0.06] p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-300">Added to description</p>
+              <div className="mt-4 rounded-xl border border-white/[0.08] bg-slate-950/60 p-3 sm:mt-5 sm:p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Added to description</p>
                 <div className="mt-3 flex flex-wrap gap-2 text-xs">
                   <DetailChip label="Box" value={hasBox ? 'Yes' : 'No'} />
                   <DetailChip label="Receipt" value={hasReceipt ? 'Yes' : 'No'} />
@@ -516,15 +586,15 @@ export function PriceGuideForm() {
                 </div>
               </div>
 
-              <div className="mt-6 grid gap-2">
+              <div className="mt-4 grid gap-2 sm:mt-6">
                 {estimate ? (
-                  <Link
-                    href={`/listings/new?from=price-guide&price=${estimate.suggestedHigh}`}
-                    onClick={() => saveListingPrefill('inline_result')}
+                  <button
+                    type="button"
+                    onClick={() => openListingModal('inline_result')}
                     className="inline-flex min-h-12 items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-teal-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-teal-400"
                   >
-                    List this shoe with these details
-                  </Link>
+                    Sell this shoe with these details
+                  </button>
                 ) : (
                   <div className="inline-flex min-h-12 items-center justify-center rounded-lg border border-white/[0.08] bg-slate-900/80 px-4 py-2 text-sm font-bold text-gray-500">
                     Add retail price to unlock listing handoff
@@ -539,7 +609,7 @@ export function PriceGuideForm() {
               </div>
 
               {estimate && (
-                <div className="mt-5">
+                <div className="mt-4 sm:mt-5">
                   <p className="text-sm font-semibold text-gray-100">Smart tips</p>
                   <ul className="mt-2 space-y-2 text-sm leading-5 text-gray-400">
                     {[...estimate.reasons, ...tips].slice(0, 5).map((reason, index) => (
@@ -555,6 +625,137 @@ export function PriceGuideForm() {
           </div>
         </div>
       </aside>
+
+      {listingModalOpen && estimate && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="price-guide-confirm-title"
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setListingModalOpen(false);
+          }}
+        >
+          <div className="flex max-h-[92dvh] w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-teal-400/20 bg-[#06111d] shadow-2xl shadow-black/70 sm:rounded-2xl">
+            <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(45,212,191,0.18),transparent_34%),radial-gradient(circle_at_90%_20%,rgba(59,130,246,0.10),transparent_30%)]" />
+              <div className="relative">
+                <div className="flex items-start justify-between gap-4">
+                  <p id="price-guide-confirm-title" className="pt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-teal-300">
+                    Live sellability
+                  </p>
+                  <button
+                    ref={modalCloseRef}
+                    type="button"
+                    onClick={() => setListingModalOpen(false)}
+                    aria-label="Close"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-slate-950/70 text-gray-400 transition-colors hover:border-teal-300/30 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400/40"
+                  >
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                      <path d="M6 6l12 12M18 6L6 18" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="mt-2 grid grid-cols-[104px_1fr] items-center gap-3 sm:mt-4 sm:grid-cols-[132px_1fr] sm:gap-4">
+                  <ScoreRing score={sellabilityScore} active />
+                  <div>
+                    <h2 className="text-lg font-extrabold tracking-tight text-gray-100 sm:text-xl">{scoreLabel}</h2>
+                    <p className="mt-1.5 text-xs leading-5 text-gray-400 sm:mt-2 sm:text-sm sm:leading-6">{bestMove}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-2.5 sm:grid-cols-[1fr_0.65fr] sm:gap-3">
+                  <div className="rounded-xl border border-white/[0.08] bg-slate-950/60 p-3 sm:p-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500 sm:text-xs">Suggested range</p>
+                    <p className="mt-1.5 text-xl font-extrabold text-gray-100 sm:mt-2 sm:text-2xl">
+                      {formatPrice(estimate.suggestedLow)} - {formatPrice(estimate.suggestedHigh)}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-1">
+                    <MetricCard label="Fast sale" value={formatPrice(estimate.fastSalePrice)} lightning />
+                    <MetricCard label="Confidence" value={estimate.confidence} />
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-teal-400/20 bg-teal-400/[0.06] p-3 sm:p-4">
+                  <h3 className="truncate text-lg font-extrabold text-gray-100">{brand} {model}</h3>
+                  <p className="mt-1 text-sm text-gray-500">{selectedConditionLabel} · {selectedMileageLabel}</p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                    <DetailChip label="Age" value={selectedAgeLabel} />
+                    <DetailChip label="Demand" value={selectedDemandLabel} />
+                    <DetailChip label="Goal" value={selectedUrgencyLabel} />
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-white/[0.08] bg-slate-950/60 p-3 sm:p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Added to description</p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                    <DetailChip label="Box" value={hasBox ? 'Yes' : 'No'} />
+                    <DetailChip label="Receipt" value={hasReceipt ? 'Yes' : 'No'} />
+                    <DetailChip label="Flaws" value={hasVisibleFlaws ? 'Yes' : 'No'} />
+                    <DetailChip label="Usage" value={selectedMileageLabel} />
+                    <DetailChip label="Age" value={selectedAgeLabel} />
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    aria-pressed={listingPriceChoice === 'suggested_range'}
+                    onClick={() => chooseListingPrice('suggested_range')}
+                    className={`rounded-xl border p-3 text-left transition-colors ${listingPriceChoice === 'suggested_range' ? 'border-teal-300/60 bg-teal-400/12 text-teal-50 shadow-[0_0_28px_rgba(45,212,191,0.12)]' : 'border-[#314158] bg-[#18263A] text-gray-300 hover:border-teal-400/40'}`}
+                  >
+                    <span className="block text-xs font-bold uppercase tracking-[0.12em]">Suggested Range</span>
+                    <span className="mt-1.5 block text-base font-extrabold">{formatPrice(rangePrice)}</span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={listingPriceChoice === 'fast_sale'}
+                    onClick={() => chooseListingPrice('fast_sale')}
+                    className={`rounded-xl border p-3 text-left transition-colors ${listingPriceChoice === 'fast_sale' ? 'border-teal-300/60 bg-teal-400/12 text-teal-50 shadow-[0_0_28px_rgba(45,212,191,0.12)]' : 'border-[#314158] bg-[#18263A] text-gray-300 hover:border-teal-400/40'}`}
+                  >
+                    <span className="flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-[0.12em]">
+                      Fast Sale
+                      <LightningIcon />
+                    </span>
+                    <span className="mt-1.5 block text-base font-extrabold">{formatPrice(estimate.fastSalePrice)}</span>
+                  </button>
+                </div>
+
+                {listingPriceChoice === 'suggested_range' && (
+                  <div className="mt-3 rounded-xl border border-white/[0.08] bg-slate-950/60 px-3 py-4">
+                    <input
+                      type="range"
+                      min={estimate.suggestedLow}
+                      max={estimate.suggestedHigh}
+                      step={100}
+                      value={rangePrice}
+                      onChange={(event) => setRangePrice(Number(event.target.value))}
+                      aria-label="Suggested Range"
+                      className="h-2 w-full cursor-pointer accent-teal-400"
+                    />
+                    <div className="mt-2 flex justify-between text-xs font-semibold text-gray-500">
+                      <span>{formatPrice(estimate.suggestedLow)}</span>
+                      <span>{formatPrice(estimate.suggestedHigh)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="shrink-0 border-t border-white/[0.08] bg-slate-950/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:p-4">
+              <button
+                type="button"
+                onClick={confirmListingPrice}
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-teal-500/25 transition-colors hover:bg-teal-400"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -771,8 +972,8 @@ function ScoreRing({ score, active }: { score: number; active: boolean }) {
   const offset = circumference - (circumference * (active ? score : 0)) / 100;
 
   return (
-    <div className="relative h-[132px] w-[132px]">
-      <svg className="-rotate-90" width="132" height="132" viewBox="0 0 132 132" aria-hidden>
+    <div className="relative h-[104px] w-[104px] sm:h-[132px] sm:w-[132px]">
+      <svg className="h-full w-full -rotate-90" viewBox="0 0 132 132" aria-hidden>
         <circle cx="66" cy="66" r="48" stroke="#122333" strokeWidth="14" fill="none" />
         <circle
           cx="66"
@@ -788,8 +989,8 @@ function ScoreRing({ score, active }: { score: number; active: boolean }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-4xl font-black text-gray-100">{animatedScore}</span>
-        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-teal-300">Score</span>
+        <span className="text-3xl font-black text-gray-100 sm:text-4xl">{animatedScore}</span>
+        <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-teal-300 sm:text-[10px]">Score</span>
       </div>
     </div>
   );
@@ -823,10 +1024,21 @@ function useCountUp(value: number) {
   return display;
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
+function LightningIcon() {
+  return (
+    <svg className="h-4 w-4 shrink-0 text-teal-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M13.2 2 5 13.1h6.1L10.8 22 19 10.9h-6.1L13.2 2Z" />
+    </svg>
+  );
+}
+
+function MetricCard({ label, value, lightning = false }: { label: string; value: string; lightning?: boolean }) {
   return (
     <div className="rounded-xl border border-white/[0.08] bg-slate-950/60 p-3">
-      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-500">{label}</p>
+      <p className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-500">
+        {label}
+        {lightning && <LightningIcon />}
+      </p>
       <p className="mt-1 text-lg font-extrabold capitalize text-teal-100">{value}</p>
     </div>
   );

@@ -20,6 +20,9 @@
 # misc
 .DS_Store
 *.pem
+/.automation-state/
+/.automation-output/
+/.codex/automation-state/
 
 # debug
 npm-debug.log*

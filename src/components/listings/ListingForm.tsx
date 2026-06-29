@@ -131,7 +131,7 @@ export function ListingForm({ profileId, initialLocationCity = null, shop = null
       }
       setValue('condition', prefill.condition, { shouldDirty: true, shouldValidate: true });
       setValue('listing_type', 'for_sale', { shouldDirty: true, shouldValidate: true });
-      setValue('price_php', prefill.suggestedHigh, { shouldDirty: true, shouldValidate: true });
+      setValue('price_php', prefill.selectedPricePhp ?? prefill.suggestedHigh, { shouldDirty: true, shouldValidate: true });
       setValue('srp_php', prefill.retailPricePhp, { shouldDirty: true, shouldValidate: true });
       if (prefill.mileage === 'unused') {
         setValue('mileage_km', 0, { shouldDirty: true, shouldValidate: true });

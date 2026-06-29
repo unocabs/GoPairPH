@@ -88,15 +88,15 @@ export default function PriceGuidePage() {
           }}
         />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(20,184,166,0.18),transparent_32%),radial-gradient(circle_at_82%_8%,rgba(59,130,246,0.12),transparent_30%)]" />
-        <div className="relative mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10 lg:px-8">
+        <div className="relative mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-10 lg:px-8">
           <div className="max-w-[22.5rem] sm:max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-300 sm:text-xs">
               Running Shoe Sellability Guide
             </p>
-            <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-gray-100 sm:text-4xl">
+            <h1 className="mt-1.5 text-xl font-extrabold leading-tight tracking-tight text-gray-100 sm:mt-2 sm:text-4xl">
               Running Shoe Resale Price Calculator
             </h1>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
+            <p className="mt-2 max-w-xl text-xs leading-5 text-gray-400 sm:mt-3 sm:text-base sm:leading-7">
               Can&apos;t decide on the pricing? Get a live resale price range before listing.
             </p>
           </div>

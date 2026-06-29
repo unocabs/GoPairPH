@@ -23,6 +23,7 @@ export interface PriceGuideListingPrefill {
   suggestedLow: number;
   suggestedHigh: number;
   fastSalePrice: number;
+  selectedPricePhp?: number;
   createdAt: number;
 }
 
