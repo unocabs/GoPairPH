@@ -585,6 +585,7 @@ export default async function HomePage() {
             shoes={recentlySoldShoes}
             currentProfileId={profile?.id}
             showSaveActions={false}
+            showFreshnessDates={false}
             emptyMessage="No recently sold pairs yet."
           />
         </section>

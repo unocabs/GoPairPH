@@ -32,6 +32,7 @@ interface HomeListingCardProps {
   saveCount?: number;
   personalizationBadges?: PersonalizationBadges;
   showSaveAction?: boolean;
+  showFreshnessDate?: boolean;
 }
 
 export function HomeListingCard({
@@ -41,6 +42,7 @@ export function HomeListingCard({
   saveCount = 0,
   personalizationBadges,
   showSaveAction = true,
+  showFreshnessDate = true,
 }: HomeListingCardProps) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImage = shoe.shoe_images?.find(img => img.view_type === 'top') ?? shoe.shoe_images?.[0];
@@ -179,7 +181,9 @@ export function HomeListingCard({
             </div>
           )}
 
-          <p className="mt-1.5 text-xs text-gray-600">{freshnessLabel}</p>
+          {showFreshnessDate && (
+            <p className="mt-1.5 text-xs text-gray-600">{freshnessLabel}</p>
+          )}
         </div>
       </Link>
 
