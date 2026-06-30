@@ -34,7 +34,7 @@ export function OwnerMoreActions({ shoeId, listingType, status }: OwnerMoreActio
     const supabase = createClient();
     const { error: shoeError } = await supabase
       .from('shoes')
-      .update({ status: doneStatus })
+      .update({ status: doneStatus, closed_sale_channel: 'outside_go_pair' })
       .eq('id', shoeId);
 
     if (shoeError) {

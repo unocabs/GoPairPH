@@ -134,7 +134,7 @@ async function loadAdminData() {
       .order('display_name'),
     service
       .from('shoes')
-      .select('id, slug, seller_id, brand, model, size_eu, size_us, size_cm, us_size_type, color, condition, mileage_km, listing_type, price_php, is_negotiable, description, status, created_at, updated_at, profiles!shoes_seller_id_fkey(id, display_name, location_city, location_province, location_region, avatar_url, fb_username, is_verified)')
+      .select('id, slug, seller_id, brand, model, size_eu, size_us, size_cm, us_size_type, color, condition, mileage_km, listing_type, price_php, is_negotiable, description, status, closed_sale_channel, created_at, updated_at, profiles!shoes_seller_id_fkey(id, display_name, location_city, location_province, location_region, avatar_url, fb_username, is_verified)')
       .in('status', ['sold', 'reserved', 'donated'])
       .order('updated_at', { ascending: false })
       .limit(10),

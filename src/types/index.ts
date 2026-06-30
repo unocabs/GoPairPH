@@ -2,6 +2,7 @@ export type ListingType = 'for_sale' | 'donate';
 export type Condition = 'new' | 'like_new' | 'good' | 'fair';
 export type ViewType = 'top' | 'sole' | 'front' | 'left' | 'right' | 'back';
 export type ListingStatus = 'active' | 'reserved' | 'sold' | 'donated' | 'archived';
+export type ClosedSaleChannel = 'go_pair' | 'outside_go_pair';
 export type UsSizeType = 'mens' | 'womens' | 'unisex' | 'unknown';
 
 export interface Profile {
@@ -108,6 +109,7 @@ export interface Shoe {
   is_negotiable: boolean;
   description: string | null;
   status: ListingStatus;
+  closed_sale_channel: ClosedSaleChannel | null;
   created_at: string;
   updated_at: string;
   renewed_at: string | null;

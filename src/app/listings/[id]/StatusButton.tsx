@@ -24,7 +24,7 @@ export function StatusButton({ shoeId, currentStatus }: StatusButtonProps) {
   async function handleRelist() {
     if (!confirm('Relist this item? It will become active and visible to buyers again.')) return;
     setStatus('active');
-    await createClient().from('shoes').update({ status: 'active' }).eq('id', shoeId);
+    await createClient().from('shoes').update({ status: 'active', closed_sale_channel: null }).eq('id', shoeId);
   }
 
   // Active listings get marked sold/claimed through the Purchase Request flow,

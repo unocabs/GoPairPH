@@ -753,6 +753,11 @@ const CLOSED_LISTING_STATUS_LABELS: Record<Shoe['status'], string> = {
   archived: 'Archived',
 };
 
+const CLOSED_SALE_CHANNEL_LABELS: Record<NonNullable<Shoe['closed_sale_channel']>, string> = {
+  go_pair: 'Sold in Go Pair',
+  outside_go_pair: 'Sold outside Go Pair',
+};
+
 function SoldListingsPanel({ listings }: { listings: Shoe[] }) {
   if (listings.length === 0) {
     return (
@@ -784,6 +789,13 @@ function SoldListingsPanel({ listings }: { listings: Shoe[] }) {
                     <span className="rounded-full border border-teal-800 bg-teal-950 px-2 py-0.5 text-xs font-semibold text-teal-300">
                       {CLOSED_LISTING_STATUS_LABELS[listing.status] ?? listing.status}
                     </span>
+                    {listing.status === 'sold' || listing.status === 'donated' ? (
+                      <span className="rounded-full border border-gray-700 bg-gray-950 px-2 py-0.5 text-xs font-semibold text-gray-300">
+                        {listing.closed_sale_channel
+                          ? CLOSED_SALE_CHANNEL_LABELS[listing.closed_sale_channel]
+                          : 'Sale channel not recorded'}
+                      </span>
+                    ) : null}
                     <span className="text-xs text-gray-500">
                       {formatRelativeDate(listing.updated_at)}
                     </span>
