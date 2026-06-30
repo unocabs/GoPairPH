@@ -4,6 +4,8 @@ export const BRANDS = [
   'Saucony', 'Under Armour', 'Other',
 ];
 
+export const PUBLIC_SUPPORT_EMAIL = 'hello@gopairph.com';
+
 export const CONDITIONS: Record<string, string> = {
   new: 'Brand New',
   like_new: 'Like New',

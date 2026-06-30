@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { InfoPage } from '@/components/layout/InfoPage';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
+import { PUBLIC_SUPPORT_EMAIL } from '@/lib/constants';
 
 export const metadata: Metadata = {
   title: 'Verification Process',
@@ -80,9 +81,9 @@ export default function VerificationProcessPage() {
         <h2 className="text-xl font-semibold text-gray-100">Need help?</h2>
         <p>
           If your fb page isn&apos;t accessible (private, restricted, etc.) or you need to
-          send extra context, email{' '}
-          <a href="mailto:rgiancabrera@gmail.com" className="text-teal-400 hover:text-teal-300">
-            rgiancabrera@gmail.com
+          send extra context, email the Go Pair PH inbox at{' '}
+          <a href={`mailto:${PUBLIC_SUPPORT_EMAIL}`} className="text-teal-400 hover:text-teal-300">
+            {PUBLIC_SUPPORT_EMAIL}
           </a>{' '}
           with your Go Pair PH display name and the proof.
         </p>

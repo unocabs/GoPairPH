@@ -4,8 +4,9 @@ import { feedbackSchema } from '@/lib/validations';
 import { sendTransactionalEmail } from '@/lib/email/resend';
 import { renderFeedbackEmail } from '@/lib/email/feedback';
 import { formatListingName, getAbsoluteListingUrl } from '@/lib/utils';
+import { PUBLIC_SUPPORT_EMAIL } from '@/lib/constants';
 
-const FEEDBACK_TO_EMAIL = process.env.FEEDBACK_TO_EMAIL ?? 'rgiancabrera@gmail.com';
+const FEEDBACK_TO_EMAIL = process.env.FEEDBACK_TO_EMAIL ?? PUBLIC_SUPPORT_EMAIL;
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com').replace(/\/$/, '');
 
 export async function POST(request: Request) {

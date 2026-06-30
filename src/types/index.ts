@@ -186,6 +186,43 @@ export interface FeaturedPromotionOrder {
   seller?: Pick<Profile, 'id' | 'display_name' | 'user_id' | 'is_verified'> | null;
 }
 
+export type SponsoredPromotionStatus =
+  | 'reserved'
+  | 'active'
+  | 'completed'
+  | 'rejected'
+  | 'cancelled'
+  | 'refund_required';
+export type SponsoredPromotionReviewStatus = 'pending' | 'approved' | 'rejected';
+export type SponsoredPaymentMethod = 'gcash' | 'bpi';
+
+export interface SponsoredPromotionOrder {
+  id: string;
+  listing_id: string;
+  seller_id: string;
+  duration_days: number;
+  price_php: number;
+  payment_method: SponsoredPaymentMethod | null;
+  transaction_reference: string | null;
+  proof_storage_path: string | null;
+  proof_signed_url?: string | null;
+  scheduled_start_at: string | null;
+  scheduled_end_at: string | null;
+  status: SponsoredPromotionStatus;
+  review_status: SponsoredPromotionReviewStatus;
+  reserved_until: string | null;
+  activated_at: string | null;
+  ended_at: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  admin_notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  listing?: Pick<Shoe, 'id' | 'slug' | 'brand' | 'model' | 'status' | 'price_php' | 'sponsored_until'> | null;
+  seller?: Pick<Profile, 'id' | 'display_name' | 'user_id' | 'is_verified'> | null;
+}
+
 export type GpCoinTransactionType =
   | 'award'
   | 'hold'

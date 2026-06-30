@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { InfoPage } from '@/components/layout/InfoPage';
 import Link from 'next/link';
+import { PUBLIC_SUPPORT_EMAIL } from '@/lib/constants';
 
 export const metadata: Metadata = {
   title: 'Contact',
@@ -8,8 +9,6 @@ export const metadata: Metadata = {
     'Reach the Go Pair PH team for support, feedback, partnership inquiries, or to report a listing.',
   alternates: { canonical: '/contact' },
 };
-
-const SUPPORT_EMAIL = 'rgiancabrera@gmail.com';
 
 export default function ContactPage() {
   return (
@@ -21,9 +20,9 @@ export default function ContactPage() {
         <h2 className="text-xl font-semibold text-gray-100">Email</h2>
         <p>
           For all inquiries (support, account help, reporting a listing, feature requests, or
-          partnerships), reach us at{' '}
-          <a href={`mailto:${SUPPORT_EMAIL}`} className="text-teal-400 hover:text-teal-300">
-            {SUPPORT_EMAIL}
+          partnerships), reach the Go Pair PH inbox at{' '}
+          <a href={`mailto:${PUBLIC_SUPPORT_EMAIL}`} className="text-teal-400 hover:text-teal-300">
+            {PUBLIC_SUPPORT_EMAIL}
           </a>
           .
         </p>

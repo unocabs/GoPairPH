@@ -7,11 +7,9 @@ import { Button } from '@/components/ui/Button';
 import { createClient } from '@/lib/supabase/client';
 import { coinsToPesoDiscount, formatGpCoins, maxRedeemableCoins } from '@/lib/gpCoins';
 import { FEATURED_PAYMENT_PROOF_BUCKET, FEATURED_PROMOTION_PRICES } from '@/lib/featuredPromotions';
+import { SPONSORED_PAYMENT_PROOF_BUCKET, SPONSORED_PROMOTION_PRICES } from '@/lib/sponsoredPromotions';
 import { formatPrice, formatShortDate } from '@/lib/utils';
-import type { FeaturedPromotionOrder } from '@/types';
-
-const MESSENGER_URL = 'https://m.me/GoPairPH';
-const FB_PROFILE_URL = 'https://www.facebook.com/gopairph';
+import type { FeaturedPromotionOrder, SponsoredPromotionOrder } from '@/types';
 
 type Placement = 'featured' | 'top_pick';
 type Tier = '7d' | '30d';
@@ -81,7 +79,7 @@ export function PromoteListingModal({
   const [coinsToUse, setCoinsToUse] = useState(0);
   const [submitState, setSubmitState] = useState<'idle' | 'reserving' | 'uploading' | 'submitting' | 'success'>('idle');
   const [submitError, setSubmitError] = useState('');
-  const [submittedOrder, setSubmittedOrder] = useState<FeaturedPromotionOrder | null>(null);
+  const [submittedOrder, setSubmittedOrder] = useState<FeaturedPromotionOrder | SponsoredPromotionOrder | null>(null);
   const selectedPlacement = PLACEMENTS[placement];
   const selectedTier = selectedPlacement.tiers[tier];
   const isTopPick = placement === 'top_pick';
@@ -97,28 +95,39 @@ export function PromoteListingModal({
     setPlacement(nextPlacement);
     setTier('7d');
     setCoinsToUse(0);
+    setProofFile(null);
+    setTransactionReference('');
+    setSubmittedOrder(null);
+    setSubmitError('');
   }
 
   function chooseTier(nextTier: Tier) {
     setTier(nextTier);
     setCoinsToUse(0);
+    setSubmittedOrder(null);
+    setSubmitError('');
+  }
+
+  function validateProofFile(): boolean {
+    if (!proofFile) {
+      setSubmitError('Upload your payment screenshot first.');
+      return false;
+    }
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'].includes(proofFile.type)) {
+      setSubmitError('Please upload an image screenshot.');
+      return false;
+    }
+    if (proofFile.size > 8 * 1024 * 1024) {
+      setSubmitError('Please upload a screenshot below 8MB.');
+      return false;
+    }
+    return true;
   }
 
   async function submitFeaturedProof() {
     if (safeCoinsToUse !== coinsToUse) setCoinsToUse(safeCoinsToUse);
 
-    if (!isCoinOnlyFeatured && !proofFile) {
-      setSubmitError('Upload your payment screenshot first.');
-      return;
-    }
-    if (proofFile && !['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'].includes(proofFile.type)) {
-      setSubmitError('Please upload an image screenshot.');
-      return;
-    }
-    if (proofFile && proofFile.size > 8 * 1024 * 1024) {
-      setSubmitError('Please upload a screenshot below 8MB.');
-      return;
-    }
+    if (!isCoinOnlyFeatured && !validateProofFile()) return;
 
     setSubmitError('');
     setSubmittedOrder(null);
@@ -177,6 +186,61 @@ export function PromoteListingModal({
       if (!proofResponse.ok) throw new Error(proofJson.error ?? 'Could not submit payment proof.');
 
       setSubmittedOrder(proofJson.order as FeaturedPromotionOrder);
+      setSubmitState('success');
+    } catch (error) {
+      setSubmitError((error as Error).message);
+      setSubmitState('idle');
+    }
+  }
+
+  async function submitSponsoredProof() {
+    if (!validateProofFile()) return;
+
+    setSubmitError('');
+    setSubmittedOrder(null);
+
+    try {
+      setSubmitState('reserving');
+      const durationDays = selectedTier.days as keyof typeof SPONSORED_PROMOTION_PRICES;
+      const reserveResponse = await fetch('/api/promotions/sponsored/reserve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId, durationDays }),
+      });
+      const reserveJson = await reserveResponse.json().catch(() => ({}));
+      if (!reserveResponse.ok) throw new Error(reserveJson.error ?? 'Could not reserve Top Pick placement.');
+      const order = reserveJson.order as SponsoredPromotionOrder;
+
+      if (!proofFile) throw new Error('Upload your payment screenshot first.');
+      setSubmitState('uploading');
+      const supabase = createClient();
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) throw new Error('Please sign in again before uploading proof.');
+      const extension = proofFile.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+      const storagePath = `${userData.user.id}/${order.id}-${Date.now()}.${extension}`;
+      const { error: uploadError } = await supabase.storage
+        .from(SPONSORED_PAYMENT_PROOF_BUCKET)
+        .upload(storagePath, proofFile, {
+          cacheControl: '3600',
+          contentType: proofFile.type || 'image/jpeg',
+          upsert: false,
+        });
+      if (uploadError) throw new Error(uploadError.message);
+
+      setSubmitState('submitting');
+      const proofResponse = await fetch(`/api/promotions/sponsored/${order.id}/proof`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentMethod: method,
+          transactionReference: transactionReference.trim() || null,
+          proofStoragePath: storagePath,
+        }),
+      });
+      const proofJson = await proofResponse.json().catch(() => ({}));
+      if (!proofResponse.ok) throw new Error(proofJson.error ?? 'Could not submit payment proof.');
+
+      setSubmittedOrder(proofJson.order as SponsoredPromotionOrder);
       setSubmitState('success');
     } catch (error) {
       setSubmitError((error as Error).message);
@@ -397,106 +461,86 @@ export function PromoteListingModal({
               </section>
               )}
 
-              {isFeatured ? (
-                <section>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{cashAmountPhp > 0 ? '5. Upload proof' : '4. Confirm GP Coin payment'}</p>
-                  {submitState === 'success' && submittedOrder ? (
-                    <div className="rounded-lg border border-teal-500/30 bg-teal-500/10 p-4">
-                      <p className="text-sm font-semibold text-teal-200">Featured request received</p>
-                      <p className="mt-1 text-xs leading-5 text-teal-100/80">
-                        Your listing is {submittedOrder.status === 'active' ? 'now provisionally Featured' : 'in the Featured queue'} while admin reviews the proof.
+              <section>
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+                  {isFeatured ? (cashAmountPhp > 0 ? '5. Upload proof' : '4. Confirm GP Coin payment') : '4. Upload proof'}
+                </p>
+                {submitState === 'success' && submittedOrder ? (
+                  <div className="rounded-lg border border-teal-500/30 bg-teal-500/10 p-4">
+                    <p className="text-sm font-semibold text-teal-200">
+                      {isFeatured ? 'Featured request received' : 'Top Pick request received'}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-teal-100/80">
+                      {isFeatured
+                        ? `Your listing is ${submittedOrder.status === 'active' ? 'now provisionally Featured' : 'in the Featured queue'} while admin reviews the proof.`
+                        : 'Your listing is now a Top Pick while admin reviews the proof.'}
+                    </p>
+                    {submittedOrder.scheduled_end_at && (
+                      <p className="mt-2 text-[11px] text-teal-200">
+                        Scheduled until {formatShortDate(submittedOrder.scheduled_end_at)}
                       </p>
-                      {submittedOrder.scheduled_end_at && (
-                        <p className="mt-2 text-[11px] text-teal-200">
-                          Scheduled until {formatShortDate(submittedOrder.scheduled_end_at)}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {cashAmountPhp > 0 && (
-                      <label className="block">
-                        <span className="text-xs font-medium text-gray-300">Transaction reference</span>
-                        <input
-                          value={transactionReference}
-                          onChange={event => setTransactionReference(event.target.value)}
-                          placeholder="GCash/BPI reference number"
-                          className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-base text-gray-100 outline-none focus:border-teal-400 sm:text-sm"
-                        />
-                      </label>
-                      )}
-                      {cashAmountPhp > 0 && (
-                      <label className="block rounded-lg border border-dashed border-gray-700 bg-gray-950/60 p-3">
-                        <span className="text-xs font-medium text-gray-300">Payment screenshot</span>
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                          onChange={event => setProofFile(event.target.files?.[0] ?? null)}
-                          className="mt-2 block w-full text-xs text-gray-400 file:mr-3 file:rounded-md file:border-0 file:bg-teal-500 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white"
-                        />
-                        {proofFile && (
-                          <span className="mt-2 block truncate text-[11px] text-teal-300">{proofFile.name}</span>
-                        )}
-                      </label>
-                      )}
-                      {isCoinOnlyFeatured && (
-                        <div className="rounded-lg border border-amber-300/25 bg-amber-300/[0.08] p-3">
-                          <p className="text-sm font-semibold text-amber-100">No screenshot needed</p>
-                          <p className="mt-1 text-xs leading-5 text-amber-100/75">
-                            This Featured request will use {safeCoinsToUse} GP Coins and auto-approve if the 30-day full-coin limit is clear.
-                          </p>
-                        </div>
-                      )}
-                      {submitError && <p className="text-xs text-red-400">{submitError}</p>}
-                      <Button
-                        type="button"
-                        onClick={submitFeaturedProof}
-                        disabled={isSubmitting}
-                        className="w-full"
-                      >
-                        {submitState === 'reserving'
-                          ? 'Reserving…'
-                          : submitState === 'uploading'
-                            ? 'Uploading proof…'
-                            : submitState === 'submitting'
-                              ? 'Submitting…'
-                              : isCoinOnlyFeatured ? 'Use GP Coins and Feature' : 'Submit Featured request'}
-                      </Button>
-                      <p className="text-[10px] leading-4 text-gray-600">
-                        Your position is reserved for 20 minutes while the proof is uploaded. Invalid proof can be removed after admin review.
-                      </p>
-                    </div>
-                  )}
-                </section>
-              ) : (
-                <section>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">4. Send the screenshot</p>
-                  <p className="text-xs text-gray-400 leading-relaxed">
-                    Send the receipt screenshot to Go Pair PH on Messenger with your listing link and selected placement.
-                  </p>
-                  <div className="mt-3 flex flex-col gap-2">
-                    <a
-                      href={MESSENGER_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition-colors"
-                    >
-                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
-                      </svg>
-                      Send proof via Messenger
-                    </a>
-                    <a
-                      href={FB_PROFILE_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-center text-xs text-gray-500 hover:text-teal-400 transition-colors"
-                    >
-                      or contact the admin on Facebook →
-                    </a>
+                    )}
                   </div>
-                </section>
-              )}
+                ) : (
+                  <div className="space-y-3">
+                    {(!isFeatured || cashAmountPhp > 0) && (
+                    <label className="block">
+                      <span className="text-xs font-medium text-gray-300">Transaction reference</span>
+                      <input
+                        value={transactionReference}
+                        onChange={event => setTransactionReference(event.target.value)}
+                        placeholder="GCash/BPI reference number"
+                        className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-base text-gray-100 outline-none focus:border-teal-400 sm:text-sm"
+                      />
+                    </label>
+                    )}
+                    {(!isFeatured || cashAmountPhp > 0) && (
+                    <label className="block rounded-lg border border-dashed border-gray-700 bg-gray-950/60 p-3">
+                      <span className="text-xs font-medium text-gray-300">Payment screenshot</span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                        onChange={event => setProofFile(event.target.files?.[0] ?? null)}
+                        className="mt-2 block w-full text-xs text-gray-400 file:mr-3 file:rounded-md file:border-0 file:bg-teal-500 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white"
+                      />
+                      {proofFile && (
+                        <span className="mt-2 block truncate text-[11px] text-teal-300">{proofFile.name}</span>
+                      )}
+                    </label>
+                    )}
+                    {isCoinOnlyFeatured && (
+                      <div className="rounded-lg border border-amber-300/25 bg-amber-300/[0.08] p-3">
+                        <p className="text-sm font-semibold text-amber-100">No screenshot needed</p>
+                        <p className="mt-1 text-xs leading-5 text-amber-100/75">
+                          This Featured request will use {safeCoinsToUse} GP Coins and auto-approve if the 30-day full-coin limit is clear.
+                        </p>
+                      </div>
+                    )}
+                    {submitError && <p className="text-xs text-red-400">{submitError}</p>}
+                    <Button
+                      type="button"
+                      onClick={isFeatured ? submitFeaturedProof : submitSponsoredProof}
+                      disabled={isSubmitting}
+                      className="w-full"
+                    >
+                      {submitState === 'reserving'
+                        ? 'Reserving…'
+                        : submitState === 'uploading'
+                          ? 'Uploading proof…'
+                          : submitState === 'submitting'
+                            ? 'Submitting…'
+                            : isFeatured
+                              ? isCoinOnlyFeatured ? 'Use GP Coins and Feature' : 'Submit Featured request'
+                              : 'Submit Top Pick request'}
+                    </Button>
+                    <p className="text-[10px] leading-4 text-gray-600">
+                      {isFeatured
+                        ? 'Your position is reserved for 20 minutes while the proof is uploaded. Invalid proof can be removed after admin review.'
+                        : 'Your Top Pick starts after proof upload if a slot is still available. Invalid proof can be removed after admin review.'}
+                    </p>
+                  </div>
+                )}
+              </section>
 
               {/* Honesty footer */}
               <p className="text-[10px] text-gray-600 leading-relaxed">

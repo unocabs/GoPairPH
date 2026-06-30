@@ -6,10 +6,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
 import { labelFeaturedPromotionStatus, labelPaymentMethod } from '@/lib/featuredPromotions';
+import { labelSponsoredPaymentMethod, labelSponsoredPromotionStatus } from '@/lib/sponsoredPromotions';
 import { formatCondition, formatListingName, formatPrice, formatProfileLocation, formatRelativeDate, formatSize, getListingPath, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import type { ListingViewSummary } from '@/lib/listingViews';
-import type { FeaturedPromotionOrder, ListingReport, ListingReportReason, VerificationRequest, Profile, Shoe, Shop, ShopStatus, WishlistOfferReport, WishlistOfferReportReason } from '@/types';
+import type { FeaturedPromotionOrder, ListingReport, ListingReportReason, VerificationRequest, Profile, Shoe, Shop, ShopStatus, SponsoredPromotionOrder, WishlistOfferReport, WishlistOfferReportReason } from '@/types';
 
 type ShopWithOwner = Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location_city' | 'location_province' | 'location_region'> | null };
 
@@ -21,6 +22,7 @@ interface AdminDashboardProps {
   profiles: Profile[];
   soldListings: Shoe[];
   promotions: FeaturedPromotionOrder[];
+  sponsoredPromotions: SponsoredPromotionOrder[];
   listingViews: ListingViewSummary[];
   leadReports: WishlistOfferReport[];
   listingReports: ListingReport[];
@@ -114,6 +116,7 @@ export function AdminDashboard({
   profiles,
   soldListings,
   promotions,
+  sponsoredPromotions,
   listingViews,
   leadReports,
   listingReports,
@@ -129,7 +132,7 @@ export function AdminDashboard({
       <div className="mb-6 flex gap-1 overflow-x-auto border-b border-gray-800">
         {([
           { key: 'views', label: `Listing views (${listingViews.length})` },
-          { key: 'promotions', label: `Promotions (${promotions.filter(order => order.status === 'active' || order.status === 'queued' || order.review_status === 'pending').length})` },
+          { key: 'promotions', label: `Promotions (${promotions.filter(order => order.status === 'active' || order.status === 'queued' || order.review_status === 'pending').length + sponsoredPromotions.filter(order => order.status === 'active' || order.review_status === 'pending').length})` },
           { key: 'pending', label: `Pending (${pending.length})` },
           { key: 'verified', label: `Verified users (${verified.length})` },
           { key: 'shops', label: `Shops (${shops.length})` },
@@ -152,7 +155,7 @@ export function AdminDashboard({
       </div>
 
       {tab === 'pending' && <PendingList requests={pending} />}
-      {tab === 'promotions' && <FeaturedPromotionsPanel initialPromotions={promotions} profiles={profiles} />}
+      {tab === 'promotions' && <FeaturedPromotionsPanel initialPromotions={promotions} initialSponsoredPromotions={sponsoredPromotions} profiles={profiles} />}
       {tab === 'verified' && <VerifiedList users={verified} verificationProofs={verifiedProofs} />}
       {tab === 'shops' && <ShopsPanel shops={shops} profiles={profiles} />}
       {tab === 'soldListings' && <SoldListingsPanel listings={soldListings} />}
@@ -169,15 +172,24 @@ export function AdminDashboard({
   );
 }
 
-function FeaturedPromotionsPanel({ initialPromotions, profiles }: { initialPromotions: FeaturedPromotionOrder[]; profiles: Profile[] }) {
+function FeaturedPromotionsPanel({ initialPromotions, initialSponsoredPromotions, profiles }: { initialPromotions: FeaturedPromotionOrder[]; initialSponsoredPromotions: SponsoredPromotionOrder[]; profiles: Profile[] }) {
   const router = useRouter();
   const [promotions, setPromotions] = useState(initialPromotions);
+  const [sponsoredPromotions, setSponsoredPromotions] = useState(initialSponsoredPromotions);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
   const current = promotions.find(order => order.status === 'active') ?? null;
   const pending = promotions.filter(order => order.review_status === 'pending' && order.source === 'paid');
+  const sponsoredPending = sponsoredPromotions.filter(order => order.review_status === 'pending');
+  const sponsoredActive = sponsoredPromotions
+    .filter(order => order.status === 'active')
+    .sort((a, b) => {
+      const aTime = a.scheduled_end_at ? new Date(a.scheduled_end_at).getTime() : 0;
+      const bTime = b.scheduled_end_at ? new Date(b.scheduled_end_at).getTime() : 0;
+      return aTime - bTime;
+    });
   const queue = promotions
     .filter(order => order.source === 'paid' && (order.status === 'active' || order.status === 'queued'))
     .sort((a, b) => {
@@ -205,6 +217,33 @@ function FeaturedPromotionsPanel({ initialPromotions, profiles }: { initialPromo
       if (!response.ok) throw new Error(json.error ?? 'Review failed.');
       setPromotions(previous => previous.map(order => order.id === orderId ? { ...order, ...json.order } : order));
       setMessage(action === 'approve' ? 'Promotion approved.' : action === 'reject' ? 'Promotion rejected.' : 'Marked refund required.');
+      router.refresh();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function reviewSponsored(orderId: string, action: 'approve' | 'reject' | 'refund_required') {
+    const notes = action === 'approve'
+      ? ''
+      : window.prompt(action === 'reject' ? 'Reason for rejecting this proof?' : 'Why is this refund required?') ?? '';
+    if (action !== 'approve' && !notes.trim()) return;
+
+    setBusyId(orderId);
+    setMessage('');
+    setError('');
+    try {
+      const response = await fetch(`/api/admin/promotions/sponsored/${orderId}/review`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, notes }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json.error ?? 'Review failed.');
+      setSponsoredPromotions(previous => previous.map(order => order.id === orderId ? { ...order, ...json.order } : order));
+      setMessage(action === 'approve' ? 'Top Pick approved.' : action === 'reject' ? 'Top Pick rejected.' : 'Top Pick marked refund required.');
       router.refresh();
     } catch (err) {
       setError((err as Error).message);
@@ -263,6 +302,23 @@ function FeaturedPromotionsPanel({ initialPromotions, profiles }: { initialPromo
       </section>
 
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-100">Pending Top Pick payment reviews</h2>
+            <p className="text-sm text-gray-500">Top Pick placements are applied immediately while you review the screenshot.</p>
+          </div>
+          <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">{sponsoredPending.length}</span>
+        </div>
+        <div className="mt-4 space-y-3">
+          {sponsoredPending.length === 0 ? (
+            <p className="text-sm text-gray-500">No pending Top Pick proofs.</p>
+          ) : sponsoredPending.map(order => (
+            <SponsoredPromotionReviewCard key={order.id} order={order} busy={busyId === order.id} onReview={reviewSponsored} />
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-gray-800 bg-gray-900 p-4">
         <h2 className="text-lg font-semibold text-gray-100">Paid Featured queue</h2>
         <div className="mt-4 space-y-2">
           {queue.length === 0 ? (
@@ -274,6 +330,29 @@ function FeaturedPromotionsPanel({ initialPromotions, profiles }: { initialPromo
                   <p className="font-semibold text-gray-100">{order.listing ? formatListingName(order.listing.brand, order.listing.model) : 'Featured listing'}</p>
                   <p className="text-xs text-gray-500">
                     #{order.queue_position ?? '—'} · {order.duration_days} days · {formatPrice(order.cash_amount_php ?? order.price_php)} cash · {order.coins_used > 0 ? `${order.coins_used} GP` : 'No coins'} · {labelFeaturedPromotionStatus(order)}
+                  </p>
+                </div>
+                <p className="text-xs text-gray-400 sm:text-right">
+                  {formatDateTime(order.scheduled_start_at)}<br />→ {formatDateTime(order.scheduled_end_at)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+        <h2 className="text-lg font-semibold text-gray-100">Active Top Picks</h2>
+        <div className="mt-4 space-y-2">
+          {sponsoredActive.length === 0 ? (
+            <p className="text-sm text-gray-500">No active paid Top Picks yet.</p>
+          ) : sponsoredActive.map(order => (
+            <div key={order.id} className="rounded-lg border border-gray-800 bg-gray-950/50 p-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-semibold text-gray-100">{order.listing ? formatListingName(order.listing.brand, order.listing.model) : 'Top Pick listing'}</p>
+                  <p className="text-xs text-gray-500">
+                    {order.duration_days} days · {formatPrice(order.price_php)} · {labelSponsoredPromotionStatus(order.status, order.review_status)}
                   </p>
                 </div>
                 <p className="text-xs text-gray-400 sm:text-right">
@@ -312,10 +391,65 @@ function FeaturedPromotionsPanel({ initialPromotions, profiles }: { initialPromo
                   <td className="py-2 pr-4">{formatDateTime(order.created_at)}</td>
                 </tr>
               ))}
+              {sponsoredPromotions.slice(0, 30).map(order => (
+                <tr key={order.id}>
+                  <td className="py-2 pr-4">{order.listing ? formatListingName(order.listing.brand, order.listing.model) : 'Listing'}</td>
+                  <td className="py-2 pr-4">Paid Top Pick</td>
+                  <td className="py-2 pr-4 capitalize">{order.status.replaceAll('_', ' ')}</td>
+                  <td className="py-2 pr-4">{labelSponsoredPaymentMethod(order.payment_method)} · {formatPrice(order.price_php)}</td>
+                  <td className="py-2 pr-4">{formatDateTime(order.created_at)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       </section>
+    </div>
+  );
+}
+
+function SponsoredPromotionReviewCard({
+  order,
+  busy,
+  onReview,
+}: {
+  order: SponsoredPromotionOrder;
+  busy: boolean;
+  onReview: (orderId: string, action: 'approve' | 'reject' | 'refund_required') => void;
+}) {
+  const listingName = order.listing ? formatListingName(order.listing.brand, order.listing.model) : 'Top Pick listing';
+  return (
+    <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="font-semibold text-gray-100">{listingName}</p>
+          <p className="mt-1 text-xs text-gray-500">
+            {order.seller?.display_name ?? 'Seller'} · {order.duration_days} days · {formatPrice(order.price_php)} · {labelSponsoredPaymentMethod(order.payment_method)}
+          </p>
+          <p className="mt-1 text-xs text-gray-500">
+            Ref: <span className="font-mono text-gray-300">{order.transaction_reference ?? '—'}</span>
+          </p>
+          <p className="mt-1 text-xs text-gray-500">
+            {formatDateTime(order.scheduled_start_at)} → {formatDateTime(order.scheduled_end_at)}
+          </p>
+          {order.proof_signed_url && (
+            <a href={order.proof_signed_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex text-xs font-semibold text-teal-300 hover:text-teal-200">
+              Open payment screenshot →
+            </a>
+          )}
+        </div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:min-w-[360px]">
+          <button disabled={busy} onClick={() => onReview(order.id, 'approve')} className="rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-500 disabled:opacity-60">
+            Approve
+          </button>
+          <button disabled={busy} onClick={() => onReview(order.id, 'reject')} className="rounded-lg border border-red-500/40 px-3 py-2 text-sm font-semibold text-red-200 hover:bg-red-950/40 disabled:opacity-60">
+            Reject
+          </button>
+          <button disabled={busy} onClick={() => onReview(order.id, 'refund_required')} className="rounded-lg border border-amber-500/40 px-3 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-950/40 disabled:opacity-60">
+            Refund
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

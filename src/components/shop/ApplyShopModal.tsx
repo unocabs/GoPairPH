@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { PUBLIC_SUPPORT_EMAIL } from '@/lib/constants';
 
 interface ApplyShopModalProps {
   onClose: () => void;
 }
-
-const ADMIN_EMAIL = 'rgiancabrera@gmail.com';
 
 const PITCH = [
   { title: 'Dedicated seller page', body: 'Approved sellers can have a simple Go Pair PH page with their logo, listings, and public URL.' },
@@ -29,10 +28,10 @@ export function ApplyShopModal({ onClose }: ApplyShopModalProps) {
 
   async function handleCopyEmail() {
     try {
-      await navigator.clipboard.writeText(ADMIN_EMAIL);
+      await navigator.clipboard.writeText(PUBLIC_SUPPORT_EMAIL);
     } catch {
       const ta = document.createElement('textarea');
-      ta.value = ADMIN_EMAIL;
+      ta.value = PUBLIC_SUPPORT_EMAIL;
       document.body.appendChild(ta);
       ta.select();
       document.execCommand('copy');
@@ -97,7 +96,7 @@ export function ApplyShopModal({ onClose }: ApplyShopModalProps) {
                   className="font-mono text-teal-400 hover:text-teal-300 underline-offset-2 hover:underline"
                   title="Copy email"
                 >
-                  {ADMIN_EMAIL}
+                  {PUBLIC_SUPPORT_EMAIL}
                 </button>
                 {copied && <span className="ml-2 text-xs text-green-400">Copied</span>}
               </li>

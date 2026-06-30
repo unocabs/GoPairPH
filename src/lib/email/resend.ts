@@ -15,6 +15,7 @@ export type TransactionalEmailCategory =
   | 'request_status'
   | 'saved_search'
   | 'seller_note'
+  | 'sponsored_promotion'
   | 'wishlist_lead';
 
 interface EmailContentArgs {

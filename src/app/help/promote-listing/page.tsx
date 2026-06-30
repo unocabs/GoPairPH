@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { InfoPage } from '@/components/layout/InfoPage';
+import { PUBLIC_SUPPORT_EMAIL } from '@/lib/constants';
 
 export const metadata: Metadata = {
   title: 'Featured & Top Pick Listings',
@@ -86,11 +87,11 @@ export default function PromoteListingPage() {
           <li>Open your listing and click <strong>Promote Listing</strong>.</li>
           <li>Pick a duration: <strong>7 days (₱30)</strong> or <strong>30 days (₱100)</strong>.</li>
           <li>Pay via GCash or BPI — QR codes are shown in the modal.</li>
-          <li>Send the receipt screenshot to Go Pair PH on Messenger with your listing link and selected placement.</li>
-          <li>An admin activates your slot within 24 hours, and your listing rises near the top of Browse with a &ldquo;Top Pick&rdquo; tag.</li>
+          <li>Upload the receipt screenshot in the modal.</li>
+          <li>Your listing becomes a Top Pick right away if a slot is still available, then an admin reviews whether the payment is valid.</li>
         </ol>
         <p className="mt-3 text-sm text-gray-400">
-          Top Pick is paid placement. We only activate Top Pick after a seller payment is confirmed.
+          Top Pick is paid placement. If a payment screenshot is invalid, we may remove the placement after review.
         </p>
       </section>
 
@@ -163,9 +164,9 @@ export default function PromoteListingPage() {
           >
             Messenger
           </a>{' '}
-          or email{' '}
-          <a href="mailto:rgiancabrera@gmail.com" className="text-teal-400 hover:text-teal-300">
-            rgiancabrera@gmail.com
+          or email the Go Pair PH inbox at{' '}
+          <a href={`mailto:${PUBLIC_SUPPORT_EMAIL}`} className="text-teal-400 hover:text-teal-300">
+            {PUBLIC_SUPPORT_EMAIL}
           </a>
           . We&apos;d rather over-explain than have you feel lost — promotions involve real money, so
           ask anything.

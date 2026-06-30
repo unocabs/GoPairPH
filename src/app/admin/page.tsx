@@ -5,7 +5,8 @@ import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { AdminDashboard } from './AdminDashboard';
 import { getDashboardViewWindow, getListingViewSummaries } from '@/lib/listingViews';
 import { FEATURED_PAYMENT_PROOF_BUCKET } from '@/lib/featuredPromotions';
-import type { FeaturedPromotionOrder, ListingReport, VerificationRequest, Profile, Shoe, Shop, WishlistItem, WishlistOffer, WishlistOfferReport } from '@/types';
+import { SPONSORED_PAYMENT_PROOF_BUCKET } from '@/lib/sponsoredPromotions';
+import type { FeaturedPromotionOrder, ListingReport, VerificationRequest, Profile, Shoe, Shop, SponsoredPromotionOrder, WishlistItem, WishlistOffer, WishlistOfferReport } from '@/types';
 
 type PairRequestSummary = Pick<WishlistItem, 'id' | 'brand' | 'model'>;
 
@@ -106,8 +107,9 @@ async function loadAdminData() {
 
   const viewWindow = getDashboardViewWindow();
   await service.rpc('reconcile_featured_promotions');
+  await service.rpc('reconcile_sponsored_promotions');
 
-  const [pendingRes, verifiedRes, approvedVerificationRes, shopsRes, profilesRes, soldListingsRes, promotionsRes, listingViews, leadReports, listingReports, siteSettingsRes] = await Promise.all([
+  const [pendingRes, verifiedRes, approvedVerificationRes, shopsRes, profilesRes, soldListingsRes, promotionsRes, sponsoredPromotionsRes, listingViews, leadReports, listingReports, siteSettingsRes] = await Promise.all([
     supabase
       .from('verification_requests')
       .select('*, profiles:profiles!user_id(*)')
@@ -143,6 +145,11 @@ async function loadAdminData() {
       .select('*, listing:shoes!featured_promotion_orders_listing_id_fkey(id, slug, brand, model, status, price_php, featured_until), seller:profiles!featured_promotion_orders_seller_id_fkey(id, display_name, user_id, is_verified)')
       .order('created_at', { ascending: false })
       .limit(100),
+    service
+      .from('sponsored_promotion_orders')
+      .select('*, listing:shoes!sponsored_promotion_orders_listing_id_fkey(id, slug, brand, model, status, price_php, sponsored_until), seller:profiles!sponsored_promotion_orders_seller_id_fkey(id, display_name, user_id, is_verified)')
+      .order('created_at', { ascending: false })
+      .limit(100),
     getListingViewSummaries({ ...viewWindow, limit: 100 }),
     loadOpenLeadReports(),
     loadOpenListingReports(),
@@ -161,6 +168,14 @@ async function loadAdminData() {
       .createSignedUrl(order.proof_storage_path, 60 * 60);
     return { ...order, proof_signed_url: data?.signedUrl ?? null };
   }));
+  const sponsoredPromotions = ((sponsoredPromotionsRes.data ?? []) as unknown as SponsoredPromotionOrder[]);
+  const sponsoredPromotionsWithProofs = await Promise.all(sponsoredPromotions.map(async order => {
+    if (!order.proof_storage_path) return order;
+    const { data } = await service.storage
+      .from(SPONSORED_PAYMENT_PROOF_BUCKET)
+      .createSignedUrl(order.proof_storage_path, 60 * 60);
+    return { ...order, proof_signed_url: data?.signedUrl ?? null };
+  }));
 
   return {
     pending: (pendingRes.data as VerificationRequest[]) ?? [],
@@ -170,6 +185,7 @@ async function loadAdminData() {
     profiles: (profilesRes.data as Profile[]) ?? [],
     soldListings: ((soldListingsRes.data ?? []) as unknown as Shoe[]),
     promotions: promotionsWithProofs,
+    sponsoredPromotions: sponsoredPromotionsWithProofs,
     listingViews,
     leadReports,
     listingReports,
