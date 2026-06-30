@@ -1,5 +1,6 @@
 import { CONDITIONS } from '@/lib/constants';
 import { formatListingName, formatPrice, formatSize } from '@/lib/utils';
+import { escapeHtml, renderButton, renderEmailShell } from '@/lib/email/template';
 
 export interface SavedSearchAlertMatch {
   searchKeyword: string;
@@ -18,15 +19,6 @@ interface SavedSearchAlertEmailArgs {
   manageUrl: string;
 }
 
-function escape(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
 export function renderSavedSearchAlertEmail({
   displayName,
   matches,
@@ -43,66 +35,31 @@ export function renderSavedSearchAlertEmail({
 
     return `
       <tr>
-        <td style="padding:16px 0;border-top:1px solid #e2e8f0;">
-          <p style="margin:0 0 6px;color:#64748b;font-size:12px;">Matched: ${escape(match.searchKeyword)}</p>
-          <a href="${escape(match.listingUrl)}" style="display:block;color:#0f172a;font-size:16px;font-weight:700;text-decoration:none;line-height:1.35;">${escape(match.listingName)}</a>
-          <p style="margin:6px 0 0;color:#475569;font-size:13px;line-height:1.5;">${escape(details)}</p>
+        <td style="padding:16px 0;border-top:1px solid rgba(148,163,184,.16);">
+          <p style="margin:0 0 6px;color:#94a3b8;font-size:12px;">Matched: ${escapeHtml(match.searchKeyword)}</p>
+          <a href="${escapeHtml(match.listingUrl)}" style="display:block;color:#f8fafc;font-size:16px;font-weight:800;text-decoration:none;line-height:1.35;">${escapeHtml(match.listingName)}</a>
+          <p style="margin:6px 0 0;color:#cbd5e1;font-size:13px;line-height:1.5;">${escapeHtml(details)}</p>
         </td>
       </tr>`;
   }).join('');
 
-  return `
-<!doctype html>
-<html>
-  <body style="margin:0;background:#f8fafc;font-family:Arial,sans-serif;color:#0f172a;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:28px 16px;">
-      <tr>
-        <td align="center">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;">
-            <tr>
-              <td style="padding:28px 28px 10px;">
-                <p style="margin:0 0 10px;color:#0f766e;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Go Pair PH matches</p>
-                <h1 style="margin:0;color:#0f172a;font-size:26px;line-height:1.2;">Fresh pairs matched what you're looking for</h1>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:10px 28px 0;">
-                <p style="margin:0;color:#334155;font-size:15px;line-height:1.7;">Hi ${escape(displayName || 'runner')}, a few new pairs matched your saved searches or profile size. Check them when you have time.</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:12px 28px 4px;">
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                  <tbody>${rows}</tbody>
-                </table>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:24px 28px;">
-                <table role="presentation" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td style="border-radius:10px;background:#0d9488;">
-                      <a href="${escape(browseUrl)}" style="display:inline-block;padding:12px 20px;color:#ffffff;font-weight:700;text-decoration:none;font-size:14px;">View matching pairs</a>
-                    </td>
-                    <td style="width:12px;"></td>
-                    <td>
-                      <a href="${escape(manageUrl)}" style="display:inline-block;padding:12px 0;color:#0f766e;font-weight:700;text-decoration:none;font-size:14px;">Manage saved searches</a>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-            <tr>
-              <td style="background-color:#f9fafb;padding:18px 28px;border-top:1px solid #e5e7eb;color:#64748b;font-size:12px;line-height:1.6;">
-                You're receiving this because matched-listing emails are enabled in your Go Pair PH profile. We send at most one digest per day.
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
+  return renderEmailShell({
+    eyebrow: 'Go Pair PH matches',
+    title: 'New running shoes matched your search',
+    preheader: 'A few new running shoes matched your saved searches or profile size.',
+    footerReason: 'You are receiving this because matched-listing emails are enabled in your Go Pair PH profile. We send at most one digest per day.',
+    children: `
+      <p style="margin:0;color:#cbd5e1;font-size:15px;line-height:1.7;">Hi ${escapeHtml(displayName || 'runner')}, a few new running shoes matched your saved searches or profile size. Check them when you have time.</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;border-collapse:collapse;">
+        <tbody>${rows}</tbody>
+      </table>
+      <p style="margin:22px 0 0;">
+        ${renderButton(browseUrl, 'Browse running shoes')}
+        <span style="display:inline-block;width:10px;"></span>
+        ${renderButton(manageUrl, 'Manage searches', 'secondary')}
+      </p>
+    `,
+  });
 }
 
 export function makeSavedSearchEmailMatch(args: {
