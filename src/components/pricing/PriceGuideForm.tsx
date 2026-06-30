@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BRANDS, CONDITIONS } from '@/lib/constants';
 import {
@@ -22,7 +21,7 @@ const brandOptions = BRANDS.map((brand) => ({ value: brand, label: brand }));
 const estimatorFieldClass = 'border-[#3B4A60] bg-[#243247] text-gray-100 placeholder:text-slate-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20';
 
 const conditionOptions: { value: PriceGuideCondition; label: string; helper: string; boost: string }[] = [
-  { value: 'new', label: CONDITIONS.new, helper: 'Unused pair', boost: 'High trust' },
+  { value: 'new', label: CONDITIONS.new, helper: 'Unused shoes', boost: 'High trust' },
   { value: 'like_new', label: CONDITIONS.like_new, helper: 'Very light wear', boost: 'Strong value' },
   { value: 'good', label: CONDITIONS.good, helper: 'Normal runner use', boost: 'Fair market' },
   { value: 'fair', label: CONDITIONS.fair, helper: 'Visible wear', boost: 'Price clearly' },
@@ -97,6 +96,8 @@ function clamp(value: number, min: number, max: number) {
 
 export function PriceGuideForm() {
   const router = useRouter();
+  const [hasStarted, setHasStarted] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
   const [retailPrice, setRetailPrice] = useState('');
@@ -108,16 +109,11 @@ export function PriceGuideForm() {
   const [hasBox, setHasBox] = useState(false);
   const [hasReceipt, setHasReceipt] = useState(false);
   const [hasVisibleFlaws, setHasVisibleFlaws] = useState(false);
-  const mobileSummaryRef = useRef<HTMLDivElement | null>(null);
-  const fullResultRef = useRef<HTMLDivElement | null>(null);
   const estimateGeneratedTrackedRef = useRef(false);
-  const [isMobileResultLayout, setIsMobileResultLayout] = useState(false);
-  const [mobileSummaryVisible, setMobileSummaryVisible] = useState(true);
-  const [fullResultVisible, setFullResultVisible] = useState(false);
   const [listingModalOpen, setListingModalOpen] = useState(false);
   const [listingPriceChoice, setListingPriceChoice] = useState<'suggested_range' | 'fast_sale'>('suggested_range');
   const [rangePrice, setRangePrice] = useState(0);
-  const [modalSurface, setModalSurface] = useState<'inline_result' | 'floating_mobile'>('inline_result');
+  const estimatorRef = useRef<HTMLDivElement | null>(null);
   const modalCloseRef = useRef<HTMLButtonElement | null>(null);
   const modalTriggerRef = useRef<HTMLElement | null>(null);
 
@@ -181,94 +177,6 @@ export function PriceGuideForm() {
         : `List around ${formatPrice(estimate.suggestedHigh)} and stay open to serious offers.`
     : 'Add the original retail price to unlock the live range.';
 
-  const tips = [
-    hasVisibleFlaws
-      ? 'Mention visible flaws directly so buyers trust the price.'
-      : 'Add close-up photos if there are any marks or wear points.',
-    hasReceipt
-      ? 'Receipt or proof can help buyers feel safer.'
-      : 'Add proof of purchase if you have it.',
-    hasBox
-      ? 'Box included makes the listing feel more complete.'
-      : 'No box is fine; make the photos and description clear.',
-  ];
-  const showFloatingDock = isMobileResultLayout && !mobileSummaryVisible && !fullResultVisible;
-  const showFloatingListingCta = showFloatingDock && !!estimate && !listingModalOpen;
-
-  useEffect(() => {
-    if (!estimate || estimateGeneratedTrackedRef.current) return;
-
-    estimateGeneratedTrackedRef.current = true;
-    trackMarketplaceAction('price_estimate_generated', {
-      source: 'price_guide',
-      brand,
-      condition,
-      mileage,
-      age,
-      demand,
-      urgency,
-      has_box: hasBox,
-      has_receipt: hasReceipt,
-      has_visible_flaws: hasVisibleFlaws,
-      sellability_score: sellabilityScore,
-    });
-  }, [
-    age,
-    brand,
-    condition,
-    demand,
-    estimate,
-    hasBox,
-    hasReceipt,
-    hasVisibleFlaws,
-    mileage,
-    sellabilityScore,
-    urgency,
-  ]);
-
-  useEffect(() => {
-    const media = window.matchMedia('(max-width: 1023px)');
-    const updateLayout = () => setIsMobileResultLayout(media.matches);
-
-    updateLayout();
-    media.addEventListener('change', updateLayout);
-
-    return () => media.removeEventListener('change', updateLayout);
-  }, []);
-
-  useEffect(() => {
-    if (!isMobileResultLayout) {
-      setMobileSummaryVisible(true);
-      setFullResultVisible(false);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.target === mobileSummaryRef.current) {
-            setMobileSummaryVisible(entry.isIntersecting);
-          }
-          if (entry.target === fullResultRef.current) {
-            setFullResultVisible(entry.isIntersecting);
-          }
-        }
-      },
-      {
-        root: null,
-        threshold: 0.12,
-        rootMargin: '-76px 0px -20% 0px',
-      },
-    );
-
-    const summaryNode = mobileSummaryRef.current;
-    const resultNode = fullResultRef.current;
-    if (summaryNode) observer.observe(summaryNode);
-    if (resultNode) observer.observe(resultNode);
-
-    return () => observer.disconnect();
-  }, [isMobileResultLayout]);
-
   useEffect(() => {
     if (!listingModalOpen) return;
 
@@ -289,16 +197,48 @@ export function PriceGuideForm() {
     };
   }, [listingModalOpen]);
 
-  function openListingModal(surface: 'inline_result' | 'floating_mobile') {
+  useEffect(() => {
+    if (!hasStarted) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      estimatorRef.current?.scrollIntoView({ block: 'start' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [currentStep, hasStarted]);
+
+  function startEstimation() {
+    if (!canEstimate || !estimate) return;
+
+    setHasStarted(true);
+    setCurrentStep(0);
+    if (!estimateGeneratedTrackedRef.current) {
+      estimateGeneratedTrackedRef.current = true;
+      trackMarketplaceAction('price_estimate_generated', {
+        source: 'price_guide',
+        brand,
+        condition,
+        mileage,
+        age,
+        demand,
+        urgency,
+        has_box: hasBox,
+        has_receipt: hasReceipt,
+        has_visible_flaws: hasVisibleFlaws,
+        sellability_score: sellabilityScore,
+      });
+    }
+  }
+
+  function openListingModal() {
     if (!estimate) return;
 
     modalTriggerRef.current = document.activeElement as HTMLElement | null;
-    setModalSurface(surface);
     setListingPriceChoice('suggested_range');
     setRangePrice(estimate.suggestedHigh);
     setListingModalOpen(true);
     trackMarketplaceAction('price_estimator_listing_modal_open', {
-      surface,
+      surface: 'wizard_step',
+      estimator_step: currentStep + 1,
       brand,
       sellability_score: sellabilityScore,
     });
@@ -307,12 +247,13 @@ export function PriceGuideForm() {
   function chooseListingPrice(choice: 'suggested_range' | 'fast_sale') {
     setListingPriceChoice(choice);
     trackMarketplaceAction('price_estimator_price_option_select', {
-      surface: modalSurface,
+      surface: 'wizard_step',
+      estimator_step: currentStep + 1,
       option: choice,
     });
   }
 
-  function saveListingPrefill(surface: 'inline_result' | 'floating_mobile', selectedPricePhp: number) {
+  function saveListingPrefill(selectedPricePhp: number) {
     if (!estimate || !canEstimate) return;
 
     const prefill: PriceGuideListingPrefill = {
@@ -340,7 +281,8 @@ export function PriceGuideForm() {
       // If storage is unavailable, the listing page still receives the price in the URL.
     }
     trackMarketplaceAction('price_estimator_to_listing', {
-      surface,
+      surface: 'wizard_step',
+      estimator_step: currentStep + 1,
       brand,
       condition,
       urgency,
@@ -358,53 +300,36 @@ export function PriceGuideForm() {
 
     const selectedPrice = listingPriceChoice === 'fast_sale' ? estimate.fastSalePrice : rangePrice;
     trackMarketplaceAction('price_estimator_price_confirm', {
-      surface: modalSurface,
+      surface: 'wizard_step',
+      estimator_step: currentStep + 1,
       option: listingPriceChoice,
       selected_price_php: selectedPrice,
       range_slider_value: rangePrice,
     });
-    saveListingPrefill(modalSurface, selectedPrice);
+    saveListingPrefill(selectedPrice);
     setListingModalOpen(false);
     router.push(`/listings/new?from=price-guide&price=${selectedPrice}`);
   }
 
   return (
-    <div className="grid max-w-full gap-5 overflow-hidden lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start lg:overflow-visible">
-      {showFloatingDock && (
-        <div className="fixed left-3 right-3 top-[4.75rem] z-30 lg:hidden">
-          <CompactScoreDock
-            score={sellabilityScore}
-            estimate={estimate}
-            active={canEstimate}
-            floating
-          />
-        </div>
-      )}
+    <div
+      ref={estimatorRef}
+      data-price-estimator-started={hasStarted ? 'true' : 'false'}
+      className="mx-auto max-w-4xl scroll-mt-24 overflow-hidden"
+    >
+      {!hasStarted ? (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            startEstimation();
+          }}
+          className="sellability-card-in rounded-2xl border border-teal-400/20 bg-[#0B1424] p-4 shadow-[0_22px_70px_rgba(0,0,0,0.28)] sm:p-6"
+        >
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-teal-300">Listing lab</p>
+          <h2 className="mt-1 text-lg font-extrabold tracking-tight text-gray-100 sm:text-2xl">Start with the shoe details.</h2>
+          <p className="mt-2 text-sm leading-6 text-gray-500">We&apos;ll guide you through five quick steps to estimate a practical resale price.</p>
 
-      {showFloatingListingCta && (
-        <div className="sellability-mobile-cta-floating fixed inset-x-0 bottom-0 z-30 border-t border-white/[0.06] bg-slate-950/90 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
-          <button
-            type="button"
-            onClick={() => openListingModal('floating_mobile')}
-            className="mx-auto flex min-h-12 w-full max-w-[22.5rem] items-center justify-center rounded-lg border border-teal-300/30 bg-teal-500 px-4 py-2 text-center text-sm font-bold text-white shadow-[0_16px_44px_rgba(0,0,0,0.5)] transition-colors hover:bg-teal-400"
-          >
-            Sell this shoe with these details
-          </button>
-        </div>
-      )}
-
-      <section className="min-w-0 space-y-4">
-        <div className="sellability-card-in rounded-2xl border border-teal-400/20 bg-[#0B1424] p-4 shadow-[0_22px_70px_rgba(0,0,0,0.28)] sm:p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-teal-300">Listing lab</p>
-              <h2 className="mt-1 text-lg font-extrabold tracking-tight text-gray-100 sm:text-xl">Start with the price. The rest updates live.</h2>
-            </div>
-            <div className={`rounded-full border px-3 py-1 text-xs font-semibold ${canEstimate ? 'sellability-live-pulse border-teal-300/35 bg-teal-400/10 text-teal-100' : 'border-white/[0.08] bg-slate-900/80 text-gray-400'}`}>
-              {canEstimate ? 'Live estimate on' : 'Add retail price to start'}
-            </div>
-          </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3 sm:gap-4">
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
             <Input
               label="Retail price"
               type="number"
@@ -435,196 +360,172 @@ export function PriceGuideForm() {
               className={`${estimatorFieldClass} ${!hasModel ? 'price-estimator-start-glow' : ''}`}
             />
           </div>
-          <div ref={mobileSummaryRef} className="mt-3 lg:hidden">
-            <CompactScoreDock
-              score={sellabilityScore}
-              estimate={estimate}
-              active={canEstimate}
-            />
-          </div>
-        </div>
 
-        <div className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '70ms' }}>
-          <SectionHeader step="01" title="Condition" body="Pick the closest truth. The score rewards clarity, not hype." />
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {conditionOptions.map((option) => (
-              <ChoiceCard
-                key={option.value}
-                active={condition === option.value}
-                label={option.label}
-                helper={option.helper}
-                badge={option.boost}
-                onClick={() => setCondition(option.value)}
-              />
-            ))}
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-gray-500" aria-live="polite">
+              {canEstimate ? 'Ready to estimate.' : 'Complete all three required fields to continue.'}
+            </p>
+            <button
+              type="submit"
+              disabled={!canEstimate}
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-teal-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-gray-500 disabled:shadow-none sm:w-auto"
+            >
+              Start Estimation
+            </button>
           </div>
-        </div>
-
-        <div className="sellability-card-in grid gap-4 lg:grid-cols-2" style={{ animationDelay: '120ms' }}>
-          <div className="rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5">
-            <SectionHeader step="02" title="Usage" body="Mileage helps buyers judge outsole and foam life." />
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {mileageOptions.map((option) => (
-                <MiniChoice
-                  key={option.value}
-                  active={mileage === option.value}
-                  label={option.label}
-                  helper={option.helper}
-                  onClick={() => setMileage(option.value)}
+        </form>
+      ) : (
+        <div className="space-y-4">
+          <div className="sellability-card-in rounded-2xl border border-white/[0.08] bg-[#0B1424] p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-teal-300">Listing lab</p>
+                <p className="mt-1 text-sm font-semibold text-gray-200">Step {currentStep + 1} of 5</p>
+              </div>
+              <p className="max-w-[55%] truncate text-right text-xs text-gray-500">{brand} {model}</p>
+            </div>
+            <div className="mt-3 grid grid-cols-5 gap-1.5" aria-label={`Step ${currentStep + 1} of 5`}>
+              {[0, 1, 2, 3, 4].map((step) => (
+                <span
+                  key={step}
+                  className={`h-1.5 rounded-full transition-colors ${step <= currentStep ? 'bg-teal-400' : 'bg-slate-800'}`}
                 />
               ))}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5">
-            <SectionHeader step="03" title="Age" body="Newer releases usually feel easier to move." />
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {ageOptions.map((option) => (
-                <MiniChoice
-                  key={option.value}
-                  active={age === option.value}
-                  label={option.label}
-                  helper={option.helper}
-                  onClick={() => setAge(option.value)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
+          <CompactScoreDock
+            score={sellabilityScore}
+            estimate={estimate}
+            active
+            onUseDetails={openListingModal}
+          />
 
-        <div className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '170ms' }}>
-          <SectionHeader step="04" title="Selling Strategy" body="Tell the tool if you want speed, balance, or maximum value." />
-          <div className="mt-4 grid gap-3 lg:grid-cols-[0.9fr_1.1fr]">
-            <div>
-              <p className="text-sm font-medium text-gray-300">Buyer demand</p>
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                {demandOptions.map((option) => (
-                  <MiniChoice
-                    key={option.value}
-                    active={demand === option.value}
-                    label={option.label}
-                    helper={option.helper}
-                    onClick={() => setDemand(option.value)}
-                  />
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-300">Selling goal</p>
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                {urgencyOptions.map((option) => (
-                  <MiniChoice
-                    key={option.value}
-                    active={urgency === option.value}
-                    label={option.label}
-                    helper={option.helper}
-                    onClick={() => setUrgency(option.value)}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-5" style={{ animationDelay: '220ms' }}>
-          <SectionHeader step="05" title="Trust Extras" body="These do not become new listing fields. They travel into the description when you list." />
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <TrustToggle checked={hasBox} onChange={setHasBox} title="Has box" body="Useful for complete pairs" />
-            <TrustToggle checked={hasReceipt} onChange={setHasReceipt} title="Has receipt" body="Adds proof and confidence" />
-            <TrustToggle checked={hasVisibleFlaws} onChange={setHasVisibleFlaws} title="Visible flaws" body="Honesty protects trust" warning />
-          </div>
-        </div>
-      </section>
-
-      <aside ref={fullResultRef} className="min-w-0 lg:sticky lg:top-24">
-        <div className="sellability-card-in overflow-hidden rounded-2xl border border-teal-400/20 bg-[#06111d] shadow-[0_26px_90px_rgba(0,0,0,0.42)]">
-          <div className="relative p-4 sm:p-6">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(45,212,191,0.18),transparent_34%),radial-gradient(circle_at_90%_20%,rgba(59,130,246,0.10),transparent_30%)]" />
-            <div className="relative">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-teal-300">Live sellability</p>
-              <div className="mt-3 grid grid-cols-[104px_1fr] items-center gap-3 sm:mt-4 sm:grid-cols-[132px_1fr] sm:gap-4">
-                <ScoreRing score={sellabilityScore} active={canEstimate} />
-                <div>
-                  <h2 className="text-lg font-extrabold tracking-tight text-gray-100 sm:text-xl">{canEstimate ? scoreLabel : 'Waiting for price'}</h2>
-                  <p className="mt-1.5 text-xs leading-5 text-gray-400 sm:mt-2 sm:text-sm sm:leading-6">{bestMove}</p>
+          <section className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-6">
+            {currentStep === 0 && (
+              <>
+                <SectionHeader step="01" title="Condition" body="Pick the closest truth. The score rewards clarity, not hype." />
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {conditionOptions.map((option) => (
+                    <ChoiceCard
+                      key={option.value}
+                      active={condition === option.value}
+                      label={option.label}
+                      helper={option.helper}
+                      badge={option.boost}
+                      onClick={() => setCondition(option.value)}
+                    />
+                  ))}
                 </div>
-              </div>
+              </>
+            )}
 
-              <div className={`mt-4 grid gap-2.5 transition-all duration-500 sm:mt-5 sm:gap-3 ${canEstimate ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-55'}`}>
-                <div className="rounded-xl border border-white/[0.08] bg-slate-950/60 p-3 sm:p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Suggested range</p>
-                  <p className="mt-1.5 text-xl font-extrabold text-gray-100 sm:mt-2 sm:text-2xl">
-                    {estimate ? `${formatPrice(estimate.suggestedLow)} - ${formatPrice(estimate.suggestedHigh)}` : 'Add retail price'}
-                  </p>
+            {currentStep === 1 && (
+              <>
+                <SectionHeader step="02" title="Usage" body="Mileage helps buyers judge outsole and foam life." />
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {mileageOptions.map((option) => (
+                    <MiniChoice
+                      key={option.value}
+                      active={mileage === option.value}
+                      label={option.label}
+                      helper={option.helper}
+                      onClick={() => setMileage(option.value)}
+                    />
+                  ))}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <MetricCard label="Fast sale" value={estimate ? formatPrice(estimate.fastSalePrice) : 'Pending'} lightning />
-                  <MetricCard label="Confidence" value={estimate ? estimate.confidence : 'Pending'} />
-                </div>
-              </div>
+              </>
+            )}
 
-              <div className="mt-4 rounded-xl border border-teal-400/20 bg-teal-400/[0.06] p-3 sm:mt-5 sm:p-4">
-                <h3 className="truncate text-lg font-extrabold text-gray-100">
-                  {brand} {model || 'Running Shoe'}
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">{selectedConditionLabel} · {selectedMileageLabel}</p>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                  <DetailChip label="Age" value={selectedAgeLabel} />
-                  <DetailChip label="Demand" value={selectedDemandLabel} />
-                  <DetailChip label="Goal" value={selectedUrgencyLabel} />
+            {currentStep === 2 && (
+              <>
+                <SectionHeader step="03" title="Age" body="Newer releases usually feel easier to move." />
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {ageOptions.map((option) => (
+                    <MiniChoice
+                      key={option.value}
+                      active={age === option.value}
+                      label={option.label}
+                      helper={option.helper}
+                      onClick={() => setAge(option.value)}
+                    />
+                  ))}
                 </div>
-              </div>
+              </>
+            )}
 
-              <div className="mt-4 rounded-xl border border-white/[0.08] bg-slate-950/60 p-3 sm:mt-5 sm:p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Added to description</p>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                  <DetailChip label="Box" value={hasBox ? 'Yes' : 'No'} />
-                  <DetailChip label="Receipt" value={hasReceipt ? 'Yes' : 'No'} />
-                  <DetailChip label="Flaws" value={hasVisibleFlaws ? 'Yes' : 'No'} />
-                  <DetailChip label="Usage" value={selectedMileageLabel} />
-                  <DetailChip label="Age" value={selectedAgeLabel} />
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-2 sm:mt-6">
-                {estimate ? (
-                  <button
-                    type="button"
-                    onClick={() => openListingModal('inline_result')}
-                    className="inline-flex min-h-12 items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-teal-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-teal-400"
-                  >
-                    Sell this shoe with these details
-                  </button>
-                ) : (
-                  <div className="inline-flex min-h-12 items-center justify-center rounded-lg border border-white/[0.08] bg-slate-900/80 px-4 py-2 text-sm font-bold text-gray-500">
-                    Add retail price to unlock listing handoff
+            {currentStep === 3 && (
+              <>
+                <SectionHeader step="04" title="Selling Strategy" body="Tell the tool if you want speed, balance, or maximum value." />
+                <div className="mt-4 grid gap-5 md:grid-cols-2">
+                  <div>
+                    <p className="text-sm font-medium text-gray-300">Buyer demand</p>
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {demandOptions.map((option) => (
+                        <MiniChoice
+                          key={option.value}
+                          active={demand === option.value}
+                          label={option.label}
+                          helper={option.helper}
+                          onClick={() => setDemand(option.value)}
+                        />
+                      ))}
+                    </div>
                   </div>
-                )}
-                <Link
-                  href="/official-running-shoe-brand-links-ph"
-                  className="inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-700 bg-slate-950/60 px-4 py-2 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-900"
-                >
-                  Check official retail links
-                </Link>
-              </div>
-
-              {estimate && (
-                <div className="mt-4 sm:mt-5">
-                  <p className="text-sm font-semibold text-gray-100">Smart tips</p>
-                  <ul className="mt-2 space-y-2 text-sm leading-5 text-gray-400">
-                    {[...estimate.reasons, ...tips].slice(0, 5).map((reason, index) => (
-                      <li key={reason} className="sellability-tip flex gap-2" style={{ animationDelay: `${index * 80}ms` }}>
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-300" />
-                        <span>{reason}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div>
+                    <p className="text-sm font-medium text-gray-300">Selling goal</p>
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {urgencyOptions.map((option) => (
+                        <MiniChoice
+                          key={option.value}
+                          active={urgency === option.value}
+                          label={option.label}
+                          helper={option.helper}
+                          onClick={() => setUrgency(option.value)}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              )}
+              </>
+            )}
+
+            {currentStep === 4 && (
+              <>
+                <SectionHeader step="05" title="Trust Extras" body="These do not become new listing fields. They travel into the description when you list." />
+                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                  <TrustToggle checked={hasBox} onChange={setHasBox} title="Has box" body="Useful for complete shoes" />
+                  <TrustToggle checked={hasReceipt} onChange={setHasReceipt} title="Has receipt" body="Adds proof and confidence" />
+                  <TrustToggle checked={hasVisibleFlaws} onChange={setHasVisibleFlaws} title="Visible flaws" body="Honesty protects trust" warning />
+                </div>
+              </>
+            )}
+
+            <div className="mt-6 flex items-center justify-between gap-3 border-t border-white/[0.08] pt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  if (currentStep === 0) setHasStarted(false);
+                  else setCurrentStep((step) => step - 1);
+                }}
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-700 bg-slate-950/60 px-4 py-2 text-sm font-semibold text-gray-300 transition-colors hover:border-gray-600 hover:text-gray-100"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (currentStep === 4) openListingModal();
+                  else setCurrentStep((step) => step + 1);
+                }}
+                className="inline-flex min-h-11 items-center justify-center rounded-lg bg-teal-500 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400"
+              >
+                {currentStep === 4 ? 'View Full Result' : 'Next'}
+              </button>
             </div>
-          </div>
+          </section>
         </div>
-      </aside>
+      )}
 
       {listingModalOpen && estimate && (
         <div
@@ -778,12 +679,12 @@ function CompactScoreDock({
   score,
   estimate,
   active,
-  floating = false,
+  onUseDetails,
 }: {
   score: number;
   estimate: ReturnType<typeof estimateRunningShoePrice> | null;
   active: boolean;
-  floating?: boolean;
+  onUseDetails: () => void;
 }) {
   const range = estimate
     ? `${formatPrice(estimate.suggestedLow)}-${formatPrice(estimate.suggestedHigh)}`
@@ -792,13 +693,19 @@ function CompactScoreDock({
   const confidence = estimate ? estimate.confidence : '--';
 
   return (
-    <div
-      className={`sellability-mobile-dock max-w-full overflow-hidden rounded-2xl border border-teal-400/25 bg-[#06111d]/95 shadow-[0_18px_56px_rgba(0,0,0,0.42)] backdrop-blur-md ${
-        floating ? 'sellability-mobile-dock-floating' : ''
-      }`}
-    >
+    <div className="sellability-card-in max-w-full overflow-hidden rounded-2xl border border-teal-400/25 bg-[#06111d] shadow-[0_18px_56px_rgba(0,0,0,0.36)]">
       <div className="relative p-3">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(45,212,191,0.16),transparent_42%),radial-gradient(circle_at_90%_20%,rgba(59,130,246,0.10),transparent_36%)]" />
+        <div className="relative mb-2 flex items-center justify-between gap-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-teal-300">Estimate snapshot</p>
+          <button
+            type="button"
+            onClick={onUseDetails}
+            className="min-h-9 rounded-lg border border-teal-300/25 bg-teal-400/10 px-3 py-1.5 text-xs font-bold text-teal-100 transition-colors hover:border-teal-300/45 hover:bg-teal-400/15 focus:outline-none focus:ring-2 focus:ring-teal-400/40"
+          >
+            Use Details
+          </button>
+        </div>
         <div className="relative grid grid-cols-[58px_minmax(0,1fr)] gap-3">
           <MiniScoreRing score={score} active={active} />
           <div className="min-w-0 rounded-xl border border-white/[0.08] bg-slate-950/60 p-3">
@@ -888,7 +795,8 @@ function ChoiceCard({
     <button
       type="button"
       onClick={onClick}
-      className={`min-h-[92px] rounded-xl border p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[118px] sm:p-3 ${
+      aria-pressed={active}
+      className={`min-h-[76px] rounded-xl border px-2.5 py-2 text-left transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[118px] sm:p-3 ${
         active
           ? 'border-teal-300/60 bg-teal-400/12 text-teal-50 shadow-[0_0_28px_rgba(45,212,191,0.12)]'
           : 'border-[#314158] bg-[#18263A] text-gray-300 hover:border-teal-400/40 hover:text-gray-100'
@@ -896,7 +804,7 @@ function ChoiceCard({
     >
       <span className="block text-xs font-extrabold sm:text-sm">{label}</span>
       <span className="mt-1 block text-[11px] leading-4 text-gray-500 sm:text-xs sm:leading-5">{helper}</span>
-      <span className={`mt-2 inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] sm:mt-3 sm:px-2 sm:text-[10px] sm:tracking-[0.12em] ${active ? 'bg-teal-300 text-slate-950' : 'bg-slate-900 text-gray-500'}`}>
+      <span className={`mt-1.5 inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] sm:mt-3 sm:px-2 sm:text-[10px] sm:tracking-[0.12em] ${active ? 'bg-teal-300 text-slate-950' : 'bg-slate-900 text-gray-500'}`}>
         {badge}
       </span>
     </button>
@@ -918,7 +826,8 @@ function MiniChoice({
     <button
       type="button"
       onClick={onClick}
-      className={`min-h-[62px] rounded-lg border px-2.5 py-2 text-left transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[76px] sm:px-3 ${
+      aria-pressed={active}
+      className={`min-h-[52px] rounded-lg border px-2.5 py-1.5 text-left transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[76px] sm:px-3 sm:py-2 ${
         active
           ? 'border-teal-400/55 bg-teal-400/10 text-teal-100'
           : 'border-[#314158] bg-[#18263A] text-gray-300 hover:border-teal-400/40 hover:text-gray-100'
@@ -947,6 +856,7 @@ function TrustToggle({
     <button
       type="button"
       onClick={() => onChange(!checked)}
+      aria-pressed={checked}
       className={`min-h-[74px] rounded-xl border p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[96px] sm:p-3 ${
         checked
           ? warning
