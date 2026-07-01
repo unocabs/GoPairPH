@@ -9,12 +9,17 @@ import {
 } from '@/lib/email/resend';
 import { createMarketingUnsubscribeToken } from '@/lib/email/unsubscribe';
 import {
+  PRICE_ESTIMATOR_BLAST_ID,
+  PRICE_ESTIMATOR_BLAST_PREVIEW,
+  PRICE_ESTIMATOR_BLAST_SUBJECT,
   REACTIVATION_CORRECTION_BLAST_ID,
   REACTIVATION_CORRECTION_PREVIEW,
   REACTIVATION_CORRECTION_SUBJECT,
   REACTIVATION_BLAST_ID,
   REACTIVATION_BLAST_PREVIEW,
   REACTIVATION_BLAST_SUBJECT,
+  renderPriceEstimatorBlastEmail,
+  renderPriceEstimatorBlastText,
   renderReactivationCorrectionEmail,
   renderReactivationCorrectionText,
   renderReactivationBlastEmail,
@@ -25,10 +30,11 @@ export const runtime = 'nodejs';
 
 const REACTIVATION_CONFIRMATION_PHRASE = 'SEND REACTIVATION BLAST';
 const CORRECTION_CONFIRMATION_PHRASE = 'SEND CORRECTED LINK';
+const PRICE_ESTIMATOR_CONFIRMATION_PHRASE = 'SEND PRICE ESTIMATOR BLAST';
 const BATCH_SIZE = 100;
 
 type Mode = 'preview' | 'test' | 'send';
-type Campaign = 'reactivation' | 'correction';
+type Campaign = 'reactivation' | 'correction' | 'priceEstimator';
 
 interface RequestBody {
   mode?: Mode;
@@ -56,7 +62,7 @@ export async function POST(request: Request) {
   if (!['preview', 'test', 'send'].includes(mode)) {
     return NextResponse.json({ error: 'Invalid mode' }, { status: 400 });
   }
-  const campaignKey: Campaign = body.campaign === 'reactivation' ? 'reactivation' : 'correction';
+  const campaignKey = getCampaignKey(body.campaign);
   const campaign = getCampaign(campaignKey);
 
   const admin = await requireAdmin();
@@ -185,6 +191,11 @@ export async function POST(request: Request) {
   });
 }
 
+function getCampaignKey(campaign: unknown): Campaign {
+  if (campaign === 'reactivation' || campaign === 'priceEstimator') return campaign;
+  return 'correction';
+}
+
 function getCampaign(campaign: Campaign) {
   if (campaign === 'reactivation') {
     return {
@@ -194,6 +205,17 @@ function getCampaign(campaign: Campaign) {
       confirmationPhrase: REACTIVATION_CONFIRMATION_PHRASE,
       renderHtml: renderReactivationBlastEmail,
       renderText: renderReactivationBlastText,
+    };
+  }
+
+  if (campaign === 'priceEstimator') {
+    return {
+      id: PRICE_ESTIMATOR_BLAST_ID,
+      subject: PRICE_ESTIMATOR_BLAST_SUBJECT,
+      previewText: PRICE_ESTIMATOR_BLAST_PREVIEW,
+      confirmationPhrase: PRICE_ESTIMATOR_CONFIRMATION_PHRASE,
+      renderHtml: renderPriceEstimatorBlastEmail,
+      renderText: renderPriceEstimatorBlastText,
     };
   }
 

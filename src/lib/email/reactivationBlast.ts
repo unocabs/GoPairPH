@@ -1,5 +1,5 @@
 export const REACTIVATION_BLAST_ID = 'gopairph-reactivation-2026-06-09-v2';
-import { escapeHtml, paragraph, renderButton, renderEmailShell, renderTextLink } from '@/lib/email/template';
+import { escapeAttribute, escapeHtml, paragraph, renderButton, renderEmailShell, renderTextLink } from '@/lib/email/template';
 
 export const REACTIVATION_BLAST_SUBJECT = 'Got running shoes to find or sell?';
 export const REACTIVATION_BLAST_PREVIEW =
@@ -8,6 +8,10 @@ export const REACTIVATION_CORRECTION_BLAST_ID = 'gopairph-reactivation-corrected
 export const REACTIVATION_CORRECTION_SUBJECT = 'Correct Go Pair PH link';
 export const REACTIVATION_CORRECTION_PREVIEW =
   'Sorry, the first email had local test links. Here are the working Go Pair PH links.';
+export const PRICE_ESTIMATOR_BLAST_ID = 'gopairph-price-estimator-2026-07-01';
+export const PRICE_ESTIMATOR_BLAST_SUBJECT = 'Price your running shoes before you list';
+export const PRICE_ESTIMATOR_BLAST_PREVIEW =
+  'Use the Go Pair PH price estimator to get a practical resale range before posting your shoes.';
 
 interface ReactivationBlastEmailArgs {
   recipientName?: string | null;
@@ -150,5 +154,63 @@ Thanks for your patience,
 Go Pair PH
 
 You are receiving this because you opted in to Go Pair PH news and community updates.
+Unsubscribe: ${unsubscribeUrl ?? `${baseUrl}/profile`}`;
+}
+
+export function renderPriceEstimatorBlastEmail({
+  recipientName,
+  siteUrl,
+  unsubscribeUrl,
+}: ReactivationBlastEmailArgs): string {
+  const baseUrl = siteUrl.replace(/\/$/, '');
+  const name = firstName(recipientName);
+  const priceGuideUrl = `${baseUrl}/price-guide`;
+  const listUrl = `${baseUrl}/listings/new`;
+  const browseUrl = `${baseUrl}/browse`;
+  const optOutUrl = unsubscribeUrl ?? `${baseUrl}/profile`;
+
+  return renderEmailShell({
+    title: PRICE_ESTIMATOR_BLAST_SUBJECT,
+    preheader: PRICE_ESTIMATOR_BLAST_PREVIEW,
+    children: `
+      ${paragraph(`Hi ${escapeHtml(name)},`)}
+      ${paragraph('Not sure how much to sell your running shoes for?')}
+      ${paragraph('Go Pair PH has a resale price estimator built for running shoes in the Philippines. Add the original retail price, condition, mileage, age, and demand, then get a practical price range you can use before listing.')}
+      ${paragraph('It is not a guaranteed selling price, but it can help you avoid pricing too high, too low, or guessing from random posts.')}
+      <p style="margin:22px 0 0;">${renderButton(priceGuideUrl, 'Check my resale price')}</p>
+      <p style="margin:18px 0 0;color:#cbd5e1;font-size:14px;line-height:1.9;">
+        ${renderTextLink(listUrl, 'List running shoes')}<br>
+        ${renderTextLink(browseUrl, 'Browse running shoes')}
+      </p>
+      <p style="margin:28px 0 0;text-align:center;">
+        <a href="${escapeAttribute(optOutUrl)}" style="display:inline-block;border:1px solid rgba(100,116,139,.45);border-radius:999px;padding:5px 9px;color:#64748b;font-size:10px;line-height:12px;text-decoration:none;">Unsubscribe</a>
+      </p>
+    `,
+  });
+}
+
+export function renderPriceEstimatorBlastText({
+  recipientName,
+  siteUrl,
+  unsubscribeUrl,
+}: ReactivationBlastEmailArgs): string {
+  const baseUrl = siteUrl.replace(/\/$/, '');
+  const name = firstName(recipientName);
+
+  return `Hi ${name},
+
+Not sure how much to sell your running shoes for?
+
+Go Pair PH has a resale price estimator built for running shoes in the Philippines. Add the original retail price, condition, mileage, age, and demand, then get a practical price range you can use before listing.
+
+It is not a guaranteed selling price, but it can help you avoid pricing too high, too low, or guessing from random posts.
+
+Check my resale price: ${baseUrl}/price-guide
+List running shoes: ${baseUrl}/listings/new
+Browse running shoes: ${baseUrl}/browse
+
+Go Pair PH
+Runners helping runners.
+
 Unsubscribe: ${unsubscribeUrl ?? `${baseUrl}/profile`}`;
 }

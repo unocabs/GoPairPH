@@ -617,7 +617,7 @@ function formatDateTime(value: string | null): string {
 
 function EmailBlastPanel() {
   const [preview, setPreview] = useState<EmailBlastPreview | null>(null);
-  const [campaign, setCampaign] = useState<'correction' | 'reactivation'>('correction');
+  const [campaign, setCampaign] = useState<'correction' | 'reactivation' | 'priceEstimator'>('correction');
   const [testEmail, setTestEmail] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [loading, setLoading] = useState(false);
@@ -696,7 +696,7 @@ function EmailBlastPanel() {
             <select
               value={campaign}
               onChange={event => {
-                setCampaign(event.target.value as 'correction' | 'reactivation');
+                setCampaign(event.target.value as 'correction' | 'reactivation' | 'priceEstimator');
                 setPreview(null);
                 setConfirmation('');
                 setMessage('');
@@ -705,6 +705,7 @@ function EmailBlastPanel() {
               className="min-h-10 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100 outline-none focus:border-teal-500 sm:max-w-md"
             >
               <option value="correction">Corrected link follow-up</option>
+              <option value="priceEstimator">Price estimator</option>
               <option value="reactivation">Original reactivation blast</option>
             </select>
           </label>
