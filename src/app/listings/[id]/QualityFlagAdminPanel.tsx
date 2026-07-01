@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 
 const QUALITY_FLAG_REASONS = [
   'Photo does not clearly show the actual shoes',
@@ -51,15 +50,19 @@ export function QualityFlagAdminPanel({ shoeId, flaggedAt, reasons, note }: Qual
 
     setError(null);
     setSaving(true);
-    const supabase = createClient();
-    const { error: err } = await supabase.rpc('admin_flag_listing_quality', {
-      p_listing_id: shoeId,
-      p_reasons: Array.from(selectedReasons),
-      p_note: adminNote.trim() || null,
+    const response = await fetch(`/api/admin/listings/${shoeId}/quality-flag`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'flag',
+        reasons: Array.from(selectedReasons),
+        note: adminNote.trim() || null,
+      }),
     });
 
-    if (err) {
-      setError(err.message);
+    if (!response.ok) {
+      const result = await response.json().catch(() => null) as { error?: string } | null;
+      setError(result?.error ?? 'Unable to flag this listing. Please try again.');
       setSaving(false);
       return;
     }
@@ -75,13 +78,15 @@ export function QualityFlagAdminPanel({ shoeId, flaggedAt, reasons, note }: Qual
 
     setError(null);
     setSaving(true);
-    const supabase = createClient();
-    const { error: err } = await supabase.rpc('admin_clear_listing_quality_flag', {
-      p_listing_id: shoeId,
+    const response = await fetch(`/api/admin/listings/${shoeId}/quality-flag`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'clear' }),
     });
 
-    if (err) {
-      setError(err.message);
+    if (!response.ok) {
+      const result = await response.json().catch(() => null) as { error?: string } | null;
+      setError(result?.error ?? 'Unable to clear this flag. Please try again.');
       setSaving(false);
       return;
     }
@@ -106,7 +111,7 @@ export function QualityFlagAdminPanel({ shoeId, flaggedAt, reasons, note }: Qual
           )}
         </div>
         <p className="mt-1 text-[11px] leading-5 text-gray-500">
-          Use this when photos or details make the pair harder for buyers to trust. Buyers will not see the flag; the listing will rank lower until it improves.
+          Use this when photos or details make the shoes harder for buyers to trust. Buyers will not see the flag; the listing will be hidden from homepage discovery until it improves.
         </p>
       </div>
 

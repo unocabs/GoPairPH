@@ -142,6 +142,7 @@ const getHomepageListings = unstable_cache(async function getHomepageListings():
     .select(HOME_LISTING_SELECT)
     .eq('status', 'active')
     .eq('has_stock', true)
+    .is('quality_flagged_at', null)
     .order('created_at', { ascending: false })
     .limit(24);
   const all = (data as unknown as Shoe[]) ?? [];
@@ -204,6 +205,7 @@ const getRecentlySoldListings = unstable_cache(async function getRecentlySoldLis
       .from('shoes')
       .select(HOME_LISTING_SELECT)
       .in('status', ['sold', 'donated'])
+      .is('quality_flagged_at', null)
       .order('updated_at', { ascending: false })
       .limit(RECENTLY_SOLD_LOOKAHEAD_LIMIT);
 
@@ -245,6 +247,7 @@ const getFeaturedListing = unstable_cache(async function getFeaturedListing(): P
     .select(HOME_LISTING_SELECT)
     .eq('status', 'active')
     .eq('has_stock', true)
+    .is('quality_flagged_at', null)
     .gt('featured_until', new Date().toISOString())
     .order('featured_until', { ascending: false })
     .limit(1)
@@ -399,10 +402,13 @@ export default async function HomePage() {
     getMarketplaceActivity(),
     getHomepageSiteSettings(),
   ]);
-  const recommendedShoes = getRecommendedListings(profile, homepageShoes).slice(0, 4);
-  const rearHeroListings = getDailyRearListings(homepageShoes, featured?.id ?? null);
+  // Keep this guard in addition to the database filters so stale or unexpected
+  // cached data can never put a quality-flagged listing into homepage discovery.
+  const homepageVisibleShoes = homepageShoes.filter(shoe => !shoe.quality_flagged_at);
+  const recommendedShoes = getRecommendedListings(profile, homepageVisibleShoes).slice(0, 4);
+  const rearHeroListings = getDailyRearListings(homepageVisibleShoes, featured?.id ?? null);
   const recommendedIds = new Set(recommendedShoes.map((shoe) => shoe.id));
-  const recentShoes = homepageShoes.filter((shoe) => !recommendedIds.has(shoe.id)).slice(0, 4);
+  const recentShoes = homepageVisibleShoes.filter((shoe) => !recommendedIds.has(shoe.id)).slice(0, 4);
   const displayedShoes = [...recommendedShoes, ...recentShoes];
   const displayedListingIds = displayedShoes.map((shoe) => shoe.id);
   const [savedListingCounts, savedListingIds] = await Promise.all([
