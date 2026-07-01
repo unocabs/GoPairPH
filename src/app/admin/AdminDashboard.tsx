@@ -78,6 +78,7 @@ interface EmailBlastPreview {
   recipientCount: number;
   confirmationPhrase: string;
   sample: Array<{ displayName: string | null; email: string }>;
+  recipientWarning?: string;
   text: string;
 }
 
@@ -615,6 +616,14 @@ function formatDateTime(value: string | null): string {
   }).format(new Date(value));
 }
 
+function safeParseJson(text: string): { error?: string; [key: string]: unknown } {
+  try {
+    return JSON.parse(text) as { error?: string; [key: string]: unknown };
+  } catch {
+    return {};
+  }
+}
+
 function EmailBlastPanel() {
   const [preview, setPreview] = useState<EmailBlastPreview | null>(null);
   const [campaign, setCampaign] = useState<'correction' | 'reactivation' | 'priceEstimator'>('correction');
@@ -640,11 +649,12 @@ function EmailBlastPanel() {
           confirm: mode === 'send' ? confirmation : undefined,
         }),
       });
-      const json = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(json.error ?? 'Request failed');
+      const text = await response.text();
+      const json = text ? safeParseJson(text) : {};
+      if (!response.ok) throw new Error(json.error ?? (text || `Request failed (${response.status})`));
 
       if (mode === 'preview') {
-        setPreview(json as EmailBlastPreview);
+        setPreview(json as unknown as EmailBlastPreview);
         setConfirmation('');
         setMessage('Blast preview loaded.');
       } else if (mode === 'test') {
@@ -727,10 +737,15 @@ function EmailBlastPanel() {
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-300">Subject</p>
             <p className="mt-1 text-lg font-semibold text-gray-100">{preview.subject}</p>
             <p className="mt-1 text-sm text-gray-500">{preview.previewText}</p>
-            <p className="mt-2 text-xs text-gray-500">
-              Public URL: <span className="font-mono text-teal-200">{preview.siteUrl}</span>
+          <p className="mt-2 text-xs text-gray-500">
+            Public URL: <span className="font-mono text-teal-200">{preview.siteUrl}</span>
+          </p>
+          {preview.recipientWarning && (
+            <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-xs text-amber-200">
+              {preview.recipientWarning}
             </p>
-          </div>
+          )}
+        </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">

@@ -56,139 +56,161 @@ interface ProfileLite {
 }
 
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({})) as RequestBody;
-  const mode = body.mode ?? 'preview';
+  try {
+    const body = await request.json().catch(() => ({})) as RequestBody;
+    const mode = body.mode ?? 'preview';
 
-  if (!['preview', 'test', 'send'].includes(mode)) {
-    return NextResponse.json({ error: 'Invalid mode' }, { status: 400 });
-  }
-  const campaignKey = getCampaignKey(body.campaign);
-  const campaign = getCampaign(campaignKey);
+    if (!['preview', 'test', 'send'].includes(mode)) {
+      return NextResponse.json({ error: 'Invalid mode' }, { status: 400 });
+    }
+    const campaignKey = getCampaignKey(body.campaign);
+    const campaign = getCampaign(campaignKey);
 
-  const admin = await requireAdmin();
-  if (!admin.ok) {
-    return NextResponse.json({ error: admin.error }, { status: admin.status });
-  }
+    const admin = await requireAdmin();
+    if (!admin.ok) {
+      return NextResponse.json({ error: admin.error }, { status: admin.status });
+    }
 
-  const siteUrl = getPublicEmailSiteUrl();
-  const service = createServiceClient();
-  const recipients = await getBlastRecipients(service);
-  const sample = recipients.slice(0, 8).map(recipient => ({
-    displayName: recipient.displayName,
-    email: maskEmail(recipient.email),
-  }));
-  const html = campaign.renderHtml({ siteUrl });
-  const text = campaign.renderText({ siteUrl });
+    const siteUrl = getPublicEmailSiteUrl();
+    const html = campaign.renderHtml({ siteUrl });
+    const text = campaign.renderText({ siteUrl });
 
-  if (mode === 'preview') {
+    if (mode === 'preview') {
+      const recipientPreview = await getRecipientPreview();
+      return NextResponse.json({
+        blastId: campaign.id,
+        subject: campaign.subject,
+        previewText: campaign.previewText,
+        siteUrl,
+        recipientCount: recipientPreview.recipientCount,
+        confirmationPhrase: campaign.confirmationPhrase,
+        sample: recipientPreview.sample,
+        recipientWarning: recipientPreview.warning,
+        html,
+        text,
+      });
+    }
+
+    const resend = getResendClient();
+    if (!resend) {
+      return NextResponse.json({ error: 'RESEND_API_KEY is not configured' }, { status: 500 });
+    }
+
+    if (mode === 'test') {
+      const testEmail = body.testEmail?.trim();
+      if (!testEmail || !isLikelyEmail(testEmail)) {
+        return NextResponse.json({ error: 'Enter a valid test email' }, { status: 400 });
+      }
+
+      await sendMarketingEmail({
+        to: testEmail,
+        subject: `[TEST] ${campaign.subject}`,
+        html,
+        text,
+        campaign: `${campaign.id}-test`,
+      });
+
+      return NextResponse.json({ sent: 1 });
+    }
+
+    const recipients = await getBlastRecipients(createServiceClient());
+    if (body.confirm !== campaign.confirmationPhrase) {
+      return NextResponse.json({
+        error: `Type "${campaign.confirmationPhrase}" to send this blast to all users.`,
+        confirmationPhrase: campaign.confirmationPhrase,
+        recipientCount: recipients.length,
+      }, { status: 400 });
+    }
+
+    if (recipients.length === 0) {
+      return NextResponse.json({ sent: 0, recipientCount: 0 });
+    }
+
+    const chunks = chunk(recipients, BATCH_SIZE);
+    let sent = 0;
+    const batchIds: string[] = [];
+    const { from, replyTo } = getMarketingEmailDefaults();
+
+    for (let index = 0; index < chunks.length; index += 1) {
+      const batch = chunks[index];
+      const { data, error } = await resend.batch.send(
+        batch.map(recipient => {
+          const unsubscribeToken = createMarketingUnsubscribeToken({ userId: recipient.userId, email: recipient.email });
+          const unsubscribeUrl = `${siteUrl}/api/email/unsubscribe/${encodeURIComponent(unsubscribeToken)}`;
+          return {
+            from,
+            to: [recipient.email],
+            replyTo,
+            subject: campaign.subject,
+            html: campaign.renderHtml({
+              recipientName: recipient.displayName,
+              siteUrl,
+              unsubscribeUrl,
+            }),
+            text: campaign.renderText({
+              recipientName: recipient.displayName,
+              siteUrl,
+              unsubscribeUrl,
+            }),
+            headers: getMarketingHeaders(campaign.id, unsubscribeUrl),
+            tags: getEmailTags('marketing', campaign.id, { user_id: recipient.userId }),
+          };
+        }),
+        {
+          batchValidation: 'strict',
+          idempotencyKey: `${campaign.id}/chunk-${index + 1}`,
+        },
+      );
+
+      if (error) {
+        return NextResponse.json({
+          error: error.message ?? JSON.stringify(error),
+          sent,
+          failedChunk: index + 1,
+          recipientCount: recipients.length,
+        }, { status: 502 });
+      }
+
+      const responseItems = Array.isArray(data) ? data as Array<{ id?: string }> : [];
+      sent += batch.length;
+      batchIds.push(...responseItems.map(item => item.id).filter((id): id is string => Boolean(id)));
+    }
+
     return NextResponse.json({
       blastId: campaign.id,
-      subject: campaign.subject,
-      previewText: campaign.previewText,
-      siteUrl,
+      sent,
       recipientCount: recipients.length,
-      confirmationPhrase: campaign.confirmationPhrase,
-      sample,
-      html,
-      text,
+      batches: chunks.length,
+      ids: batchIds,
     });
+  } catch (error) {
+    console.error('[email-blasts] request failed', error);
+    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
+}
 
-  const resend = getResendClient();
-  if (!resend) {
-    return NextResponse.json({ error: 'RESEND_API_KEY is not configured' }, { status: 500 });
-  }
-
-  if (mode === 'test') {
-    const testEmail = body.testEmail?.trim();
-    if (!testEmail || !isLikelyEmail(testEmail)) {
-      return NextResponse.json({ error: 'Enter a valid test email' }, { status: 400 });
-    }
-
-    await sendMarketingEmail({
-      to: testEmail,
-      subject: `[TEST] ${campaign.subject}`,
-      html,
-      text,
-      campaign: `${campaign.id}-test`,
-    });
-
-    return NextResponse.json({
-      sent: 1,
+async function getRecipientPreview(): Promise<{
+  recipientCount: number;
+  sample: Array<{ displayName: string | null; email: string }>;
+  warning?: string;
+}> {
+  try {
+    const recipients = await getBlastRecipients(createServiceClient());
+    return {
       recipientCount: recipients.length,
-      sample,
-    });
+      sample: recipients.slice(0, 8).map(recipient => ({
+        displayName: recipient.displayName,
+        email: maskEmail(recipient.email),
+      })),
+    };
+  } catch (error) {
+    console.error('[email-blasts] could not load preview recipients', error);
+    return {
+      recipientCount: 0,
+      sample: [],
+      warning: `Could not load recipient count: ${getErrorMessage(error)}`,
+    };
   }
-
-  if (body.confirm !== campaign.confirmationPhrase) {
-    return NextResponse.json({
-      error: `Type "${campaign.confirmationPhrase}" to send this blast to all users.`,
-      confirmationPhrase: campaign.confirmationPhrase,
-      recipientCount: recipients.length,
-    }, { status: 400 });
-  }
-
-  if (recipients.length === 0) {
-    return NextResponse.json({ sent: 0, recipientCount: 0 });
-  }
-
-  const chunks = chunk(recipients, BATCH_SIZE);
-  let sent = 0;
-  const batchIds: string[] = [];
-  const { from, replyTo } = getMarketingEmailDefaults();
-
-  for (let index = 0; index < chunks.length; index += 1) {
-    const batch = chunks[index];
-    const { data, error } = await resend.batch.send(
-      batch.map(recipient => {
-        const unsubscribeToken = createMarketingUnsubscribeToken({ userId: recipient.userId, email: recipient.email });
-        const unsubscribeUrl = `${siteUrl}/api/email/unsubscribe/${encodeURIComponent(unsubscribeToken)}`;
-        return {
-          from,
-          to: [recipient.email],
-          replyTo,
-          subject: campaign.subject,
-          html: campaign.renderHtml({
-            recipientName: recipient.displayName,
-            siteUrl,
-            unsubscribeUrl,
-          }),
-          text: campaign.renderText({
-            recipientName: recipient.displayName,
-            siteUrl,
-            unsubscribeUrl,
-          }),
-          headers: getMarketingHeaders(campaign.id, unsubscribeUrl),
-          tags: getEmailTags('marketing', campaign.id, { user_id: recipient.userId }),
-        };
-      }),
-      {
-        batchValidation: 'strict',
-        idempotencyKey: `${campaign.id}/chunk-${index + 1}`,
-      },
-    );
-
-    if (error) {
-      return NextResponse.json({
-        error: error.message ?? JSON.stringify(error),
-        sent,
-        failedChunk: index + 1,
-        recipientCount: recipients.length,
-      }, { status: 502 });
-    }
-
-    const responseItems = Array.isArray(data) ? data as Array<{ id?: string }> : [];
-    sent += batch.length;
-    batchIds.push(...responseItems.map(item => item.id).filter((id): id is string => Boolean(id)));
-  }
-
-  return NextResponse.json({
-    blastId: campaign.id,
-    sent,
-    recipientCount: recipients.length,
-    batches: chunks.length,
-    ids: batchIds,
-  });
 }
 
 function getCampaignKey(campaign: unknown): Campaign {
@@ -343,6 +365,10 @@ function chunk<T>(items: T[], size: number): T[][] {
 
 function isLikelyEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Email blast request failed.';
 }
 
 function maskEmail(email: string): string {
