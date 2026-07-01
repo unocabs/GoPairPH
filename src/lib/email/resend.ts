@@ -44,14 +44,14 @@ export function getResendClient(): Resend | null {
 
 export function getTransactionalEmailDefaults() {
   return {
-    from: process.env.RESEND_TRANSACTIONAL_FROM ?? 'Go Pair PH <notifications@notify.gopairph.com>',
+    from: process.env.RESEND_TRANSACTIONAL_FROM ?? 'Go Pair PH <notifications@gopairph.com>',
     replyTo: process.env.RESEND_REPLY_TO_EMAIL ?? 'hello@gopairph.com',
   };
 }
 
 export function getMarketingEmailDefaults() {
   return {
-    from: process.env.RESEND_MARKETING_FROM ?? 'Go Pair PH <news@news.gopairph.com>',
+    from: process.env.RESEND_MARKETING_FROM ?? 'Go Pair PH <news@gopairph.com>',
     replyTo: process.env.RESEND_REPLY_TO_EMAIL ?? 'hello@gopairph.com',
   };
 }
