@@ -35,6 +35,22 @@ interface AdminDashboardProps {
 type Tab = 'promotions' | 'pending' | 'verified' | 'shops' | 'soldListings' | 'views' | 'leadReports' | 'listingReports' | 'emailBlast' | 'settings';
 const ACCEPTED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
+function formatTabLabel(label: string, count: number): string {
+  return count > 0 ? `${label} (${count})` : label;
+}
+
+function getTodayViewedListingCount(listings: ListingViewSummary[], today: string): number {
+  return listings.filter(listing => listing.dailyViews.some(day => day.date === today && day.views > 0)).length;
+}
+
+function getPendingPromotionReviewCount(
+  promotions: FeaturedPromotionOrder[],
+  sponsoredPromotions: SponsoredPromotionOrder[]
+): number {
+  return promotions.filter(order => order.source === 'paid' && order.review_status === 'pending').length
+    + sponsoredPromotions.filter(order => order.review_status === 'pending').length;
+}
+
 const LEAD_REPORT_REASON_LABELS: Record<WishlistOfferReportReason, string> = {
   unavailable_or_sold: 'Unavailable or sold',
   price_changed: 'Price changed',
@@ -125,20 +141,22 @@ export function AdminDashboard({
 }: AdminDashboardProps) {
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>(searchParams.get('tab') === 'promotions' ? 'promotions' : 'views');
+  const todayViewedListingCount = getTodayViewedListingCount(listingViews, viewWindow.endDate);
+  const pendingPromotionReviewCount = getPendingPromotionReviewCount(promotions, sponsoredPromotions);
 
   return (
     <div>
       {/* Tabs */}
       <div className="mb-6 flex gap-1 overflow-x-auto border-b border-gray-800">
         {([
-          { key: 'views', label: `Listing views (${listingViews.length})` },
-          { key: 'promotions', label: `Promotions (${promotions.filter(order => order.status === 'active' || order.status === 'queued' || order.review_status === 'pending').length + sponsoredPromotions.filter(order => order.status === 'active' || order.review_status === 'pending').length})` },
-          { key: 'pending', label: `Pending (${pending.length})` },
-          { key: 'verified', label: `Verified users (${verified.length})` },
-          { key: 'shops', label: `Shops (${shops.length})` },
-          { key: 'soldListings', label: `Closed listings (${soldListings.length})` },
-          { key: 'listingReports', label: `Listing reports (${listingReports.length})` },
-          { key: 'leadReports', label: `Lead reports (${leadReports.length})` },
+          { key: 'views', label: formatTabLabel('Listing views', todayViewedListingCount) },
+          { key: 'promotions', label: formatTabLabel('Promotions', pendingPromotionReviewCount) },
+          { key: 'pending', label: formatTabLabel('Pending', pending.length) },
+          { key: 'verified', label: 'Verified users' },
+          { key: 'shops', label: 'Shops' },
+          { key: 'soldListings', label: 'Closed listings' },
+          { key: 'listingReports', label: formatTabLabel('Listing reports', listingReports.length) },
+          { key: 'leadReports', label: formatTabLabel('Lead reports', leadReports.length) },
           { key: 'emailBlast', label: 'Email blast' },
           { key: 'settings', label: 'Settings' },
         ] as const).map(({ key, label }) => (
@@ -904,7 +922,7 @@ function SoldListingsPanel({ listings }: { listings: Shoe[] }) {
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
-        <p className="text-sm font-semibold text-gray-100">Recent closed listings</p>
+        <p className="text-sm text-gray-300">Closed listings: {listings.length}</p>
         <p className="mt-1 text-xs text-gray-500">
           Showing the latest 10 sold, reserved, or claimed listings. This matches the homepage activity count.
         </p>
@@ -1642,6 +1660,7 @@ function ShopsPanel({ shops, profiles }: { shops: ShopWithOwner[]; profiles: Pro
           </div>
         ) : (
           <div className="space-y-3">
+            <p className="text-sm text-gray-300">Shops: {shops.length}</p>
             {shops.map(shop => (
               <div key={shop.id} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -1826,6 +1845,7 @@ function VerifiedList({ users, verificationProofs }: { users: Profile[]; verific
 
   return (
     <div className="space-y-3">
+      <p className="text-sm text-gray-300">Verified Users: {users.length}</p>
       {users.map(u => {
         const proof = proofByProfileId.get(u.id);
         const facebookUrl = getFacebookContactUrl(u.fb_username);
