@@ -134,6 +134,7 @@ export async function getListingViewSummaries({
       .from('listing_view_totals')
       .select('listing_id, total_views, shoes!inner(id, slug, brand, model, profiles(display_name), shops(name))')
       .gt('total_views', 0)
+      .eq('shoes.status', 'active')
       .order('total_views', { ascending: false })
       .limit(limit),
     service
