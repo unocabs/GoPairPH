@@ -72,7 +72,7 @@ function MiniListingCard({ shoe }: { shoe: Shoe }) {
     ? getPublicUrl(supabaseUrl, image.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.miniListing)
     : null;
   const title = formatListingName(shoe.brand, shoe.model);
-  const size = shoe.shop_id
+  const size = shoe.shop_id && shoe.inventory_mode === 'multi'
     ? getVariantSizeLabel(shoe)
     : formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type);
   const price = shoe.listing_type === 'donate'

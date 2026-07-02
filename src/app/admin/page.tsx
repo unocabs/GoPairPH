@@ -6,7 +6,8 @@ import { AdminDashboard } from './AdminDashboard';
 import { getDashboardViewWindow, getListingViewSummaries } from '@/lib/listingViews';
 import { FEATURED_PAYMENT_PROOF_BUCKET } from '@/lib/featuredPromotions';
 import { SPONSORED_PAYMENT_PROOF_BUCKET } from '@/lib/sponsoredPromotions';
-import type { FeaturedPromotionOrder, ListingReport, VerificationRequest, Profile, Shoe, Shop, SponsoredPromotionOrder, WishlistItem, WishlistOffer, WishlistOfferReport } from '@/types';
+import { buildBuybackRelistDescription } from '@/lib/buybackInventory';
+import type { BuybackInventoryItem, BuybackOffer, FeaturedPromotionOrder, ListingReport, VerificationRequest, Profile, Shoe, Shop, SponsoredPromotionOrder, WishlistItem, WishlistOffer, WishlistOfferReport } from '@/types';
 
 type PairRequestSummary = Pick<WishlistItem, 'id' | 'brand' | 'model'>;
 
@@ -91,6 +92,57 @@ async function loadOpenListingReports(): Promise<ListingReport[]> {
   }));
 }
 
+async function loadBuybackOffers(): Promise<BuybackOffer[]> {
+  const service = createServiceClient();
+  const { data, error } = await service
+    .from('buyback_offers')
+    .select('*, listing:shoes!buyback_offers_listing_id_fkey(*, shoe_images(*)), seller:profiles!buyback_offers_seller_id_fkey(*), proofs:buyback_offer_proofs(*), events:buyback_offer_events(*)')
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) {
+    console.warn('[admin] could not load buyback offers:', error.message);
+    return [];
+  }
+  const offers = (data ?? []) as unknown as BuybackOffer[];
+  const listingIds = Array.from(new Set(offers.map(offer => offer.listing_id)));
+  const pendingCounts = new Map<string, number>();
+  if (listingIds.length > 0) {
+    const { data: requests } = await service.from('purchase_requests').select('listing_id').in('listing_id', listingIds).eq('status', 'pending');
+    for (const request of requests ?? []) pendingCounts.set(request.listing_id, (pendingCounts.get(request.listing_id) ?? 0) + 1);
+  }
+  return Promise.all(offers.map(async offer => ({
+    ...offer,
+    pending_buyer_offer_count: pendingCounts.get(offer.listing_id) ?? 0,
+    proofs: await Promise.all((offer.proofs ?? []).map(async proof => {
+      const { data: signed } = await service.storage.from('buyback-proofs').createSignedUrl(proof.storage_path, 60 * 60);
+      return { ...proof, signed_url: signed?.signedUrl ?? null };
+    })),
+    events: [...(offer.events ?? [])].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+  })));
+}
+
+async function loadBuybackInventory(): Promise<BuybackInventoryItem[]> {
+  const service = createServiceClient();
+  const { data, error } = await service
+    .from('buyback_inventory_items')
+    .select('*, source_listing:shoes!buyback_inventory_items_source_listing_id_fkey(*, shoe_images(*)), resale_listing:shoes!buyback_inventory_items_resale_listing_id_fkey(*, shoe_images(*)), assigned_shop:shops!buyback_inventory_items_assigned_shop_id_fkey(*), offer:buyback_offers!buyback_inventory_items_offer_id_fkey(*), photos:buyback_inventory_photos(*), events:buyback_inventory_events(*)')
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) {
+    console.warn('[admin] could not load buyback inventory:', error.message);
+    return [];
+  }
+  return ((data ?? []) as unknown as BuybackInventoryItem[]).map(item => ({
+    ...item,
+    relist_snapshot: {
+      ...item.relist_snapshot,
+      description: typeof item.relist_snapshot.description === 'string' && item.relist_snapshot.description.trim()
+        ? item.relist_snapshot.description
+        : buildBuybackRelistDescription(item.relist_snapshot),
+    },
+  }));
+}
+
 async function loadAdminData() {
   const supabase = createClient();
   const service = createServiceClient();
@@ -109,7 +161,7 @@ async function loadAdminData() {
   await service.rpc('reconcile_featured_promotions');
   await service.rpc('reconcile_sponsored_promotions');
 
-  const [pendingRes, verifiedRes, approvedVerificationRes, shopsRes, profilesRes, soldListingsRes, promotionsRes, sponsoredPromotionsRes, listingViews, leadReports, listingReports, siteSettingsRes] = await Promise.all([
+  const [pendingRes, verifiedRes, approvedVerificationRes, shopsRes, receivingShopsRes, profilesRes, soldListingsRes, promotionsRes, sponsoredPromotionsRes, listingViews, leadReports, listingReports, buybackOffers, buybackInventory, siteSettingsRes] = await Promise.all([
     supabase
       .from('verification_requests')
       .select('*, profiles:profiles!user_id(*)')
@@ -130,6 +182,7 @@ async function loadAdminData() {
       .from('shops')
       .select('*, owner:profiles!shops_owner_profile_id_fkey(id, display_name, location_city, location_province, location_region)')
       .order('created_at', { ascending: false }),
+    service.from('buyback_receiving_shops').select('shop_id, enabled'),
     supabase
       .from('profiles')
       .select('id, user_id, display_name, location_city, location_province, location_region, avatar_url, fb_username, is_verified, is_admin, created_at, updated_at')
@@ -153,6 +206,8 @@ async function loadAdminData() {
     getListingViewSummaries({ ...viewWindow, limit: 100 }),
     loadOpenLeadReports(),
     loadOpenListingReports(),
+    loadBuybackOffers(),
+    loadBuybackInventory(),
     service
       .from('site_settings')
       .select('show_homepage_activity_publicly')
@@ -177,11 +232,16 @@ async function loadAdminData() {
     return { ...order, proof_signed_url: data?.signedUrl ?? null };
   }));
 
+  const enabledReceivingShopIds = new Set((receivingShopsRes.data ?? []).filter(row => row.enabled).map(row => row.shop_id));
+
   return {
     pending: (pendingRes.data as VerificationRequest[]) ?? [],
     verified: (verifiedRes.data as Profile[]) ?? [],
     verifiedProofs: (approvedVerificationRes.data as VerificationRequest[]) ?? [],
-    shops: (shopsRes.data as (Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location_city' | 'location_province' | 'location_region'> | null })[]) ?? [],
+    shops: (((shopsRes.data as (Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location_city' | 'location_province' | 'location_region'> | null })[]) ?? []).map(shop => ({
+      ...shop,
+      buyback_receiving_enabled: enabledReceivingShopIds.has(shop.id),
+    }))),
     profiles: (profilesRes.data as Profile[]) ?? [],
     soldListings: ((soldListingsRes.data ?? []) as unknown as Shoe[]),
     promotions: promotionsWithProofs,
@@ -189,6 +249,8 @@ async function loadAdminData() {
     listingViews,
     leadReports,
     listingReports,
+    buybackOffers,
+    buybackInventory,
     siteSettings: {
       showHomepageActivityPublicly: Boolean(siteSettingsRes.data?.show_homepage_activity_publicly),
     },

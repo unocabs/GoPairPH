@@ -4,6 +4,7 @@ export type ViewType = 'top' | 'sole' | 'front' | 'left' | 'right' | 'back';
 export type ListingStatus = 'active' | 'reserved' | 'sold' | 'donated' | 'archived';
 export type ClosedSaleChannel = 'go_pair' | 'outside_go_pair';
 export type UsSizeType = 'mens' | 'womens' | 'unisex' | 'unknown';
+export type InventoryMode = 'single' | 'multi';
 
 export interface Profile {
   id: string;
@@ -71,6 +72,7 @@ export interface Shop {
   status: ShopStatus;
   created_at: string;
   updated_at: string;
+  buyback_receiving_enabled?: boolean;
 }
 
 export interface ShopCarouselItem {
@@ -130,6 +132,8 @@ export interface Shoe {
   quantity: number;
   listed_in_main_feed: boolean;
   has_stock: boolean;
+  inventory_mode: InventoryMode;
+  inspected_by_go_pair_at: string | null;
   shops?: Shop | null;
   shoe_variants?: ShoeVariant[];
 }
@@ -277,6 +281,151 @@ export interface PurchaseRequest {
   profiles?: Profile; // buyer
   listing?: Shoe;
   shoe_variants?: ShoeVariant | null;
+}
+
+export type BuybackOfferStatus =
+  | 'pending'
+  | 'accepted'
+  | 'declined'
+  | 'cancelled'
+  | 'expired'
+  | 'shipped'
+  | 'delivered'
+  | 'completed'
+  | 'disputed';
+
+export type BuybackProofKind =
+  | 'receipt'
+  | 'label'
+  | 'sides'
+  | 'heel'
+  | 'ownership'
+  | 'box_label'
+  | 'booking_confirmation'
+  | 'unboxing_evidence';
+
+export interface BuybackOfferProof {
+  id: string;
+  offer_id: string;
+  kind: BuybackProofKind;
+  storage_path: string;
+  original_name: string | null;
+  mime_type: string | null;
+  signed_url?: string | null;
+  created_at: string;
+}
+
+export interface BuybackOfferEvent {
+  id: string;
+  offer_id: string;
+  actor_profile_id: string | null;
+  event_type: string;
+  note: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface BuybackOffer {
+  id: string;
+  listing_id: string;
+  seller_id: string;
+  status: BuybackOfferStatus;
+  attempt_number: number;
+  original_price_php: number;
+  purchase_date: string;
+  has_box: boolean;
+  has_visible_flaws: boolean;
+  flaw_notes: string | null;
+  seller_note: string | null;
+  proposed_ship_date: string;
+  retail_basis_php: number;
+  fast_sale_estimate_php: number;
+  quoted_price_php: number;
+  pricing_version: string;
+  pricing_snapshot: Record<string, unknown>;
+  proof_code: string;
+  acknowledgements: Record<string, boolean>;
+  admin_note: string | null;
+  decline_reason: string | null;
+  review_checklist: Record<string, boolean>;
+  checklist_version: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  recipient_name: string | null;
+  recipient_phone: string | null;
+  recipient_address: string | null;
+  accepted_at: string | null;
+  expires_at: string | null;
+  shipping_reminder_sent_at: string | null;
+  tracking_number: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  cod_paid_php: number | null;
+  delivery_checklist: Record<string, boolean>;
+  completed_at: string | null;
+  disputed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  proofs?: BuybackOfferProof[];
+  events?: BuybackOfferEvent[];
+  listing?: Shoe | null;
+  seller?: Profile | null;
+  pending_buyer_offer_count?: number;
+}
+
+export type BuybackInventoryStatus = 'ready_to_assign' | 'preparing' | 'listed' | 'sold' | 'held';
+export type BuybackPhotoCopyStatus = 'pending' | 'copying' | 'ready' | 'failed';
+
+export interface BuybackInventoryPhoto {
+  id: string;
+  inventory_id: string;
+  source_storage_path: string;
+  copied_storage_path: string | null;
+  view_type: ViewType;
+  display_order: number;
+  copy_status: Exclude<BuybackPhotoCopyStatus, 'copying'>;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BuybackInventoryEvent {
+  id: string;
+  inventory_id: string;
+  actor_profile_id: string | null;
+  event_type: string;
+  note: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface BuybackInventoryItem {
+  id: string;
+  offer_id: string;
+  source_listing_id: string;
+  status: BuybackInventoryStatus;
+  acquisition_cost_php: number;
+  minimum_resale_price_php: number;
+  assigned_shop_id: string | null;
+  resale_listing_id: string | null;
+  relist_snapshot: Record<string, unknown>;
+  photo_copy_status: BuybackPhotoCopyStatus;
+  photo_copy_error: string | null;
+  acquired_by: string | null;
+  assigned_by: string | null;
+  published_by: string | null;
+  acquired_at: string;
+  assigned_at: string | null;
+  published_at: string | null;
+  sold_at: string | null;
+  created_at: string;
+  updated_at: string;
+  source_listing?: Shoe | null;
+  resale_listing?: Shoe | null;
+  assigned_shop?: Shop | null;
+  offer?: BuybackOffer | null;
+  photos?: BuybackInventoryPhoto[];
+  events?: BuybackInventoryEvent[];
 }
 
 export interface SavedListing {

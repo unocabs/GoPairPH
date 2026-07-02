@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { getOfferCount } from '@/lib/offers';
 import { PhotoGallery } from '@/components/listings/PhotoGallery';
 import { ShopLogoOverlay } from '@/components/shop/ShopLogoOverlay';
@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/Badge';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
 import { formatMileage, formatPrice, formatProfileLocation, formatSize, formatRelativeDate, getPublicUrl, formatListingName, getListingPath, getAbsoluteListingUrl, getListingFreshnessDate, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { cn } from '@/lib/utils';
-import type { Shoe, PurchaseRequest } from '@/types';
+import type { Shoe, PurchaseRequest, BuybackOffer } from '@/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { StatusButton } from './StatusButton';
 import { CompleteSaleButtons } from './CompleteSaleButtons';
@@ -53,6 +53,9 @@ import { getCompletedSalesCount } from '@/lib/sales';
 import { getListingCompletenessItems, getListingCompletenessScore, getListingTrustSignals } from '@/lib/listingTrust';
 import { getGreatDealEstimate } from '@/lib/pricing/greatDeal';
 import type { Profile } from '@/types';
+import { BuybackOfferPanel } from '@/components/listings/BuybackOfferPanel';
+import { calculateMaximumBuybackQuote, getBuybackShipDateBounds, type BuybackQuote } from '@/lib/pricing/buyback';
+import { toSellerBuybackOffer } from '@/lib/buyback';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -60,6 +63,34 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 function getSchemaCondition(condition: Shoe['condition']): string {
   if (condition === 'new') return 'https://schema.org/NewCondition';
   return 'https://schema.org/UsedCondition';
+}
+
+function AdminBuybackEstimate({ originalPricePhp, quote }: { originalPricePhp: number | null; quote: BuybackQuote | null }) {
+  const label = originalPricePhp == null
+    ? 'GP offer: add original price'
+    : quote && !quote.eligible
+      ? 'GP offer: below ₱500'
+      : quote
+        ? `GP offer up to ${formatPrice(quote.quotedPricePhp)}`
+        : 'GP offer unavailable';
+
+  const explanation = originalPricePhp == null
+    ? 'The seller must add the original price before Go Pair PH can calculate a buyback offer.'
+    : quote && !quote.eligible
+      ? 'Even the maximum estimate falls below the current ₱500 minimum buyback offer.'
+      : 'Maximum estimate assumes the shoes were purchased within three months, include the original box and valid receipt, and have no visible flaws. The seller’s actual offer may be lower.';
+
+  return (
+    <details className="relative">
+      <summary className="list-none cursor-pointer rounded-full border border-teal-400/30 bg-teal-500/10 px-2.5 py-1 text-[11px] font-bold leading-none text-teal-200 transition-colors hover:bg-teal-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/70 [&::-webkit-details-marker]:hidden">
+        {label}
+      </summary>
+      <div className="absolute right-0 top-full z-30 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-teal-400/20 bg-slate-950 p-3 text-left text-xs font-normal leading-5 text-gray-300 shadow-2xl">
+        <p className="font-semibold text-teal-200">Admin estimate only</p>
+        <p className="mt-1">{explanation}</p>
+      </div>
+    </details>
+  );
 }
 
 function SellerTrustPanel({ seller, completedSales }: { seller: Profile; completedSales: number }) {
@@ -197,6 +228,19 @@ async function getGpCoinBalance(profileId: string | null): Promise<number> {
     .eq('profile_id', profileId)
     .maybeSingle();
   return Math.max(0, Number(data?.available_balance ?? 0));
+}
+
+async function getLatestBuybackOffer(listingId: string, sellerId: string): Promise<BuybackOffer | null> {
+  const service = createServiceClient();
+  const { data } = await service
+    .from('buyback_offers')
+    .select('*')
+    .eq('listing_id', listingId)
+    .eq('seller_id', sellerId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data as BuybackOffer | null;
 }
 
 const listingDiscoverySelect = '*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)';
@@ -379,12 +423,23 @@ export default async function ListingDetailPage({ params, searchParams }: { para
     ? Math.max(0, Math.round(((shoe.srp_php - shoe.price_php) / shoe.srp_php) * 100))
     : 0;
   const greatDeal = getGreatDealEstimate(shoe);
+  const canShowAdminBuybackEstimate = isAdmin && !isOwner && shoe.status === 'active' && shoe.listing_type === 'for_sale' && !shoe.shop_id;
+  const maximumBuybackQuote = canShowAdminBuybackEstimate && shoe.srp_php != null && shoe.srp_php > 0 && shoe.price_php != null && shoe.price_php > 0
+    ? calculateMaximumBuybackQuote({
+        originalPricePhp: shoe.srp_php,
+        listingPricePhp: shoe.price_php,
+        condition: shoe.condition,
+        mileageKm: shoe.mileage_km,
+      })
+    : null;
 
   const now = new Date();
   const isSponsored = !!shoe.sponsored_until && new Date(shoe.sponsored_until) > now;
   const isFeatured = !!shoe.featured_until && new Date(shoe.featured_until) > now;
   const slotInfo = isOwner ? await getSponsoredSlotInfo() : null;
   const gpCoinBalance = isOwner ? await getGpCoinBalance(currentProfileId) : 0;
+  const latestBuybackOffer = isOwner ? await getLatestBuybackOffer(shoe.id, shoe.seller_id) : null;
+  const buybackShipDateBounds = getBuybackShipDateBounds();
   const listingName = formatListingName(shoe.brand, shoe.model);
   const justListed = isOwner && searchParams?.listed === '1';
   const justUpdated = isOwner && searchParams?.updated === '1';
@@ -447,7 +502,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   );
   const renderBuyerCtas = (className = '') => (
     <div className={className}>
-      {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && !shoe.shop_id && (
+      {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && (!shoe.shop_id || shoe.inventory_mode === 'single') && (
         <div className="mt-4 space-y-2">
           <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
             {canAskSeller && (
@@ -480,10 +535,12 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               pricePhp={shoe.price_php}
               isNegotiable={shoe.is_negotiable}
               seller={seller ?? undefined}
+              shop={shoe.shop_id ? shoe.shops : undefined}
               offerCount={offerCount}
               buyerProfileId={currentProfileId}
               buyerFbUsername={currentProfileFbUsername}
               showOfferCount={false}
+              label={shoe.shop_id ? 'Place Order' : undefined}
               className="w-full rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
             />
           </div>
@@ -494,7 +551,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           )}
         </div>
       )}
-      {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && shoe.shop_id && shoe.has_stock && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
+      {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && shoe.shop_id && shoe.inventory_mode === 'multi' && shoe.has_stock && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
         <div className="mt-4 space-y-2">
           <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
             {canAskSeller && (
@@ -607,7 +664,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   );
 
   const renderOwnerCtas = (className = '', autoOpenPromotion = true) => (
-    <div className={cn('grid gap-2 sm:grid-flow-col sm:auto-cols-fr', className)}>
+    <div className={cn('space-y-2', className)}>
       {shoe.status === 'active' && slotInfo && (
         <PromoteListingButton
           listingId={shoe.id}
@@ -623,16 +680,35 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           autoOpenFromSearchParams={autoOpenPromotion}
         />
       )}
-      {shoe.status === 'active' && (
-        <Link
-          href={`/listings/${shoe.id}/edit`}
-          className="inline-flex w-full items-center justify-center rounded-lg border border-gray-700 bg-transparent px-4 py-2 text-base font-medium text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-100 sm:text-sm"
-        >
-          Edit Listing
-        </Link>
-      )}
+      <div className={cn('grid gap-2', shoe.status === 'active' ? 'grid-cols-2' : 'grid-cols-1')}>
+        {shoe.status === 'active' && (
+          <Link
+            href={`/listings/${shoe.id}/edit`}
+            className="inline-flex w-full items-center justify-center rounded-xl border border-indigo-500/35 bg-indigo-950/80 px-4 py-3 text-sm font-bold text-indigo-100 shadow-lg shadow-black/10 transition-colors hover:border-indigo-400/50 hover:bg-indigo-900"
+          >
+            Edit Listing
+          </Link>
+        )}
+        <OwnerMoreActions shoeId={shoe.id} listingType={shoe.listing_type} status={shoe.status} />
+      </div>
       <StatusButton shoeId={shoe.id} currentStatus={shoe.status} listingType={shoe.listing_type} />
-      <OwnerMoreActions shoeId={shoe.id} listingType={shoe.listing_type} status={shoe.status} />
+      {shoe.listing_type === 'for_sale' && !shoe.shop_id && (shoe.status === 'active' || latestBuybackOffer) && (
+        <BuybackOfferPanel
+          listing={{
+            id: shoe.id,
+            condition: shoe.condition,
+            mileage_km: shoe.mileage_km,
+            price_php: shoe.price_php,
+            srp_php: shoe.srp_php,
+          }}
+          isVerified={isVerified}
+          canSubmit={shoe.status === 'active'}
+          hasRequiredPhotos={Boolean(shoe.shoe_images?.some(image => image.view_type === 'top') && shoe.shoe_images?.some(image => image.view_type === 'sole'))}
+          existingOffer={latestBuybackOffer ? toSellerBuybackOffer(latestBuybackOffer) : null}
+          shipDateMin={buybackShipDateBounds.min}
+          shipDateMax={buybackShipDateBounds.max}
+        />
+      )}
     </div>
   );
 
@@ -789,6 +865,9 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               <FeaturedPill featuredUntil={shoe.featured_until} />
             )}
             {isSponsored && <SponsoredPill />}
+            {shoe.inspected_by_go_pair_at && (
+              <Badge className="border border-teal-400/30 bg-teal-500/10 text-teal-100">✓ Inspected by Go Pair PH</Badge>
+            )}
             {canSeeQualityFlag && <FlaggedPill />}
           </div>
 
@@ -857,16 +936,21 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                     </span>
                   )}
                 </div>
-                {showSrp && (
+                {(showSrp || canShowAdminBuybackEstimate) && (
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-500 line-through">
-                      {formatPrice(shoe.srp_php)}
-                    </span>
-                    {discountPercent > 0 && (
-                      <span className="text-xs font-bold uppercase leading-none text-red-400">
-                        {discountPercent}% OFF
-                      </span>
+                    {showSrp && (
+                      <>
+                        <span className="text-sm font-medium text-gray-500 line-through">
+                          {formatPrice(shoe.srp_php)}
+                        </span>
+                        {discountPercent > 0 && (
+                          <span className="text-xs font-bold uppercase leading-none text-red-400">
+                            {discountPercent}% OFF
+                          </span>
+                        )}
+                      </>
                     )}
+                    {canShowAdminBuybackEstimate && <AdminBuybackEstimate originalPricePhp={shoe.srp_php} quote={maximumBuybackQuote} />}
                   </div>
                 )}
               </div>
@@ -887,7 +971,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           </div>
 
           {/* Available sizes — shop variant listings only */}
-          {shoe.shop_id && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
+          {shoe.shop_id && shoe.inventory_mode === 'multi' && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
             <div className="mt-5 rounded-xl border border-white/[0.08] bg-slate-950/55">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
                 <h3 className="text-sm font-semibold text-gray-100">Available sizes</h3>
@@ -923,8 +1007,8 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           {/* Specs */}
           <dl className="mt-6 grid grid-cols-2 gap-3 rounded-xl border border-white/[0.08] bg-slate-950/55 p-4">
             {[
-              ...(shoe.shop_id ? [] : [{ label: 'Size', value: formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type) }]),
-              ...(shoe.shop_id ? [] : [{ label: 'Mileage', value: formatMileage(shoe.mileage_km) }]),
+              ...(shoe.shop_id && shoe.inventory_mode === 'multi' ? [] : [{ label: 'Size', value: formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type) }]),
+              ...(shoe.shop_id && shoe.inventory_mode === 'multi' ? [] : [{ label: 'Mileage', value: formatMileage(shoe.mileage_km) }]),
               { label: 'Brand', value: shoe.brand === 'Other' ? shoe.model : shoe.brand },
               { label: 'Model', value: shoe.model },
               { label: 'Color', value: shoe.color },

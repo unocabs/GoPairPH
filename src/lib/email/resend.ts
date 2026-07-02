@@ -5,6 +5,7 @@ let cached: Resend | null = null;
 
 export type TransactionalEmailCategory =
   | 'admin_notification'
+  | 'buyback_offer'
   | 'featured_promotion'
   | 'feedback'
   | 'listing_milestone'

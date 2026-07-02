@@ -40,7 +40,7 @@ type EditablePhoto = UploadedPhoto & {
   id?: string;
 };
 
-export function EditListingForm({ shoe, renewAfterSave = false }: { shoe: Shoe; renewAfterSave?: boolean }) {
+export function EditListingForm({ shoe, renewAfterSave = false, canChangeStockMode = false }: { shoe: Shoe; renewAfterSave?: boolean; canChangeStockMode?: boolean }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -48,6 +48,9 @@ export function EditListingForm({ shoe, renewAfterSave = false }: { shoe: Shoe; 
 
   const [listedInMainFeed, setListedInMainFeed] = useState<boolean>(shoe.listed_in_main_feed ?? true);
   const isShopListing = !!shoe.shop_id;
+  const initialStockMode = shoe.inventory_mode ?? 'multi';
+  const [stockMode, setStockMode] = useState<'single' | 'multi'>(initialStockMode);
+  const isMultiStock = isShopListing && stockMode === 'multi';
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
   const [photos, setPhotos] = useState<EditablePhoto[]>(() =>
     (shoe.shoe_images ?? [])
@@ -62,7 +65,7 @@ export function EditListingForm({ shoe, renewAfterSave = false }: { shoe: Shoe; 
   );
 
   const [variants, setVariants] = useState<VariantRow[]>(() =>
-    isShopListing
+    isMultiStock
       ? (shoe.shoe_variants ?? [])
           .slice()
           .sort((a, b) => a.size_eu - b.size_eu)
@@ -90,9 +93,9 @@ export function EditListingForm({ shoe, renewAfterSave = false }: { shoe: Shoe; 
       srp_php: shoe.srp_php ?? undefined,
       is_negotiable: shoe.is_negotiable,
       description: shoe.description ?? undefined,
-      // For shop listings, satisfy the schema's "at least one size" check with a
+      // For multi-stock shop listings, satisfy the schema's size check with a
       // placeholder; the value isn't persisted (size lives on shoe_variants).
-      size_eu: isShopListing ? 99 : (shoe.size_eu ?? undefined),
+      size_eu: isMultiStock ? 99 : (shoe.size_eu ?? undefined),
       size_us: shoe.size_us ?? undefined,
       size_cm: shoe.size_cm ?? undefined,
       us_size_type: shoe.us_size_type ?? 'mens',
@@ -100,12 +103,14 @@ export function EditListingForm({ shoe, renewAfterSave = false }: { shoe: Shoe; 
   });
 
   useEffect(() => {
-    if (isShopListing) {
+    if (isMultiStock) {
       setValue('size_eu', 99);
+    }
+    if (isShopListing) {
       setValue('listing_type', 'for_sale');
       setValue('is_negotiable', false);
     }
-  }, [isShopListing, setValue]);
+  }, [isMultiStock, isShopListing, setValue]);
 
   const listingType = watch('listing_type');
   const condition = watch('condition');
@@ -165,6 +170,31 @@ export function EditListingForm({ shoe, renewAfterSave = false }: { shoe: Shoe; 
     }
   }
 
+  function handleStockModeChange(nextMode: 'single' | 'multi') {
+    if (!canChangeStockMode || nextMode === stockMode) return;
+    if (nextMode === 'single') {
+      const first = variants.find(variant => typeof variant.size_eu === 'number') ?? variants[0];
+      setValue('size_eu', typeof first?.size_eu === 'number' ? first.size_eu : undefined, { shouldValidate: true });
+      setValue('size_us', typeof first?.size_us === 'number' ? first.size_us : undefined);
+      setValue('size_cm', typeof first?.size_cm === 'number' ? first.size_cm : undefined);
+      setValue('us_size_type', first?.us_size_type ?? 'mens');
+    } else {
+      const currentEu = toOptionalNumber(watch('size_eu'));
+      if (variants.length === 0 && currentEu != null) {
+        setVariants([{
+          id: null,
+          size_eu: currentEu,
+          size_us: toOptionalNumber(watch('size_us')) ?? '',
+          size_cm: toOptionalNumber(watch('size_cm')) ?? '',
+          us_size_type: watch('us_size_type') ?? 'mens',
+          quantity: 1,
+        }]);
+      }
+      setValue('size_eu', 99, { shouldValidate: true });
+    }
+    setStockMode(nextMode);
+  }
+
   async function onSubmit(data: ListingFormData) {
     setSubmitting(true);
     setError(null);
@@ -193,7 +223,7 @@ export function EditListingForm({ shoe, renewAfterSave = false }: { shoe: Shoe; 
           order: row.order,
         }));
 
-      if (isShopListing) {
+      if (isMultiStock) {
         const seen = new Set<number>();
         for (const v of variants) {
           if (typeof v.size_eu !== 'number' || isNaN(v.size_eu)) {
@@ -209,6 +239,7 @@ export function EditListingForm({ shoe, renewAfterSave = false }: { shoe: Shoe; 
         }
       }
 
+      const stockModeChanged = isShopListing && stockMode !== initialStockMode;
       const { error: err } = await supabase
         .from('shoes')
         .update({
@@ -219,17 +250,40 @@ export function EditListingForm({ shoe, renewAfterSave = false }: { shoe: Shoe; 
           srp_php: isShopListing || data.listing_type === 'for_sale' ? (data.srp_php ?? null) : null,
           is_negotiable: isShopListing ? false : (data.listing_type === 'for_sale' ? !!data.is_negotiable : false),
           description: data.description,
-          size_eu: isShopListing ? null : data.size_eu,
-          size_us: isShopListing ? null : data.size_us,
-          size_cm: isShopListing ? null : data.size_cm,
-          us_size_type: isShopListing ? 'mens' : (data.us_size_type ?? 'mens'),
+          ...(!stockModeChanged ? {
+            size_eu: isMultiStock ? null : data.size_eu,
+            size_us: isMultiStock ? null : data.size_us,
+            size_cm: isMultiStock ? null : data.size_cm,
+            us_size_type: isMultiStock ? 'mens' : (data.us_size_type ?? 'mens'),
+            inventory_mode: isShopListing ? stockMode : 'single',
+            quantity: isShopListing && !isMultiStock ? 1 : shoe.quantity,
+          } : {}),
           ...(isShopListing ? { listed_in_main_feed: listedInMainFeed } : {}),
           ...(renewAfterSave ? { renewed_at: new Date().toISOString() } : {}),
         })
         .eq('id', shoe.id);
       if (err) throw err;
 
-      if (isShopListing) {
+      if (stockModeChanged) {
+        const { error: modeError } = await supabase.rpc('change_shop_inventory_mode', {
+          p_listing_id: shoe.id,
+          p_inventory_mode: stockMode,
+          p_size_eu: isMultiStock ? null : (data.size_eu ?? null),
+          p_size_us: isMultiStock ? null : (data.size_us ?? null),
+          p_size_cm: isMultiStock ? null : (data.size_cm ?? null),
+          p_us_size_type: data.us_size_type ?? 'mens',
+          p_variants: isMultiStock ? variants.map(variant => ({
+            size_eu: variant.size_eu,
+            size_us: variant.size_us,
+            size_cm: variant.size_cm,
+            us_size_type: variant.us_size_type,
+            quantity: variant.quantity,
+          })) : [],
+        });
+        if (modeError) throw modeError;
+      }
+
+      if (isMultiStock && !stockModeChanged) {
         // Save variants in separate batches. Existing rows are updated by id so
         // sellers can correct a wrong size/US type without hitting the
         // shoe_id,size_eu upsert conflict key.
@@ -357,7 +411,31 @@ export function EditListingForm({ shoe, renewAfterSave = false }: { shoe: Shoe; 
           <p className="mt-1 text-xs text-gray-500">Update what buyers filter and compare.</p>
         </div>
 
-        {!isShopListing && (
+        {isShopListing && canChangeStockMode && (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {([
+              ['single', 'Single shoe', 'One physical shoe; it becomes Sold after one completed order.'],
+              ['multi', 'Multiple stock', 'Sizes and quantities remain available until all stock is gone.'],
+            ] as const).map(([mode, label, helper]) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => handleStockModeChange(mode)}
+                className={`rounded-xl border p-3 text-left transition-colors ${stockMode === mode ? 'border-teal-400/55 bg-teal-400/10 text-teal-100' : 'border-white/[0.08] bg-slate-950/45 text-gray-300 hover:border-teal-400/30'}`}
+              >
+                <span className="block text-sm font-semibold">{label}</span>
+                <span className="mt-1 block text-xs leading-5 text-gray-500">{helper}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        {isShopListing && !canChangeStockMode && (
+          <div className="rounded-lg border border-teal-500/20 bg-teal-500/[0.05] px-3 py-2 text-xs text-teal-100">
+            Stock mode: <strong>{isMultiStock ? 'Multiple stock' : 'Single shoe'}</strong>. It is locked after the first buyer request. Go Pair PH inspected shoes always remain single-stock.
+          </div>
+        )}
+
+        {!isMultiStock && (
           <div>
             <p className="text-sm font-medium text-gray-300 mb-1">
               Size <span className="text-teal-400">*</span>
@@ -454,11 +532,11 @@ export function EditListingForm({ shoe, renewAfterSave = false }: { shoe: Shoe; 
 
       {isShopListing && (
         <div id="variants" className="space-y-4 rounded-xl border border-teal-500/30 bg-teal-500/5 p-4 scroll-mt-24">
-          <div>
+          {isMultiStock && <div>
             <p className="text-xs font-bold uppercase tracking-wider text-teal-400 mb-1">Sizes & stock</p>
             <p className="text-xs text-gray-500 mb-3">Set stock to 0 to hide a size from buyers (it stays in your records). Add new sizes any time.</p>
             <VariantsEditor value={variants} onChange={setVariants} preserveRowsOnRemove />
-          </div>
+          </div>}
           <label className="flex items-start gap-2 text-sm text-gray-200 cursor-pointer">
             <input
               type="checkbox"

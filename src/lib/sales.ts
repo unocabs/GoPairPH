@@ -1,7 +1,7 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 
 /**
- * Count of completed purchase_requests on listings owned by this profile.
+ * Count of completed marketplace sales and completed Go Pair PH buybacks.
  * Used as a buyer-facing trust signal ("N successful deals") on profile pages.
  *
  * Note: a single listing can in theory have multiple "completed" requests over
@@ -24,5 +24,11 @@ export async function getCompletedSalesCount(profileId: string): Promise<number>
     .in('listing_id', ids)
     .eq('status', 'completed');
 
-  return count ?? 0;
+  const { count: completedBuybacks } = await createServiceClient()
+    .from('buyback_offers')
+    .select('id', { count: 'exact', head: true })
+    .eq('seller_id', profileId)
+    .eq('status', 'completed');
+
+  return (count ?? 0) + (completedBuybacks ?? 0);
 }

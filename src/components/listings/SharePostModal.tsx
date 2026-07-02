@@ -822,7 +822,7 @@ function getHorizontalDescriptionLines({
   const titleLines = estimateWrappedLines(listingTitle, 19, 3);
   const visibleBadges = 2 + (isFeatured ? 1 : 0) + (isSponsored ? 1 : 0);
   const badgeRows = visibleBadges > 3 ? 2 : 1;
-  const pillRows = [shareSize, shoe.shop_id ? null : formatMileage(shoe.mileage_km), identityLocation].filter(Boolean).length > 2 ? 2 : 1;
+  const pillRows = [shareSize, shoe.shop_id && shoe.inventory_mode === 'multi' ? null : formatMileage(shoe.mileage_km), identityLocation].filter(Boolean).length > 2 ? 2 : 1;
 
   const usedHeight =
     badgeRows * 24
@@ -1381,7 +1381,7 @@ function TitleBlock({
 function ShareDetailPills({ shoe, shareSize, identityLocation }: { shoe: Shoe; shareSize: string; identityLocation: string | null }) {
   const items = [
     shareSize ? { label: 'Size', value: shareSize } : null,
-    !shoe.shop_id ? { label: 'Mileage', value: formatMileage(shoe.mileage_km) } : null,
+    !shoe.shop_id || shoe.inventory_mode === 'single' ? { label: 'Mileage', value: formatMileage(shoe.mileage_km) } : null,
     identityLocation ? { label: 'Location', value: identityLocation } : null,
   ].filter(Boolean) as Array<{ label: string; value: string }>;
 

@@ -176,6 +176,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
             {shoe.listing_type === 'donate' && <ListingTypeBadge type={shoe.listing_type} />}
             {canSeeQualityFlag && <FlaggedPill size="sm" />}
             {isSponsored && <SponsoredPill size="sm" />}
+            {shoe.inspected_by_go_pair_at && <span className="rounded-full border border-teal-300/30 bg-black/65 px-2 py-1 text-[9px] font-bold text-teal-100 backdrop-blur-sm">✓ GP inspected</span>}
             {isFresh && shoe.status === 'active' && !isSponsored && <NewPill size="sm" />}
           </div>
           {(greatDeal || (offerCount > 0 && shoe.status === 'active')) && (
@@ -209,7 +210,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
             </div>
           )}
           {/* Shop listing, every variant out of stock — overlay for owner view */}
-          {shoe.shop_id && shoe.status === 'active' && !shoe.has_stock && (
+          {shoe.shop_id && shoe.inventory_mode === 'multi' && shoe.status === 'active' && !shoe.has_stock && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50">
               <OutOfStockBadge />
             </div>
@@ -224,7 +225,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
               <span className="shrink-0"><VerifiedBadge size="sm" iconOnly /></span>
             )}
           </div>
-          {shoe.shop_id ? (
+          {shoe.shop_id && shoe.inventory_mode === 'multi' ? (
             (() => {
               const inStock = (shoe.shoe_variants ?? []).filter(v => v.quantity > 0);
               return (
@@ -243,7 +244,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
             <Badge className={cn('text-xs whitespace-nowrap', CONDITION_COLORS[shoe.condition])}>
               {CONDITIONS[shoe.condition]}
             </Badge>
-            {!shoe.shop_id && (
+            {(!shoe.shop_id || shoe.inventory_mode === 'single') && (
               <span className="text-xs text-gray-600 whitespace-nowrap" title={shoe.mileage_km != null ? formatMileage(shoe.mileage_km) : 'Mileage not tracked'}>
                 {formatMileage(shoe.mileage_km)}
               </span>
@@ -311,7 +312,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
         </div>
       </Link>
 
-      {isOwner && shoe.shop_id && shoe.status === 'active' && !shoe.has_stock && (
+      {isOwner && shoe.shop_id && shoe.inventory_mode === 'multi' && shoe.status === 'active' && !shoe.has_stock && (
         <Link
           href={`/listings/${shoe.id}/edit#variants`}
           className="block px-3 pb-3 -mt-1 text-center text-xs font-semibold text-teal-400 hover:text-teal-300 transition-colors"

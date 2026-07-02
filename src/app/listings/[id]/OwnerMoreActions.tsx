@@ -56,11 +56,11 @@ export function OwnerMoreActions({ shoeId, listingType, status }: OwnerMoreActio
   if (!hasActions) return null;
 
   return (
-    <details className="relative w-full sm:w-auto">
-      <summary className="list-none rounded-lg border border-gray-700 bg-transparent px-4 py-2 text-center text-base font-medium text-gray-300 transition-colors cursor-pointer hover:bg-gray-800 hover:text-gray-100 sm:text-left sm:text-sm [&::-webkit-details-marker]:hidden">
+    <details className="relative w-full">
+      <summary className="list-none rounded-xl border border-indigo-500/35 bg-indigo-950/80 px-4 py-3 text-center text-sm font-bold text-indigo-100 shadow-lg shadow-black/10 transition-colors cursor-pointer hover:border-indigo-400/50 hover:bg-indigo-900 [&::-webkit-details-marker]:hidden">
         More Actions
       </summary>
-      <div className="mt-2 w-full rounded-xl border border-gray-800 bg-slate-950 p-2 shadow-2xl shadow-black/40 sm:absolute sm:right-0 sm:z-20 sm:w-64">
+      <div className="absolute right-0 top-full z-40 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-gray-800 bg-slate-950 p-2 shadow-2xl shadow-black/40">
         {canMarkDone && (
           <button
             type="button"

@@ -55,6 +55,8 @@ const HOME_LISTING_SELECT = `
   renewed_at,
   shop_id,
   has_stock,
+  inventory_mode,
+  inspected_by_go_pair_at,
   featured_until,
   sponsored_until,
   is_negotiable,

@@ -78,13 +78,13 @@ export function PromoteListingButton({
     <button
       type="button"
       onClick={handleClick}
-      className={`inline-flex w-full items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-base font-medium transition-colors sm:w-auto sm:text-sm ${
+      className={`inline-flex w-full items-center justify-center gap-1.5 rounded-xl border px-4 py-3 text-sm font-bold shadow-lg transition-colors ${
         isVerified
-          ? 'border-amber-600/50 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
-          : 'border-teal-500/50 bg-teal-500/15 text-teal-200 hover:border-teal-300/60 hover:bg-teal-500/25 hover:text-teal-100'
+          ? 'border-sky-500/50 bg-sky-700 text-white shadow-sky-500/20 hover:bg-sky-600'
+          : 'border-sky-500/45 bg-sky-800 text-sky-50 shadow-sky-500/15 hover:bg-sky-700'
       }`}
     >
-      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="h-4 w-4 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
       </svg>
       Promote Listing

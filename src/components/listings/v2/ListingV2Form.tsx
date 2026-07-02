@@ -18,7 +18,7 @@ import type { UploadedPhoto } from '@/components/listings/PhotoUploader';
 import { ListingV2PhotoUploader } from './ListingV2PhotoUploader';
 import { findSizeConversion } from '@/lib/utils';
 import { trackMarketplaceAction } from '@/lib/analytics';
-import type { Shop } from '@/types';
+import type { InventoryMode, Shop } from '@/types';
 
 const DRAFT_KEY = 'gopairph:new-listing-draft:v2';
 const BRAND_OPTIONS = BRANDS.map(brand => ({ value: brand, label: brand }));
@@ -31,6 +31,7 @@ interface ListingV2Draft {
   details: Partial<ListingFormData>;
   variants: VariantRow[];
   listedInMainFeed: boolean;
+  inventoryMode: InventoryMode;
   photos: UploadedPhoto[];
   shoeId: string;
   step: WizardStep;
@@ -54,6 +55,7 @@ export function ListingV2Form({ profileId, initialLocationCity = null, shop = nu
   const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
   const [variants, setVariants] = useState<VariantRow[]>([{ ...EMPTY_VARIANT }]);
   const [listedInMainFeed, setListedInMainFeed] = useState(true);
+  const [inventoryMode, setInventoryMode] = useState<InventoryMode>(isShop ? 'multi' : 'single');
   const [hydrated, setHydrated] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving'>('saved');
   const [submitting, setSubmitting] = useState(false);
@@ -78,7 +80,7 @@ export function ListingV2Form({ profileId, initialLocationCity = null, shop = nu
     defaultValues,
   });
   const values = useWatch({ control });
-  const draftSignature = JSON.stringify({ values, variants, listedInMainFeed, photos, shoeId, step });
+  const draftSignature = JSON.stringify({ values, variants, listedInMainFeed, inventoryMode, photos, shoeId, step });
   const listingType = values.listing_type ?? 'for_sale';
   const shoeNamePreview = [values.brand, values.model].filter(Boolean).join(' ').trim();
   const cameFromPriceGuide = searchParams.get('from') === 'price-guide';
@@ -102,6 +104,7 @@ export function ListingV2Form({ profileId, initialLocationCity = null, shop = nu
         const draft = JSON.parse(raw) as ListingV2Draft;
         if (draft.details) reset({ ...defaultValues, ...draft.details });
         if (draft.variants?.length) setVariants(draft.variants);
+        if (isShop && draft.inventoryMode) setInventoryMode(draft.inventoryMode);
         if (Array.isArray(draft.photos)) setPhotos(draft.photos.slice(0, 4));
         if (draft.shoeId) nextShoeId = draft.shoeId;
         setListedInMainFeed(draft.listedInMainFeed !== false);
@@ -133,6 +136,7 @@ export function ListingV2Form({ profileId, initialLocationCity = null, shop = nu
         details: getValues(),
         variants,
         listedInMainFeed,
+        inventoryMode,
         photos: photos.slice(0, 4),
         shoeId,
         step,
@@ -143,7 +147,7 @@ export function ListingV2Form({ profileId, initialLocationCity = null, shop = nu
     return () => window.clearTimeout(timeout);
   // draftSignature represents every autosaved input.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftSignature, hydrated]);
+  }, [draftSignature, hydrated, inventoryMode]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -187,10 +191,12 @@ export function ListingV2Form({ profileId, initialLocationCity = null, shop = nu
       if (isShop) {
         const conditionValid = await trigger('condition');
         if (!conditionValid) return;
-        const variantError = validateVariants(variants);
-        if (variantError) {
-          setError(variantError);
-          return;
+        if (inventoryMode === 'multi') {
+          const variantError = validateVariants(variants);
+          if (variantError) { setError(variantError); return; }
+        } else {
+          const sizeValid = await trigger(['size_eu', 'size_us', 'size_cm']);
+          if (!sizeValid) return;
         }
       } else {
         const valid = await trigger(['size_eu', 'size_us', 'size_cm', 'condition']);
@@ -212,7 +218,7 @@ export function ListingV2Form({ profileId, initialLocationCity = null, shop = nu
       surface: 'new_listing_v2',
     });
     if (isGuest) {
-      persistDraft({ details, variants, listedInMainFeed, photos, shoeId, step: 4, savedAt: Date.now() });
+      persistDraft({ details, variants, listedInMainFeed, inventoryMode, photos, shoeId, step: 4, savedAt: Date.now() });
       trackMarketplaceAction('listing_sign_in_required', {
         listing_type: details.listing_type,
         surface: 'new_listing_v2',
@@ -260,18 +266,20 @@ export function ListingV2Form({ profileId, initialLocationCity = null, shop = nu
         srp_php: isShop || details.listing_type === 'for_sale' ? (details.srp_php ?? null) : null,
         is_negotiable: !isShop && details.listing_type === 'for_sale' ? !!details.is_negotiable : false,
         description: details.description,
-        size_eu: isShop ? null : positiveNumberOrNull(details.size_eu),
-        size_us: isShop ? null : positiveNumberOrNull(details.size_us),
-        size_cm: isShop ? null : positiveNumberOrNull(details.size_cm),
-        us_size_type: isShop ? 'mens' : (details.us_size_type ?? 'mens'),
+        size_eu: isShop && inventoryMode === 'multi' ? null : positiveNumberOrNull(details.size_eu),
+        size_us: isShop && inventoryMode === 'multi' ? null : positiveNumberOrNull(details.size_us),
+        size_cm: isShop && inventoryMode === 'multi' ? null : positiveNumberOrNull(details.size_cm),
+        us_size_type: isShop && inventoryMode === 'multi' ? 'mens' : (details.us_size_type ?? 'mens'),
         status: 'active',
         shop_id: shop?.id ?? null,
-        quantity: 0,
+        quantity: isShop && inventoryMode === 'single' ? 1 : 0,
         listed_in_main_feed: isShop ? listedInMainFeed : true,
+        inventory_mode: isShop ? inventoryMode : 'single',
+        has_stock: true,
       }).select('id').single();
       if (insertError || !inserted) throw insertError ?? new Error('Could not publish listing.');
 
-      if (isShop) {
+      if (isShop && inventoryMode === 'multi') {
         const rows = variants.filter(validVariant).map(variant => ({
           shoe_id: shoeId,
           size_eu: variant.size_eu as number,
@@ -393,7 +401,18 @@ export function ListingV2Form({ profileId, initialLocationCity = null, shop = nu
             subtitle="Add the details buyers filter by."
             accessory={<SizeConditionIcons />}
           >
-            {isShop ? (
+            {isShop && (
+              <div className="grid grid-cols-2 gap-2">
+                {([['single', 'Single shoe'], ['multi', 'Multiple stock']] as const).map(([mode, label]) => (
+                  <button key={mode} type="button" onClick={() => {
+                    setInventoryMode(mode);
+                    if (mode === 'single' && Number(getValues('size_eu')) === 99) setValue('size_eu', null, { shouldValidate: true });
+                    if (mode === 'multi' && !getValues('size_eu')) setValue('size_eu', 99);
+                  }} className={`min-h-11 rounded-lg border px-3 text-sm font-bold transition-colors ${inventoryMode === mode ? 'border-teal-400/50 bg-teal-500/15 text-teal-100' : 'border-white/[0.08] bg-slate-950/55 text-gray-400'}`}>{label}</button>
+                ))}
+              </div>
+            )}
+            {isShop && inventoryMode === 'multi' ? (
               <VariantsEditor value={variants} onChange={setVariants} />
             ) : (
               <>

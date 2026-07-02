@@ -17,6 +17,18 @@ Go Pair PH sends lightweight Google Analytics events through the existing `gtag`
 - `marketplace_listing_publish`: seller successfully published a listing.
 - `marketplace_post_publish_share_prompt_view`: seller saw the sharing checklist immediately after publishing a listing.
 - `marketplace_seller_request_status`: seller accepted, declined, reopened, or marked a request sold.
+- `marketplace_buyback_open`: seller opened the Go Pair PH buyback flow; includes only listing ID and whether basic eligibility checks passed.
+- `marketplace_buyback_submit`: seller submitted a buyback request with the server-verified quote amount.
+- `marketplace_buyback_cancel`: seller cancelled a pending or accepted buyback request.
+- `marketplace_buyback_shipped`: seller submitted J&T tracking after acceptance.
+
+## Admin Buyback Inventory
+
+- `marketplace_buyback_inventory_prepare`: admin assigned an approved shop and saved the private resale draft.
+- `marketplace_buyback_inventory_photo_copy`: source listing photos were copied into Go Pair PH inventory storage.
+- `marketplace_buyback_inventory_photo_replace`: admin replaced a top or sole inventory photo; only the view type is recorded.
+- `marketplace_buyback_inventory_publish`: admin published the separate single-stock shop listing.
+- `marketplace_buyback_receiving_shop_toggle`: admin enabled or disabled an internal shop for buyback inventory.
 
 ## Sharing And Off-Site Handoffs
 

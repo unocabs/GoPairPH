@@ -130,7 +130,7 @@ export function HomeListingCard({
         <div className="flex flex-1 flex-col p-3.5">
           <h3 className="truncate text-sm font-semibold text-gray-100">{listingName}</h3>
           <p className="mt-0.5 truncate text-xs text-gray-500">
-            {shoe.shop_id
+            {shoe.shop_id && shoe.inventory_mode === 'multi'
               ? getVariantSummary(shoe)
               : formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type)}
           </p>
@@ -139,7 +139,7 @@ export function HomeListingCard({
             <Badge className={cn('text-xs whitespace-nowrap', CONDITION_COLORS[shoe.condition])}>
               {CONDITIONS[shoe.condition]}
             </Badge>
-            {!shoe.shop_id && (
+            {(!shoe.shop_id || shoe.inventory_mode === 'single') && (
               <span className="text-xs text-gray-600" title={shoe.mileage_km != null ? formatMileage(shoe.mileage_km) : 'Mileage not tracked'}>
                 {formatMileage(shoe.mileage_km)}
               </span>

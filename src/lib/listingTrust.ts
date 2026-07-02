@@ -41,14 +41,14 @@ export function getSellerContactUrl(shoe: Pick<Shoe, 'shops' | 'profiles'>): str
 
 export function getListingCompletenessItems(shoe: Shoe): ListingCompletenessItem[] {
   const isShop = !!shoe.shop_id;
-  const hasSize = isShop
+  const hasSize = isShop && shoe.inventory_mode === 'multi'
     ? (shoe.shoe_variants ?? []).some(variant => variant.quantity > 0)
     : Boolean(shoe.size_eu || shoe.size_us || shoe.size_cm);
 
   return [
     { key: 'top_photo', label: 'Top photo', complete: hasTopPhoto(shoe) },
     { key: 'sole_photo', label: 'Sole photo', complete: hasSolePhoto(shoe) },
-    { key: 'size', label: isShop ? 'Available size' : 'Size', complete: hasSize },
+    { key: 'size', label: isShop && shoe.inventory_mode === 'multi' ? 'Available size' : 'Size', complete: hasSize },
     { key: 'condition', label: 'Condition', complete: Boolean(shoe.condition) },
     { key: 'mileage', label: 'Mileage or Not Tracked', complete: shoe.mileage_km != null },
     { key: 'location', label: 'Seller location', complete: Boolean(getSellerLocationLabel(shoe)) },

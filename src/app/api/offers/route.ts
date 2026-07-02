@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 
   const { data: listing, error: listingErr } = await supabase
     .from('shoes')
-    .select('id, seller_id, shop_id, status, has_stock')
+    .select('id, seller_id, shop_id, status, has_stock, inventory_mode')
     .eq('id', listing_id)
     .single();
 
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'You cannot place an order on your own listing.' }, { status: 400 });
   }
 
-  if (listing.shop_id) {
+  if (listing.shop_id && listing.inventory_mode === 'multi') {
     if (!variant_id) {
       return NextResponse.json({ error: 'Please choose a size before placing your order.' }, { status: 400 });
     }
@@ -79,7 +79,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'The selected size is out of stock.' }, { status: 400 });
     }
   } else if (variant_id) {
-    return NextResponse.json({ error: 'Size selection is only available for shop listings.' }, { status: 400 });
+    return NextResponse.json({ error: 'Size selection is only available for multiple-stock shop listings.' }, { status: 400 });
+  } else if (!listing.has_stock) {
+    return NextResponse.json({ error: 'This shoe is no longer available.' }, { status: 400 });
   }
 
   const { data: inserted, error: insertError } = await supabase

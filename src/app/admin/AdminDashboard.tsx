@@ -10,7 +10,9 @@ import { labelSponsoredPaymentMethod, labelSponsoredPromotionStatus } from '@/li
 import { formatCondition, formatListingName, formatPrice, formatProfileLocation, formatRelativeDate, formatSize, getListingPath, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import type { ListingViewSummary } from '@/lib/listingViews';
-import type { FeaturedPromotionOrder, ListingReport, ListingReportReason, VerificationRequest, Profile, Shoe, Shop, ShopStatus, SponsoredPromotionOrder, WishlistOfferReport, WishlistOfferReportReason } from '@/types';
+import { BUYBACK_DECLINE_REASONS, BUYBACK_DELIVERY_CHECKS, BUYBACK_PRE_ACCEPTANCE_CHECKS, BUYBACK_STATUS_LABELS } from '@/lib/buyback';
+import { trackMarketplaceAction } from '@/lib/analytics';
+import type { BuybackInventoryItem, BuybackOffer, FeaturedPromotionOrder, ListingReport, ListingReportReason, VerificationRequest, Profile, Shoe, Shop, ShopStatus, SponsoredPromotionOrder, WishlistOfferReport, WishlistOfferReportReason } from '@/types';
 
 type ShopWithOwner = Shop & { owner?: Pick<Profile, 'id' | 'display_name' | 'location_city' | 'location_province' | 'location_region'> | null };
 
@@ -26,13 +28,15 @@ interface AdminDashboardProps {
   listingViews: ListingViewSummary[];
   leadReports: WishlistOfferReport[];
   listingReports: ListingReport[];
+  buybackOffers: BuybackOffer[];
+  buybackInventory: BuybackInventoryItem[];
   siteSettings: {
     showHomepageActivityPublicly: boolean;
   };
   viewWindow: { startDate: string; endDate: string };
 }
 
-type Tab = 'promotions' | 'pending' | 'verified' | 'shops' | 'soldListings' | 'views' | 'leadReports' | 'listingReports' | 'emailBlast' | 'settings';
+type Tab = 'buyback' | 'promotions' | 'pending' | 'verified' | 'shops' | 'soldListings' | 'views' | 'leadReports' | 'listingReports' | 'emailBlast' | 'settings';
 const ACCEPTED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 function formatTabLabel(label: string, count: number): string {
@@ -137,11 +141,14 @@ export function AdminDashboard({
   listingViews,
   leadReports,
   listingReports,
+  buybackOffers,
+  buybackInventory,
   siteSettings,
   viewWindow,
 }: AdminDashboardProps) {
   const searchParams = useSearchParams();
-  const [tab, setTab] = useState<Tab>(searchParams.get('tab') === 'promotions' ? 'promotions' : 'views');
+  const requestedTab = searchParams.get('tab');
+  const [tab, setTab] = useState<Tab>(requestedTab === 'promotions' || requestedTab === 'buyback' ? requestedTab : 'views');
   const todayViewedListingCount = getTodayViewedListingCount(listingViews, viewWindow.endDate);
   const pendingPromotionReviewCount = getPendingPromotionReviewCount(promotions, sponsoredPromotions);
 
@@ -151,6 +158,7 @@ export function AdminDashboard({
       <div className="mb-6 flex gap-1 overflow-x-auto border-b border-gray-800">
         {([
           { key: 'views', label: formatTabLabel('Listing views', todayViewedListingCount) },
+          { key: 'buyback', label: formatTabLabel('Buyback', buybackOffers.filter(offer => offer.status === 'pending').length + buybackInventory.filter(item => ['ready_to_assign', 'preparing'].includes(item.status)).length) },
           { key: 'promotions', label: formatTabLabel('Promotions', pendingPromotionReviewCount) },
           { key: 'pending', label: formatTabLabel('Pending', pending.length) },
           { key: 'verified', label: 'Verified users' },
@@ -174,6 +182,7 @@ export function AdminDashboard({
       </div>
 
       {tab === 'pending' && <PendingList requests={pending} />}
+      {tab === 'buyback' && <BuybackPanel initialOffers={buybackOffers} initialInventory={buybackInventory} shops={shops.filter(shop => shop.buyback_receiving_enabled)} />}
       {tab === 'promotions' && <FeaturedPromotionsPanel initialPromotions={promotions} initialSponsoredPromotions={sponsoredPromotions} profiles={profiles} />}
       {tab === 'verified' && <VerifiedList users={verified} verificationProofs={verifiedProofs} />}
       {tab === 'shops' && <ShopsPanel shops={shops} profiles={profiles} />}
@@ -188,6 +197,437 @@ export function AdminDashboard({
         />
       )}
     </div>
+  );
+}
+
+function BuybackPanel({ initialOffers, initialInventory, shops }: { initialOffers: BuybackOffer[]; initialInventory: BuybackInventoryItem[]; shops: ShopWithOwner[] }) {
+  const [offers, setOffers] = useState(initialOffers);
+  const [inventory, setInventory] = useState(initialInventory);
+  const pending = offers.filter(offer => offer.status === 'pending');
+  const inProgress = offers.filter(offer => ['accepted', 'shipped', 'delivered', 'disputed'].includes(offer.status));
+  const history = offers.filter(offer => !['pending', 'accepted', 'shipped', 'delivered', 'disputed'].includes(offer.status));
+
+  useEffect(() => setInventory(initialInventory), [initialInventory]);
+
+  function replaceOffer(updated: BuybackOffer) {
+    setOffers(previous => previous.map(offer => offer.id === updated.id ? { ...offer, ...updated } : offer));
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-3 sm:grid-cols-3">
+        {[
+          ['Pending review', pending.length, 'text-amber-200'],
+          ['In progress', inProgress.length, 'text-teal-200'],
+          ['Total attempts', offers.length, 'text-gray-100'],
+        ].map(([label, value, color]) => (
+          <div key={String(label)} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</p>
+            <p className={`mt-1 text-2xl font-bold ${color}`}>{value}</p>
+          </div>
+        ))}
+      </div>
+      <BuybackInventoryPanel inventory={inventory} shops={shops} onChanged={updated => setInventory(current => current.map(item => item.id === updated.id ? { ...item, ...updated } : item))} />
+      <section>
+        <h2 className="text-lg font-semibold text-gray-100">Pending review</h2>
+        <div className="mt-3 space-y-4">
+          {pending.length === 0 ? <p className="rounded-xl border border-dashed border-gray-800 p-8 text-center text-sm text-gray-500">No pending buyback requests.</p> : pending.map(offer => <BuybackOfferCard key={offer.id} offer={offer} onChanged={replaceOffer} />)}
+        </div>
+      </section>
+      {inProgress.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold text-gray-100">Shipping and receiving</h2>
+          <div className="mt-3 space-y-4">{inProgress.map(offer => <BuybackOfferCard key={offer.id} offer={offer} onChanged={replaceOffer} />)}</div>
+        </section>
+      )}
+      {history.length > 0 && (
+        <details className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+          <summary className="cursor-pointer text-sm font-semibold text-gray-200">Review history ({history.length})</summary>
+          <div className="mt-4 space-y-4">{history.map(offer => <BuybackOfferCard key={offer.id} offer={offer} onChanged={replaceOffer} />)}</div>
+        </details>
+      )}
+    </div>
+  );
+}
+
+function snapshotString(snapshot: Record<string, unknown>, key: string): string {
+  const value = snapshot[key];
+  return value == null ? '' : String(value);
+}
+
+function snapshotNumber(snapshot: Record<string, unknown>, key: string): number | '' {
+  const value = Number(snapshot[key]);
+  return Number.isFinite(value) ? value : '';
+}
+
+function BuybackInventoryPanel({ inventory, shops, onChanged }: {
+  inventory: BuybackInventoryItem[];
+  shops: ShopWithOwner[];
+  onChanged: (item: BuybackInventoryItem) => void;
+}) {
+  const actionable = inventory.filter(item => item.status !== 'sold');
+  if (actionable.length === 0) return (
+    <section>
+      <h2 className="text-lg font-semibold text-gray-100">Ready to relist</h2>
+      <p className="mt-3 rounded-xl border border-dashed border-gray-800 p-6 text-center text-sm text-gray-500">Completed buybacks will appear here as private Go Pair PH inventory.</p>
+    </section>
+  );
+
+  return (
+    <section>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-100">Ready to relist</h2>
+          <p className="mt-1 text-xs text-gray-500">Assign completed inventory to an approved internal shop, confirm its details, then publish.</p>
+        </div>
+        <span className="rounded-full border border-teal-500/25 bg-teal-500/10 px-2.5 py-1 text-xs font-semibold text-teal-200">{actionable.length} item{actionable.length === 1 ? '' : 's'}</span>
+      </div>
+      <div className="mt-3 space-y-4">
+        {actionable.map(item => <BuybackInventoryCard key={item.id} item={item} shops={shops} onChanged={onChanged} />)}
+      </div>
+    </section>
+  );
+}
+
+function BuybackInventoryCard({ item, shops, onChanged }: {
+  item: BuybackInventoryItem;
+  shops: ShopWithOwner[];
+  onChanged: (item: BuybackInventoryItem) => void;
+}) {
+  const router = useRouter();
+  const snapshot = item.relist_snapshot ?? {};
+  const [shopId, setShopId] = useState(item.assigned_shop_id ?? '');
+  const [brand, setBrand] = useState(snapshotString(snapshot, 'brand'));
+  const [model, setModel] = useState(snapshotString(snapshot, 'model'));
+  const [color, setColor] = useState(snapshotString(snapshot, 'color'));
+  const [price, setPrice] = useState<number | ''>(snapshotNumber(snapshot, 'price_php'));
+  const [srp, setSrp] = useState<number | ''>(snapshotNumber(snapshot, 'srp_php'));
+  const [sizeEu, setSizeEu] = useState<number | ''>(snapshotNumber(snapshot, 'size_eu'));
+  const [sizeUs, setSizeUs] = useState<number | ''>(snapshotNumber(snapshot, 'size_us'));
+  const [sizeCm, setSizeCm] = useState<number | ''>(snapshotNumber(snapshot, 'size_cm'));
+  const [usSizeType, setUsSizeType] = useState(snapshotString(snapshot, 'us_size_type') || 'unknown');
+  const [condition, setCondition] = useState(snapshotString(snapshot, 'condition') || 'good');
+  const [mileage, setMileage] = useState<number | ''>(snapshotNumber(snapshot, 'mileage_km'));
+  const [description, setDescription] = useState(snapshotString(snapshot, 'description'));
+  const [listedInMainFeed, setListedInMainFeed] = useState(snapshot.listed_in_main_feed !== false);
+  const [photosConfirmed, setPhotosConfirmed] = useState(snapshot.photos_confirmed === true);
+  const [busy, setBusy] = useState<'save' | 'copy' | 'photo' | 'publish' | null>(null);
+  const [error, setError] = useState('');
+  const listing = item.source_listing;
+  const title = listing ? formatListingName(listing.brand, listing.model) : `${brand} ${model}`.trim() || 'Bought-back shoes';
+  const locked = item.status === 'listed';
+
+  async function save() {
+    setBusy('save'); setError('');
+    try {
+      const response = await fetch(`/api/admin/buyback-inventory/${item.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shop_id: shopId, brand, model, color, price_php: Number(price), srp_php: Number(srp),
+          size_eu: Number(sizeEu), size_us: sizeUs === '' ? null : Number(sizeUs), size_cm: sizeCm === '' ? null : Number(sizeCm),
+          us_size_type: usSizeType, condition, mileage_km: mileage === '' ? null : Number(mileage),
+          purchase_date: snapshotString(snapshot, 'purchase_date'), has_box: snapshot.has_box === true,
+          has_receipt: snapshot.has_receipt === true, description, listed_in_main_feed: listedInMainFeed,
+          photos_confirmed: photosConfirmed,
+        }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error ?? 'Could not save the relisting draft.');
+      onChanged(body.inventory as BuybackInventoryItem);
+      trackMarketplaceAction('buyback_inventory_prepare', { inventory_id: item.id, status: 'preparing' });
+      router.refresh();
+    } catch (saveError) { setError(saveError instanceof Error ? saveError.message : 'Could not save.'); }
+    finally { setBusy(null); }
+  }
+
+  async function copyPhotos() {
+    setBusy('copy'); setError('');
+    try {
+      const response = await fetch(`/api/admin/buyback-inventory/${item.id}/copy-photos`, { method: 'POST' });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error ?? body.inventory?.photo_copy_error ?? 'Could not copy the photos.');
+      onChanged(body.inventory as BuybackInventoryItem);
+      trackMarketplaceAction('buyback_inventory_photo_copy', { inventory_id: item.id, status: 'ready' });
+      router.refresh();
+    } catch (copyError) { setError(copyError instanceof Error ? copyError.message : 'Could not copy photos.'); }
+    finally { setBusy(null); }
+  }
+
+  async function publish() {
+    if (!confirm(`Publish ${brand} ${model} in the selected shop for ${formatPrice(Number(price))}?`)) return;
+    setBusy('publish'); setError('');
+    try {
+      const response = await fetch(`/api/admin/buyback-inventory/${item.id}/publish`, { method: 'POST' });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error ?? 'Could not publish the listing.');
+      onChanged(body.inventory as BuybackInventoryItem);
+      trackMarketplaceAction('buyback_inventory_publish', { inventory_id: item.id, status: 'listed' });
+      router.refresh();
+    } catch (publishError) { setError(publishError instanceof Error ? publishError.message : 'Could not publish.'); }
+    finally { setBusy(null); }
+  }
+
+  async function uploadPhoto(viewType: 'top' | 'sole', file: File | undefined) {
+    if (!file) return;
+    setBusy('photo'); setError('');
+    const form = new FormData(); form.set('view_type', viewType); form.set('file', file);
+    try {
+      const response = await fetch(`/api/admin/buyback-inventory/${item.id}/photos`, { method: 'POST', body: form });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error ?? 'Could not upload the inventory photo.');
+      onChanged(body.inventory as BuybackInventoryItem);
+      trackMarketplaceAction('buyback_inventory_photo_replace', { inventory_id: item.id, view_type: viewType });
+      setPhotosConfirmed(false);
+      router.refresh();
+    } catch (photoError) { setError(photoError instanceof Error ? photoError.message : 'Could not upload photo.'); }
+    finally { setBusy(null); }
+  }
+
+  return (
+    <article className="rounded-xl border border-teal-500/20 bg-gray-900 p-4 sm:p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-teal-500/25 bg-teal-500/10 px-2 py-1 text-xs font-semibold text-teal-200">{item.status.replaceAll('_', ' ')}</span>
+            <span className="text-xs text-gray-500">Single stock · acquired {formatRelativeDate(item.acquired_at)}</span>
+          </div>
+          <h3 className="mt-2 text-lg font-bold text-gray-100">{title}</h3>
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-right text-xs sm:min-w-80">
+          <div className="rounded-lg bg-gray-950 p-2"><span className="block text-gray-600">Acquisition cost</span><strong className="text-gray-200">{formatPrice(item.acquisition_cost_php)}</strong></div>
+          <div className="rounded-lg bg-gray-950 p-2"><span className="block text-gray-600">Minimum resale</span><strong className="text-teal-200">{formatPrice(item.minimum_resale_price_php)}</strong></div>
+          <div className="rounded-lg bg-gray-950 p-2"><span className="block text-gray-600">Projected gross</span><strong className="text-gray-200">{formatPrice(Math.max(0, Number(price || 0) - item.acquisition_cost_php))}</strong></div>
+        </div>
+      </div>
+
+      {locked ? (
+        <div className="mt-4 rounded-lg border border-green-500/20 bg-green-500/[0.05] p-3 text-sm text-green-100">
+          Published to {item.assigned_shop?.name ?? 'internal shop'}.
+          {item.resale_listing_id && <Link href={`/listings/${item.resale_listing_id}`} target="_blank" className="ml-2 font-semibold underline">View listing</Link>}
+        </div>
+      ) : (
+        <div className="mt-5 space-y-4 border-t border-gray-800 pt-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <label className="text-xs text-gray-400 sm:col-span-2 lg:col-span-1">Approved internal shop
+              <select value={shopId} onChange={event => setShopId(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2.5 text-sm text-gray-100"><option value="">Choose shop</option>{shops.map(shop => <option key={shop.id} value={shop.id}>{shop.name}</option>)}</select>
+            </label>
+            <AdminInventoryInput label="Brand" value={brand} onChange={setBrand} />
+            <AdminInventoryInput label="Model" value={model} onChange={setModel} />
+            <AdminInventoryInput label="Colorway" value={color} onChange={setColor} />
+            <AdminInventoryInput label="Selling price" type="number" value={price} onChange={value => setPrice(value === '' ? '' : Number(value))} />
+            <AdminInventoryInput label="Original retail price" type="number" value={srp} onChange={value => setSrp(value === '' ? '' : Number(value))} />
+            <AdminInventoryInput label="EU size" type="number" value={sizeEu} onChange={value => setSizeEu(value === '' ? '' : Number(value))} />
+            <AdminInventoryInput label="US size" type="number" value={sizeUs} onChange={value => setSizeUs(value === '' ? '' : Number(value))} />
+            <AdminInventoryInput label="CM" type="number" value={sizeCm} onChange={value => setSizeCm(value === '' ? '' : Number(value))} />
+            <label className="text-xs text-gray-400">US size type<select value={usSizeType} onChange={event => setUsSizeType(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2.5 text-sm text-gray-100"><option value="mens">Men&apos;s</option><option value="womens">Women&apos;s</option><option value="unisex">Unisex</option><option value="unknown">Unknown</option></select></label>
+            <label className="text-xs text-gray-400">Condition<select value={condition} onChange={event => setCondition(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2.5 text-sm text-gray-100"><option value="new">Brand New</option><option value="like_new">Like New</option><option value="good">Good</option><option value="fair">Fair</option></select></label>
+            <AdminInventoryInput label="Mileage (km)" type="number" value={mileage} onChange={value => setMileage(value === '' ? '' : Number(value))} />
+          </div>
+          <label className="block text-xs text-gray-400">Description
+            <textarea value={description} onChange={event => setDescription(event.target.value)} rows={8} className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2.5 text-sm leading-6 text-gray-100" />
+          </label>
+          {(item.photos ?? []).some(photo => photo.copied_storage_path) && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Transferred listing photos</p>
+              <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
+                {(item.photos ?? []).filter(photo => photo.copied_storage_path).map(photo => (
+                  <a key={photo.id} href={getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, photo.copied_storage_path!, 'shoe-images', IMAGE_TRANSFORM_PRESETS.listingCard)} target="_blank" rel="noopener noreferrer" className="overflow-hidden rounded-lg border border-gray-700 bg-gray-950">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, photo.copied_storage_path!, 'shoe-images', IMAGE_TRANSFORM_PRESETS.listingCard)} alt={`${photo.view_type} inventory view`} className="aspect-square w-full object-cover" />
+                    <span className="block px-1 py-1 text-center text-[10px] uppercase text-gray-400">{photo.view_type}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="grid gap-2 sm:grid-cols-2">
+            {(['top', 'sole'] as const).map(viewType => (
+              <label key={viewType} className="cursor-pointer rounded-lg border border-dashed border-sky-500/30 bg-sky-950/20 px-3 py-2 text-center text-xs font-semibold text-sky-200">
+                Replace {viewType} photo
+                <input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy !== null} onChange={event => { void uploadPhoto(viewType, event.target.files?.[0]); event.target.value = ''; }} className="sr-only" />
+              </label>
+            ))}
+          </div>
+          <label className="flex items-start gap-2 rounded-lg border border-teal-500/20 bg-teal-500/[0.05] p-3 text-sm text-gray-200"><input type="checkbox" checked={photosConfirmed} onChange={event => setPhotosConfirmed(event.target.checked)} className="mt-1 h-4 w-4 accent-teal-500" /><span>I confirmed these photos show the received shoes, including clear top and sole views and any visible flaws.</span></label>
+          <label className="flex items-start gap-2 text-sm text-gray-300"><input type="checkbox" checked={listedInMainFeed} onChange={event => setListedInMainFeed(event.target.checked)} className="mt-1 h-4 w-4 accent-teal-500" /> Also show in the main Browse feed</label>
+
+          <div className="grid gap-2 sm:grid-cols-3">
+            <button type="button" disabled={busy !== null || !shopId} onClick={save} className="rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40">{busy === 'save' ? 'Saving…' : 'Save Assignment & Draft'}</button>
+            <button type="button" disabled={busy !== null} onClick={copyPhotos} className="rounded-lg border border-sky-500/35 bg-sky-950/40 px-4 py-2.5 text-sm font-semibold text-sky-200 disabled:opacity-40">{busy === 'copy' ? 'Copying…' : item.photo_copy_status === 'ready' ? 'Photos Ready ✓' : 'Retry Photo Copy'}</button>
+            <button type="button" disabled={busy !== null || item.status !== 'preparing' || item.photo_copy_status !== 'ready' || !photosConfirmed} onClick={publish} className="rounded-lg border border-amber-400/35 bg-amber-400/[0.08] px-4 py-2.5 text-sm font-semibold text-amber-100 disabled:opacity-40">{busy === 'publish' ? 'Publishing…' : 'Publish Shop Listing'}</button>
+          </div>
+          {item.photo_copy_error && <p className="text-xs text-amber-200">Photo copy: {item.photo_copy_error}</p>}
+          {error && <p className="text-sm text-red-300">{error}</p>}
+        </div>
+      )}
+    </article>
+  );
+}
+
+function AdminInventoryInput({ label, value, onChange, type = 'text' }: {
+  label: string;
+  value: string | number;
+  onChange: (value: string) => void;
+  type?: 'text' | 'number';
+}) {
+  return <label className="text-xs text-gray-400">{label}<input type={type} value={value} onChange={event => onChange(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2.5 text-sm text-gray-100" /></label>;
+}
+
+function BuybackOfferCard({ offer, onChanged }: { offer: BuybackOffer; onChanged: (offer: BuybackOffer) => void }) {
+  const router = useRouter();
+  const [checks, setChecks] = useState<Record<string, boolean>>(offer.review_checklist ?? {});
+  const [deliveryChecks, setDeliveryChecks] = useState<Record<string, boolean>>(offer.delivery_checklist ?? {});
+  const [adminNote, setAdminNote] = useState(offer.admin_note ?? '');
+  const [declineReason, setDeclineReason] = useState('');
+  const [recipientName, setRecipientName] = useState('');
+  const [recipientPhone, setRecipientPhone] = useState('');
+  const [recipientAddress, setRecipientAddress] = useState('');
+  const [codPaid, setCodPaid] = useState(String(offer.quoted_price_php));
+  const [disputeNote, setDisputeNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const listing = offer.listing;
+  const seller = offer.seller;
+  const listingName = listing ? formatListingName(listing.brand, listing.model) : 'Listing unavailable';
+  const allReviewChecks = BUYBACK_PRE_ACCEPTANCE_CHECKS.every(([key]) => checks[key] === true);
+  const allDeliveryChecks = BUYBACK_DELIVERY_CHECKS.every(([key]) => deliveryChecks[key] === true);
+
+  async function review(action: 'accept' | 'decline') {
+    setBusy(true); setError('');
+    try {
+      const response = await fetch(`/api/admin/buyback-offers/${offer.id}/review`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action, checklist: checks, admin_note: adminNote || null,
+          decline_reason: action === 'decline' ? declineReason : null,
+          recipient_name: action === 'accept' ? recipientName : null,
+          recipient_phone: action === 'accept' ? recipientPhone : null,
+          recipient_address: action === 'accept' ? recipientAddress : null,
+        }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error ?? 'Review failed.');
+      onChanged(body.offer as BuybackOffer); router.refresh();
+    } catch (err) { setError(err instanceof Error ? err.message : 'Review failed.'); }
+    finally { setBusy(false); }
+  }
+
+  async function fulfill(action: 'delivered' | 'complete' | 'dispute') {
+    setBusy(true); setError('');
+    try {
+      const response = await fetch(`/api/admin/buyback-offers/${offer.id}/fulfillment`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          cod_paid_php: action === 'delivered' ? Number(codPaid) : null,
+          delivery_checklist: deliveryChecks,
+          note: action === 'dispute' ? disputeNote : null,
+        }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error ?? 'Update failed.');
+      onChanged(body.offer as BuybackOffer); router.refresh();
+    } catch (err) { setError(err instanceof Error ? err.message : 'Update failed.'); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <article className="rounded-xl border border-gray-800 bg-gray-900 p-4 sm:p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-teal-500/30 bg-teal-500/10 px-2 py-1 text-xs font-semibold text-teal-200">{BUYBACK_STATUS_LABELS[offer.status]}</span>
+            <span className="text-xs text-gray-500">Attempt #{offer.attempt_number} · {formatRelativeDate(offer.created_at)}</span>
+          </div>
+          {listing ? <Link href={getListingPath(listing)} target="_blank" className="mt-2 block text-lg font-bold text-gray-100 hover:text-teal-300">{listingName}</Link> : <p className="mt-2 text-lg font-bold text-gray-100">{listingName}</p>}
+          <p className="mt-1 text-sm text-gray-400">Seller: {seller?.display_name ?? 'Unavailable'} {seller?.is_verified ? '· Verified' : '· Not verified'}</p>
+          <p className="mt-1 text-xs text-gray-500">Proposed send date: {offer.proposed_ship_date} · Pending buyer offers: {offer.pending_buyer_offer_count ?? 0}</p>
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-center lg:min-w-[360px]">
+          <div className="rounded-lg bg-gray-950 p-2"><p className="text-[10px] uppercase text-gray-500">Retail basis</p><p className="text-sm font-bold text-gray-200">{formatPrice(offer.retail_basis_php)}</p></div>
+          <div className="rounded-lg bg-gray-950 p-2"><p className="text-[10px] uppercase text-gray-500">Fast sale</p><p className="text-sm font-bold text-gray-200">{formatPrice(offer.fast_sale_estimate_php)}</p></div>
+          <div className="rounded-lg border border-amber-400/20 bg-amber-400/[0.06] p-2"><p className="text-[10px] uppercase text-amber-300">Buyback</p><p className="text-sm font-bold text-amber-100">{formatPrice(offer.quoted_price_php)}</p></div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 text-xs text-gray-400 sm:grid-cols-2 lg:grid-cols-4">
+        <p><span className="block text-gray-600">Original price</span>{formatPrice(offer.original_price_php)}</p>
+        <p><span className="block text-gray-600">Purchase date</span>{offer.purchase_date}</p>
+        <p><span className="block text-gray-600">Original box</span>{offer.has_box ? 'Yes' : 'No'}</p>
+        <p><span className="block text-gray-600">Visible flaws</span>{offer.has_visible_flaws ? 'Yes' : 'No'}</p>
+      </div>
+      {offer.flaw_notes && <div className="mt-3 rounded-lg border border-amber-400/15 bg-amber-500/[0.04] px-3 py-2 text-sm text-amber-100"><span className="font-semibold">Flaws:</span> {offer.flaw_notes}</div>}
+      {offer.seller_note && <div className="mt-3 rounded-lg border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-300"><span className="font-semibold">Seller note:</span> {offer.seller_note}</div>}
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {(offer.proofs ?? []).map(proof => proof.signed_url && (
+          <a key={proof.id} href={proof.signed_url} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-xs font-semibold text-teal-300 hover:bg-gray-800">Open {proof.kind.replaceAll('_', ' ')}</a>
+        ))}
+      </div>
+
+      {offer.status === 'pending' && (
+        <div className="mt-5 grid gap-5 border-t border-gray-800 pt-5 xl:grid-cols-[1.2fr_0.8fr]">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-100">Required acceptance review</h3>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {BUYBACK_PRE_ACCEPTANCE_CHECKS.map(([key, label]) => (
+                <label key={key} className={`flex items-start gap-2 rounded-lg border p-3 text-xs leading-5 ${checks[key] ? 'border-teal-500/30 bg-teal-500/[0.06] text-teal-100' : 'border-gray-800 bg-gray-950 text-gray-400'}`}>
+                  <input type="checkbox" checked={checks[key] === true} onChange={event => setChecks(previous => ({ ...previous, [key]: event.target.checked }))} className="mt-0.5 h-4 w-4 shrink-0 accent-teal-500" />{label}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-100">Decision</h3>
+            <input value={recipientName} onChange={event => setRecipientName(event.target.value)} placeholder="Recipient name" className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100" />
+            <input value={recipientPhone} onChange={event => setRecipientPhone(event.target.value)} placeholder="Recipient phone" className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100" />
+            <textarea value={recipientAddress} onChange={event => setRecipientAddress(event.target.value)} rows={3} placeholder="Complete recipient address" className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100" />
+            <textarea value={adminNote} onChange={event => setAdminNote(event.target.value)} rows={3} placeholder="Admin note (optional for acceptance)" className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100" />
+            <button disabled={busy || !allReviewChecks || !recipientName.trim() || !recipientPhone.trim() || !recipientAddress.trim()} onClick={() => review('accept')} className="w-full rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-40">Accept and Reserve</button>
+            <div className="border-t border-gray-800 pt-3">
+              <select value={declineReason} onChange={event => setDeclineReason(event.target.value)} className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100"><option value="">Decline reason</option>{BUYBACK_DECLINE_REASONS.map(reason => <option key={reason}>{reason}</option>)}</select>
+              <button disabled={busy || !declineReason || !adminNote.trim()} onClick={() => review('decline')} className="mt-2 w-full rounded-lg border border-red-500/40 px-4 py-2.5 text-sm font-semibold text-red-200 hover:bg-red-950/30 disabled:opacity-40">Decline with Note</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {offer.status === 'accepted' && (
+        <div className="mt-4 rounded-lg border border-sky-500/20 bg-sky-500/[0.05] p-3 text-sm text-sky-100">Waiting for the seller to book J&amp;T COD and submit tracking. Offer expires {formatDateTime(offer.expires_at)}.</div>
+      )}
+      {offer.status === 'shipped' && (
+        <div className="mt-5 grid gap-3 border-t border-gray-800 pt-5 sm:grid-cols-[1fr_auto] sm:items-end">
+          <label className="text-xs text-gray-400">COD amount paid at delivery
+            <input type="number" value={codPaid} onChange={event => setCodPaid(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100" />
+          </label>
+          <button disabled={busy || Number(codPaid) !== Number(offer.quoted_price_php)} onClick={() => fulfill('delivered')} className="rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40">Mark Delivered &amp; Paid</button>
+        </div>
+      )}
+      {offer.status === 'delivered' && (
+        <div className="mt-5 border-t border-gray-800 pt-5">
+          <h3 className="text-sm font-semibold text-gray-100">Final receiving checklist</h3>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {BUYBACK_DELIVERY_CHECKS.map(([key, label]) => <label key={key} className={`flex items-start gap-2 rounded-lg border p-3 text-xs ${deliveryChecks[key] ? 'border-teal-500/30 bg-teal-500/[0.06] text-teal-100' : 'border-gray-800 bg-gray-950 text-gray-400'}`}><input type="checkbox" checked={deliveryChecks[key] === true} onChange={event => setDeliveryChecks(previous => ({ ...previous, [key]: event.target.checked }))} className="h-4 w-4 accent-teal-500" />{label}</label>)}
+          </div>
+          <button disabled={busy || !allDeliveryChecks} onClick={() => fulfill('complete')} className="mt-3 w-full rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40">Complete Buyback</button>
+          <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto]">
+            <input value={disputeNote} onChange={event => setDisputeNote(event.target.value)} placeholder="Required dispute reason and evidence note" className="rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100" />
+            <button disabled={busy || !disputeNote.trim()} onClick={() => fulfill('dispute')} className="rounded-lg border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-200 disabled:opacity-40">Open Dispute</button>
+          </div>
+        </div>
+      )}
+      {offer.status === 'shipped' && offer.tracking_number && <p className="mt-3 text-xs text-gray-400">J&amp;T tracking: <span className="font-mono text-gray-200">{offer.tracking_number}</span></p>}
+      {offer.admin_note && offer.status !== 'pending' && <p className="mt-3 rounded-lg bg-gray-950 px-3 py-2 text-sm text-gray-300"><span className="font-semibold">Admin note:</span> {offer.admin_note}</p>}
+      {(offer.events?.length ?? 0) > 0 && (
+        <details className="mt-3 rounded-lg border border-gray-800 bg-gray-950/60 px-3 py-2">
+          <summary className="cursor-pointer text-xs font-semibold text-gray-400">Event history ({offer.events?.length})</summary>
+          <ol className="mt-2 space-y-2 text-xs text-gray-500">
+            {offer.events?.map(event => <li key={event.id}><span className="font-semibold capitalize text-gray-300">{event.event_type.replaceAll('_', ' ')}</span> · {formatDateTime(event.created_at)}{event.note ? ` — ${event.note}` : ''}</li>)}
+          </ol>
+        </details>
+      )}
+      {error && <p className="mt-3 rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-2 text-sm text-red-200">{error}</p>}
+    </article>
   );
 }
 
@@ -1348,6 +1788,7 @@ function ShopsPanel({ shops, profiles }: { shops: ShopWithOwner[]; profiles: Pro
   const [logoError, setLogoError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [receivingSaving, setReceivingSaving] = useState<string | null>(null);
   const router = useRouter();
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
@@ -1507,6 +1948,26 @@ function ShopsPanel({ shops, profiles }: { shops: ShopWithOwner[]; profiles: Pro
 
     setDeleting(null);
     if (editing?.id === shop.id) resetForm();
+    router.refresh();
+  }
+
+  async function toggleBuybackReceiving(shop: ShopWithOwner) {
+    const enabled = !shop.buyback_receiving_enabled;
+    if (enabled && shop.status !== 'active') {
+      alert('Activate this shop before approving it for buyback inventory.');
+      return;
+    }
+    setReceivingSaving(shop.id);
+    const response = await fetch(`/api/admin/shops/${shop.id}/buyback-receiving`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled }),
+    });
+    const body = await response.json().catch(() => ({}));
+    setReceivingSaving(null);
+    if (!response.ok) {
+      alert(body.error ?? 'Could not update buyback receiving access.');
+      return;
+    }
+    trackMarketplaceAction('buyback_receiving_shop_toggle', { shop_id: shop.id, enabled });
     router.refresh();
   }
 
@@ -1696,6 +2157,7 @@ function ShopsPanel({ shops, profiles }: { shops: ShopWithOwner[]; profiles: Pro
                       }`}>
                         {shop.status}
                       </span>
+                      {shop.buyback_receiving_enabled && <span className="rounded-full border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 text-xs font-semibold text-teal-200">Buyback receiving</span>}
                     </div>
                     <p className="mt-1 truncate text-xs text-gray-500">/shop/{shop.slug}</p>
                     <p className="mt-2 text-sm text-gray-300">
@@ -1705,6 +2167,13 @@ function ShopsPanel({ shops, profiles }: { shops: ShopWithOwner[]; profiles: Pro
                   </div>
 
                   <div className="flex shrink-0 gap-2">
+                    <button
+                      onClick={() => toggleBuybackReceiving(shop)}
+                      disabled={receivingSaving === shop.id}
+                      className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50 ${shop.buyback_receiving_enabled ? 'border-teal-700 text-teal-200 hover:bg-teal-950' : 'border-gray-700 text-gray-300 hover:bg-gray-800'}`}
+                    >
+                      {receivingSaving === shop.id ? 'Saving…' : shop.buyback_receiving_enabled ? 'Disable Receiving' : 'Approve Receiving'}
+                    </button>
                     <button
                       onClick={() => startEdit(shop)}
                       className="rounded-lg border border-gray-700 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-800"
