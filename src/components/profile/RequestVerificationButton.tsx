@@ -2,12 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import type { VerificationRequest } from '@/types';
 
 interface RequestVerificationButtonProps {
-  profileId: string;
   isVerified: boolean;
   existingRequest: VerificationRequest | null;
   fbUsername: string | null;
@@ -32,7 +30,6 @@ const PLACEHOLDERS: Record<ProofType, string> = {
 const MAX_PROOFS = 5;
 
 export function RequestVerificationButton({
-  profileId,
   isVerified,
   existingRequest,
   fbUsername,
@@ -114,12 +111,14 @@ export function RequestVerificationButton({
 
     setSubmitting(true);
     setError(null);
-    const { error: err } = await createClient().from('verification_requests').insert({
-      user_id: profileId,
-      proof: proofText,
+    const response = await fetch('/api/verification-requests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ proof: proofText }),
     });
-    if (err) {
-      setError(err.message);
+    const result = await response.json().catch(() => ({})) as { error?: string };
+    if (!response.ok) {
+      setError(result.error ?? 'Could not submit verification request.');
       setSubmitting(false);
       return;
     }

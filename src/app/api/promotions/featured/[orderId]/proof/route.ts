@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { sendTransactionalEmail } from '@/lib/email/resend';
+import { getAdminNotificationEmails } from '@/lib/email/adminNotifications';
 import { renderAdminFeaturedProofEmail, renderSellerFeaturedSubmittedEmail } from '@/lib/email/featuredPromotion';
 import {
   FEATURED_PAYMENT_PROOF_BUCKET,
-  getAdminEmails,
   proofPathBelongsToUser,
 } from '@/lib/featuredPromotions';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
@@ -75,7 +75,7 @@ export async function POST(request: Request, { params }: { params: { orderId: st
   }
 
   try {
-    const admins = await getAdminEmails(service);
+    const admins = await getAdminNotificationEmails(service);
     if (admins.length > 0) {
       await sendTransactionalEmail({
         category: 'featured_promotion',

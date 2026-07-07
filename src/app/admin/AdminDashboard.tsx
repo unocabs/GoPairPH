@@ -37,6 +37,7 @@ interface AdminDashboardProps {
 }
 
 type Tab = 'buyback' | 'promotions' | 'pending' | 'verified' | 'shops' | 'soldListings' | 'views' | 'leadReports' | 'listingReports' | 'emailBlast' | 'settings';
+const ADMIN_TABS: Tab[] = ['buyback', 'promotions', 'pending', 'verified', 'shops', 'soldListings', 'views', 'leadReports', 'listingReports', 'emailBlast', 'settings'];
 const ACCEPTED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 function formatTabLabel(label: string, count: number): string {
@@ -51,8 +52,8 @@ function getPendingPromotionReviewCount(
   promotions: FeaturedPromotionOrder[],
   sponsoredPromotions: SponsoredPromotionOrder[]
 ): number {
-  return promotions.filter(order => order.source === 'paid' && order.review_status === 'pending').length
-    + sponsoredPromotions.filter(order => order.review_status === 'pending').length;
+  return promotions.filter(order => order.source === 'paid' && order.review_status === 'pending' && ['active', 'queued'].includes(order.status)).length
+    + sponsoredPromotions.filter(order => order.review_status === 'pending' && order.status === 'active').length;
 }
 
 const LEAD_REPORT_REASON_LABELS: Record<WishlistOfferReportReason, string> = {
@@ -148,7 +149,7 @@ export function AdminDashboard({
 }: AdminDashboardProps) {
   const searchParams = useSearchParams();
   const requestedTab = searchParams.get('tab');
-  const [tab, setTab] = useState<Tab>(requestedTab === 'promotions' || requestedTab === 'buyback' ? requestedTab : 'views');
+  const [tab, setTab] = useState<Tab>(requestedTab && ADMIN_TABS.includes(requestedTab as Tab) ? requestedTab as Tab : 'views');
   const todayViewedListingCount = getTodayViewedListingCount(listingViews, viewWindow.endDate);
   const pendingPromotionReviewCount = getPendingPromotionReviewCount(promotions, sponsoredPromotions);
 
@@ -640,8 +641,8 @@ function FeaturedPromotionsPanel({ initialPromotions, initialSponsoredPromotions
   const [error, setError] = useState('');
 
   const current = promotions.find(order => order.status === 'active') ?? null;
-  const pending = promotions.filter(order => order.review_status === 'pending' && order.source === 'paid');
-  const sponsoredPending = sponsoredPromotions.filter(order => order.review_status === 'pending');
+  const pending = promotions.filter(order => order.review_status === 'pending' && order.source === 'paid' && ['active', 'queued'].includes(order.status));
+  const sponsoredPending = sponsoredPromotions.filter(order => order.review_status === 'pending' && order.status === 'active');
   const sponsoredActive = sponsoredPromotions
     .filter(order => order.status === 'active')
     .sort((a, b) => {

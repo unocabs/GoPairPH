@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { makeAdminNewListingEmailInput, renderAdminNewListingEmail } from '@/lib/email/adminNewListing';
 import { sendTransactionalEmail } from '@/lib/email/resend';
+import { getAdminNotificationEmails } from '@/lib/email/adminNotifications';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { getAbsoluteListingUrl } from '@/lib/utils';
 
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const emails = await getAdminEmails(service);
+  const emails = await getAdminNotificationEmails(service);
   if (emails.length === 0) {
     return NextResponse.json({ sent: 0, reason: 'No admin emails found' });
   }
@@ -83,26 +84,4 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json({ sent: emails.length });
-}
-
-async function getAdminEmails(service: ReturnType<typeof createServiceClient>): Promise<string[]> {
-  const emails = new Set<string>();
-
-  const configured = process.env.ADMIN_NOTIFICATION_EMAILS
-    ?.split(',')
-    .map(email => email.trim())
-    .filter(Boolean) ?? [];
-  for (const email of configured) emails.add(email);
-
-  const { data: admins } = await service
-    .from('profiles')
-    .select('user_id')
-    .eq('is_admin', true);
-
-  for (const admin of admins ?? []) {
-    const { data } = await service.auth.admin.getUserById(admin.user_id);
-    if (data.user?.email) emails.add(data.user.email);
-  }
-
-  return Array.from(emails);
 }

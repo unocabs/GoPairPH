@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { sendTransactionalEmail } from '@/lib/email/resend';
+import { getAdminNotificationEmails } from '@/lib/email/adminNotifications';
 import { renderAdminSponsoredProofEmail, renderSellerSponsoredSubmittedEmail } from '@/lib/email/sponsoredPromotion';
 import {
-  getAdminEmails,
   proofPathBelongsToUser,
   SPONSORED_PAYMENT_PROOF_BUCKET,
 } from '@/lib/sponsoredPromotions';
@@ -75,7 +75,7 @@ export async function POST(request: Request, { params }: { params: { orderId: st
   }
 
   try {
-    const admins = await getAdminEmails(service);
+    const admins = await getAdminNotificationEmails(service);
     if (admins.length > 0) {
       await sendTransactionalEmail({
         category: 'sponsored_promotion',

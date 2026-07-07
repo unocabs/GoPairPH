@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { verifyTurnstile } from '@/lib/turnstile';
+import { getAdminNotificationEmails, renderAdminActionEmail } from '@/lib/email/adminNotifications';
+import { sendTransactionalEmail } from '@/lib/email/resend';
+
+export const runtime = 'nodejs';
 
 const reportReasons = [
   'unavailable_or_sold',
@@ -41,21 +45,23 @@ export async function POST(request: Request, { params }: RouteContext) {
   }
 
   let reporterId: string | null = null;
+  let reporterName: string | null = null;
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, display_name')
       .eq('user_id', user.id)
       .maybeSingle();
     reporterId = profile?.id ?? null;
+    reporterName = profile?.display_name ?? null;
   }
 
   const service = createServiceClient();
   const { data: offer } = await service
     .from('wishlist_offers')
-    .select('id, wishlist_id')
+    .select('id, wishlist_id, url, price_php, note')
     .eq('id', params.offerId)
     .eq('wishlist_id', params.id)
     .single();
@@ -78,6 +84,39 @@ export async function POST(request: Request, { params }: RouteContext) {
 
   if (error || !report) {
     return NextResponse.json({ error: error?.message ?? 'Failed to report lead.' }, { status: 400 });
+  }
+
+  try {
+    const [admins, { data: item }] = await Promise.all([
+      getAdminNotificationEmails(service),
+      service.from('wishlist_items').select('brand, model').eq('id', offer.wishlist_id).maybeSingle(),
+    ]);
+    if (admins.length > 0) {
+      const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com').replace(/\/$/, '');
+      const requestName = [item?.brand, item?.model].filter(Boolean).join(' ') || 'Looking For request';
+      await sendTransactionalEmail({
+        category: 'admin_notification',
+        to: admins,
+        subject: `Looking For lead reported: ${requestName}`,
+        html: renderAdminActionEmail({
+          title: 'New Looking For lead report',
+          intro: 'A submitted lead was reported and needs admin review.',
+          rows: [
+            { label: 'Request', value: requestName },
+            { label: 'Reason', value: parsed.reason.replaceAll('_', ' ') },
+            { label: 'Reporter', value: reporterName ?? (user?.email || 'Anonymous visitor') },
+            { label: 'Lead URL', value: offer.url },
+            { label: 'Lead price', value: offer.price_php == null ? null : `PHP ${Number(offer.price_php).toLocaleString('en-PH')}` },
+          ],
+          note: parsed.note?.trim() || offer.note,
+          adminUrl: `${siteUrl}/admin?tab=leadReports`,
+          buttonLabel: 'Review lead report',
+        }),
+        tags: { notification: 'wishlist_lead_report' },
+      });
+    }
+  } catch (emailError) {
+    console.error('[wishlist-offer-reports] admin email failed', emailError);
   }
 
   return NextResponse.json({ id: report.id }, { status: 201 });

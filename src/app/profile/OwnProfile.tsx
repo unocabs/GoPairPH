@@ -398,7 +398,6 @@ export function OwnProfile({
         <div id="verification" tabIndex={-1} className="mt-3 flex scroll-mt-24 flex-wrap items-center gap-2 focus:outline-none sm:ml-[92px]">
           {!profile.is_verified && (
             <RequestVerificationButton
-              profileId={profile.id}
               isVerified={profile.is_verified}
               existingRequest={latestVerification}
               fbUsername={profile.fb_username}

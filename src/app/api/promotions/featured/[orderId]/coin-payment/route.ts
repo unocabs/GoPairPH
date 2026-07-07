@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { renderAdminFeaturedProofEmail, renderSellerFeaturedSubmittedEmail } from '@/lib/email/featuredPromotion';
 import { sendTransactionalEmail } from '@/lib/email/resend';
-import { getAdminEmails } from '@/lib/featuredPromotions';
+import { getAdminNotificationEmails } from '@/lib/email/adminNotifications';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { formatListingName, getAbsoluteListingUrl } from '@/lib/utils';
 import type { FeaturedPromotionOrder } from '@/types';
@@ -43,7 +43,7 @@ export async function POST(_request: Request, { params }: { params: { orderId: s
   const sellerName = sellerProfile?.display_name ?? 'Go Pair PH seller';
 
   try {
-    const admins = await getAdminEmails(service);
+    const admins = await getAdminNotificationEmails(service);
     if (admins.length > 0) {
       await sendTransactionalEmail({
         category: 'featured_promotion',

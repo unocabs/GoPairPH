@@ -47,6 +47,22 @@ async function loadAdminPendingActionCount(supabase: SupabaseClient): Promise<nu
         .select('id', { count: 'exact', head: true })
         .eq('source', 'paid')
         .eq('review_status', 'pending')
+        .in('status', ['active', 'queued'])
+    ),
+    safeAdminActionCount(
+      'Top Pick promotion review',
+      supabase
+        .from('sponsored_promotion_orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('review_status', 'pending')
+        .eq('status', 'active')
+    ),
+    safeAdminActionCount(
+      'buyback review',
+      supabase
+        .from('buyback_offers')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending')
     ),
     safeAdminActionCount(
       'listing report',

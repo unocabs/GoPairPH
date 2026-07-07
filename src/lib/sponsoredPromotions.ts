@@ -1,4 +1,3 @@
-import type { createServiceClient } from '@/lib/supabase/server';
 import type { SponsoredPaymentMethod } from '@/types';
 
 export const SPONSORED_PAYMENT_PROOF_BUCKET = 'sponsored-payment-proofs';
@@ -27,28 +26,6 @@ export function labelSponsoredPaymentMethod(method: SponsoredPaymentMethod | nul
   if (method === 'gcash') return 'GCash';
   if (method === 'bpi') return 'BPI';
   return 'Not provided';
-}
-
-export async function getAdminEmails(service: ReturnType<typeof createServiceClient>): Promise<string[]> {
-  const emails = new Set<string>();
-
-  const configured = process.env.ADMIN_NOTIFICATION_EMAILS
-    ?.split(',')
-    .map(email => email.trim())
-    .filter(Boolean) ?? [];
-  for (const email of configured) emails.add(email);
-
-  const { data: admins } = await service
-    .from('profiles')
-    .select('user_id')
-    .eq('is_admin', true);
-
-  for (const admin of admins ?? []) {
-    const { data } = await service.auth.admin.getUserById(admin.user_id);
-    if (data.user?.email) emails.add(data.user.email);
-  }
-
-  return Array.from(emails);
 }
 
 export function proofPathBelongsToUser(path: string, authUserId: string): boolean {

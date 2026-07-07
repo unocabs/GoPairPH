@@ -5,6 +5,7 @@ import { toSellerBuybackOffer } from '@/lib/buyback';
 import { formatListingName, formatPrice, getListingPath } from '@/lib/utils';
 import { renderBuybackSellerSubmittedEmail, renderBuybackSubmittedEmail } from '@/lib/email/buybackOffer';
 import { sendTransactionalEmail } from '@/lib/email/resend';
+import { getAdminNotificationEmails } from '@/lib/email/adminNotifications';
 import type { BuybackOffer, BuybackProofKind, Shoe } from '@/types';
 
 export const runtime = 'nodejs';
@@ -181,12 +182,7 @@ export async function POST(request: Request) {
           }),
         });
       }
-      const { data: admins } = await service.from('profiles').select('user_id').eq('is_admin', true);
-      const adminEmails: string[] = [];
-      for (const admin of admins ?? []) {
-        const { data } = await service.auth.admin.getUserById(admin.user_id);
-        if (data.user?.email) adminEmails.push(data.user.email);
-      }
+      const adminEmails = await getAdminNotificationEmails(service);
       if (adminEmails.length > 0) {
         await sendTransactionalEmail({
           category: 'buyback_offer',
