@@ -270,7 +270,11 @@ export function OwnProfile({
   const totalListingViews = listingViewSummaries.reduce((sum, item) => sum + item.total, 0);
   const activeShoes = shoes.filter((shoe) => shoe.status === 'active');
   const closedShoes = shoes.filter((shoe) => shoe.status !== 'active');
-  const orderedShoes = [...activeShoes, ...closedShoes];
+  // My Listings omits the profile join; reuse the current owner profile so
+  // listing-card downloads include seller details, including after profile edits.
+  const orderedShoes = [...activeShoes, ...closedShoes].map((shoe) => (
+    shoe.seller_id === profile.id ? { ...shoe, profiles: profile } : shoe
+  ));
   const activeListings = activeShoes.length;
   const requestCountsByListing = purchaseRequests.reduce<Record<string, number>>((counts, request) => {
     counts[request.listing_id] = (counts[request.listing_id] ?? 0) + 1;
