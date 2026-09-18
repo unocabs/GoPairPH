@@ -56,6 +56,7 @@ import type { Profile } from '@/types';
 import { BuybackOfferPanel } from '@/components/listings/BuybackOfferPanel';
 import { calculateMaximumBuybackQuote, getBuybackShipDateBounds, type BuybackQuote } from '@/lib/pricing/buyback';
 import { toSellerBuybackOffer } from '@/lib/buyback';
+import { getListingAvailability } from '@/lib/listingAvailability';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -389,8 +390,6 @@ export default async function ListingDetailPage({ params, searchParams }: { para
     getCurrentProfile(),
   ]);
 
-  const offerCount = await getOfferCount(params.id);
-
   if (!shoe) notFound();
 
   const currentProfileId = currentProfile?.id ?? null;
@@ -407,14 +406,17 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const productImageUrl = topImage
     ? getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, topImage.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.detailMain)
     : null;
-  const purchaseContext = await getPurchaseContext(shoe.id, currentProfileId, isOwner, shoe.status);
-  const isSaved = await isListingSaved(currentProfileId, shoe.id);
-  const saveCount = await getSavedListingCount(shoe.id);
-  const sellerCompletedSales = seller && !shop ? await getCompletedSalesCount(seller.id) : 0;
+  const [offerCount, purchaseContext, isSaved, saveCount, sellerCompletedSales, discovery] = await Promise.all([
+    getOfferCount(shoe.id),
+    getPurchaseContext(shoe.id, currentProfileId, isOwner, shoe.status),
+    isListingSaved(currentProfileId, shoe.id),
+    getSavedListingCount(shoe.id),
+    seller && !shop ? getCompletedSalesCount(seller.id) : Promise.resolve(0),
+    getListingDiscovery(shoe, currentProfile),
+  ]);
   const viewSummary = isOwner
     ? (await getViewSummariesForListings([shoe.id])).get(shoe.id) ?? { total: 0, last7d: 0 }
     : null;
-  const discovery = await getListingDiscovery(shoe, currentProfile);
   const trustSignals = getListingTrustSignals(shoe);
   const completenessItems = getListingCompletenessItems(shoe);
   const completenessScore = getListingCompletenessScore(shoe);
@@ -447,12 +449,19 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const justClosedStatus = isOwner && (searchParams?.closed === 'sold' || searchParams?.closed === 'donated')
     ? searchParams.closed
     : null;
-  const showUnavailablePanel = !isOwner && (shoe.status === 'sold' || shoe.status === 'donated' || shoe.status === 'archived');
+  const availability = getListingAvailability(shoe);
+  const showUnavailablePanel = !isOwner && availability.unavailable;
+  const inStockVariants = (shoe.shoe_variants ?? []).filter(variant => variant.quantity > 0);
+  const summarySize = shoe.shop_id && shoe.inventory_mode === 'multi'
+    ? inStockVariants.length === 1
+      ? formatSize(inStockVariants[0].size_eu, inStockVariants[0].size_us, inStockVariants[0].size_cm, inStockVariants[0].us_size_type)
+      : inStockVariants.length > 1 ? `${inStockVariants.length} sizes available` : 'No sizes in stock'
+    : formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type);
   const signInHref = `/auth/sign-in?next=${encodeURIComponent(getListingPath(shoe))}`;
   const shopContactHref = getFacebookContactUrl(shop?.fb_page_url ?? null);
   const sellerMessengerHref = buildMessengerUrl(seller?.fb_username ?? null);
   const askSellerHref = shopContactHref ?? sellerMessengerHref;
-  const canAskSeller = shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner;
+  const canAskSeller = shoe.listing_type === 'for_sale' && availability.canRequest && !isOwner && Boolean(askSellerHref);
   const signedOutForSaleCtaLabel = shoe.shop_id
     ? 'Sign in to Place Order'
     : 'Sign in to Send Offer';
@@ -470,7 +479,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
       url: getAbsoluteListingUrl(SITE_URL, shoe),
       priceCurrency: 'PHP',
       price: shoe.price_php,
-      availability: shoe.status === 'active' && shoe.has_stock
+      availability: availability.canRequest
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
       seller: shop
@@ -502,7 +511,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   );
   const renderBuyerCtas = (className = '') => (
     <div className={className}>
-      {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && (!shoe.shop_id || shoe.inventory_mode === 'single') && (
+      {shoe.listing_type === 'for_sale' && availability.canRequest && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && (!shoe.shop_id || shoe.inventory_mode === 'single') && (
         <div className="mt-4 space-y-2">
           <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
             {canAskSeller && (
@@ -551,7 +560,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           )}
         </div>
       )}
-      {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && shoe.shop_id && shoe.inventory_mode === 'multi' && shoe.has_stock && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
+      {shoe.listing_type === 'for_sale' && availability.canRequest && !isOwner && currentProfileId && !purchaseContext && shoe.price_php && shoe.shop_id && shoe.inventory_mode === 'multi' && shoe.shoe_variants && shoe.shoe_variants.length > 0 && (
         <div className="mt-4 space-y-2">
           <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
             {canAskSeller && (
@@ -599,7 +608,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           )}
         </div>
       )}
-      {shoe.listing_type === 'for_sale' && shoe.status === 'active' && !isOwner && !currentProfileId && (
+      {shoe.listing_type === 'for_sale' && availability.canRequest && !isOwner && !currentProfileId && (
         <div className="mt-4 space-y-2">
           <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
             {canAskSeller && (
@@ -644,7 +653,13 @@ export default async function ListingDetailPage({ params, searchParams }: { para
         </div>
       )}
 
-      {shoe.listing_type === 'donate' && shoe.status === 'active' && !isOwner && currentProfileId && !purchaseContext && (
+      {shoe.listing_type === 'for_sale' && availability.canRequest && !isOwner && !purchaseContext && !askSellerHref && (
+        <p className="mt-2 text-xs leading-5 text-gray-400">
+          This seller hasn&apos;t added Messenger. {shoe.shop_id ? 'Place an order' : 'Send an offer'} through Go Pair PH to get started.
+        </p>
+      )}
+
+      {shoe.listing_type === 'donate' && availability.canRequest && !isOwner && currentProfileId && !purchaseContext && (
         <DonateRequestButton
           listingId={shoe.id}
           listingName={listingName}
@@ -652,7 +667,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           requesterFbUsername={currentProfileFbUsername}
         />
       )}
-      {shoe.listing_type === 'donate' && shoe.status === 'active' && !isOwner && !currentProfileId && (
+      {shoe.listing_type === 'donate' && availability.canRequest && !isOwner && !currentProfileId && (
         <Link
           href={signInHref}
           className="mt-4 flex w-full items-center justify-center rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-500"
@@ -833,6 +848,41 @@ export default async function ListingDetailPage({ params, searchParams }: { para
         </SurfaceCard>
       )}
 
+      <header className="mb-4 min-w-0 space-y-2 lg:hidden">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="font-semibold text-gray-300">{CONDITIONS[shoe.condition]}</span>
+          <span aria-hidden="true" className="text-gray-600">·</span>
+          <span className={availability.canRequest ? 'text-teal-300' : 'text-amber-300'}>{availability.label}</span>
+        </div>
+        <h1 className="break-words text-2xl font-bold leading-tight text-gray-100 lg:hidden">{listingName}</h1>
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <p className="break-words text-2xl font-bold text-teal-300">
+            {shoe.listing_type === 'donate' ? 'Free shoes' : shoe.price_php != null ? formatPrice(shoe.price_php) : 'Ask for price'}
+          </p>
+          {shoe.listing_type === 'for_sale' && shoe.is_negotiable && <span className="text-xs text-amber-300">Negotiable</span>}
+        </div>
+        <p className="break-words text-sm font-medium text-gray-300">{summarySize || 'Ask seller about sizing'}</p>
+      </header>
+
+      {showUnavailablePanel && (
+        <section aria-label="Listing availability and alternatives" className="mb-6 min-w-0">
+          <SurfaceCard className="border-amber-400/20 p-4">
+            <h2 className="text-base font-bold text-gray-100">
+              {shoe.status === 'sold' ? 'These shoes have sold.'
+                : shoe.status === 'donated' ? 'These shoes have been claimed.'
+                  : shoe.status === 'archived' ? 'This listing is no longer available.'
+                    : 'These shoes are out of stock.'}
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-gray-400">Explore available shoes or let sellers know what you&apos;re looking for.</p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <Link href="/browse" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-400">Browse available shoes</Link>
+              <Link href="/looking-for/new" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-200 hover:border-teal-400">Post what you need</Link>
+            </div>
+          </SurfaceCard>
+          <ListingDiscoverySection similarListings={discovery.similarListings} sellerListings={discovery.sellerListings} compact />
+        </section>
+      )}
+
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(380px,0.92fr)]">
         {/* Gallery */}
         <div className="min-w-0">
@@ -852,7 +902,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
         </div>
 
         {/* Details */}
-        <SurfaceCard glow className="p-5 sm:p-6">
+        <SurfaceCard glow className="min-w-0 p-5 sm:p-6">
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <ListingTypeBadge type={shoe.listing_type} />
             <Badge className={cn(CONDITION_COLORS[shoe.condition])}>
@@ -871,7 +921,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             {canSeeQualityFlag && <FlaggedPill />}
           </div>
 
-          <h1 className="text-3xl font-bold text-gray-100">{formatListingName(shoe.brand, shoe.model)}</h1>
+          <h1 className="hidden break-words text-3xl font-bold text-gray-100 lg:block">{formatListingName(shoe.brand, shoe.model)}</h1>
           <p className="text-gray-500 mt-1">{shoe.color}</p>
           <ListingTrustBadges signals={trustSignals} className="mt-3" />
           {shoe.shops && shoe.shops.status === 'active' && (
@@ -886,35 +936,6 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 reasons={shoe.quality_flag_reasons}
                 note={shoe.quality_flag_note}
               />
-            </div>
-          )}
-
-          {showUnavailablePanel && (
-            <div className="mt-4 rounded-xl border border-white/[0.08] bg-slate-950/55 p-4">
-              <p className="text-sm font-semibold text-gray-100">
-                {shoe.status === 'sold'
-                  ? 'This pair has already found its next runner.'
-                  : shoe.status === 'donated'
-                    ? 'This free pair has already been claimed.'
-                    : 'This listing is no longer available.'}
-              </p>
-              <p className="mt-1 text-xs leading-5 text-gray-400">
-                You can keep browsing active running shoes or post what you&apos;re looking for so sellers can find you.
-              </p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <Link
-                  href="/browse"
-                  className="inline-flex items-center justify-center rounded-lg bg-teal-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
-                >
-                  Browse GP Marketplace
-                </Link>
-                <Link
-                  href="/looking-for/new"
-                  className="inline-flex items-center justify-center rounded-lg border border-white/[0.1] bg-slate-950/45 px-3 py-2 text-sm font-semibold text-gray-200 transition-colors hover:bg-slate-900"
-                >
-                  Post Looking For
-                </Link>
-              </div>
             </div>
           )}
 
@@ -1226,10 +1247,12 @@ export default async function ListingDetailPage({ params, searchParams }: { para
         </SurfaceCard>
       </div>
 
-      <ListingDiscoverySection
-        similarListings={discovery.similarListings}
-        sellerListings={discovery.sellerListings}
-      />
+      {!showUnavailablePanel && (
+        <ListingDiscoverySection
+          similarListings={discovery.similarListings}
+          sellerListings={discovery.sellerListings}
+        />
+      )}
     </PageShell>
   );
 }

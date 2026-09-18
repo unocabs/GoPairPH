@@ -26,6 +26,7 @@ const CONDITION_OPTIONS = Object.entries(CONDITIONS).map(([value, label]) => ({ 
 const EMPTY_VARIANT: VariantRow = { id: null, size_eu: '', size_us: '', size_cm: '', us_size_type: 'mens', quantity: 1 };
 
 type WizardStep = 1 | 2 | 3 | 4;
+type DraftSaveStatus = 'saved' | 'saving' | 'error';
 
 interface ListingV2Draft {
   details: Partial<ListingFormData>;
@@ -57,7 +58,7 @@ export function ListingV2Form({ profileId, initialLocationCity = null, shop = nu
   const [listedInMainFeed, setListedInMainFeed] = useState(true);
   const [inventoryMode, setInventoryMode] = useState<InventoryMode>(isShop ? 'multi' : 'single');
   const [hydrated, setHydrated] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving'>('saved');
+  const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>('saving');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -132,7 +133,7 @@ export function ListingV2Form({ profileId, initialLocationCity = null, shop = nu
     if (!hydrated || !shoeId) return;
     setSaveStatus('saving');
     const timeout = window.setTimeout(() => {
-      persistDraft({
+      const saved = persistDraft({
         details: getValues(),
         variants,
         listedInMainFeed,
@@ -142,7 +143,7 @@ export function ListingV2Form({ profileId, initialLocationCity = null, shop = nu
         step,
         savedAt: Date.now(),
       });
-      setSaveStatus('saved');
+      setSaveStatus(saved ? 'saved' : 'error');
     }, 350);
     return () => window.clearTimeout(timeout);
   // draftSignature represents every autosaved input.
@@ -218,7 +219,13 @@ export function ListingV2Form({ profileId, initialLocationCity = null, shop = nu
       surface: 'new_listing_v2',
     });
     if (isGuest) {
-      persistDraft({ details, variants, listedInMainFeed, inventoryMode, photos, shoeId, step: 4, savedAt: Date.now() });
+      const saved = persistDraft({ details, variants, listedInMainFeed, inventoryMode, photos, shoeId, step: 4, savedAt: Date.now() });
+      setSaveStatus(saved ? 'saved' : 'error');
+      if (!saved) {
+        setError('Your browser could not save your details. Keep this page open and allow site storage, then try again. Your details are still here.');
+        trackMarketplaceAction('listing_draft_save_failed', { surface: 'new_listing_v2', stage: 'before_sign_in' });
+        return;
+      }
       trackMarketplaceAction('listing_sign_in_required', {
         listing_type: details.listing_type,
         surface: 'new_listing_v2',
@@ -510,7 +517,7 @@ export function ListingV2Form({ profileId, initialLocationCity = null, shop = nu
   );
 }
 
-function WizardHeader({ step, saveStatus, onBack }: { step: WizardStep; saveStatus: 'saved' | 'saving'; onBack: () => void }) {
+function WizardHeader({ step, saveStatus, onBack }: { step: WizardStep; saveStatus: DraftSaveStatus; onBack: () => void }) {
   const labels = ['Shoe & price', 'Size & condition', 'Notes', 'Photos', 'Share'];
   const percent = step * 20;
   return (
@@ -518,7 +525,9 @@ function WizardHeader({ step, saveStatus, onBack }: { step: WizardStep; saveStat
       <div className="flex items-center justify-between gap-3 text-xs">
         <div className="min-w-0">
           <p className="truncate font-bold text-gray-100">Step {step} of 5 · {labels[step - 1]}</p>
-          <p className="mt-0.5 text-[11px] text-gray-500" aria-live="polite">{saveStatus === 'saving' ? 'Saving…' : 'Draft saved'}</p>
+          <p className={`mt-0.5 text-[11px] ${saveStatus === 'error' ? 'text-amber-300' : 'text-gray-500'}`} aria-live="polite">
+            {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'error' ? 'Not saved — keep this page open' : 'Saved on this device'}
+          </p>
         </div>
         <button type="button" onClick={onBack} className="inline-flex min-h-8 shrink-0 items-center gap-1 rounded-md px-2 font-semibold text-gray-400 transition-colors hover:bg-white/[0.06] hover:text-gray-200">
           <span aria-hidden="true">←</span> Back
@@ -596,11 +605,13 @@ function LocationStepIcon() {
   );
 }
 
-function persistDraft(draft: ListingV2Draft) {
+function persistDraft(draft: ListingV2Draft): boolean {
   try {
     window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    return true;
   } catch {
-    // The form remains usable when local storage is blocked.
+    // Keep the entered details on screen and prevent an unsafe sign-in redirect.
+    return false;
   }
 }
 

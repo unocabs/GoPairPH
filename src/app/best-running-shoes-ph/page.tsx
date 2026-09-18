@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Script from 'next/script';
+import { GuideLink } from '@/components/guides/GuideLink';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com';
 const PAGE_URL = `${SITE_URL}/best-running-shoes-ph`;
@@ -8,6 +9,14 @@ const PAGE_TITLE = 'Best Running Shoes in the Philippines (2026)';
 const PAGE_DESCRIPTION =
   'A Philippines-focused guide to the best running shoes for daily training, long runs, racing, trails, stability, and pre-loved buying on Go Pair PH.';
 const LAST_UPDATED = 'May 21, 2026';
+
+function getShoeAnchor(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+function getModelSearch(name: string) {
+  return `/browse?q=${encodeURIComponent(name)}`;
+}
 
 const shoePicks = [
   {
@@ -322,7 +331,7 @@ export default function BestRunningShoesPhPage() {
 
       <article className="bg-gray-950">
         <section className="overflow-hidden border-b border-gray-800 bg-gray-900">
-          <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:px-8">
+          <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 sm:py-14 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:px-8">
             <div>
               <Link
                 href="/guides"
@@ -333,18 +342,22 @@ export default function BestRunningShoesPhPage() {
               <p className="text-xs font-semibold uppercase tracking-wider text-teal-400">
                 Philippines Shoe Guide
               </p>
-              <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-gray-100 sm:text-5xl lg:text-6xl">
+              <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-gray-100 sm:text-5xl lg:text-6xl">
                 Best Running Shoes in the Philippines (2026)
               </h1>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-300">
-                A practical shortlist for PH runners choosing daily trainers, long-run
-                shoes, race-day pairs, trail shoes, or pre-loved listings with useful
-                miles left.
+              <p className="mt-4 max-w-2xl text-base leading-7 text-gray-300 sm:text-lg">
+                Find shoes for daily runs, race day, or trails. Compare the picks, then search new and pre-loved shoes from local sellers.
               </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <GuideLink source="/best-running-shoes-ph" href="/browse" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-400">
+                  Browse running shoes
+                </GuideLink>
+                <a href="#quick-picks" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-600 px-4 py-2 text-sm font-semibold text-gray-200 hover:border-teal-400">Jump to picks ↓</a>
+              </div>
               <p className="mt-5 text-sm text-gray-500">Last updated: {LAST_UPDATED}</p>
             </div>
 
-            <div className="relative overflow-hidden rounded-lg border border-teal-500/20 bg-gray-950 p-5 shadow-2xl shadow-black/40 sm:p-7">
+            <div className="relative hidden overflow-hidden rounded-lg border border-teal-500/20 bg-gray-950 p-5 shadow-2xl shadow-black/40 sm:block sm:p-7">
               <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-teal-400 via-cyan-300 to-teal-500" />
               <p className="text-xs font-semibold uppercase tracking-wider text-teal-300">
                 Quick fit logic
@@ -373,14 +386,29 @@ export default function BestRunningShoesPhPage() {
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
             <div className="min-w-0 space-y-8">
-              <section className="min-w-0 rounded-lg border border-gray-800 bg-gray-900 p-5 sm:p-8">
+              <section id="quick-picks" className="min-w-0 scroll-mt-24 rounded-lg border border-gray-800 bg-gray-900 p-4 sm:p-8">
                 <p className="text-sm font-semibold uppercase tracking-wider text-teal-400">
                   Quick picks
                 </p>
                 <h2 className="mt-2 text-2xl font-bold text-gray-100">
                   The shortlist by use case
                 </h2>
-                <div className="mt-6 w-full max-w-full overflow-x-auto">
+                <div className="mt-4 divide-y divide-gray-800 md:hidden">
+                  {shoePicks.map(shoe => (
+                    <div key={shoe.name} className="py-4">
+                      <p className="text-xs font-semibold text-teal-300">{shoe.label}</p>
+                      <h3 className="mt-1 font-bold text-gray-100">{shoe.name}</h3>
+                      <p className="mt-1 text-sm leading-6 text-gray-400">{shoe.bestFor}</p>
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                        <GuideLink source="/best-running-shoes-ph" href={getModelSearch(shoe.name)} className="inline-flex min-h-11 items-center text-sm font-semibold text-teal-300 hover:text-teal-200">
+                          Search this model →
+                        </GuideLink>
+                        <a href={`#${getShoeAnchor(shoe.name)}`} className="inline-flex min-h-11 items-center text-sm text-gray-300 hover:text-white">Read buying notes</a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-6 hidden w-full max-w-full overflow-x-auto md:block">
                   <table className="min-w-[760px] text-left text-sm">
                     <thead className="border-b border-gray-800 text-xs uppercase tracking-wider text-gray-500">
                       <tr>
@@ -394,7 +422,7 @@ export default function BestRunningShoesPhPage() {
                       {shoePicks.map(shoe => (
                         <tr key={shoe.name}>
                           <td className="py-4 pr-4 font-semibold text-teal-300">{shoe.label}</td>
-                          <td className="py-4 pr-4 font-semibold text-gray-100">{shoe.name}</td>
+                          <td className="py-4 pr-4 font-semibold text-gray-100"><a href={`#${getShoeAnchor(shoe.name)}`} className="hover:text-teal-300">{shoe.name}</a></td>
                           <td className="py-4 pr-4">{shoe.bestFor}</td>
                           <td className="py-4 pr-4 text-gray-400">
                             {shoe.weight} / {shoe.drop} / {shoe.type}
@@ -410,8 +438,8 @@ export default function BestRunningShoesPhPage() {
                 {shoePicks.map((shoe, index) => (
                   <div
                     key={shoe.name}
-                    id={shoe.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}
-                    className="rounded-lg border border-gray-800 bg-gray-900 p-5 sm:p-7"
+                    id={getShoeAnchor(shoe.name)}
+                    className="scroll-mt-24 rounded-lg border border-gray-800 bg-gray-900 p-5 sm:p-7"
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div>
@@ -425,7 +453,12 @@ export default function BestRunningShoesPhPage() {
                       </div>
                     </div>
 
-                    <dl className="mt-6 grid gap-3 sm:grid-cols-4">
+                    <div className="mt-4">
+                      <GuideLink source="/best-running-shoes-ph" href={getModelSearch(shoe.name)} className="inline-flex min-h-11 items-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-400">Search this model</GuideLink>
+                      <p className="mt-2 text-xs text-gray-400">Sizes, condition, and availability vary by seller.</p>
+                    </div>
+
+                    <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
                       {[
                         ['Type', shoe.type],
                         ['Cushion', shoe.cushion],
@@ -502,7 +535,7 @@ export default function BestRunningShoesPhPage() {
 
             <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
               <div className="rounded-lg border border-teal-500/25 bg-teal-500/[0.06] p-5">
-                <h2 className="text-lg font-bold text-gray-100">Find the pair, not just the hype.</h2>
+                <h2 className="text-lg font-bold text-gray-100">Find shoes that fit your next run.</h2>
                 <p className="mt-3 text-sm leading-6 text-gray-400">
                   Use this guide to shortlist models, then check Go Pair PH for new and
                   pre-loved listings from runners and shops.
@@ -524,7 +557,7 @@ export default function BestRunningShoesPhPage() {
                     href="/listings/new"
                     className="rounded-lg border border-gray-700 px-4 py-2 text-center text-sm font-semibold text-gray-200 transition-colors hover:border-teal-500/70 hover:text-teal-300"
                   >
-                    Sell a Pair
+                    Sell running shoes
                   </Link>
                 </div>
               </div>

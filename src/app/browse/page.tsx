@@ -275,6 +275,14 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
           </SurfaceCard>
         )}
 
+        {shoes.length === 0 && (
+          <SurfaceCard className="border-teal-400/20 p-4">
+            <h2 className="text-base font-semibold text-gray-100">Try a broader search</h2>
+            <p className="mt-1 text-sm leading-6 text-gray-400">Availability changes as sellers list their shoes. Try a brand name, remove a size filter, or browse all available shoes.</p>
+            <Link href="/browse" className="mt-3 inline-flex min-h-11 items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-400">Clear filters and browse shoes</Link>
+          </SurfaceCard>
+        )}
+
         {recommendedShoes.length > 0 ? (
           <>
             <section>
@@ -326,7 +334,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
               />
             </section>
           </>
-        ) : (
+        ) : visibleShoes.length > 0 ? (
           <ListingGrid
             shoes={visibleShoes}
             currentProfileId={profile?.id}
@@ -339,7 +347,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
             personalizationBadges={personalizationBadges}
             emptyMessage="No listings match your filters. Try adjusting them."
           />
-        )}
+        ) : null}
 
         {hasMoreListings && (
           <div className="flex flex-col items-center gap-2">

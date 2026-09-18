@@ -4,6 +4,7 @@ Go Pair PH sends lightweight Google Analytics events through the existing `gtag`
 
 ## Buyer Intent
 
+- `marketplace_guide_navigation`: visitor followed a guide-directory or running-shoe-guide link; includes `source_page` and `destination`. Internal links do not use campaign UTMs. This navigation event is not a key event.
 - `marketplace_save_listing`: buyer saved a listing.
 - `marketplace_unsave_listing`: buyer removed a saved listing.
 - `marketplace_request_start`: buyer opened or entered an offer, order, buy request, or donation request flow.
@@ -14,6 +15,7 @@ Go Pair PH sends lightweight Google Analytics events through the existing `gtag`
 
 - `marketplace_listing_create_start`: seller completed Step 1 details and moved toward photo upload or sign-in.
 - `marketplace_listing_draft_saved`: logged-out seller details were saved locally before sign-in.
+- `marketplace_listing_draft_save_failed`: the new listing wizard could not save details before sign-in, so it kept the seller on the form. Includes only `surface` and `stage`; no entered listing details. This diagnostic event is not a key event.
 - `marketplace_listing_publish`: seller successfully published a listing.
 - `marketplace_post_publish_share_prompt_view`: seller saw the sharing checklist immediately after publishing a listing.
 - `marketplace_seller_request_status`: seller accepted, declined, reopened, or marked a request sold.

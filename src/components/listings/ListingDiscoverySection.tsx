@@ -8,9 +8,20 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard';
 interface ListingDiscoverySectionProps {
   similarListings: Shoe[];
   sellerListings: Shoe[];
+  compact?: boolean;
 }
 
-export function ListingDiscoverySection({ similarListings, sellerListings }: ListingDiscoverySectionProps) {
+export function ListingDiscoverySection({ similarListings, sellerListings, compact = false }: ListingDiscoverySectionProps) {
+  if (compact) {
+    const alternatives = [...similarListings, ...sellerListings].slice(0, 6);
+    if (alternatives.length === 0) return null;
+    return (
+      <SurfaceCard className="mt-4 min-w-0 overflow-hidden p-0">
+        <DiscoveryHeader title="Available shoes to explore" subtitle="Compare sizes and condition before choosing" />
+        <ListingRail listings={alternatives} />
+      </SurfaceCard>
+    );
+  }
   if (similarListings.length === 0 && sellerListings.length === 0) {
     return (
       <SurfaceCard className="mt-6 border-teal-500/20 bg-teal-500/[0.04] p-4 sm:p-5">
@@ -23,7 +34,7 @@ export function ListingDiscoverySection({ similarListings, sellerListings }: Lis
     <div className="mt-6 space-y-4">
       {similarListings.length > 0 && (
         <SurfaceCard className="overflow-hidden p-0">
-          <DiscoveryHeader title="Similar pairs" subtitle="Same brand, nearby size, or similar price" />
+          <DiscoveryHeader title="Similar shoes" subtitle="Same brand, nearby size, or similar price" />
           <ListingRail listings={similarListings} />
         </SurfaceCard>
       )}
@@ -128,7 +139,7 @@ function FindSizeCta({ compact = false }: { compact?: boolean }) {
         <h2 className="text-sm font-bold text-gray-100">Can&apos;t find your size?</h2>
         {!compact && (
           <p className="mt-1 text-xs leading-5 text-gray-400">
-            Post what you&apos;re looking for so sellers can offer the right pair.
+            Post what you&apos;re looking for so sellers can offer matching shoes.
           </p>
         )}
       </div>
