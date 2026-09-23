@@ -147,7 +147,7 @@ export function FilterPanel({ listingCount = 0 }: { listingCount?: number }) {
               maxLength={80}
               className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-4 pr-12 text-sm text-slate-950 placeholder:text-slate-500 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/35"
             />
-            {currentQuery.trim().length >= 2 && (
+            {listingCount > 0 && currentQuery.trim().length >= 2 && (
               <div className="absolute right-1 top-1/2 z-10 -translate-y-1/2">
                 <SaveSearchButton keyword={currentQuery} />
               </div>

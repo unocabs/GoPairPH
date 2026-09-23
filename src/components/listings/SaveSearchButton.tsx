@@ -9,13 +9,15 @@ const SAVE_SEARCH_TIP_DISMISSED_EVENT = 'gopair:save-search-tip-dismissed';
 interface SavedSearchLite {
   id: string;
   keyword: string;
+  email_enabled: boolean;
 }
 
 interface SaveSearchButtonProps {
   keyword: string;
+  variant?: 'icon' | 'button';
 }
 
-export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
+export function SaveSearchButton({ keyword, variant = 'icon' }: SaveSearchButtonProps) {
   const trimmedKeyword = useMemo(() => keyword.trim(), [keyword]);
   const [loading, setLoading] = useState(true);
   const [signedIn, setSignedIn] = useState(false);
@@ -45,6 +47,7 @@ export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
         const json = await response.json();
         const next = new Set(
           ((json.savedSearches ?? []) as SavedSearchLite[])
+            .filter(search => search.email_enabled)
             .map(search => search.keyword.trim().toLowerCase())
             .filter(Boolean)
         );
@@ -67,7 +70,7 @@ export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
   }, [normalizedKeyword]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || loading || !canSave || alreadySaved) return;
+    if (variant === 'button' || typeof window === 'undefined' || loading || !canSave || alreadySaved) return;
 
     try {
       if (window.localStorage.getItem(SAVE_SEARCH_TIP_DISMISSED_KEY) !== '1') {
@@ -80,7 +83,7 @@ export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
     const closeTip = () => setShowTip(false);
     window.addEventListener(SAVE_SEARCH_TIP_DISMISSED_EVENT, closeTip);
     return () => window.removeEventListener(SAVE_SEARCH_TIP_DISMISSED_EVENT, closeTip);
-  }, [alreadySaved, canSave, loading]);
+  }, [alreadySaved, canSave, loading, variant]);
 
   function dismissTip() {
     setShowTip(false);
@@ -182,18 +185,18 @@ export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [alreadySaved, canSave, loading, normalizedKeyword, saving, signedIn]);
 
-  if (!canSave || loading) return null;
+  if (!canSave || (loading && variant === 'icon')) return null;
 
   return (
-    <span className="relative inline-flex">
+    <span className={`relative inline-flex ${variant === 'button' ? 'w-full flex-col sm:w-auto' : ''}`}>
       <button
         type="button"
         onClick={saveSearch}
-        disabled={saving || alreadySaved}
+        disabled={loading || saving || alreadySaved}
         aria-label={alreadySaved ? `Search saved for ${trimmedKeyword}` : `Save search for ${trimmedKeyword}`}
         aria-pressed={alreadySaved}
         title={alreadySaved ? 'Search saved' : 'Save search'}
-        className={`relative inline-flex h-10 w-10 shrink-0 items-center justify-center transition-colors focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 disabled:cursor-default ${
+        className={variant === 'button' ? 'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:cursor-default disabled:opacity-70 sm:w-auto' : `relative inline-flex h-10 w-10 shrink-0 items-center justify-center transition-colors focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 disabled:cursor-default ${
           alreadySaved
             ? 'text-teal-700'
             : 'text-slate-600 hover:text-slate-950'
@@ -209,6 +212,7 @@ export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z" />
           </svg>
         )}
+        {variant === 'button' && (loading ? 'Loading…' : saving ? 'Saving…' : alreadySaved ? 'Search saved' : 'Save this search')}
       </button>
 
       {showTip && !alreadySaved && (
@@ -232,7 +236,7 @@ export function SaveSearchButton({ keyword }: SaveSearchButtonProps) {
       )}
 
       {error && (
-        <span role="alert" className="absolute right-0 top-full z-40 mt-2 w-56 rounded-lg border border-red-500/25 bg-red-950 px-3 py-2 text-left text-[11px] leading-4 text-red-200 shadow-xl">
+        <span role="alert" className={variant === 'button' ? 'mt-2 max-w-sm text-sm text-red-200' : 'absolute right-0 top-full z-40 mt-2 w-56 rounded-lg border border-red-500/25 bg-red-950 px-3 py-2 text-left text-[11px] leading-4 text-red-200 shadow-xl'}>
           {error}
         </span>
       )}

@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getOfferCounts } from '@/lib/offers';
 import { FirstListingNudge } from '@/components/listings/FirstListingNudge';
 import { ListingGrid } from '@/components/listings/ListingGrid';
+import { SaveSearchButton } from '@/components/listings/SaveSearchButton';
 import { FilterPanel } from '@/components/listings/FilterPanel';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageShell } from '@/components/layout/PageShell';
@@ -277,9 +278,26 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
 
         {shoes.length === 0 && (
           <SurfaceCard className="border-teal-400/20 p-4">
-            <h2 className="text-base font-semibold text-gray-100">Try a broader search</h2>
-            <p className="mt-1 text-sm leading-6 text-gray-400">Availability changes as sellers list their shoes. Try a brand name, remove a size filter, or browse all available shoes.</p>
-            <Link href="/browse" className="mt-3 inline-flex min-h-11 items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-400">Clear filters and browse shoes</Link>
+            <h2 className="text-base font-semibold text-gray-100">No matching shoes yet</h2>
+            <p className="mt-1 text-sm leading-6 text-gray-400">
+              {(searchParams.q ?? '').trim().length >= 2
+                ? 'Save your search keywords and we’ll email you when a new listing matches. You can also check our Facebook group for more running shoes.'
+                : 'Enter a brand or model in the search box to save a search and get email alerts for new matching listings. You can also check our Facebook group for more running shoes.'}
+            </p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start">
+              <SaveSearchButton keyword={(searchParams.q ?? '').slice(0, SEARCH_QUERY_MAX_LENGTH)} variant="button" />
+              <a href="https://www.facebook.com/groups/gopairph" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-teal-400/35 px-4 py-2 text-sm font-semibold text-teal-200 transition-colors hover:bg-teal-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
+                Check Facebook group<span className="sr-only"> (opens in a new tab)</span>
+              </a>
+            </div>
+            {(searchParams.q ?? '').trim().length >= 2 && (
+              <p className="mt-2 text-xs leading-5 text-gray-400">Alerts use your search keywords; size and other filters aren’t included.</p>
+            )}
+            <p className="mt-4 text-sm leading-6 text-gray-400">
+              Try a broader search or{' '}
+              <Link href="/browse" className="text-teal-300 underline underline-offset-4 hover:text-teal-200">clear filters and browse shoes</Link>.
+            </p>
+            <Link href="/looking-for/new" className="mt-1 inline-flex min-h-11 items-center text-sm text-gray-300 underline underline-offset-4 hover:text-white">Post what you’re looking for</Link>
           </SurfaceCard>
         )}
 
@@ -365,7 +383,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
         )}
 
         {/* Looking For CTA — full width below on desktop, last on mobile */}
-        <section className="w-full">
+        {shoes.length > 0 && <section className="w-full">
           <SurfaceCard glow className="border-teal-500/20 bg-teal-500/5 p-6 text-center">
             <h3 className="text-lg font-bold text-gray-100">
               Can&apos;t find the right pair?
@@ -385,7 +403,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
               </Button>
             </Link>
           </SurfaceCard>
-        </section>
+        </section>}
 
         <SurfaceCard className="border-teal-500/20 bg-teal-500/[0.04] p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
