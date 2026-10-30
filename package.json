@@ -7,7 +7,9 @@
     "build": "next build",
     "build:check": "NEXT_DIST_DIR=.next-build-check next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "test:payments:db": "node scripts/test-payment-database.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -78,7 +78,7 @@ function GpCoinsPanel({
   return (
     <SurfaceCard className="mb-4 overflow-hidden p-4 sm:mb-6">
       <div className="min-w-0">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-300">GoPair Coins</p>
+        <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-300">GoPair Coins</p><Link href="/promotions/payments" className="py-2 text-xs font-semibold text-teal-300">Promotion payments →</Link></div>
         <p className={`mt-2 text-3xl font-black tabular-nums ${isNegative ? 'text-red-300' : 'text-amber-100'}`}>
           {formatGpCoins(available)}
         </p>

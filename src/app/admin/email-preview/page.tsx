@@ -166,7 +166,7 @@ function getSamples() {
       }),
     },
     {
-      name: 'Featured submitted',
+      name: 'Legacy Featured submitted',
       html: renderSellerFeaturedSubmittedEmail({
         listingName: 'Nike Alphafly 3',
         listingUrl,
@@ -178,7 +178,7 @@ function getSamples() {
       }),
     },
     {
-      name: 'Top Pick approved',
+      name: 'Legacy Top Pick approved',
       html: renderSellerSponsoredReviewEmail({
         listingName: 'Nike Alphafly 3',
         listingUrl,
@@ -192,7 +192,7 @@ function getSamples() {
       }),
     },
     {
-      name: 'Featured admin proof',
+      name: 'Legacy Featured admin proof',
       html: renderAdminFeaturedProofEmail({
         listingName: 'Nike Alphafly 3',
         listingUrl,
@@ -210,11 +210,11 @@ function getSamples() {
         coinsUsed: 0,
         coinDiscountPhp: 0,
         cashAmountPhp: 50,
-        paymentMode: 'Cash only',
+        paymentMode: 'Legacy GCash transfer',
       }),
     },
     {
-      name: 'Top Pick admin proof',
+      name: 'Legacy Top Pick admin proof',
       html: renderAdminSponsoredProofEmail({
         listingName: 'Nike Alphafly 3',
         listingUrl,
@@ -231,7 +231,7 @@ function getSamples() {
       }),
     },
     {
-      name: 'Featured approved',
+      name: 'Legacy Featured approved',
       html: renderSellerFeaturedReviewEmail({
         listingName: 'Nike Alphafly 3',
         listingUrl,
@@ -245,7 +245,7 @@ function getSamples() {
       }),
     },
     {
-      name: 'Top Pick submitted',
+      name: 'Legacy Top Pick submitted',
       html: renderSellerSponsoredSubmittedEmail({
         listingName: 'Nike Alphafly 3',
         listingUrl,

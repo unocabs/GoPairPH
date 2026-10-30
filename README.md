@@ -34,3 +34,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Promotion payments
+
+Featured and Top Pick use QR Ph through PayMongo hosted checkout with automatic verification. Follow [the PayMongo rollout guide](docs/paymongo-promotion-rollout.md) before enabling payments. **Apply migration 053 manually in the Supabase SQL Editor; migrations do not auto-apply.** The guide covers test/live credentials, webhooks, the required reconciliation schedule, legacy orders, and refunds.

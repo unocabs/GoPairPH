@@ -26,25 +26,10 @@ export interface SponsoredSlotInfo {
 export async function getSponsoredSlotInfo(): Promise<SponsoredSlotInfo> {
   const supabase = createClient();
 
-  const [{ count: activeCount }, { data: sponsored }] = await Promise.all([
-    supabase
-      .from('shoes')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'active'),
-    supabase
-      .from('shoes')
-      .select('sponsored_until')
-      .eq('status', 'active')
-      .gt('sponsored_until', new Date().toISOString())
-      .order('sponsored_until', { ascending: true }),
-  ]);
-
-  const total = activeCount ?? 0;
-  const cap = Math.max(1, Math.floor(total * 0.15));
-  const sponsoredRows = sponsored ?? [];
-  const used = sponsoredRows.length;
-  const slotsAvailable = used < cap;
-  const nextSlotOpensAt = slotsAvailable ? null : sponsoredRows[0]?.sponsored_until ?? null;
-
-  return { cap, activeCount: used, slotsAvailable, nextSlotOpensAt };
+  const { data, error } = await supabase.rpc('get_sponsored_payment_slot_info');
+  if (error || !data) {
+    // Fail closed if payment capacity cannot be checked.
+    return { cap: 0, activeCount: 0, slotsAvailable: false, nextSlotOpensAt: null };
+  }
+  return data as SponsoredSlotInfo;
 }

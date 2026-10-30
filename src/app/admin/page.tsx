@@ -7,6 +7,7 @@ import { getDashboardViewWindow, getListingViewSummaries } from '@/lib/listingVi
 import { FEATURED_PAYMENT_PROOF_BUCKET } from '@/lib/featuredPromotions';
 import { SPONSORED_PAYMENT_PROOF_BUCKET } from '@/lib/sponsoredPromotions';
 import { buildBuybackRelistDescription } from '@/lib/buybackInventory';
+import type { PromotionPayment } from '@/lib/payments/types';
 import type { BuybackInventoryItem, BuybackOffer, FeaturedPromotionOrder, ListingReport, VerificationRequest, Profile, Shoe, Shop, SponsoredPromotionOrder, WishlistItem, WishlistOffer, WishlistOfferReport } from '@/types';
 
 type PairRequestSummary = Pick<WishlistItem, 'id' | 'brand' | 'model'>;
@@ -233,6 +234,7 @@ async function loadAdminData() {
   }));
 
   const enabledReceivingShopIds = new Set((receivingShopsRes.data ?? []).filter(row => row.enabled).map(row => row.shop_id));
+  const { data: paymentRows } = await service.from('promotion_payments').select('*').order('created_at', { ascending: false }).limit(50);
 
   return {
     pending: (pendingRes.data as VerificationRequest[]) ?? [],
@@ -246,6 +248,7 @@ async function loadAdminData() {
     soldListings: ((soldListingsRes.data ?? []) as unknown as Shoe[]),
     promotions: promotionsWithProofs,
     sponsoredPromotions: sponsoredPromotionsWithProofs,
+    promotionPayments: (paymentRows ?? []) as PromotionPayment[],
     listingViews,
     leadReports,
     listingReports,

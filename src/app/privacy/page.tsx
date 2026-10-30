@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <InfoPage title="Privacy Policy" lastUpdated="June 2026">
+    <InfoPage title="Privacy Policy" lastUpdated="October 2026">
       <section>
         <h2 className="text-xl font-semibold text-gray-100">1. Who we are</h2>
         <p>
@@ -32,6 +32,7 @@ export default function PrivacyPage() {
           <li><strong>Communications:</strong> messages or notes submitted through offer, order, free-pair, support, shop application, verification, and contact forms.</li>
           <li><strong>Email preferences and delivery:</strong> marketing consent, unsubscribe choices, delivery events, bounces, and spam complaints used to honor preferences and protect sender reputation.</li>
           <li><strong>Marketplace analytics:</strong> listing views, saved pairs, request starts, request submissions, listing publish events, share actions, outbound contact clicks, price estimator usage, timestamps, and limited technical identifiers used to measure activity and reduce duplicate or abusive activity.</li>
+          <li><strong>Promotion payments:</strong> order references, promotion selections, GP Coin usage, payment amounts, payment method, provider checkout and payment IDs, payment status, refunds, and support review notes. QR Ph payments are completed in your banking or e-wallet app through PayMongo checkout; we do not store card numbers or wallet credentials.</li>
           <li><strong>Technical information:</strong> IP address, browser, device, pages visited, referring pages, cookies, session data, and server logs needed to operate, secure, measure, and improve the site.</li>
         </ul>
       </section>
@@ -71,6 +72,7 @@ export default function PrivacyPage() {
         <ul className="list-disc list-inside space-y-1.5">
           <li><strong>Supabase</strong> — database, authentication, and image storage.</li>
           <li><strong>Google</strong> — sign-in (OAuth).</li>
+          <li><strong>PayMongo</strong> — QR Ph and other enabled promotion payments, hosted checkout, payment confirmation, receipts, and refunds. We share your checkout email, order reference, promotion description, and amount to process the payment.</li>
           <li><strong>Google Analytics</strong> — site measurement and usage analytics.</li>
           <li><strong>Vercel</strong> — site hosting, deployment, logs, and delivery.</li>
           <li><strong>Resend</strong> — transactional, notification, and opted-in marketing emails, including delivery and complaint events.</li>

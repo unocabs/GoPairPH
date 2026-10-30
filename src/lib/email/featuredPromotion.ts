@@ -1,3 +1,4 @@
+// Historical screenshot-payment templates. New QR Ph receipts use payments/notifications.ts.
 import { formatPrice } from '@/lib/utils';
 import { labelPaymentMethod } from '@/lib/featuredPromotions';
 import type { FeaturedPaymentMethod } from '@/types';
@@ -44,16 +45,16 @@ export function renderAdminFeaturedProofEmail(args: AdminProofEmailArgs): string
     ? `<p style="margin:12px 0 0;">${renderButton(args.proofUrl, 'Open payment proof', 'secondary')}</p>`
     : '';
 
-  return shell('Featured proof submitted', 'Go Pair PH admin', `
-    ${paragraph(`A seller submitted payment proof for <strong>${escapeHtml(args.listingName)}</strong>.`)}
+  return shell('Featured proof submitted', 'Go Pair PH admin · Legacy payment', `
+    ${paragraph(`A seller submitted legacy payment proof for <strong>${escapeHtml(args.listingName)}</strong>.`)}
     ${renderInfoRows([
       { label: 'Seller', value: args.sellerName },
       { label: 'Duration', value: `${args.durationDays} days` },
       { label: 'Featured price', value: formatPrice(args.pricePhp) },
       { label: 'GP Coins spent', value: `${(args.coinsUsed ?? 0).toLocaleString('en-PH')} GP` },
       { label: 'Coin discount', value: formatPrice(args.coinDiscountPhp ?? 0) },
-      { label: 'Cash amount', value: formatPrice(args.cashAmountPhp ?? args.pricePhp) },
-      { label: 'Payment mode', value: args.paymentMode ?? 'Cash only' },
+      { label: 'Transferred amount', value: formatPrice(args.cashAmountPhp ?? args.pricePhp) },
+      { label: 'Payment mode', value: args.paymentMode ?? 'Legacy bank / e-wallet transfer' },
       { label: 'Payment method', value: labelPaymentMethod(args.paymentMethod) },
       { label: 'Transaction reference', value: args.transactionReference ?? 'Not provided' },
       { label: 'Queue status', value: args.status },
@@ -70,8 +71,8 @@ export function renderAdminFeaturedProofEmail(args: AdminProofEmailArgs): string
 }
 
 export function renderSellerFeaturedSubmittedEmail(args: FeaturedPromotionEmailBase): string {
-  return shell('Your Featured request was received', 'Go Pair PH', `
-    ${paragraph(`Your Featured request for <strong>${escapeHtml(args.listingName)}</strong> is in line. We will review your payment proof, but your position is already reserved.`)}
+  return shell('Your Featured request was received', 'Go Pair PH · Legacy payment', `
+    ${paragraph(`Your legacy Featured request for <strong>${escapeHtml(args.listingName)}</strong> is in line. We will review your payment proof, but your position is already reserved.`)}
     ${renderInfoRows([
       { label: 'Duration', value: `${args.durationDays} days` },
       { label: 'Amount', value: formatPrice(args.pricePhp) },
@@ -84,7 +85,7 @@ export function renderSellerFeaturedSubmittedEmail(args: FeaturedPromotionEmailB
 }
 
 export function renderSellerFeaturedReviewEmail(args: FeaturedPromotionEmailBase & { approved: boolean; notes: string | null }): string {
-  return shell(args.approved ? 'Your Featured listing is approved' : 'Featured request needs review', 'Go Pair PH', `
+  return shell(args.approved ? 'Your Featured listing is approved' : 'Featured request needs review', 'Go Pair PH · Legacy payment', `
     <p style="margin:14px 0 0;color:#cbd5e1;font-size:15px;line-height:1.65;">
       ${args.approved
         ? `<strong>${escapeHtml(args.listingName)}</strong> is approved for Featured placement.`

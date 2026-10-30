@@ -50,13 +50,13 @@ export default function PromoteListingPage() {
         <h2 className="text-xl font-semibold text-gray-100">How Featured works</h2>
         <p>
           Featured is the home-page highlight for one listing at a time. It is designed for sellers
-          who want their pair to be the first thing visitors see when they land on Go Pair PH.
+          who want their running shoes to be the first thing visitors see when they land on Go Pair PH.
         </p>
         <ol className="list-decimal list-inside space-y-1.5">
           <li>Open your listing, click <strong>Promote Listing</strong>, then choose <strong>Featured on Home</strong>.</li>
           <li>Pick a duration: <strong>7 days (₱50)</strong> or <strong>30 days (₱150)</strong>.</li>
-          <li>Choose whether to use GP Coins, cash, or a mix of both. If there is a cash balance, pay via GCash or BPI and upload the receipt screenshot.</li>
-          <li>An admin confirms availability, then activates your Featured slot within 24 hours after payment confirmation.</li>
+          <li>Choose QR Ph, GP Coins, or a mix of both. Pay any remaining amount through PayMongo QR Ph checkout.</li>
+          <li>After verified payment, your shoes become Featured if the spotlight is available, or join the paid Featured queue. Your promotion window starts when your placement activates.</li>
           <li>Your listing appears on the home page with a clear <strong>★ Featured</strong> tag until the window ends or the item sells.</li>
         </ol>
         <p className="mt-3 text-sm text-gray-400">
@@ -68,16 +68,16 @@ export default function PromoteListingPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">Using GP Coins for Featured</h2>
         <p>
-          GP Coins can be used for <strong>Featured on Home</strong>. They help lower the cash amount
+          GP Coins can be used for <strong>Featured on Home</strong>. They help lower the amount
           needed to promote your running shoes on the Go Pair PH home page.
         </p>
         <ul className="list-disc list-inside space-y-1.5">
-          <li><strong>Cash only:</strong> pay the full Featured price with GCash or BPI.</li>
-          <li><strong>GP Coins + cash:</strong> use coins for part of the Featured price, then pay the remaining balance with GCash or BPI.</li>
-          <li><strong>GP Coins only:</strong> if your balance covers the full Featured price, no payment screenshot is needed.</li>
-          <li>If any cash remains, upload the payment screenshot so an admin can review the Featured request.</li>
-          <li>GP Coins do not apply to Top Pick. Top Pick is paid with cash only.</li>
-          <li>GP Coins are Go Pair PH promotional credits. They cannot be withdrawn, transferred, or exchanged for cash.</li>
+          <li><strong>QR Ph:</strong> pay the full Featured price by scanning the QR code in PayMongo checkout with your banking or e-wallet app.</li>
+          <li><strong>GP Coins + QR Ph:</strong> use coins for part of the Featured price, then pay the remaining amount through PayMongo QR Ph.</li>
+          <li><strong>GP Coins only:</strong> if your balance covers the full Featured price, confirm your coins without opening PayMongo. Full coin payment is limited to once every 30 days.</li>
+          <li>QR Ph payments are verified automatically. Check your reference and placement status in Promotion payments from your profile.</li>
+          <li>GP Coins do not apply to Top Pick. Pay for Top Pick through PayMongo QR Ph checkout.</li>
+          <li>Other enabled PayMongo payment methods may also appear at checkout. GP Coins are Go Pair PH promotional credits. They cannot be withdrawn, transferred, or exchanged for cash.</li>
         </ul>
       </section>
 
@@ -86,12 +86,12 @@ export default function PromoteListingPage() {
         <ol className="list-decimal list-inside space-y-1.5">
           <li>Open your listing and click <strong>Promote Listing</strong>.</li>
           <li>Pick a duration: <strong>7 days (₱30)</strong> or <strong>30 days (₱100)</strong>.</li>
-          <li>Pay via GCash or BPI — QR codes are shown in the modal.</li>
-          <li>Upload the receipt screenshot in the modal.</li>
-          <li>Your listing becomes a Top Pick right away if a slot is still available, then an admin reviews whether the payment is valid.</li>
+          <li>Review the total and choose Pay with QR Ph. An available slot is held while you complete checkout.</li>
+          <li>Scan the QR Ph code shown in PayMongo checkout using your banking or e-wallet app, then confirm the payment in your app.</li>
+          <li>Your listing becomes a Top Pick after payment has been verified automatically.</li>
         </ol>
         <p className="mt-3 text-sm text-gray-400">
-          Top Pick is paid placement. If a payment screenshot is invalid, we may remove the placement after review.
+          Top Pick is paid placement. Returning from checkout does not prove payment succeeded. Check your payment status before trying to pay again.
         </p>
       </section>
 
@@ -103,14 +103,29 @@ export default function PromoteListingPage() {
             and stops Top Pick cards from drowning out organic ones.
           </li>
           <li>
-            If all slots are taken, you&apos;ll see when the next slot opens up. <strong>No reservation queue
-            — first paid wins.</strong> When that date arrives, refresh and try again.
+            If all slots are taken, you&apos;ll see the next expected opening when available. Checkout holds count toward the cap. <strong>There is no waiting queue for Top Pick.</strong>
           </li>
           <li>
             If a Top Pick listing sells (or gets reserved) before its window ends, that slot frees up
             immediately for the next seller.
           </li>
         </ul>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-gray-100">Payment status, cancellations, and refunds</h2>
+        <p>
+          Find your reference, resume an existing checkout, or refresh confirmation in{' '}
+          <Link href="/promotions/payments" className="text-teal-400 hover:text-teal-300">Promotion payments</Link>.
+          If you already paid, avoid paying again while confirmation is pending.
+          Cancelling an unpaid checkout releases its slot and GP Coins only after PayMongo confirms it is closed.
+          A processing payment may take longer to resolve.
+        </p>
+        <p>
+          If payment was received but your promotion cannot start, contact support with your reference for review.
+          QR Ph payment refunds are processed through PayMongo and marked refunded after provider confirmation.
+          Eligible GP Coins are returned to your wallet. A refund request or review note does not mean a payment refund has completed.
+        </p>
       </section>
 
       <section>

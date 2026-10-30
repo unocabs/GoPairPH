@@ -1,3 +1,4 @@
+// Historical screenshot-payment templates. New QR Ph receipts use payments/notifications.ts.
 import { labelSponsoredPaymentMethod } from '@/lib/sponsoredPromotions';
 import { formatPrice } from '@/lib/utils';
 import type { SponsoredPaymentMethod } from '@/types';
@@ -39,8 +40,8 @@ export function renderAdminSponsoredProofEmail(args: AdminProofEmailArgs): strin
     ? `<p style="margin:12px 0 0;">${renderButton(args.proofUrl, 'Open payment proof', 'secondary')}</p>`
     : '';
 
-  return shell('Top Pick proof submitted', 'Go Pair PH admin', `
-    ${paragraph(`A seller submitted payment proof for Top Pick placement on <strong>${escapeHtml(args.listingName)}</strong>.`)}
+  return shell('Top Pick proof submitted', 'Go Pair PH admin · Legacy payment', `
+    ${paragraph(`A seller submitted legacy payment proof for Top Pick placement on <strong>${escapeHtml(args.listingName)}</strong>.`)}
     ${renderInfoRows([
       { label: 'Seller', value: args.sellerName },
       { label: 'Duration', value: `${args.durationDays} days` },
@@ -60,8 +61,8 @@ export function renderAdminSponsoredProofEmail(args: AdminProofEmailArgs): strin
 }
 
 export function renderSellerSponsoredSubmittedEmail(args: SponsoredPromotionEmailBase): string {
-  return shell('Your Top Pick request was received', 'Go Pair PH', `
-    ${paragraph(`Your Top Pick request for <strong>${escapeHtml(args.listingName)}</strong> is active now while we review your payment proof.`)}
+  return shell('Your Top Pick request was received', 'Go Pair PH · Legacy payment', `
+    ${paragraph(`Your legacy Top Pick request for <strong>${escapeHtml(args.listingName)}</strong> is active now while we review your payment proof.`)}
     ${renderInfoRows([
       { label: 'Duration', value: `${args.durationDays} days` },
       { label: 'Amount', value: formatPrice(args.pricePhp) },
@@ -76,7 +77,7 @@ export function renderSellerSponsoredSubmittedEmail(args: SponsoredPromotionEmai
 }
 
 export function renderSellerSponsoredReviewEmail(args: SponsoredPromotionEmailBase & { approved: boolean; notes: string | null }): string {
-  return shell(args.approved ? 'Your Top Pick is approved' : 'Top Pick request needs review', 'Go Pair PH', `
+  return shell(args.approved ? 'Your Top Pick is approved' : 'Top Pick request needs review', 'Go Pair PH · Legacy payment', `
     <p style="margin:14px 0 0;color:#cbd5e1;font-size:15px;line-height:1.65;">
       ${args.approved
         ? `<strong>${escapeHtml(args.listingName)}</strong> is approved for Top Pick placement.`

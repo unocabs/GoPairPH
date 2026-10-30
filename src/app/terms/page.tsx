@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <InfoPage title="Terms of Service" lastUpdated="June 2026">
+    <InfoPage title="Terms of Service" lastUpdated="October 2026">
       <section>
         <h2 className="text-xl font-semibold text-gray-100">1. Acceptance of terms</h2>
         <p>
@@ -33,10 +33,9 @@ export default function TermsPage() {
         <h2 className="text-xl font-semibold text-gray-100">3. What Go Pair PH is (and isn&apos;t)</h2>
         <p>
           Go Pair PH is a <strong>listing and shop storefront platform</strong>. We connect buyers
-          with community sellers and independent shop sellers, but we do not handle payments,
+          with community sellers and independent shop sellers. Payments for shoes are arranged directly between buyers and sellers. We do not
           hold inventory, ship items, inspect shoes, verify authenticity, provide escrow, or
-          guarantee the conduct of any user or shop. All transactions are arranged directly
-          between buyers and sellers.
+          guarantee the conduct of any user or shop. Go Pair PH collects its own promotion fees through PayMongo QR Ph checkout.
         </p>
       </section>
 
@@ -118,6 +117,15 @@ export default function TermsPage() {
           misleading, have no images, violate rules, or create trust concerns.
           GoPair Coins are promotional credits that may be applied to eligible Featured
           placements; they are not cash, withdrawable, or transferable.
+        </p>
+        <p>
+          Promotion fees are paid through PayMongo checkout using QR Ph or another enabled payment method. Placements activate or enter the Featured queue only after verified payment.
+          A return or cancellation screen does not confirm a payment outcome. If confirmation is delayed, check{' '}
+          <Link href="/promotions/payments" className="text-teal-400 hover:text-teal-300">Promotion payments</Link>{' '}
+          before trying to pay again. Unused promotion time after shoes sell is not refunded.
+          If a paid placement cannot be delivered, contact support with the payment reference for refund review.
+          Payment refunds are recorded after PayMongo confirms them; review status alone does not mean funds were returned.
+          See the{' '}<Link href="/help/promote-listing" className="text-teal-400 hover:text-teal-300">promotion policy</Link>{' '}for details.
         </p>
       </section>
 

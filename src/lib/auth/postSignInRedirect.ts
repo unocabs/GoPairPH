@@ -42,7 +42,7 @@ export async function resolvePostSignInPath(
   // A guest has already completed step 1 and saved the details locally. Keep
   // this explicit continuation ahead of the normal active-seller dashboard
   // redirect so sign-in returns them to photo upload instead of /profile.
-  if (isGuestListingDraftResume(fallbackPath) || isSavedSearchResume(fallbackPath)) return fallbackPath;
+  if (isGuestListingDraftResume(fallbackPath) || isSavedSearchResume(fallbackPath) || fallbackPath.split('?')[0] === '/promotions/payments') return fallbackPath;
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import { PromoteListingModal, UnverifiedNotice } from './PromoteListingModal';
-import { PromoteAcknowledgmentModal } from './PromoteAcknowledgmentModal';
 
 interface PromoteListingButtonProps {
   listingId: string;
@@ -33,7 +32,6 @@ export function PromoteListingButton({
   gpCoinBalance = 0,
   autoOpenFromSearchParams = true,
 }: PromoteListingButtonProps) {
-  const [showAcknowledgment, setShowAcknowledgment] = useState(false);
   const [open, setOpen] = useState(false);
   const [showUnverified, setShowUnverified] = useState(false);
   const [autoFeatured, setAutoFeatured] = useState(false);
@@ -65,12 +63,6 @@ export function PromoteListingButton({
       setShowUnverified(true);
       return;
     }
-    // Always show the acknowledgment first — payment is involved, refresher each time.
-    setShowAcknowledgment(true);
-  }
-
-  function handleProceed() {
-    setShowAcknowledgment(false);
     setOpen(true);
   }
 
@@ -93,13 +85,6 @@ export function PromoteListingButton({
 
   const modalLayer = (
     <>
-      {showAcknowledgment && (
-        <PromoteAcknowledgmentModal
-          onClose={() => setShowAcknowledgment(false)}
-          onProceed={handleProceed}
-        />
-      )}
-
       {open && (
         <PromoteListingModal
           listingId={listingId}

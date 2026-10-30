@@ -29,6 +29,7 @@ interface EmailContentArgs {
 interface TransactionalEmailArgs extends EmailContentArgs {
   category: TransactionalEmailCategory;
   tags?: Record<string, string>;
+  idempotencyKey?: string;
 }
 
 interface MarketingEmailArgs extends EmailContentArgs {
@@ -81,6 +82,7 @@ export async function sendTransactionalEmail({
   text,
   category,
   tags,
+  idempotencyKey,
 }: TransactionalEmailArgs): Promise<void> {
   const client = getResendClient();
   if (!client) {
@@ -103,7 +105,7 @@ export async function sendTransactionalEmail({
     html,
     text: text?.trim() || htmlToPlainText(html),
     tags: getEmailTags('transactional', category, tags),
-  });
+  }, idempotencyKey ? { idempotencyKey } : undefined);
 
   if (error) {
     throw new Error(`Resend error: ${error.message ?? JSON.stringify(error)}`);

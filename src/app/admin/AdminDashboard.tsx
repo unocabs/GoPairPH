@@ -2,6 +2,8 @@
 
 import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { PromotionPaymentsAdmin } from '@/components/payments/PromotionPaymentsAdmin';
+import { labelPromotionPaymentMethod, type PromotionPayment } from '@/lib/payments/types';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
@@ -25,6 +27,7 @@ interface AdminDashboardProps {
   soldListings: Shoe[];
   promotions: FeaturedPromotionOrder[];
   sponsoredPromotions: SponsoredPromotionOrder[];
+  promotionPayments: PromotionPayment[];
   listingViews: ListingViewSummary[];
   leadReports: WishlistOfferReport[];
   listingReports: ListingReport[];
@@ -139,6 +142,7 @@ export function AdminDashboard({
   soldListings,
   promotions,
   sponsoredPromotions,
+  promotionPayments,
   listingViews,
   leadReports,
   listingReports,
@@ -151,7 +155,7 @@ export function AdminDashboard({
   const requestedTab = searchParams.get('tab');
   const [tab, setTab] = useState<Tab>(requestedTab && ADMIN_TABS.includes(requestedTab as Tab) ? requestedTab as Tab : 'views');
   const todayViewedListingCount = getTodayViewedListingCount(listingViews, viewWindow.endDate);
-  const pendingPromotionReviewCount = getPendingPromotionReviewCount(promotions, sponsoredPromotions);
+  const pendingPromotionReviewCount = getPendingPromotionReviewCount(promotions, sponsoredPromotions) + promotionPayments.filter(payment => payment.status === 'review').length;
 
   return (
     <div>
@@ -184,7 +188,7 @@ export function AdminDashboard({
 
       {tab === 'pending' && <PendingList requests={pending} />}
       {tab === 'buyback' && <BuybackPanel initialOffers={buybackOffers} initialInventory={buybackInventory} shops={shops.filter(shop => shop.buyback_receiving_enabled)} />}
-      {tab === 'promotions' && <FeaturedPromotionsPanel initialPromotions={promotions} initialSponsoredPromotions={sponsoredPromotions} profiles={profiles} />}
+      {tab === 'promotions' && <><PromotionPaymentsAdmin payments={promotionPayments} /><FeaturedPromotionsPanel initialPromotions={promotions} initialSponsoredPromotions={sponsoredPromotions} profiles={profiles} payments={promotionPayments} /></>}
       {tab === 'verified' && <VerifiedList users={verified} verificationProofs={verifiedProofs} />}
       {tab === 'shops' && <ShopsPanel shops={shops} profiles={profiles} />}
       {tab === 'soldListings' && <SoldListingsPanel listings={soldListings} />}
@@ -632,10 +636,12 @@ function BuybackOfferCard({ offer, onChanged }: { offer: BuybackOffer; onChanged
   );
 }
 
-function FeaturedPromotionsPanel({ initialPromotions, initialSponsoredPromotions, profiles }: { initialPromotions: FeaturedPromotionOrder[]; initialSponsoredPromotions: SponsoredPromotionOrder[]; profiles: Profile[] }) {
+function FeaturedPromotionsPanel({ initialPromotions, initialSponsoredPromotions, profiles, payments }: { initialPromotions: FeaturedPromotionOrder[]; initialSponsoredPromotions: SponsoredPromotionOrder[]; profiles: Profile[]; payments: PromotionPayment[] }) {
   const router = useRouter();
   const [promotions, setPromotions] = useState(initialPromotions);
   const [sponsoredPromotions, setSponsoredPromotions] = useState(initialSponsoredPromotions);
+  const featuredMethods = new Map(payments.filter(payment => payment.featured_order_id).map(payment => [payment.featured_order_id, labelPromotionPaymentMethod(payment)]));
+  const sponsoredMethods = new Map(payments.filter(payment => payment.sponsored_order_id).map(payment => [payment.sponsored_order_id, labelPromotionPaymentMethod(payment)]));
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -747,8 +753,8 @@ function FeaturedPromotionsPanel({ initialPromotions, initialSponsoredPromotions
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-gray-100">Pending payment reviews</h2>
-            <p className="text-sm text-gray-500">Paid placements can already be active or queued while you review the screenshot.</p>
+            <h2 className="text-lg font-semibold text-gray-100">Legacy Featured payment reviews</h2>
+            <p className="text-sm text-gray-500">Screenshot orders created before PayMongo. New payments are verified automatically above.</p>
           </div>
           <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">{pending.length}</span>
         </div>
@@ -764,8 +770,8 @@ function FeaturedPromotionsPanel({ initialPromotions, initialSponsoredPromotions
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-gray-100">Pending Top Pick payment reviews</h2>
-            <p className="text-sm text-gray-500">Top Pick placements are applied immediately while you review the screenshot.</p>
+            <h2 className="text-lg font-semibold text-gray-100">Legacy Top Pick payment reviews</h2>
+            <p className="text-sm text-gray-500">Screenshot orders created before PayMongo. Keep these records for the existing review process.</p>
           </div>
           <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">{sponsoredPending.length}</span>
         </div>
@@ -789,7 +795,7 @@ function FeaturedPromotionsPanel({ initialPromotions, initialSponsoredPromotions
                 <div>
                   <p className="font-semibold text-gray-100">{order.listing ? formatListingName(order.listing.brand, order.listing.model) : 'Featured listing'}</p>
                   <p className="text-xs text-gray-500">
-                    #{order.queue_position ?? '—'} · {order.duration_days} days · {formatPrice(order.cash_amount_php ?? order.price_php)} cash · {order.coins_used > 0 ? `${order.coins_used} GP` : 'No coins'} · {labelFeaturedPromotionStatus(order)}
+                    #{order.queue_position ?? '—'} · {order.duration_days} days · {formatPrice(order.cash_amount_php ?? order.price_php)} · {featuredMethods.get(order.id) ?? (order.coin_payment_mode === 'coins_only' ? 'GP Coins' : order.payment_method ? `Legacy ${labelPaymentMethod(order.payment_method)}` : 'Online payment')} · {order.coins_used > 0 ? `${order.coins_used} GP` : 'No coins'} · {labelFeaturedPromotionStatus(order)}
                   </p>
                 </div>
                 <p className="text-xs text-gray-400 sm:text-right">
@@ -845,7 +851,7 @@ function FeaturedPromotionsPanel({ initialPromotions, initialSponsoredPromotions
                   <td className="py-2 pr-4 capitalize">{order.status.replaceAll('_', ' ')}</td>
                   <td className="py-2 pr-4">
                     {order.source === 'paid'
-                      ? `${order.coin_payment_mode.replaceAll('_', ' ')} · ${order.coins_used} GP · ${formatPrice(order.cash_amount_php ?? order.price_php)} cash`
+                      ? `${featuredMethods.get(order.id) ?? (order.coin_payment_mode === 'coins_only' ? 'GP Coins' : order.payment_method ? `Legacy ${labelPaymentMethod(order.payment_method)}` : 'Online payment')} · ${order.coins_used} GP · ${formatPrice(order.cash_amount_php ?? order.price_php)}`
                       : 'No payment'}
                   </td>
                   <td className="py-2 pr-4">{formatDateTime(order.created_at)}</td>
@@ -856,7 +862,7 @@ function FeaturedPromotionsPanel({ initialPromotions, initialSponsoredPromotions
                   <td className="py-2 pr-4">{order.listing ? formatListingName(order.listing.brand, order.listing.model) : 'Listing'}</td>
                   <td className="py-2 pr-4">Paid Top Pick</td>
                   <td className="py-2 pr-4 capitalize">{order.status.replaceAll('_', ' ')}</td>
-                  <td className="py-2 pr-4">{labelSponsoredPaymentMethod(order.payment_method)} · {formatPrice(order.price_php)}</td>
+                  <td className="py-2 pr-4">{sponsoredMethods.get(order.id) ?? (order.payment_method ? `Legacy ${labelSponsoredPaymentMethod(order.payment_method)}` : 'Online payment')} · {formatPrice(order.price_php)}</td>
                   <td className="py-2 pr-4">{formatDateTime(order.created_at)}</td>
                 </tr>
               ))}
