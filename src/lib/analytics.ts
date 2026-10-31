@@ -1,5 +1,7 @@
 'use client';
 
+import { allowsKeeplyAnalytics, KEEPLY_AD_PARAMS } from './keeplyAd';
+
 type AnalyticsValue = string | number | boolean | null | undefined;
 
 type AnalyticsParams = Record<string, AnalyticsValue>;
@@ -27,4 +29,22 @@ export function trackEvent(eventName: string, params?: AnalyticsParams) {
 
 export function trackMarketplaceAction(action: string, params?: AnalyticsParams) {
   trackEvent(`marketplace_${action}`, params);
+}
+
+export function trackKeeplyAdClick() {
+  try {
+    if (typeof window === 'undefined') return;
+    const analyticsWindow = window as Window & {
+      dataLayer?: unknown;
+      'ga-disable-G-LH99NEKGMC'?: boolean;
+    };
+    const privacyNavigator = navigator as Navigator & { globalPrivacyControl?: boolean };
+    const disabled = analyticsWindow['ga-disable-G-LH99NEKGMC'] === true
+      || privacyNavigator.doNotTrack === '1'
+      || privacyNavigator.globalPrivacyControl === true;
+    if (!allowsKeeplyAnalytics(analyticsWindow.dataLayer, disabled)) return;
+    trackEvent('keeply_ad_click', KEEPLY_AD_PARAMS);
+  } catch {
+    // Tracking must never cancel or delay the native outbound navigation.
+  }
 }

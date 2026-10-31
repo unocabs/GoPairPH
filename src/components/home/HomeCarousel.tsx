@@ -3,7 +3,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { CSSProperties, TransitionEvent } from 'react';
+import type { CSSProperties, MouseEvent, TransitionEvent } from 'react';
+import { trackKeeplyAdClick } from '@/lib/analytics';
+import { isKeeplyActivation, KEEPLY_AD_LABEL, KEEPLY_AD_URL } from '@/lib/keeplyAd';
 
 type HomeCarouselSlide = {
   id: string;
@@ -16,6 +18,15 @@ type HomeCarouselSlide = {
 };
 
 const slides: ReadonlyArray<HomeCarouselSlide> = [
+  {
+    id: 'keeply',
+    label: 'Keeply',
+    title: 'More headspace for your next run.',
+    body: 'Organise bills, home maintenance and purchase records in one place.',
+    imageSrc: '/home-carousel/keeply-gopair-banner-v1.webp',
+    imageAlt: 'Keeply: More headspace for your next run. Organise bills, home maintenance and purchase records in one place. Explore a sample account.',
+    ctaHref: KEEPLY_AD_URL,
+  },
   {
     id: 'gp-coins',
     label: 'GoPair Coins',
@@ -70,8 +81,10 @@ export function HomeCarousel() {
   const [slideOffset, setSlideOffset] = useState(0);
   const [transitionEnabled, setTransitionEnabled] = useState(true);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [showsTwoSlides, setShowsTwoSlides] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
+  const swiped = useRef(false);
 
   const activeIndex = normalizeSlideIndex(position);
 
@@ -80,6 +93,7 @@ export function HomeCarousel() {
       const viewportWidth = viewportRef.current?.clientWidth ?? 0;
       const gap = 16;
       const showsTwoSlides = window.matchMedia('(min-width: 640px)').matches;
+      setShowsTwoSlides(showsTwoSlides);
       setSlideOffset(showsTwoSlides ? (viewportWidth + gap) / 2 : viewportWidth + gap);
     };
 
@@ -142,11 +156,23 @@ export function HomeCarousel() {
     transform: `translate3d(-${position * slideOffset}px, 0, 0)`,
   } satisfies CSSProperties;
 
+  const handleActivation = (event: MouseEvent<HTMLAnchorElement>, slide: HomeCarouselSlide) => {
+    if (swiped.current) {
+      event.preventDefault();
+      swiped.current = false;
+      return;
+    }
+    if (slide.id === 'keeply' && isKeeplyActivation(event.type, event.button, event.isTrusted)) {
+      trackKeeplyAdClick();
+    }
+  };
+
   return (
     <section
       className="border-b border-white/[0.08] bg-slate-950"
       aria-label="Go Pair PH highlights"
       onTouchStart={(event) => {
+        swiped.current = false;
         touchStartX.current = event.touches[0]?.clientX ?? null;
       }}
       onTouchEnd={(event) => {
@@ -157,6 +183,7 @@ export function HomeCarousel() {
         const endX = event.changedTouches[0]?.clientX ?? startX;
         const delta = endX - startX;
         if (Math.abs(delta) < 44) return;
+        swiped.current = true;
         if (delta > 0) goToPrevious();
         else goToNext();
       }}
@@ -184,27 +211,39 @@ export function HomeCarousel() {
             >
             {trackSlides.map((slide, index) => {
               const isPrimarySlide = index >= baseIndex && index < baseIndex * 2;
+              const isVisibleSlide = index === position || (showsTwoSlides && index === position + 1);
+              const isKeeply = slide.id === 'keeply';
+              const BannerLink = isKeeply ? 'a' : Link;
 
               return (
                 <article
                   key={`${slide.id}-${index}`}
-                  aria-hidden={!isPrimarySlide}
+                  aria-hidden={!isVisibleSlide}
+                  aria-label={`${normalizeSlideIndex(index) + 1} of ${slides.length}`}
+                  aria-roledescription="slide"
                   className="min-w-0 shrink-0 basis-full overflow-hidden rounded-xl border border-white/[0.08] bg-slate-950 shadow-[0_16px_50px_rgba(0,0,0,0.28)] sm:basis-[calc((100%_-_1rem)/2)]"
                 >
-                  <Link
+                  <BannerLink
                     href={slide.ctaHref}
-                    className="block"
-                    aria-label={isPrimarySlide ? `${slide.title}. ${slide.body}` : undefined}
-                    tabIndex={isPrimarySlide ? undefined : -1}
+                    className="block focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-teal-300"
+                    aria-label={isKeeply ? KEEPLY_AD_LABEL : `${slide.title}. ${slide.body}`}
+                    tabIndex={isVisibleSlide ? undefined : -1}
+                    onClick={(event) => handleActivation(event, slide)}
+                    onAuxClick={(event) => handleActivation(event, slide)}
+                    onPointerDown={(event) => { if (event.pointerType !== 'touch') swiped.current = false; }}
+                    onKeyDown={() => { swiped.current = false; }}
                   >
-                    <div className="relative aspect-[2.45/1] overflow-hidden bg-slate-950 sm:aspect-[2.5/1]">
+                    <div
+                      className={`relative overflow-hidden bg-slate-950 ${isKeeply ? '' : 'aspect-[2.45/1] sm:aspect-[2.5/1]'}`}
+                      style={isKeeply ? { aspectRatio: '1983 / 793' } : undefined}
+                    >
                       <Image
                         src={slide.imageSrc}
                         alt={isPrimarySlide ? slide.imageAlt : ''}
                         fill
-                        priority={activeIndex === 0 && index === baseIndex}
-                        sizes="(max-width: 640px) 100vw, 50vw"
-                        className="object-cover object-top transition-transform duration-300 hover:scale-[1.015]"
+                        priority={index === baseIndex}
+                        sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1023px) calc((100vw - 64px) / 2), (max-width: 1279px) calc((100vw - 80px) / 2), 600px"
+                        className={isKeeply ? 'object-contain' : 'object-cover object-top transition-transform duration-300 hover:scale-[1.015]'}
                       />
                     </div>
                     {isPrimarySlide && (
@@ -214,7 +253,7 @@ export function HomeCarousel() {
                         <p>{slide.body}</p>
                       </div>
                     )}
-                  </Link>
+                  </BannerLink>
                 </article>
               );
             })}
@@ -230,6 +269,9 @@ export function HomeCarousel() {
             <ArrowRightIcon />
           </button>
         </div>
+        <p className="sr-only" aria-live="polite" aria-atomic="true">
+          Highlight {activeIndex + 1} of {slides.length}: {slides[activeIndex].label}
+        </p>
       </div>
     </section>
   );

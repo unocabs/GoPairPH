@@ -34,6 +34,7 @@ Go Pair PH sends lightweight Google Analytics events through the existing `gtag`
 
 ## Sharing And Off-Site Handoffs
 
+- `keeply_ad_click`: genuine activation of the Keeply homepage carousel banner, including Enter, modified primary click, and middle click. Uses only `advertiser: keeply`, `placement: homepage_promo_first`, `campaign: gopair_home_banner`, and `link_domain: www.keeplyph.com`. This measures outbound intent on Go Pair PH. It does not measure Keeply arrivals, registrations, or saved records. Registered as a GA4 key event in property `536547109`, counting once per session with no default monetary value; ordinary event counts still include repeat activations. See [implementation and verification notes](keeply-home-banner.md).
 - `marketplace_copy_listing_link`: listing link copied.
 - `marketplace_copy_share_caption`: Facebook/share caption copied.
 - `marketplace_share_kit_open`: listing share kit opened.
