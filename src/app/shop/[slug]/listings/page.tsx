@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { compareListingFreshness } from '@/lib/listingFreshness';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { getOfferCounts } from '@/lib/offers';
@@ -28,7 +29,8 @@ async function getShopListings(shopId: string): Promise<Shoe[]> {
     .eq('shop_id', shopId)
     .eq('status', 'active')
     .eq('has_stock', true)
-    .order('created_at', { ascending: false })
+    .order('freshness_at', { ascending: false })
+    .order('id')
     .limit(120);
   const all = (data as Shoe[]) ?? [];
   const hasPhoto = (s: Shoe) => (s.shoe_images?.length ?? 0) > 0;
@@ -36,7 +38,7 @@ async function getShopListings(shopId: string): Promise<Shoe[]> {
     const aPhoto = hasPhoto(a);
     const bPhoto = hasPhoto(b);
     if (aPhoto !== bPhoto) return aPhoto ? -1 : 1;
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    return compareListingFreshness(a, b);
   });
 }
 

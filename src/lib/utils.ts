@@ -1,6 +1,9 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { CONDITIONS, LISTING_TYPE_LABELS, SIZE_CONVERSIONS_BY_US_TYPE, US_SIZE_PREFIX, type UsSizeType } from './constants';
+import { getListingFreshnessDate } from './listingFreshness';
+
+export { getListingFreshnessDate } from './listingFreshness';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -151,10 +154,6 @@ export function formatRelativeDate(dateString: string): string {
   if (diffDays < 30) return formatAgo(Math.floor(diffDays / 7), 'week');
   if (diffDays < 365) return formatAgo(Math.floor(diffDays / 30), 'month');
   return formatAgo(Math.floor(diffDays / 365), 'year');
-}
-
-export function getListingFreshnessDate(listing: { created_at: string; renewed_at?: string | null }): string {
-  return listing.renewed_at ?? listing.created_at;
 }
 
 export function formatListingFreshness(listing: { created_at: string; renewed_at?: string | null }): string {

@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
+import { compareListingFreshness } from '@/lib/listingFreshness';
 import type { Metadata } from 'next';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { getOfferCount } from '@/lib/offers';
@@ -300,7 +301,8 @@ async function getListingDiscovery(shoe: Shoe, viewerProfile?: PersonalizationPr
       .eq('listed_in_main_feed', true)
       .eq('brand', shoe.brand)
       .neq('id', shoe.id)
-      .order('created_at', { ascending: false })
+      .order('freshness_at', { ascending: false })
+      .order('id')
       .limit(18),
     supabase
       .from('shoes')
@@ -309,7 +311,8 @@ async function getListingDiscovery(shoe: Shoe, viewerProfile?: PersonalizationPr
       .eq('has_stock', true)
       .eq('listed_in_main_feed', true)
       .neq('id', shoe.id)
-      .order('created_at', { ascending: false })
+      .order('freshness_at', { ascending: false })
+      .order('id')
       .limit(36),
     supabase
       .from('shoes')
@@ -318,7 +321,8 @@ async function getListingDiscovery(shoe: Shoe, viewerProfile?: PersonalizationPr
       .eq('has_stock', true)
       .eq('seller_id', shoe.seller_id)
       .neq('id', shoe.id)
-      .order('created_at', { ascending: false })
+      .order('freshness_at', { ascending: false })
+      .order('id')
       .limit(4),
   ]);
 
@@ -332,7 +336,7 @@ async function getListingDiscovery(shoe: Shoe, viewerProfile?: PersonalizationPr
     .sort((a, b) => {
       const scoreDiff = scoreSimilarListing(shoe, b, viewerProfile) - scoreSimilarListing(shoe, a, viewerProfile);
       if (scoreDiff !== 0) return scoreDiff;
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return compareListingFreshness(a, b);
     });
 
   return {
@@ -786,9 +790,9 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">Listing renewed</p>
-              <h2 className="mt-2 text-xl font-bold text-gray-100">Buyers will see this pair was checked recently.</h2>
+              <h2 className="mt-2 text-xl font-bold text-gray-100">Your shoes are back in the fresh listings.</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
-                This updates the checked timestamp without marking the listing as just posted.
+                Your listing gets the same 24-hour freshness boost as new listings. Buyers can also see when you last checked it.
               </p>
             </div>
           </div>

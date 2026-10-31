@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { compareListingFreshness } from '@/lib/listingFreshness';
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 import { createClient, createPublicClient, createServiceClient } from '@/lib/supabase/server';
@@ -145,7 +146,8 @@ const getHomepageListings = unstable_cache(async function getHomepageListings():
     .eq('status', 'active')
     .eq('has_stock', true)
     .is('quality_flagged_at', null)
-    .order('created_at', { ascending: false })
+    .order('freshness_at', { ascending: false })
+    .order('id')
     .limit(24);
   const all = (data as unknown as Shoe[]) ?? [];
   const hasPhoto = (s: Shoe) => (s.shoe_images?.length ?? 0) > 0;
@@ -154,7 +156,7 @@ const getHomepageListings = unstable_cache(async function getHomepageListings():
       const aPhoto = hasPhoto(a);
       const bPhoto = hasPhoto(b);
       if (aPhoto !== bPhoto) return aPhoto ? -1 : 1;
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return compareListingFreshness(a, b);
     });
 }, ['homepage-listings'], { revalidate: 60, tags: ['homepage-listings'] });
 

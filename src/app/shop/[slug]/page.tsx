@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
+import { compareListingFreshness } from '@/lib/listingFreshness';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { getOfferCounts } from '@/lib/offers';
@@ -72,7 +73,8 @@ async function getShopListings(shopId: string, searchParams: ShopLandingPageProp
     .select('*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)')
     .eq('shop_id', shopId)
     .eq('status', 'active')
-    .order('created_at', { ascending: false })
+    .order('freshness_at', { ascending: false })
+    .order('id')
     .limit(200);
 
   let all = (data as Shoe[]) ?? [];
@@ -92,7 +94,7 @@ async function getShopListings(shopId: string, searchParams: ShopLandingPageProp
     if (aPhoto !== bPhoto) return aPhoto ? -1 : 1;
     if (searchParams.sort === 'price_asc') return (a.price_php ?? Number.MAX_SAFE_INTEGER) - (b.price_php ?? Number.MAX_SAFE_INTEGER);
     if (searchParams.sort === 'price_desc') return (b.price_php ?? 0) - (a.price_php ?? 0);
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    return compareListingFreshness(a, b);
   });
 }
 

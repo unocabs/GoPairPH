@@ -1,5 +1,6 @@
 export const revalidate = 60;
 
+import { compareListingFreshness } from '@/lib/listingFreshness';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Script from 'next/script';
@@ -191,7 +192,8 @@ async function getRecentListings(): Promise<Shoe[]> {
     .select('*, profiles!shoes_seller_id_fkey(*), shoe_images(*), shops(*), shoe_variants(*)')
     .eq('status', 'active')
     .eq('has_stock', true)
-    .order('created_at', { ascending: false })
+    .order('freshness_at', { ascending: false })
+    .order('id')
     .limit(24);
 
   const all = (data as Shoe[]) ?? [];
@@ -202,7 +204,7 @@ async function getRecentListings(): Promise<Shoe[]> {
       const aPhoto = hasPhoto(a);
       const bPhoto = hasPhoto(b);
       if (aPhoto !== bPhoto) return aPhoto ? -1 : 1;
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return compareListingFreshness(a, b);
     })
     .slice(0, 8);
 }

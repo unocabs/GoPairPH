@@ -14,6 +14,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { PageShell } from '@/components/layout/PageShell';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { getSavedListingCounts, getSavedListingIds } from '@/lib/savedListings';
+import { compareListingFreshness, isFreshListing } from '@/lib/listingFreshness';
 import {
   getPersonalizationBadges,
   hasPreferredLocation,
@@ -47,7 +48,6 @@ interface BrowsePageProps {
 
 type SizeUnit = 'eu' | 'us' | 'cm';
 type SortKey = 'mixed' | 'price_asc' | 'price_desc';
-const FRESH_LISTING_WINDOW_MS = 24 * 60 * 60 * 1000;
 const BROWSE_BATCH_SIZE = 24;
 const BROWSE_MAX_VISIBLE = 240;
 const SEARCH_QUERY_MAX_LENGTH = 80;
@@ -84,12 +84,12 @@ function getLoadMoreHref(searchParams: BrowsePageProps['searchParams'], nextLimi
   return `/browse?${params.toString()}`;
 }
 
-function sortListings(listings: Shoe[], key: SortKey, profile?: Profile | null): Shoe[] {
+function sortListings(listings: Shoe[], key: SortKey, profile?: Profile | null, fresh = false): Shoe[] {
   let arr = [...listings];
   if (key === 'mixed') {
-    // Fisher-Yates shuffle. Default sort: fair rotation across all listings in
-    // the bucket so old listings still surface and re-listing can't game the order.
-    // Freshness is also communicated via the per-card "Just Posted" pill.
+    // New and renewed listings lead for 24 hours, newest freshness action first.
+    if (fresh) return sortByPersonalization(arr.sort(compareListingFreshness), profile);
+    // Rotate the other buckets so older listings still surface.
     for (let i = arr.length - 1; i > 0; i -= 1) {
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -145,7 +145,10 @@ async function getListings(searchParams: BrowsePageProps['searchParams'], profil
     query = query.ilike('search_text', `%${token}%`);
   });
 
-  const { data, error } = await query.limit(BROWSE_MAX_VISIBLE);
+  const { data, error } = await query
+    .order('freshness_at', { ascending: false })
+    .order('id')
+    .limit(BROWSE_MAX_VISIBLE);
   if (error) {
     console.error('[browse] Failed to load listings', error);
     throw new Error('Unable to load marketplace listings right now.');
@@ -159,8 +162,6 @@ async function getListings(searchParams: BrowsePageProps['searchParams'], profil
   const now = Date.now();
   const isActiveSponsored = (s: Shoe) =>
     s.sponsored_until != null && new Date(s.sponsored_until).getTime() > now;
-  const isFresh = (s: Shoe) =>
-    now - new Date(s.created_at).getTime() < FRESH_LISTING_WINDOW_MS;
   const hasPhoto = (s: Shoe) => (s.shoe_images?.length ?? 0) > 0;
   const isQualityFlagged = (s: Shoe) => !!s.quality_flagged_at;
 
@@ -174,7 +175,7 @@ async function getListings(searchParams: BrowsePageProps['searchParams'], profil
       lowPriority.push(shoe);
     } else if (isActiveSponsored(shoe)) {
       sponsoredWithPhoto.push(shoe);
-    } else if (isFresh(shoe)) {
+    } else if (isFreshListing(shoe, now)) {
       freshWithPhoto.push(shoe);
     } else if (hasPhoto(shoe)) {
       regularWithPhoto.push(shoe);
@@ -183,7 +184,7 @@ async function getListings(searchParams: BrowsePageProps['searchParams'], profil
 
   return [
     ...sortListings(sponsoredWithPhoto, sortKey, profile),
-    ...sortListings(freshWithPhoto, sortKey, profile),
+    ...sortListings(freshWithPhoto, sortKey, profile, true),
     ...sortListings(regularWithPhoto, sortKey, profile),
     ...sortListings(lowPriority, sortKey, profile),
   ];
