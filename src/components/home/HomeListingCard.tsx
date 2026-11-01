@@ -50,6 +50,7 @@ export function HomeListingCard({
     ? getPublicUrl(supabaseUrl, topImage.storage_path, 'shoe-images', IMAGE_TRANSFORM_PRESETS.listingCard)
     : null;
   const isActive = shoe.status === 'active';
+  const isSponsored = isActive && shoe.sponsored_until != null && Date.parse(shoe.sponsored_until) > Date.now();
   const isOwner = !!currentProfileId && shoe.seller_id === currentProfileId;
   const canSave = showSaveAction && isActive && !!currentProfileId && !isOwner;
   const listingPath = getListingPath(shoe);
@@ -87,7 +88,14 @@ export function HomeListingCard({
               No photo
             </div>
           )}
-          {isFresh && shoe.status === 'active' && (
+          {isSponsored && (
+            <div className="absolute left-2 top-2">
+              <span title="Top Pick is paid placement." className="inline-flex rounded-full border border-black/10 bg-white/95 px-2 py-1 text-[10px] font-semibold text-slate-950 shadow-sm">
+                Top Pick<span className="sr-only"> · Sponsored listing</span>
+              </span>
+            </div>
+          )}
+          {isFresh && isActive && !isSponsored && (
             <div className="absolute left-2 top-2">
               <NewPill size="sm" />
             </div>

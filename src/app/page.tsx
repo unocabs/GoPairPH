@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import Image from 'next/image';
 import { compareListingFreshness } from '@/lib/listingFreshness';
+import { isHomepageTopPick, selectHomepageTopPicks, type HomepageTopPickCandidate } from '@/lib/homepageTopPicks';
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 import { createClient, createPublicClient, createServiceClient } from '@/lib/supabase/server';
@@ -56,6 +57,7 @@ const HOME_LISTING_SELECT = `
   renewed_at,
   shop_id,
   has_stock,
+  listed_in_main_feed,
   inventory_mode,
   inspected_by_go_pair_at,
   featured_until,
@@ -159,6 +161,48 @@ const getHomepageListings = unstable_cache(async function getHomepageListings():
       return compareListingFreshness(a, b);
     });
 }, ['homepage-listings'], { revalidate: 60, tags: ['homepage-listings'] });
+
+// Load only the rotation pool here; images and seller/stock details are fetched
+// for the four selected listings below, independently of recent-listing age.
+const getHomepageTopPickCandidates = unstable_cache(async function getHomepageTopPickCandidates(): Promise<HomepageTopPickCandidate[]> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from('shoes')
+    .select('id, status, has_stock, listed_in_main_feed, quality_flagged_at, sponsored_until, shoe_images!inner(id)')
+    .eq('status', 'active')
+    .eq('has_stock', true)
+    .eq('listed_in_main_feed', true)
+    .is('quality_flagged_at', null)
+    .gt('sponsored_until', new Date().toISOString())
+    .order('id');
+
+  if (error) {
+    console.error('Unable to load homepage Top Picks:', error);
+    return [];
+  }
+  return (data as HomepageTopPickCandidate[]) ?? [];
+}, ['homepage-top-pick-candidates'], { revalidate: 60, tags: ['homepage-listings'] });
+
+const getHomepageTopPickListings = unstable_cache(async function getHomepageTopPickListings(ids: string[]): Promise<Shoe[]> {
+  if (ids.length === 0) return [];
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from('shoes')
+    .select(HOME_LISTING_SELECT)
+    .in('id', ids)
+    .eq('status', 'active')
+    .eq('has_stock', true)
+    .eq('listed_in_main_feed', true)
+    .is('quality_flagged_at', null)
+    .gt('sponsored_until', new Date().toISOString());
+
+  if (error) {
+    console.error('Unable to load homepage Top Pick details:', error);
+    return [];
+  }
+  const shoes = (data as unknown as Shoe[]) ?? [];
+  return ids.flatMap(id => shoes.filter(shoe => shoe.id === id));
+}, ['homepage-top-pick-listings'], { revalidate: 60, tags: ['homepage-listings'] });
 
 function getRecentlySoldExcludedEmails() {
   return (process.env.HOMEPAGE_RECENTLY_SOLD_EXCLUDED_EMAILS ?? DEFAULT_RECENTLY_SOLD_EXCLUDED_EMAILS.join(','))
@@ -398,22 +442,30 @@ const getHomepageSiteSettings = unstable_cache(async function getHomepageSiteSet
 }, ['homepage-site-settings'], { revalidate: 300 });
 
 export default async function HomePage() {
-  const [profile, homepageShoes, recentlySoldShoes, featured, activity, siteSettings] = await Promise.all([
+  const [profile, homepageShoes, recentlySoldShoes, featured, activity, siteSettings, topPickCandidates] = await Promise.all([
     getCurrentProfile(),
     getHomepageListings(),
     getRecentlySoldListings(),
     getFeaturedListing(),
     getMarketplaceActivity(),
     getHomepageSiteSettings(),
+    getHomepageTopPickCandidates(),
   ]);
+  const topPickIds = selectHomepageTopPicks(topPickCandidates, featured?.id ?? null).map(shoe => shoe.id);
+  const topPickListings = await getHomepageTopPickListings(topPickIds);
+  // Recheck expiry after the cache read so a cached promotion cannot outlive its window.
+  const topPickShoes = topPickListings.filter(shoe => isHomepageTopPick(shoe));
+  const spotlightIds = new Set(topPickShoes.map(shoe => shoe.id));
+  if (featured) spotlightIds.add(featured.id);
   // Keep this guard in addition to the database filters so stale or unexpected
   // cached data can never put a quality-flagged listing into homepage discovery.
-  const homepageVisibleShoes = homepageShoes.filter(shoe => !shoe.quality_flagged_at);
+  const homepageVisibleShoes = homepageShoes.filter(shoe => !shoe.quality_flagged_at && !spotlightIds.has(shoe.id));
   const recommendedShoes = getRecommendedListings(profile, homepageVisibleShoes).slice(0, 4);
-  const rearHeroListings = getDailyRearListings(homepageVisibleShoes, featured?.id ?? null);
   const recommendedIds = new Set(recommendedShoes.map((shoe) => shoe.id));
   const recentShoes = homepageVisibleShoes.filter((shoe) => !recommendedIds.has(shoe.id)).slice(0, 4);
-  const displayedShoes = [...recommendedShoes, ...recentShoes];
+  const organicIds = new Set([...recommendedShoes, ...recentShoes].map(shoe => shoe.id));
+  const rearHeroListings = getDailyRearListings(homepageVisibleShoes.filter(shoe => !organicIds.has(shoe.id)), featured?.id ?? null);
+  const displayedShoes = [...topPickShoes, ...recommendedShoes, ...recentShoes];
   const displayedListingIds = displayedShoes.map((shoe) => shoe.id);
   const [savedListingCounts, savedListingIds] = await Promise.all([
     getSavedListingCounts(displayedListingIds),
@@ -531,6 +583,30 @@ export default async function HomePage() {
       </section>
 
       <HomeCarousel />
+
+      {topPickShoes.length > 0 && (
+        <section aria-labelledby="homepage-top-picks" className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-300">Sponsored listings</p>
+              <h2 id="homepage-top-picks" className="mt-1 text-2xl font-bold text-gray-100">Top Picks</h2>
+              <p className="mt-1 text-sm leading-6 text-gray-400">Running shoes promoted by sellers.</p>
+            </div>
+            <Link href="/browse" className="inline-flex min-h-11 items-center text-sm font-medium text-teal-400 transition-colors hover:text-teal-300">
+              Browse all shoes →
+            </Link>
+          </div>
+          <HomeListingGrid
+            shoes={topPickShoes}
+            currentProfileId={profile?.id}
+            savedListingIds={savedListingIds}
+            savedListingCounts={savedListingCounts}
+            personalizationBadges={personalizationBadges}
+            className="sm:grid-cols-2"
+            emptyMessage="No Top Picks right now."
+          />
+        </section>
+      )}
 
       {recommendedShoes.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">

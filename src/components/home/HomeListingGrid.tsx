@@ -1,6 +1,7 @@
 import type { Shoe } from '@/types';
 import type { PersonalizationBadges } from '@/lib/personalization';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { cn } from '@/lib/utils';
 import { HomeListingCard } from './HomeListingCard';
 
 interface HomeListingGridProps {
@@ -12,6 +13,7 @@ interface HomeListingGridProps {
   personalizationBadges?: Record<string, PersonalizationBadges>;
   showSaveActions?: boolean;
   showFreshnessDates?: boolean;
+  className?: string;
 }
 
 export function HomeListingGrid({
@@ -23,6 +25,7 @@ export function HomeListingGrid({
   personalizationBadges,
   showSaveActions = true,
   showFreshnessDates = true,
+  className,
 }: HomeListingGridProps) {
   if (shoes.length === 0) {
     return (
@@ -34,7 +37,7 @@ export function HomeListingGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+    <div className={cn('grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4', className)}>
       {shoes.map(shoe => (
         <HomeListingCard
           key={shoe.id}

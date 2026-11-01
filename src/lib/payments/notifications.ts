@@ -28,7 +28,7 @@ export async function sendPromotionPaymentEmail(id: string) {
     idempotencyKey: `promotion-payment/${payment.id}`,
     html: renderEmailShell({ title: payment.status === 'review' ? 'Payment received, review needed' : 'Your promotion payment is confirmed', eyebrow: 'Go Pair PH', children: `
       ${paragraph(`We recorded your ${label} payment for <strong>${escapeHtml(name)}</strong>.`)}
-      ${paragraph(payment.status === 'review' ? 'Your placement needs review. Please contact support with the reference below before paying again.' : payment.placement === 'featured' ? 'Your shoes are Featured now or waiting in the paid Featured queue. See your placement status below.' : 'Your shoes are now a Top Pick in Browse.')}
+      ${paragraph(payment.status === 'review' ? 'Your placement needs review. Please contact support with the reference below before paying again.' : payment.placement === 'featured' ? 'Your shoes are Featured now or waiting in the paid Featured queue. See your placement status below.' : 'Your shoes are now a Top Pick in Browse. Eligible listings with photos also rotate through homepage Top Picks, with up to four shown at a time.')}
       ${renderInfoRows([{ label: 'Duration', value: `${payment.duration_days} days` }, { label: 'Amount paid', value: formatPrice(payment.amount_minor / 100) }, { label: 'Payment method', value: labelPromotionPaymentMethod(payment) }, { label: 'GP Coins', value: String(payment.coins_used) }, { label: 'Reference', value: payment.id }])}
       <p style="margin-top:22px">${renderButton(url, 'View payment and placement')}</p>
     ` }),

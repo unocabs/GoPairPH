@@ -30,8 +30,8 @@ export default function PromoteListingPage() {
             <strong>₱150 / 30 days</strong>.
           </li>
           <li>
-            <strong>Top Pick</strong> — sellers can boost a listing near the top of Browse for 7 or
-            30 days. <strong>₱30 / 7 days</strong> or <strong>₱100 / 30 days</strong>.
+            <strong>Top Pick</strong> — sellers can boost a listing near the top of Browse and join
+            the homepage Top Picks rotation for 7 or 30 days. <strong>₱30 / 7 days</strong> or <strong>₱100 / 30 days</strong>.
           </li>
         </ul>
       </section>
@@ -61,7 +61,7 @@ export default function PromoteListingPage() {
         </ol>
         <p className="mt-3 text-sm text-gray-400">
           Featured is separate from Top Pick. Featured highlights your listing on the home page,
-          while Top Pick lifts it near the top of Browse.
+          while Top Pick lifts it near the top of Browse and includes rotating homepage exposure.
         </p>
       </section>
 
@@ -90,6 +90,12 @@ export default function PromoteListingPage() {
           <li>Scan the QR Ph code shown in PayMongo checkout using your banking or e-wallet app, then confirm the payment in your app.</li>
           <li>Your listing becomes a Top Pick after payment has been verified automatically.</li>
         </ol>
+        <p className="mt-3 text-sm text-gray-400">
+          The homepage shows up to four Top Picks at a time. Active, in-stock marketplace listings
+          with photos and no quality flags are eligible. When more than four are eligible, the
+          selection rotates hourly, so homepage display is not continuous. Shoes already in the
+          Featured spotlight are not repeated in Top Picks.
+        </p>
         <p className="mt-3 text-sm text-gray-400">
           Top Pick is paid placement. Returning from checkout does not prove payment succeeded. Check your payment status before trying to pay again.
         </p>

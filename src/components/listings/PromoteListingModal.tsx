@@ -105,10 +105,10 @@ export function PromoteListingModal({ listingId, listingName, slotsAvailable, ne
                 onClick={() => { setPlacement(value); setCoins(0); setError(''); }}
                 className={`rounded-xl border p-3 text-left text-sm ${placement === value ? 'border-teal-500 bg-teal-500/10 text-teal-200' : 'border-gray-700 text-gray-300'}`}>
                 <span className="block font-bold">{value === 'featured' ? 'Featured' : 'Top Pick'}</span>
-                <span className="mt-1 block text-xs text-gray-400">{value === 'featured' ? 'Homepage spotlight' : 'Near the top of Browse'}</span>
+                <span className="mt-1 block text-xs text-gray-400">{value === 'featured' ? 'Homepage spotlight' : 'Browse boost + homepage rotation'}</span>
               </button>)}
             </div>
-            <p className="mt-2 text-xs leading-5 text-gray-400">{featured ? 'One Featured listing at a time. After payment confirmation, your shoes appear now or join the paid queue.' : 'Limited slots keep Browse useful. We hold an available slot while you complete checkout.'}</p>
+            <p className="mt-2 text-xs leading-5 text-gray-400">{featured ? 'One Featured listing at a time. After payment confirmation, your shoes appear now or join the paid queue.' : 'Top Picks also rotate hourly on the homepage, with up to four eligible listings shown. Add photos and keep your shoes in stock. We hold an available slot while you complete checkout.'}</p>
           </fieldset>
           {active ? <p className="rounded-xl border border-teal-500/30 bg-teal-500/10 p-3 text-sm text-teal-100">Your listing is already {featured ? 'Featured' : 'a Top Pick'}{activeUntil ? ` until ${formatShortDate(activeUntil)}` : ''}.</p>
             : full ? <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">Top Pick slots are full.{nextSlotOpensAt ? ` The next slot is expected to open ${formatShortDate(nextSlotOpensAt)}.` : ' Please check again later.'}</p> : <>
