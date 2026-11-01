@@ -43,11 +43,7 @@ export function OwnerMoreActions({ shoeId, listingType, status }: OwnerMoreActio
       return;
     }
 
-    await supabase
-      .from('purchase_requests')
-      .update({ status: 'declined' })
-      .eq('listing_id', shoeId)
-      .in('status', ['pending', 'accepted']);
+    // The listing-close trigger updates requests and their conversations atomically.
 
     router.push(`/listings/${shoeId}?closed=${doneStatus}`);
     router.refresh();

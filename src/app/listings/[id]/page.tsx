@@ -28,6 +28,9 @@ import { DonateRequestButton } from '@/components/purchases/DonateRequestButton'
 import { ListingShareActions } from '@/components/listings/ListingShareActions';
 import { ListingDiscoverySection } from '@/components/listings/ListingDiscoverySection';
 import { AskSellerButton } from '@/components/listings/AskSellerButton';
+import { messagingEnabled } from '@/lib/messaging/config';
+import { MessageSellerButton } from '@/components/messaging/MessageSellerButton';
+import { StickyListingActions } from '@/components/messaging/StickyListingActions';
 import { SaveListingButton } from '@/components/listings/SaveListingButton';
 import { ListingViewTracker } from '@/components/listings/ListingViewTracker';
 import { PromoteListingButton } from '@/components/listings/PromoteListingButton';
@@ -465,7 +468,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const shopContactHref = getFacebookContactUrl(shop?.fb_page_url ?? null);
   const sellerMessengerHref = buildMessengerUrl(seller?.fb_username ?? null);
   const askSellerHref = shopContactHref ?? sellerMessengerHref;
-  const canAskSeller = shoe.listing_type === 'for_sale' && availability.canRequest && !isOwner && Boolean(askSellerHref);
+  const canAskSeller = shoe.listing_type === 'for_sale' && availability.canRequest && !isOwner && (messagingEnabled || Boolean(askSellerHref));
   const signedOutForSaleCtaLabel = shoe.shop_id
     ? 'Sign in to Place Order'
     : 'Sign in to Send Offer';
@@ -520,6 +523,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
             {canAskSeller && (
               <AskSellerButton
+                listingId={shoe.id}
                 contactUrl={askSellerHref}
                 listingName={listingName}
                 listingHref={getListingPath(shoe)}
@@ -569,6 +573,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
             {canAskSeller && (
               <AskSellerButton
+                listingId={shoe.id}
                 contactUrl={askSellerHref}
                 listingName={listingName}
                 listingHref={getListingPath(shoe)}
@@ -617,6 +622,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           <div className={cn('grid gap-2', canAskSeller && 'sm:grid-cols-2')}>
             {canAskSeller && (
               <AskSellerButton
+                listingId={shoe.id}
                 contactUrl={askSellerHref}
                 listingName={listingName}
                 listingHref={getListingPath(shoe)}
@@ -657,7 +663,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
         </div>
       )}
 
-      {shoe.listing_type === 'for_sale' && availability.canRequest && !isOwner && !purchaseContext && !askSellerHref && (
+      {shoe.listing_type === 'for_sale' && availability.canRequest && !isOwner && !purchaseContext && !askSellerHref && !messagingEnabled && (
         <p className="mt-2 text-xs leading-5 text-gray-400">
           This seller hasn&apos;t added Messenger. {shoe.shop_id ? 'Place an order' : 'Send an offer'} through Go Pair PH to get started.
         </p>
@@ -897,8 +903,9 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             listingPath={getListingPath(shoe)}
             overlay={galleryOverlay}
           />
-          <div className="lg:hidden">
+          <div className="lg:hidden" id="listing-mobile-actions">
             {isOwner ? renderOwnerCtas('mt-4', false) : renderBuyerCtas('mt-1')}
+            {messagingEnabled && !isOwner && (purchaseContext || shoe.listing_type === 'donate') && <MessageSellerButton href={purchaseContext && 'request' in purchaseContext ? `/messages?request=${purchaseContext.request.id}` : `/messages?listing=${shoe.id}`} messengerUrl={askSellerHref} className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-sky-600 px-4 py-3 text-sm font-semibold text-sky-200" />}
             <div className="mt-4">
               <ListingShareActions shoe={shoe} seller={seller ?? null} isOwner={isOwner} />
             </div>
@@ -1257,6 +1264,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           sellerListings={discovery.sellerListings}
         />
       )}
+      {messagingEnabled && !isOwner && availability.canRequest && !purchaseContext && <StickyListingActions listing={shoe} contactUrl={askSellerHref} profileId={currentProfileId} />}
     </PageShell>
   );
 }

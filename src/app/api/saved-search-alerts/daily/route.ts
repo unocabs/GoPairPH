@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
-import { sendTransactionalEmail } from '@/lib/email/resend';
 import { makeSavedSearchEmailMatch, renderSavedSearchAlertEmail } from '@/lib/email/savedSearchAlerts';
 import { formatProfileLocation, formatSize, getAbsoluteListingUrl } from '@/lib/utils';
 import { hasPreferredSize, profileSizeMatchesRow, type PersonalizationProfile } from '@/lib/personalization';
@@ -305,11 +304,6 @@ export async function GET(request: Request) {
 
     const emailProfile = profileMatchProfile;
     const savedSearchProfile = userSearches[0]?.profiles;
-    const authUserId = emailProfile?.user_id ?? savedSearchProfile?.user_id;
-    if (!authUserId) continue;
-    const { data: authData } = await service.auth.admin.getUserById(authUserId);
-    const email = authData.user?.email;
-    if (!email) continue;
 
     const html = renderSavedSearchAlertEmail({
       displayName: emailProfile?.display_name ?? savedSearchProfile?.display_name ?? 'runner',
@@ -334,15 +328,6 @@ export async function GET(request: Request) {
 
     const hasOnlyProfileMatches = digestMatches.every(match => match.source === 'profile_match');
 
-    await sendTransactionalEmail({
-      category: 'saved_search',
-      to: email,
-      subject: hasOnlyProfileMatches
-        ? 'New running shoes in your size - Go Pair PH'
-        : "Fresh pairs matched what you're looking for - Go Pair PH",
-      html,
-    });
-
     const notificationRows = digestMatches
       .filter((match): match is Extract<DigestMatch, { source: 'saved_search' }> => match.source === 'saved_search')
       .map(({ search, listing }) => ({
@@ -351,18 +336,6 @@ export async function GET(request: Request) {
         listing_id: listing.id,
         sent_date: today,
       }));
-    if (notificationRows.length > 0) {
-      const { error: notifyError } = await service
-        .from('saved_search_notifications')
-        .upsert(notificationRows, {
-          onConflict: 'saved_search_id,listing_id',
-          ignoreDuplicates: true,
-        });
-      if (notifyError) {
-        console.error('[saved-search-alerts] notification insert failed', notifyError);
-      }
-    }
-
     const profileNotificationRows = digestMatches
       .filter((match): match is Extract<DigestMatch, { source: 'profile_match' }> => match.source === 'profile_match')
       .map(({ profile, listing }) => ({
@@ -370,21 +343,20 @@ export async function GET(request: Request) {
         listing_id: listing.id,
         sent_date: today,
       }));
-    if (profileNotificationRows.length > 0) {
-      const { error: profileNotifyError } = await service
-        .from('profile_match_notifications')
-        .upsert(profileNotificationRows, {
-          onConflict: 'user_id,listing_id',
-          ignoreDuplicates: true,
-        });
-      if (profileNotifyError) {
-        console.error('[saved-search-alerts] profile notification insert failed', profileNotifyError);
-      }
+    const { data: queued, error: queueError } = await service.rpc('queue_saved_search_notification', {
+      p_recipient: profileId, p_date: today,
+      p_payload: { html, subject: hasOnlyProfileMatches ? 'New running shoes in your size - Go Pair PH' : "Fresh shoes matched what you're looking for - Go Pair PH" },
+      p_search_rows: notificationRows, p_profile_rows: profileNotificationRows,
+    });
+    if (queueError) {
+      console.error('[saved-search-alerts] queue failed', queueError.code);
+      return NextResponse.json({ error: 'Could not queue search alerts. Previously queued alerts are safe to retry.' }, { status: 500 });
     }
+    if (!queued) continue;
 
     sent += 1;
     matched += digestMatches.length;
   }
 
-  return NextResponse.json({ sent, matched, date: today });
+  return NextResponse.json({ queued: sent, matched, date: today });
 }

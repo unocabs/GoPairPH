@@ -5,16 +5,16 @@
       "schedule": "0 8 * * *"
     },
     {
-      "path": "/api/admin/reports/listing-views",
-      "schedule": "0 9 * * 5"
-    },
-    {
       "path": "/api/admin/gp-coins/process",
       "schedule": "0 1 * * *"
     },
     {
       "path": "/api/admin/buyback-offers/reconcile",
       "schedule": "15 1 * * *"
+    },
+    {
+      "path": "/api/saved-search-alerts/daily",
+      "schedule": "0 2 * * *"
     }
   ]
 }

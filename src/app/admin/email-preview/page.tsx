@@ -8,7 +8,7 @@ import { renderAdminSponsoredProofEmail, renderSellerSponsoredReviewEmail, rende
 import { renderFeedbackEmail } from '@/lib/email/feedback';
 import { renderListingPublishedEmail } from '@/lib/email/listingPublished';
 import { renderListingRenewalEmail } from '@/lib/email/listingRenewal';
-import { renderAdminListingViewsReportEmail, renderListingViewLifetimeMilestoneEmail, renderListingViewMilestoneEmail } from '@/lib/email/listingViewEmails';
+import { renderListingViewLifetimeMilestoneEmail, renderListingViewMilestoneEmail } from '@/lib/email/listingViewEmails';
 import { renderDonationRequestEmail, renderOfferEmail, renderRequestStatusChangeEmail, renderSellerNoteEmail, renderShopOrderEmail } from '@/lib/email/offerNotification';
 import { renderSavedSearchAlertEmail } from '@/lib/email/savedSearchAlerts';
 import { renderWishlistLeadNotificationEmail } from '@/lib/email/wishlistLeadNotification';
@@ -290,27 +290,6 @@ function getSamples() {
         listingTitle: 'Nike Alphafly 3',
         listingUrl,
         pagePath: '/listings/new',
-      }),
-    },
-    {
-      name: 'Admin listing views report',
-      html: renderAdminListingViewsReportEmail({
-        windowStart: 'June 24, 2026',
-        windowEnd: 'June 30, 2026',
-        totalViews: 248,
-        listings: [
-          {
-            listingName: 'Nike Alphafly 3',
-            listingUrl,
-            sellerName: 'Gian',
-            shopName: 'Stride Supply',
-            totalViews: 72,
-            dailyViews: [
-              { date: '2026-06-29', views: 31 },
-              { date: '2026-06-30', views: 41 },
-            ],
-          },
-        ],
       }),
     },
   ];

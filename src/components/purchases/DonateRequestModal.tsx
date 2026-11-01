@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
+import { useModalFocus } from '@/hooks/useModalFocus';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
-import { BuyerContactPrompt } from './BuyerContactPrompt';
 import { trackMarketplaceAction } from '@/lib/analytics';
 
 interface DonateRequestModalProps {
@@ -13,11 +13,14 @@ interface DonateRequestModalProps {
   requesterId?: string;
   requesterFbUsername?: string | null;
   onClose: () => void;
-  onSubmitted: () => void;
+  onSubmitted: (conversationId?: string) => void;
 }
 
-export function DonateRequestModal({ listingId, listingName, requesterId, requesterFbUsername, onClose, onSubmitted }: DonateRequestModalProps) {
+export function DonateRequestModal({ listingId, listingName, onClose, onSubmitted }: DonateRequestModalProps) {
+  const dialogRef = useModalFocus(onClose);
+  const titleId = useId();
   const [message, setMessage] = useState('');
+  const clientId = useRef<string>();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,16 +28,18 @@ export function DonateRequestModal({ listingId, listingName, requesterId, reques
     setSubmitting(true);
     setError(null);
     try {
+      clientId.current ??= crypto.randomUUID();
       const res = await fetch('/api/offers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           listing_id: listingId,
+          client_id: clientId.current,
           message: message.trim() || null,
         }),
       });
+      const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? 'Failed to send request');
       }
       trackMarketplaceAction('request_submit', {
@@ -42,7 +47,7 @@ export function DonateRequestModal({ listingId, listingName, requesterId, reques
         listing_type: 'donation_request',
         has_message: message.trim().length > 0,
       });
-      onSubmitted();
+      onSubmitted(body.conversation_id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send request');
       setSubmitting(false);
@@ -54,10 +59,10 @@ export function DonateRequestModal({ listingId, listingName, requesterId, reques
       className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/70"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-md rounded-2xl bg-gray-900 border border-gray-700 shadow-2xl flex flex-col max-h-[90vh]">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full max-w-md rounded-2xl bg-gray-900 border border-gray-700 shadow-2xl flex flex-col max-h-[90dvh]">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800 shrink-0">
-          <h2 className="font-semibold text-gray-100">Claim Free Pair</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 transition-colors">
+          <h2 id={titleId} className="font-semibold text-gray-100">Request free shoes</h2>
+          <button onClick={onClose} aria-label="Close request" className="min-h-11 min-w-11 text-gray-500 hover:text-gray-300 transition-colors">
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -76,11 +81,12 @@ export function DonateRequestModal({ listingId, listingName, requesterId, reques
             </p>
           </div>
 
-          <BuyerContactPrompt profileId={requesterId} initialFbUsername={requesterFbUsername} />
+          <p className="text-xs text-gray-400">You can coordinate in Go Pair PH messages. Messenger is optional.</p>
 
           <Textarea
             label="Message to the seller (optional)"
             rows={3}
+            maxLength={2000}
             placeholder="Hi! I'd like to claim this free pair. I'm based in..."
             value={message}
             onChange={e => setMessage(e.target.value)}

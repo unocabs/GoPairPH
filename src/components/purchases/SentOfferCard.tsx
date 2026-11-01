@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { formatRelativeDate, formatPrice, getPublicUrl, formatListingName, getListingPath, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
+import { messagingEnabled, purchaseStatusLabel } from '@/lib/messaging/config';
 import { buildMessengerUrl } from '@/lib/facebook';
 import { trackMarketplaceAction } from '@/lib/analytics';
 import type { PurchaseRequest, PurchaseRequestStatus, Shoe } from '@/types';
@@ -48,6 +49,7 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
   }
 
   function handleMessageSeller() {
+    if (messagingEnabled) { window.location.href = `/messages?request=${request.id}`; return; }
     if (sellerMessengerUrl) {
       trackMarketplaceAction('outbound_click', {
         destination: 'seller_messenger',
@@ -145,7 +147,7 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
 
       {status === 'declined' && (
         <div className="rounded-lg border border-gray-700 bg-slate-950/45 px-3 py-2 text-xs leading-5 text-gray-400">
-          This request was declined. You can keep browsing or send a new offer if the seller asks for different details.
+          {purchaseStatusLabel(status, request.status_reason)}. You can keep browsing or return to your conversation.
         </div>
       )}
 
@@ -162,7 +164,7 @@ export function SentOfferCard({ request, onChanged }: SentOfferCardProps) {
             onClick={handleMessageSeller}
             disabled={loading}
             className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
-              sellerMessengerUrl
+              (messagingEnabled || sellerMessengerUrl)
                 ? 'border-blue-400/25 bg-blue-600 text-white hover:bg-blue-500'
                 : 'border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50'
             }`}

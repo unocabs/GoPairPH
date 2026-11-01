@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { renderListingRenewalEmail } from '@/lib/email/listingRenewal';
-import { sendTransactionalEmail } from '@/lib/email/resend';
 import {
   LISTING_RENEWAL_DAY_MS,
   LISTING_RENEWAL_FIRST_REMINDER_DAYS,
@@ -78,19 +77,6 @@ export async function GET(request: Request) {
 
   for (const listing of candidates) {
     const sellerProfile = getSellerProfile(listing);
-    const userId = sellerProfile?.user_id;
-    if (!userId) {
-      skipped += 1;
-      continue;
-    }
-
-    const { data: authData, error: authError } = await service.auth.admin.getUserById(userId);
-    const email = authData.user?.email;
-    if (authError || !email) {
-      skipped += 1;
-      continue;
-    }
-
     try {
       const token = createListingRenewalToken({
         listingId: listing.id,
@@ -101,9 +87,9 @@ export async function GET(request: Request) {
       const updatePath = `/listings/${listing.id}/edit?renew=1`;
       const updateAndRenewUrl = `${siteUrl}/auth/sign-in?next=${encodeURIComponent(updatePath)}`;
 
-      await sendTransactionalEmail({
-        category: 'listing_renewal',
-        to: email,
+      const { data: queued, error: queueError } = await service.rpc('queue_renewal_notification', {
+        p_listing: listing.id, p_previous: listing.renewal_reminder_sent_at,
+        p_payload: { listing_id: listing.id, updated_at: listing.updated_at, category: 'listing_renewal',
         subject: `Renew your ${listing.brand} ${listing.model} listing`,
         html: renderListingRenewalEmail({
           sellerName: sellerProfile?.display_name || 'there',
@@ -113,16 +99,10 @@ export async function GET(request: Request) {
           renewUrl,
           updateAndRenewUrl,
         }),
+        },
       });
-
-      const { error: updateError } = await service
-        .from('shoes')
-        .update({ renewal_reminder_sent_at: new Date().toISOString() })
-        .eq('id', listing.id);
-
-      if (updateError) {
-        throw updateError;
-      }
+      if (queueError) throw queueError;
+      if (!queued) { skipped += 1; continue; }
 
       sent += 1;
     } catch (err) {
@@ -134,7 +114,7 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({
-    sent,
+    queued: sent,
     skipped,
     failed: failures.length,
     failures,

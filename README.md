@@ -2,6 +2,8 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+For built-in messaging, offer tracking, notification retries, and the required manual Supabase setup, see [Messaging rollout](docs/messaging-rollout.md).
+
 First, run the development server:
 
 ```bash

@@ -269,6 +269,10 @@ export type PurchaseRequestStatus = 'pending' | 'accepted' | 'declined' | 'compl
 
 export interface PurchaseRequest {
   id: string;
+  conversation_id?: string | null;
+  version?: number;
+  status_reason?: string | null;
+  listed_price_php?: number | null;
   listing_id: string;
   buyer_id: string;
   message: string | null;

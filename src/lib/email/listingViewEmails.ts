@@ -1,4 +1,4 @@
-import { formatListingName, getAbsoluteListingUrl } from '@/lib/utils';
+import { formatListingName } from '@/lib/utils';
 import { escapeHtml, paragraph, renderButton, renderEmailShell } from '@/lib/email/template';
 
 interface MilestoneEmailArgs {
@@ -7,22 +7,6 @@ interface MilestoneEmailArgs {
   model: string;
   milestone: number;
   listingUrl: string;
-}
-
-interface AdminReportListing {
-  listingUrl: string;
-  listingName: string;
-  sellerName: string;
-  shopName: string | null;
-  totalViews: number;
-  dailyViews: Array<{ date: string; views: number }>;
-}
-
-interface AdminReportEmailArgs {
-  windowStart: string;
-  windowEnd: string;
-  listings: AdminReportListing[];
-  totalViews: number;
 }
 
 function formatNumber(value: number): string {
@@ -78,51 +62,4 @@ export function renderListingViewLifetimeMilestoneEmail({
       <p style="margin:22px 0 0;">${renderButton(listingUrl, 'View listing')}</p>
     `,
   });
-}
-
-export function renderAdminListingViewsReportEmail({
-  windowStart,
-  windowEnd,
-  listings,
-  totalViews,
-}: AdminReportEmailArgs): string {
-  const rows = listings.length === 0
-    ? '<tr><td colspan="4" style="padding:18px;border-top:1px solid rgba(148,163,184,.16);color:#94a3b8;">No listing views were recorded in this report window.</td></tr>'
-    : listings.map(item => {
-      const daily = item.dailyViews
-        .map(day => `${escapeHtml(day.date)}: ${formatNumber(day.views)}`)
-        .join('<br>');
-      return `
-        <tr>
-          <td style="padding:14px;border-top:1px solid rgba(148,163,184,.16);vertical-align:top;"><a href="${escapeHtml(item.listingUrl)}" style="color:#2dd4bf;font-weight:800;text-decoration:none;">${escapeHtml(item.listingName)}</a></td>
-          <td style="padding:14px;border-top:1px solid rgba(148,163,184,.16);vertical-align:top;color:#cbd5e1;">${escapeHtml(item.shopName ?? item.sellerName)}</td>
-          <td style="padding:14px;border-top:1px solid rgba(148,163,184,.16);vertical-align:top;color:#f8fafc;font-weight:800;">${formatNumber(item.totalViews)}</td>
-          <td style="padding:14px;border-top:1px solid rgba(148,163,184,.16);vertical-align:top;color:#cbd5e1;line-height:1.6;">${daily}</td>
-        </tr>`;
-    }).join('');
-
-  return renderEmailShell({
-    eyebrow: 'Go Pair PH admin report',
-    title: 'Weekly listing views',
-    preheader: `${formatNumber(totalViews)} total views from ${windowStart} to ${windowEnd}.`,
-    width: 760,
-    children: `
-      <p style="margin:0 0 16px;color:#94a3b8;font-size:14px;">${escapeHtml(windowStart)} to ${escapeHtml(windowEnd)} · ${formatNumber(totalViews)} total views</p>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px;">
-        <thead>
-          <tr>
-            <th align="left" style="padding:12px 14px;color:#94a3b8;text-transform:uppercase;font-size:11px;letter-spacing:.06em;">Listing</th>
-            <th align="left" style="padding:12px 14px;color:#94a3b8;text-transform:uppercase;font-size:11px;letter-spacing:.06em;">Seller</th>
-            <th align="left" style="padding:12px 14px;color:#94a3b8;text-transform:uppercase;font-size:11px;letter-spacing:.06em;">Views</th>
-            <th align="left" style="padding:12px 14px;color:#94a3b8;text-transform:uppercase;font-size:11px;letter-spacing:.06em;">Daily breakdown</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    `,
-  });
-}
-
-export function getListingUrl(siteUrl: string, listing: { id: string; slug?: string | null }): string {
-  return getAbsoluteListingUrl(siteUrl.replace(/\/$/, ''), listing);
 }

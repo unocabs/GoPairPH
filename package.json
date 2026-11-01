@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
-    "test:payments:db": "node scripts/test-payment-database.mjs"
+    "test:payments:db": "node scripts/test-payment-database.mjs",
+    "test:messaging:db": "node scripts/test-messaging-database.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

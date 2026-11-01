@@ -70,7 +70,7 @@ export default function SafetyPage() {
         <h2 className="text-xl font-semibold text-gray-100">Reporting issues</h2>
         <p>
           If something feels off — a suspicious listing, harassment, or a deal gone wrong —
-          please report it via our <a href="/contact" className="text-teal-400 hover:text-teal-300">contact page</a>.
+          use Report conversation or Block from the Go Pair PH conversation menu, or report it via our <a href="/contact" className="text-teal-400 hover:text-teal-300">contact page</a>.
           Include the listing URL or username and a short description.
         </p>
       </section>

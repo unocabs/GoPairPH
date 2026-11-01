@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { formatRelativeDate, formatPrice, formatSize, getPublicUrl, getListingPath, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
+import { messagingEnabled } from '@/lib/messaging/config';
 import { buildMessengerUrl } from '@/lib/facebook';
 import { trackMarketplaceAction } from '@/lib/analytics';
 import type { PurchaseRequest, PurchaseRequestStatus, Shoe } from '@/types';
@@ -14,10 +15,10 @@ type ConfirmAction = 'accept' | 'decline' | 'complete' | 'cancel';
 
 const SELLER_NOTE_MAX = 500;
 const SELLER_NOTE_SUGGESTIONS = [
-  'Please add Messenger so I can coordinate with you.',
-  'You can message me through the contact shown on my profile.',
+  'Please open our Go Pair PH conversation so we can coordinate.',
+  'Which city should I check shipping for?',
   'I need more details before accepting this request.',
-  'I can proceed if you add a reachable contact.',
+  'What area and day work for a meetup?',
 ];
 
 interface PurchaseRequestCardProps {
@@ -66,7 +67,7 @@ export function PurchaseRequestCard({
       const res = await fetch(`/api/purchase-requests/${request.id}/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: next, seller_message: note?.trim() || null }),
+        body: JSON.stringify({ status: next, version: request.version, seller_message: note?.trim() || null }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -143,7 +144,8 @@ export function PurchaseRequestCard({
     setError(null);
     const { error: err } = await createClient().rpc('cancel_purchase_acceptance', { p_request_id: request.id });
     if (err) { setError(err.message); setLoading(false); return; }
-    setStatus('pending');
+    setStatus('declined');
+    onChanged(request.id);
     trackMarketplaceAction('seller_request_status', {
       listing_id: listingId,
       request_status: 'reopened',
@@ -170,6 +172,7 @@ export function PurchaseRequestCard({
   const buyerName = request.profiles?.display_name ?? 'the buyer';
 
   function handleMessageBuyer() {
+    if (messagingEnabled) { window.location.href = `/messages?request=${request.id}`; return; }
     if (buyerMessengerUrl) {
       trackMarketplaceAction('outbound_click', {
         destination: 'buyer_messenger',
@@ -258,7 +261,7 @@ export function PurchaseRequestCard({
             onClick={handleMessageBuyer}
             disabled={loading}
             className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
-              buyerMessengerUrl
+              (messagingEnabled || buyerMessengerUrl)
                 ? 'border-blue-400/25 bg-blue-600 text-white hover:bg-blue-500'
                 : 'border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50'
             }`}
@@ -320,7 +323,7 @@ export function PurchaseRequestCard({
               onClick={handleMessageBuyer}
               disabled={loading}
               className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
-                buyerMessengerUrl
+                (messagingEnabled || buyerMessengerUrl)
                   ? 'border-blue-400/25 bg-blue-600 text-white hover:bg-blue-500'
                   : 'border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50'
               }`}
@@ -475,7 +478,7 @@ function SellerNotePanel({
         value={note}
         maxLength={SELLER_NOTE_MAX}
         onChange={(event) => setNote(event.target.value)}
-        placeholder="Please add Messenger or check my profile contact so I can coordinate before accepting."
+        placeholder="Please open our Go Pair PH conversation so we can coordinate."
         className="mt-3 min-h-[92px] w-full resize-none rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm leading-6 text-gray-100 placeholder:text-gray-600 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
       />
       <p className="mt-1 text-[11px] text-gray-500">{note.length}/{SELLER_NOTE_MAX}</p>
@@ -526,7 +529,7 @@ function RequestConfirmPanel({
       body: 'Accepting reserves the listing, notifies the buyer, and gives you space to coordinate meetup, payment, or shipping. Mark it sold after the deal is complete.',
       confirmLabel: 'Accept offer',
       confirmClass: 'bg-teal-600 hover:bg-teal-500',
-      placeholder: 'Accepted. Please add Messenger or check my profile contact so we can coordinate.',
+      placeholder: 'Accepted. Let’s confirm meetup or shipping in our Go Pair PH conversation.',
     },
     decline: {
       title: `Decline ${buyerName}'s offer?`,

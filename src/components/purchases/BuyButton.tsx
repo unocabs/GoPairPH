@@ -25,12 +25,13 @@ interface BuyButtonProps {
   label?: string;
   className?: string;
   showOfferCount?: boolean;
+  onSubmitted?: (conversationId?: string) => void;
 }
 
-export function BuyButton({ listingId, listingSlug, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, offerCount = 0, variants, initialVariantId, buyerProfileId, buyerFbUsername, label, className, showOfferCount = true }: BuyButtonProps) {
+export function BuyButton({ listingId, listingSlug, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, offerCount = 0, variants, initialVariantId, buyerProfileId, buyerFbUsername, label, className, showOfferCount = true, onSubmitted }: BuyButtonProps) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const actionLabel = label ?? (shop ? 'Place Order' : 'Send Offer');
+  const actionLabel = label ?? (shop ? 'Place Order' : isNegotiable ? 'Send Offer' : 'Request to Buy');
 
   if (submitted) {
     return (
@@ -41,7 +42,7 @@ export function BuyButton({ listingId, listingSlug, listingName, priceFormatted,
             ? 'They review it first. Track it in Sent Offers, then coordinate payment or delivery after confirmation.'
             : 'They review it first. Track it in Sent Offers, then coordinate meetup, payment, or shipping if accepted.'}
         </p>
-        <Link href="/profile?tab=offers" className="mt-2 inline-flex text-xs font-semibold text-teal-100 underline underline-offset-2 hover:text-white">
+        <Link href="/buying?tab=offers" className="mt-2 inline-flex text-xs font-semibold text-teal-100 underline underline-offset-2 hover:text-white">
           View Sent Offers
         </Link>
       </div>
@@ -102,7 +103,7 @@ export function BuyButton({ listingId, listingSlug, listingName, priceFormatted,
           buyerProfileId={buyerProfileId}
           buyerFbUsername={buyerFbUsername}
           onClose={() => setOpen(false)}
-          onSubmitted={() => { setOpen(false); setSubmitted(true); }}
+          onSubmitted={(conversationId) => { setOpen(false); if (onSubmitted) onSubmitted(conversationId); else setSubmitted(true); }}
         />,
         document.body
       )}

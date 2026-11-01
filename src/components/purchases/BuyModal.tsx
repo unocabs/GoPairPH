@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useModalFocus } from '@/hooks/useModalFocus';
 import Link from 'next/link';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -9,7 +10,6 @@ import { Avatar } from '@/components/ui/Avatar';
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge';
 import { VariantSelector } from '@/components/listings/VariantSelector';
 import { SafeShopImage } from '@/components/shop/SafeShopImage';
-import { BuyerContactPrompt } from './BuyerContactPrompt';
 import { trackMarketplaceAction } from '@/lib/analytics';
 import { formatProfileLocation, getPublicUrl, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { getFacebookContactUrl } from '@/lib/facebook';
@@ -17,7 +17,7 @@ import type { Profile, ShoeVariant, Shop } from '@/types';
 
 const OFFER_MESSAGE_CHIPS = [
   'Is this still available?',
-  'Can meet in Pampanga',
+  'Where can we meet?',
   'Can ship?',
   'Price negotiable?',
 ];
@@ -45,16 +45,22 @@ interface BuyModalProps {
   buyerProfileId?: string | null;
   buyerFbUsername?: string | null;
   onClose: () => void;
-  onSubmitted: () => void;
+  onSubmitted: (conversationId?: string) => void;
+  requestId?: string;
+  requestVersion?: number;
+  initialOfferPrice?: number | null;
 }
 
-export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, variants, initialVariantId, buyerProfileId, buyerFbUsername, onClose, onSubmitted }: BuyModalProps) {
+export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isNegotiable, seller, shop, variants, initialVariantId, onClose, onSubmitted, requestId, requestVersion, initialOfferPrice }: BuyModalProps) {
+  const dialogRef = useModalFocus(onClose);
+  const titleId = useId();
   const [message, setMessage] = useState('');
-  const [bestOffer, setBestOffer] = useState('');
+  const [bestOffer, setBestOffer] = useState(initialOfferPrice != null ? String(initialOfferPrice) : '');
+  const submission = useRef<{ signature: string; id: string } | null>(null);
   const [variantId, setVariantId] = useState<string | null>(initialVariantId ?? null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const showVariantSelector = !!variants && variants.length > 0;
+  const showVariantSelector = !requestId && !!variants && variants.length > 0;
   const availableVariants = useMemo(
     () => (variants ?? []).filter(v => v.quantity > 0).sort((a, b) => a.size_eu - b.size_eu),
     [variants],
@@ -65,8 +71,8 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
   const shopLogoUrl = shop?.logo_storage_path ? getPublicUrl(supabaseUrl, shop.logo_storage_path, 'shop-logos', IMAGE_TRANSFORM_PRESETS.shopLogo) : null;
   const shopFacebookUrl = getFacebookContactUrl(shop?.fb_page_url);
   const submitDisabled = showVariantSelector && availableVariants.length === 0;
-  const actionLabel = isShopOrder ? 'Place Order' : 'Send Offer';
-  const titleLabel = isShopOrder ? 'Place your order' : 'Send your offer';
+  const actionLabel = requestId ? 'Update Offer' : isShopOrder ? 'Place Order' : isNegotiable ? 'Send Offer' : 'Request to Buy';
+  const titleLabel = requestId ? 'Update your offer' : isShopOrder ? 'Place your order' : isNegotiable ? 'Send your offer' : 'Request to buy';
   const summaryLabel = isShopOrder
     ? 'Order request'
     : 'Offer request';
@@ -102,18 +108,23 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
     }
 
     try {
+      const signature = JSON.stringify([bestOffer, message, variantId, requestId]);
+      if (submission.current?.signature !== signature) submission.current = { signature, id: crypto.randomUUID() };
       const res = await fetch('/api/offers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           listing_id: listingId,
+          client_id: submission.current.id,
+          request_id: requestId,
+          version: requestVersion,
           message: message.trim() || null,
           offer_price_php: isNegotiable ? offerNum : null,
           variant_id: variantId,
         }),
       });
+      const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? 'Failed to send request');
       }
       trackMarketplaceAction('request_submit', {
@@ -123,7 +134,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
         has_offer_price: offerNum != null,
         selected_variant: !!variantId,
       });
-      onSubmitted();
+      onSubmitted(body.conversation_id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send request');
       setSubmitting(false);
@@ -135,15 +146,15 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
       className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/70"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-md rounded-2xl bg-gray-900 border border-gray-700 shadow-2xl flex flex-col max-h-[90vh]">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full max-w-md rounded-2xl bg-gray-900 border border-gray-700 shadow-2xl flex flex-col max-h-[90dvh]">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800 shrink-0">
           <div className="min-w-0">
-            <h2 className="font-semibold text-gray-100">{titleLabel}</h2>
+            <h2 id={titleId} className="font-semibold text-gray-100">{titleLabel}</h2>
             <p className="mt-0.5 text-xs text-gray-500">
               {isShopOrder ? 'The shop confirms first. No payment happens here.' : 'The seller reviews first. No payment happens here.'}
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 transition-colors">
+          <button onClick={onClose} aria-label="Close offer" className="min-h-11 min-w-11 text-gray-500 hover:text-gray-300 transition-colors">
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -256,7 +267,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
             )}
           </div>
 
-          <BuyerContactPrompt profileId={buyerProfileId} initialFbUsername={buyerFbUsername} />
+          <p className="text-xs leading-5 text-gray-400">You can coordinate in Go Pair PH messages. Messenger is optional.</p>
 
           <div className="space-y-2">
             <Textarea
@@ -266,6 +277,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
                 ? 'Preferred payment, pickup, delivery, or shipping details.'
                 : 'Ask about availability, meetup, shipping, or condition.'}
               value={message}
+            maxLength={2000}
               onChange={e => setMessage(e.target.value)}
             />
             <div className="flex flex-wrap gap-2">
@@ -273,7 +285,7 @@ export function BuyModal({ listingId, listingName, priceFormatted, pricePhp, isN
                 <button
                   key={chip}
                   type="button"
-                  onClick={() => setMessage(chip)}
+                  onClick={() => { if (!message.trim() || window.confirm('Replace your draft with this suggestion?')) setMessage(chip); }}
                   className="rounded-full border border-white/[0.08] bg-slate-950/45 px-2.5 py-1 text-[11px] font-medium text-gray-300 transition-colors hover:border-teal-400/35 hover:text-teal-200"
                 >
                   {chip}

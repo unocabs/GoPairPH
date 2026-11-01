@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 let cached: Resend | null = null;
 
 export type TransactionalEmailCategory =
+  | 'chat_message'
   | 'admin_notification'
   | 'buyback_offer'
   | 'featured_promotion'
@@ -83,17 +84,17 @@ export async function sendTransactionalEmail({
   category,
   tags,
   idempotencyKey,
-}: TransactionalEmailArgs): Promise<void> {
+}: TransactionalEmailArgs): Promise<'sent' | 'suppressed' | 'unconfigured'> {
   const client = getResendClient();
   if (!client) {
     console.warn('[resend] RESEND_API_KEY not set — skipping transactional email');
-    return;
+    return 'unconfigured';
   }
 
   const recipients = await excludeSuppressedRecipients(to);
   if (recipients.length === 0) {
     console.warn(`[resend] All recipients suppressed — skipped ${category} email`);
-    return;
+    return 'suppressed';
   }
 
   const { from, replyTo } = getTransactionalEmailDefaults();
@@ -110,6 +111,7 @@ export async function sendTransactionalEmail({
   if (error) {
     throw new Error(`Resend error: ${error.message ?? JSON.stringify(error)}`);
   }
+  return 'sent';
 }
 
 export async function sendMarketingEmail({

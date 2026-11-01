@@ -4,8 +4,11 @@ import { type CSSProperties, type ReactNode, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { trackEvent, trackMarketplaceAction } from '@/lib/analytics';
+import { messagingEnabled } from '@/lib/messaging/config';
+import { MessageSellerButton } from '@/components/messaging/MessageSellerButton';
 
 interface AskSellerButtonProps {
+  listingId?: string;
   contactUrl?: string | null;
   listingName: string;
   listingHref?: string;
@@ -60,7 +63,12 @@ function getFacebookProfileFallback(url?: string | null) {
   }
 }
 
-export function AskSellerButton({
+export function AskSellerButton(props: AskSellerButtonProps) {
+  if (messagingEnabled && props.listingId) return <MessageSellerButton href={`/messages?listing=${props.listingId}`} messengerUrl={props.contactUrl} className={props.className} />;
+  return <ExternalAskSellerButton {...props} />;
+}
+
+function ExternalAskSellerButton({
   contactUrl,
   listingName,
   listingHref,

@@ -58,12 +58,6 @@ export function getDashboardViewWindow(days = 14): { startDate: string; endDate:
   return { startDate: addDaysToDateString(endDate, -(days - 1)), endDate };
 }
 
-export function getWeeklyReportWindow(): { startDate: string; endDate: string; reportKey: string } {
-  const endDate = getManilaDateString();
-  const startDate = addDaysToDateString(endDate, -6);
-  return { startDate, endDate, reportKey: `${startDate}_${endDate}` };
-}
-
 function one<T>(value: T | T[] | null | undefined): T | null {
   if (Array.isArray(value)) return value[0] ?? null;
   return value ?? null;

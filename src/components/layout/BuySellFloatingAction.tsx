@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { messagingEnabled } from '@/lib/messaging/config';
 import { trackMarketplaceAction } from '@/lib/analytics';
 
 type GoferCta = {
@@ -82,8 +83,9 @@ const GOFER_QUESTIONS: GoferQuestion[] = [
 
 function shouldHide(pathname: string | null) {
   if (!pathname) return false;
-  if (pathname === '/listings/new') return true;
+  if (pathname === '/listings/new' || pathname.startsWith('/messages')) return true;
   if (pathname === '/price-guide') return true;
+  if (messagingEnabled && /^\/listings\/[^/]+$/.test(pathname)) return true;
   if (pathname.startsWith('/auth/')) return true;
   return /^\/listings\/[^/]+\/edit$/.test(pathname);
 }

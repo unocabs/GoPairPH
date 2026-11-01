@@ -159,6 +159,7 @@ export function AdminDashboard({
 
   return (
     <div>
+      <Link href="/admin/messages" className="mb-4 inline-flex min-h-11 items-center rounded-lg border border-teal-700 px-4 text-sm font-semibold text-teal-200">Review chat reports</Link>
       {/* Tabs */}
       <div className="mb-6 flex gap-1 overflow-x-auto border-b border-gray-800">
         {([

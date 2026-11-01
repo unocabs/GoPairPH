@@ -29,7 +29,7 @@ export default function PrivacyPage() {
           <li><strong>Profile information:</strong> display name, location, optional Facebook Messenger username or profile link, verification status, and seller or shop details you provide.</li>
           <li><strong>Listings and shop content:</strong> shoe photos, brand, model, size, condition, mileage, price, description, location, availability, shop logos, shop pages, and related listing details.</li>
           <li><strong>GP Marketplace activity:</strong> offers, shop orders, free-pair requests, saved pairs, saved searches, Looking For posts, buyer demand signals, listing status updates, seller actions, and admin review activity.</li>
-          <li><strong>Communications:</strong> messages or notes submitted through offer, order, free-pair, support, shop application, verification, and contact forms.</li>
+          <li><strong>Communications:</strong> private Go Pair PH text conversations, related offer events, read positions, mute/archive settings, blocks, reports, and messages or notes submitted through marketplace and support forms.</li>
           <li><strong>Email preferences and delivery:</strong> marketing consent, unsubscribe choices, delivery events, bounces, and spam complaints used to honor preferences and protect sender reputation.</li>
           <li><strong>Marketplace analytics:</strong> listing views, saved pairs, request starts, request submissions, listing publish events, share actions, outbound contact clicks, price estimator usage, timestamps, and limited technical identifiers used to measure activity and reduce duplicate or abusive activity.</li>
           <li><strong>Promotion payments:</strong> order references, promotion selections, GP Coin usage, payment amounts, payment method, provider checkout and payment IDs, payment status, refunds, and support review notes. QR Ph payments are completed in your banking or e-wallet app through PayMongo checkout; we do not store card numbers or wallet credentials.</li>
@@ -39,6 +39,7 @@ export default function PrivacyPage() {
 
       <section>
         <h2 className="text-xl font-semibold text-gray-100">3. How we use it</h2>
+        <p className="mb-3">Go Pair PH conversations are available to their participants. Authorized admins can review reported conversations, and that access is recorded. We send a delayed email alert for unread messages; you can mute it from the conversation menu. Chat text is not sent to analytics. Messenger opens as a separate service: we cannot read or synchronize those messages. Removing a listing keeps its conversation and a small listing summary available to the participants. Contact us for account deletion or privacy requests.</p>
         <ul className="list-disc list-inside space-y-1.5">
           <li>To create and maintain your account and authenticate sign-ins.</li>
           <li>To display listings, seller profiles, shop pages, Looking For posts, saved pairs, saved searches, and public marketplace content.</li>

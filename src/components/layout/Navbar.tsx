@@ -8,6 +8,8 @@ import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { useRouter, usePathname } from 'next/navigation';
+import { MessageNav } from '@/components/messaging/MessageNav';
+import { messagingEnabled } from '@/lib/messaging/config';
 import { Logo } from '@/components/brand/Logo';
 
 type SupabaseClient = ReturnType<typeof createClient>;
@@ -223,6 +225,7 @@ export function Navbar() {
 
           {/* Right side — avatar always visible; hamburger mobile-only */}
           <div className="flex items-center gap-2">
+            <MessageNav />
             {/* Avatar / auth */}
             {loading ? (
               <div className="h-9 w-9 animate-pulse rounded-full bg-gray-800" />
@@ -253,7 +256,7 @@ export function Navbar() {
                     </div>
                   )}
                   {/* Avatar dot — signals pending requests or active sent offers */}
-                  {(pendingRequestCount + sentOffersCount) > 0 && (
+                  {!messagingEnabled && (pendingRequestCount + sentOffersCount) > 0 && (
                     <span
                       aria-label={`${pendingRequestCount + sentOffersCount} items need attention`}
                       className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-sky-500 border-2 border-gray-950"
@@ -274,6 +277,7 @@ export function Navbar() {
                       >
                         My Profile
                       </Link>
+                      <Link href="/buying" onClick={() => setMenuOpen(false)} className="flex min-h-11 items-center px-4 py-2 text-sm font-semibold text-teal-300 hover:bg-gray-800">My Buying</Link>
                       {ownedShopSlug && (
                         <Link
                           href="/shop/dashboard"
@@ -287,7 +291,8 @@ export function Navbar() {
                         </Link>
                       )}
                       {/* Purchase Requests — only when there are pending ones */}
-                      {pendingRequestCount > 0 && (
+                      {(
+
                         <Link
                           href="/profile?tab=purchases"
                           onClick={() => setMenuOpen(false)}
@@ -305,9 +310,10 @@ export function Navbar() {
                         </Link>
                       )}
                       {/* Sent Offers — only when there are pending or reserved ones */}
-                      {sentOffersCount > 0 && (
+                      {(
+
                         <Link
-                          href="/profile?tab=offers"
+                          href="/buying?tab=offers"
                           onClick={() => setMenuOpen(false)}
                           className="flex items-center justify-between gap-2 px-4 py-2 text-sm text-gray-200 hover:bg-gray-800"
                         >
@@ -395,6 +401,8 @@ export function Navbar() {
             <Link href="/listings/new" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-semibold text-teal-400 hover:bg-gray-800">+ List a Shoe</Link>
             {user && (
               <>
+                <Link href="/buying" onClick={() => setMobileOpen(false)} className="min-h-11 rounded-lg px-3 py-3 text-sm font-semibold text-teal-300 hover:bg-gray-800">My Buying</Link>
+                <Link href="/messages" onClick={() => setMobileOpen(false)} className="min-h-11 rounded-lg px-3 py-3 text-sm font-medium text-gray-300 hover:bg-gray-800">Messages</Link>
                 {ownedShopSlug && (
                   <Link href="/shop/dashboard" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-teal-300 hover:bg-gray-800">Shop Dashboard</Link>
                 )}

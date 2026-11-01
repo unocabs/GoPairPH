@@ -36,7 +36,7 @@ const steps: ReadonlyArray<{
   {
     number: '3',
     title: 'Message the Seller',
-    text: 'Contact the seller to ask questions, negotiate, or confirm availability.',
+    text: 'Choose Go Pair PH chat or Messenger to ask about fit, condition, or shipping. Use Send Offer to record the amount and size.',
     icon: 'chat',
     visual: 'message',
   },
@@ -49,8 +49,8 @@ const steps: ReadonlyArray<{
   },
   {
     number: '5',
-    title: 'Save or Track Pairs',
-    text: 'Save listings you like and come back later before they get sold.',
+    title: 'Track Your Buying',
+    text: 'Open My Buying for saved shoes, inquiries, offers, reservations, and completed purchases.',
     icon: 'heart',
     visual: 'saved',
   },

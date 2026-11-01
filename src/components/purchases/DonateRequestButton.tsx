@@ -10,18 +10,19 @@ interface DonateRequestButtonProps {
   listingName: string;
   requesterId: string;
   requesterFbUsername?: string | null;
+  onSubmitted?: (conversationId?: string) => void;
 }
 
-export function DonateRequestButton({ listingId, listingName, requesterId, requesterFbUsername }: DonateRequestButtonProps) {
+export function DonateRequestButton({ listingId, listingName, requesterId, requesterFbUsername, onSubmitted }: DonateRequestButtonProps) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   if (submitted) {
     return (
       <div className="mt-4 rounded-xl border border-green-800 bg-green-950 px-4 py-3 text-sm text-green-300">
-        <p>Free pair request sent. Track it in Sent Offers.</p>
-        <a href="/profile?tab=offers" className="mt-2 inline-flex text-xs font-semibold text-green-100 underline underline-offset-2 hover:text-white">
-          View Sent Offers
+        <p>Request sent. Track it in My Buying.</p>
+        <a href="/buying?tab=offers" className="mt-2 inline-flex text-xs font-semibold text-green-100 underline underline-offset-2 hover:text-white">
+          View My Buying
         </a>
       </div>
     );
@@ -40,7 +41,7 @@ export function DonateRequestButton({ listingId, listingName, requesterId, reque
         }}
         className="mt-4 w-full rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white hover:bg-green-500 transition-colors"
       >
-        Claim Free Pair
+        Request Free Shoes
       </button>
       {open && typeof window !== 'undefined' && createPortal(
         <DonateRequestModal
@@ -49,7 +50,7 @@ export function DonateRequestButton({ listingId, listingName, requesterId, reque
           requesterId={requesterId}
           requesterFbUsername={requesterFbUsername}
           onClose={() => setOpen(false)}
-          onSubmitted={() => { setOpen(false); setSubmitted(true); }}
+          onSubmitted={(conversationId) => { setOpen(false); if (onSubmitted) onSubmitted(conversationId); else setSubmitted(true); }}
         />,
         document.body
       )}
