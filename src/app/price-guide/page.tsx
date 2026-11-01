@@ -1,11 +1,17 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { PriceGuideForm } from '@/components/pricing/PriceGuideForm';
 
 const title = 'Running Shoe Resale Price Calculator Philippines';
 const description =
-  'Estimate a fair resale price for new or used running shoes in the Philippines based on retail price, condition, mileage, age, and dated retail references where available.';
-const image = '/guides/running-shoe-price-estimator-hero.jpg';
+  'Estimate a resale price for running shoes in the Philippines. Compare condition, mileage and available retail references before choosing your asking price.';
+const image = '/guides/running-shoe-price-estimator-unbranded-1200.webp';
+const imageAlt =
+  'Unbranded running shoe with mesh upper, foam midsole and rubber outsole';
+const siteUrl = (
+  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com'
+).replace(/\/$/, '');
 
 const priceGuideFaqs = [
   {
@@ -22,6 +28,21 @@ const priceGuideFaqs = [
     question: 'Does running shoe mileage affect resale value?',
     answer:
       'Yes. Mileage helps buyers estimate outsole wear and how much useful life may remain in the midsole foam. Unknown mileage can also reduce buyer confidence, so an honest estimate is better than leaving usage unexplained.',
+  },
+  {
+    question: 'Do current retail discounts affect used running shoe prices?',
+    answer:
+      'Yes. Buyers can compare your asking price with a discounted new option. When a fresh reference matches the exact model, the calculator uses that dated retail offer as context. Size, colour and stock availability can differ, so check the source before listing.',
+  },
+  {
+    question: 'Which running shoes have retail reference coverage?',
+    answer:
+      'The initial catalogue includes the original Adidas Adizero Evo SL, ASICS Novablast 5 and Nike Pegasus 41. A reference is used only while it qualifies as fresh. Other brands and models can use your entered SRP as a clearly labelled fallback. These are retail offers, not confirmed resale transactions.',
+  },
+  {
+    question: 'Do I need a box or receipt to estimate my running shoes?',
+    answer:
+      'No. You can estimate shoes without a box or receipt. These details help describe the listing, but do not automatically raise the estimate, prove authenticity or establish market accuracy.',
   },
   {
     question: 'Is the estimated resale price guaranteed?',
@@ -48,19 +69,20 @@ export const metadata: Metadata = {
     title: `${title} | Go Pair PH`,
     description,
     url: '/price-guide',
-    images: [image],
+    images: [{ url: image, width: 1200, height: 800, alt: imageAlt }],
   },
   twitter: {
     card: 'summary_large_image',
     title: `${title} | Go Pair PH`,
     description,
-    images: [image],
+    images: [{ url: image, alt: imageAlt }],
   },
 };
 
 const faqJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
+  '@id': `${siteUrl}/price-guide#faq`,
   mainEntity: priceGuideFaqs.map(({ question, answer }) => ({
     '@type': 'Question',
     name: question,
@@ -71,12 +93,30 @@ const faqJsonLd = {
   })),
 };
 
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Running shoe price guide',
+      item: `${siteUrl}/price-guide`,
+    },
+  ],
+};
+
 export default function PriceGuidePage() {
   return (
     <main className="overflow-x-hidden bg-slate-950">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <section className="relative overflow-hidden border-b border-white/[0.08] bg-[#020617]">
         <div
@@ -88,17 +128,65 @@ export default function PriceGuidePage() {
           }}
         />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(20,184,166,0.18),transparent_32%),radial-gradient(circle_at_82%_8%,rgba(59,130,246,0.12),transparent_30%)]" />
-        <div className="relative mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-10 lg:px-8">
-          <div className="max-w-[22.5rem] sm:max-w-3xl">
-            <p className="price-guide-step-mobile-hidden text-[10px] font-bold uppercase tracking-[0.2em] text-teal-300 sm:text-xs">
-              Running Shoe Price Guide
-            </p>
-            <h1 className="mt-1.5 text-xl font-extrabold leading-tight tracking-tight text-gray-100 sm:mt-2 sm:text-4xl">
-              Running Shoe Resale Price Calculator
-            </h1>
-            <p className="price-guide-step-mobile-hidden mt-2 max-w-xl text-xs leading-5 text-gray-400 sm:mt-3 sm:text-base sm:leading-7">
-              Can&apos;t decide on the pricing? Check a dated retail reference and a condition-adjusted resale range before listing.
-            </p>
+        <div className="relative mx-auto max-w-6xl px-4 pb-6 pt-4 sm:px-6 sm:py-5 lg:px-8">
+          <nav
+            aria-label="Breadcrumb"
+            className="mb-3 flex items-center gap-2 text-[11px] text-slate-500 sm:mb-2"
+          >
+            <Link
+              href="/"
+              className="inline-flex min-h-11 items-center hover:text-teal-300"
+            >
+              Home
+            </Link>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">Shoe price guide</span>
+          </nav>
+          <div className="grid items-center gap-4 md:grid-cols-[1.1fr_0.9fr] md:gap-6">
+            <div className="relative z-10 max-w-xl">
+              <p className="price-guide-step-mobile-hidden text-[10px] font-bold uppercase leading-5 tracking-[0.18em] text-teal-300 sm:text-xs">
+                Running shoe resale price calculator · Philippines
+              </p>
+              <h1 className="mt-2 text-[1.75rem] font-extrabold leading-[1.15] tracking-tight text-gray-100 sm:text-4xl lg:text-[2.75rem]">
+                Find a fair asking price for your{' '}
+                <span className="text-teal-300">running shoes.</span>
+              </h1>
+              <p className="price-guide-step-mobile-hidden mt-3 max-w-lg text-sm leading-6 text-slate-400 sm:text-base sm:leading-7">
+                Get a suggested resale range based on your shoe details and
+                available retail references.
+              </p>
+            </div>
+            <div className="relative hidden aspect-[2/1] min-w-0 md:block">
+              {/* Pre-sized sources keep this hero responsive even with global image optimization disabled. */}
+              <picture className="block h-full w-full">
+                <source
+                  type="image/webp"
+                  srcSet="/guides/running-shoe-price-estimator-unbranded-480.webp 480w, /guides/running-shoe-price-estimator-unbranded-768.webp 768w, /guides/running-shoe-price-estimator-unbranded-1200.webp 1200w"
+                  sizes="(min-width:1152px) 480px, 42vw"
+                />
+                <Image
+                  src="/guides/running-shoe-price-estimator-unbranded-768.webp"
+                  alt={imageAlt}
+                  width={1200}
+                  height={800}
+                  loading="eager"
+                  fetchPriority="high"
+                  className="h-full w-full object-cover"
+                />
+              </picture>
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,#020617_0%,transparent_28%,transparent_90%,#020617_100%)]"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-[#020617] to-transparent"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#020617] to-transparent"
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -128,7 +216,11 @@ export default function PriceGuidePage() {
               How to price used running shoes fairly
             </h2>
             <p className="mt-3 text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
-              A fair asking price starts with what the shoes actually cost in the Philippines, then accounts for wear and buyer confidence. Current retail discounts matter: if stores are selling the same model below SRP, buyers will compare your listing with that lower price.
+              A fair asking price starts with what the shoes actually cost in
+              the Philippines, then accounts for wear and buyer confidence.
+              Current retail discounts matter: if stores are selling the same
+              model below SRP, buyers will compare your listing with that lower
+              price.
             </p>
           </div>
 
@@ -152,9 +244,13 @@ export default function PriceGuidePage() {
 
           <div className="mt-8 overflow-hidden rounded-lg border border-white/[0.08]">
             <div className="border-b border-white/[0.08] bg-slate-900/70 px-4 py-3">
-              <h3 className="text-sm font-bold text-gray-100">Estimator starting ranges by condition</h3>
+              <h3 className="text-sm font-bold text-gray-100">
+                Estimator starting ranges by condition
+              </h3>
               <p className="mt-1 text-xs leading-5 text-gray-500">
-                These percentages are the calculator&apos;s baseline before mileage, age, and visible flaws. These beta heuristics are not measured resale statistics.
+                These percentages are the calculator&apos;s baseline before
+                mileage, age, and visible flaws. These starting guidelines are
+                not measured resale statistics.
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -162,15 +258,35 @@ export default function PriceGuidePage() {
                 <thead className="bg-slate-950 text-xs uppercase text-gray-500">
                   <tr>
                     <th className="px-4 py-3 font-semibold">Condition</th>
-                    <th className="px-4 py-3 font-semibold">Baseline from retail</th>
-                    <th className="px-4 py-3 font-semibold">Typical description</th>
+                    <th className="px-4 py-3 font-semibold">
+                      Baseline from retail
+                    </th>
+                    <th className="px-4 py-3 font-semibold">
+                      Typical description
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.06] bg-slate-950/60 text-gray-300">
-                  <PriceRangeRow condition="New" range="85%–95%" description="Unused shoes with no running mileage" />
-                  <PriceRangeRow condition="Like New" range="72%–82%" description="Very light wear and minimal signs of use" />
-                  <PriceRangeRow condition="Good" range="60%–70%" description="Normal runner use with useful life remaining" />
-                  <PriceRangeRow condition="Fair" range="35%–50%" description="Visible wear that is clearly shown and priced" />
+                  <PriceRangeRow
+                    condition="New"
+                    range="85%–95%"
+                    description="Unused shoes with no running mileage"
+                  />
+                  <PriceRangeRow
+                    condition="Like New"
+                    range="72%–82%"
+                    description="Very light wear and minimal signs of use"
+                  />
+                  <PriceRangeRow
+                    condition="Good"
+                    range="60%–70%"
+                    description="Normal runner use with useful life remaining"
+                  />
+                  <PriceRangeRow
+                    condition="Fair"
+                    range="35%–50%"
+                    description="Visible wear that is clearly shown and priced"
+                  />
                 </tbody>
               </table>
             </div>
@@ -178,7 +294,9 @@ export default function PriceGuidePage() {
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
             <div>
-              <h2 className="text-lg font-extrabold text-gray-100">What can move the final price?</h2>
+              <h2 className="text-lg font-extrabold text-gray-100">
+                What can move the final price?
+              </h2>
               <ul className="mt-3 grid gap-2 text-sm leading-6 text-gray-400 sm:grid-cols-2">
                 <GuidePoint text="Higher mileage and older foam usually lower the range." />
                 <GuidePoint text="Popular models and useful sizes may attract more buyers." />
@@ -190,50 +308,91 @@ export default function PriceGuidePage() {
             </div>
 
             <aside className="rounded-lg border border-teal-400/20 bg-teal-400/[0.05] p-4">
-              <h2 className="text-sm font-bold text-teal-100">How Go Pair PH calculates it</h2>
+              <h2 className="text-sm font-bold text-teal-100">
+                How Go Pair PH calculates it
+              </h2>
               <p className="mt-2 text-sm leading-6 text-gray-400">
-                The estimator uses a transparent pricing model based on retail price and the details you provide. It is not yet a valuation based on completed Go Pair PH sales, and it does not certify authenticity or shoe safety.
+                The estimator uses a transparent pricing model based on retail
+                price and the details you provide. It is not yet a valuation
+                based on completed Go Pair PH sales, and it does not certify
+                authenticity or shoe safety.
               </p>
               <p className="mt-3 text-sm leading-6 text-gray-400">
-                Compare the result with similar active listings and official-store discounts before publishing.
+                Compare the result with similar active listings and
+                official-store discounts before publishing.
               </p>
               <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold">
-                <Link href="/browse" className="text-teal-300 hover:text-teal-200">
+                <Link
+                  href="/browse"
+                  className="text-teal-300 hover:text-teal-200"
+                >
                   Compare running shoes
                 </Link>
-                <Link href="/help/how-to-sell" className="text-teal-300 hover:text-teal-200">
+                <Link
+                  href="/help/how-to-sell"
+                  className="text-teal-300 hover:text-teal-200"
+                >
                   Read the selling guide
+                </Link>
+                <Link
+                  href="/official-running-shoe-brand-links-ph"
+                  className="text-teal-300 hover:text-teal-200"
+                >
+                  Find official brand stores
+                </Link>
+                <Link
+                  href="/where-to-sell-used-running-shoes-philippines"
+                  className="text-teal-300 hover:text-teal-200"
+                >
+                  Where to sell running shoes in the Philippines
                 </Link>
               </div>
             </aside>
           </div>
 
-          <div className="mt-10 max-w-3xl">
-            <h2 className="text-lg font-extrabold text-gray-100">Running shoe resale price questions</h2>
+          <div id="faq" className="mt-10 max-w-3xl scroll-mt-24">
+            <h2 className="text-lg font-extrabold text-gray-100">
+              Running shoe resale price questions
+            </h2>
             <div className="mt-3 divide-y divide-white/[0.08] border-y border-white/[0.08]">
               {priceGuideFaqs.map(({ question, answer }) => (
                 <details key={question} className="group py-1">
                   <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 py-3 text-sm font-semibold text-gray-200 marker:content-none">
                     <span>{question}</span>
-                    <span aria-hidden="true" className="text-lg font-normal text-teal-300 transition-transform group-open:rotate-45">+</span>
+                    <span
+                      aria-hidden="true"
+                      className="text-lg font-normal text-teal-300 transition-transform group-open:rotate-45"
+                    >
+                      +
+                    </span>
                   </summary>
-                  <p className="max-w-2xl pb-4 pr-8 text-sm leading-6 text-gray-400">{answer}</p>
+                  <p className="max-w-2xl pb-4 pr-8 text-sm leading-6 text-gray-400">
+                    {answer}
+                  </p>
                 </details>
               ))}
             </div>
           </div>
 
           <p className="mt-8 text-xs leading-5 text-gray-600">
-            Prepared by the Go Pair PH marketplace team. Methodology reviewed November 1, 2026.
+            Prepared by the Go Pair PH marketplace team. Methodology reviewed
+            November 1, 2026.
           </p>
         </div>
       </section>
-
     </main>
   );
 }
 
-function GuideStep({ number, title, body }: { number: string; title: string; body: string }) {
+function GuideStep({
+  number,
+  title,
+  body,
+}: {
+  number: string;
+  title: string;
+  body: string;
+}) {
   return (
     <div className="border-l-2 border-teal-400/40 pl-4">
       <p className="text-xs font-black text-teal-300">{number}</p>
@@ -243,11 +402,26 @@ function GuideStep({ number, title, body }: { number: string; title: string; bod
   );
 }
 
-function PriceRangeRow({ condition, range, description }: { condition: string; range: string; description: string }) {
+function PriceRangeRow({
+  condition,
+  range,
+  description,
+}: {
+  condition: string;
+  range: string;
+  description: string;
+}) {
   return (
     <tr>
-      <th scope="row" className="whitespace-nowrap px-4 py-3 font-semibold text-gray-200">{condition}</th>
-      <td className="whitespace-nowrap px-4 py-3 font-semibold text-teal-300">{range}</td>
+      <th
+        scope="row"
+        className="whitespace-nowrap px-4 py-3 font-semibold text-gray-200"
+      >
+        {condition}
+      </th>
+      <td className="whitespace-nowrap px-4 py-3 font-semibold text-teal-300">
+        {range}
+      </td>
       <td className="px-4 py-3 text-gray-400">{description}</td>
     </tr>
   );

@@ -8,6 +8,13 @@ import {
   type FormEvent,
 } from 'react';
 import { EstimateComparison } from './EstimateComparison';
+import { PriceGuideWizard } from './PriceGuideWizard';
+import {
+  INITIAL_PRICE_GUIDE_INPUT,
+  guideBrandChoice,
+  normalizeGuideBrand,
+  restoreGuideDraft,
+} from '@/lib/pricing/priceGuideWizard';
 import { PriceEstimateFeedback } from './PriceEstimateFeedback';
 import { PRICE_GUIDE_PREFILL_KEY } from '@/lib/pricing/priceGuidePrefill';
 import { trackMarketplaceAction } from '@/lib/analytics';
@@ -19,23 +26,6 @@ import type {
 } from '@/lib/pricing/estimatorServer';
 import type { EstimatorPayment } from '@/lib/pricing/estimatorPayments';
 
-const initial: EstimatorInput = {
-  brand: '',
-  model: '',
-  retailPricePhp: 0,
-  condition: 'good',
-  mileage: 'unknown',
-  mileageKm: null,
-  age: 'unknown',
-  demand: 'normal',
-  urgency: 'balanced',
-  hasBox: false,
-  hasReceipt: false,
-  hasVisibleFlaws: false,
-  askingPricePhp: null,
-};
-const field =
-  'min-h-11 w-full rounded-lg border border-gray-700 bg-slate-900 px-3 py-2 text-base text-gray-100 focus:border-teal-400 focus:outline-none';
 const button =
   'inline-flex min-h-11 items-center justify-center rounded-lg bg-teal-400 px-4 py-2 text-sm font-bold text-slate-950 disabled:opacity-50';
 interface Overview {
@@ -50,7 +40,7 @@ interface Overview {
   monthlyExpiresIfPaidNow: string;
 }
 export function PriceGuideForm() {
-  const [input, setInput] = useState(initial),
+  const [input, setInput] = useState(INITIAL_PRICE_GUIDE_INPUT),
     [overview, setOverview] = useState<Overview | null>(null),
     [estimate, setEstimate] = useState<SavedEstimate | null>(null);
   const [error, setError] = useState(''),
@@ -59,6 +49,13 @@ export function PriceGuideForm() {
     [choice, setChoice] = useState<'suggested_range' | 'fast_sale'>(
       'suggested_range',
     );
+  const [step, setStep] = useState(0),
+    [brandChoice, setBrandChoice] = useState('');
+  function reopenInput(value: EstimatorInput) {
+    setInput({ ...value, brand: normalizeGuideBrand(value.brand) });
+    setBrandChoice(guideBrandChoice(value.brand));
+    setStep(4);
+  }
   const [terms, setTerms] = useState(false),
     [checking, setChecking] = useState(false),
     [notice, setNotice] = useState('');
@@ -76,18 +73,27 @@ export function PriceGuideForm() {
       const draft = JSON.parse(
         sessionStorage.getItem('estimator-draft-v2') ?? 'null',
       );
-      if (draft?.brand && draft?.model) setInput({ ...initial, ...draft });
+      const restored = restoreGuideDraft(draft);
+      if (restored) {
+        setInput(restored.input);
+        setStep(restored.step);
+        setBrandChoice(restored.brandChoice);
+      }
     } catch {}
-    load()
-      .catch((cause) => setError(cause.message))
-      .finally(() => setReady(true));
+    setReady(true);
+    load().catch((cause) => setError(cause.message));
   }, [load]);
+  const persistDraft = useCallback(() => {
+    try {
+      sessionStorage.setItem(
+        'estimator-draft-v2',
+        JSON.stringify({ ...input, _step: step, _brandChoice: brandChoice }),
+      );
+    } catch {}
+  }, [input, step, brandChoice]);
   useEffect(() => {
-    if (ready)
-      try {
-        sessionStorage.setItem('estimator-draft-v2', JSON.stringify(input));
-      } catch {}
-  }, [input, ready]);
+    if (ready) persistDraft();
+  }, [ready, persistDraft]);
   const checkPayment = useCallback(
     async (id: string, cancel = false) => {
       setChecking(true);
@@ -123,19 +129,18 @@ export function PriceGuideForm() {
       void checkPayment(id);
     }
   }, [overview?.signedIn, checkPayment]); // One return check; manual refresh avoids background polling.
-  function update<K extends keyof EstimatorInput>(
-    key: K,
-    value: EstimatorInput[K],
-  ) {
-    setInput((previous) => ({ ...previous, [key]: value }));
-  }
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (busy) return;
     setBusy(true);
     setError('');
     const parent = estimate?.id ?? null;
-    const body = JSON.stringify({ input, parent_id: parent });
+    const normalizedInput = {
+      ...input,
+      brand: normalizeGuideBrand(input.brand),
+      model: input.model.trim(),
+    };
+    const body = JSON.stringify({ input: normalizedInput, parent_id: parent });
     if (attempt.current?.body !== body)
       attempt.current = { body, id: crypto.randomUUID() };
     try {
@@ -143,7 +148,7 @@ export function PriceGuideForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          input,
+          input: normalizedInput,
           parent_id: parent,
           request_id: attempt.current.id,
         }),
@@ -275,23 +280,19 @@ export function PriceGuideForm() {
     overview.access.freeAvailable ||
     correctionMode;
   return (
-    <div className="space-y-5 text-gray-200">
-      <div className="rounded-xl border border-teal-400/20 bg-teal-400/5 p-4 text-sm leading-6">
-        <strong>
-          {overview?.access.premiumEnabled
-            ? 'Your shoe pricing guide'
-            : 'Free beta · Help us improve shoe pricing'}
-        </strong>
-        <p className="text-gray-400">
-          {overview?.access.premiumEnabled
-            ? overview.access.active
-              ? `Unlimited access${overview.access.permanent ? ' · permanent' : ` until ${new Date(overview.access.expiresAt!).toLocaleDateString('en-PH')}`}.`
-              : overview.access.freeAvailable
-                ? 'Your first full estimate is free.'
-                : 'Your free estimate has been used. Unlock unlimited estimates below.'
-            : 'Estimates are free while we validate the guide against real resale outcomes. Retail offers are dated references; they are not completed resale prices.'}
+    <div
+      className="mx-auto max-w-4xl space-y-5 text-gray-200"
+      data-price-estimator-started={step > 0 ? 'true' : 'false'}
+    >
+      {overview?.access.premiumEnabled && (
+        <p className="rounded-xl border border-white/10 bg-slate-900/40 px-4 py-3 text-sm text-slate-300">
+          {overview.access.active
+            ? `Unlimited access${overview.access.permanent ? ' · permanent' : ` until ${new Date(overview.access.expiresAt!).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila' })}`}.`
+            : overview.access.freeAvailable
+              ? 'Your first full estimate is free.'
+              : 'Your free estimate has been used. Unlock unlimited estimates below.'}
         </p>
-      </div>
+      )}
       {error && (
         <p
           role="alert"
@@ -306,194 +307,22 @@ export function PriceGuideForm() {
         </p>
       )}
       {showForm ? (
-        <form
-          onSubmit={submit}
-          className="rounded-xl border border-white/10 bg-slate-950 p-4 sm:p-6"
-        >
-          <h2 className="text-lg font-bold">Tell us about your shoes</h2>
-          <p className="mt-1 text-sm text-gray-400">
-            Exact model and honest wear details make the estimate more useful.
-          </p>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <label className="space-y-1 text-sm">
-              Brand
-              <input
-                className={field}
-                required
-                maxLength={80}
-                value={input.brand}
-                onChange={(e) => update('brand', e.target.value)}
-              />
-            </label>
-            <label className="space-y-1 text-sm">
-              Exact model
-              <input
-                className={field}
-                required
-                list="estimator-models"
-                maxLength={160}
-                value={input.model}
-                onChange={(e) => update('model', e.target.value)}
-              />
-              <datalist id="estimator-models">
-                {overview?.models
-                  .filter(
-                    (model) =>
-                      model.brand.toLowerCase() === input.brand.toLowerCase(),
-                  )
-                  .map((model) => (
-                    <option key={model.id} value={model.name} />
-                  ))}
-              </datalist>
-            </label>
-            <label className="space-y-1 text-sm">
-              Original SRP (₱)
-              <input
-                className={field}
-                type="number"
-                inputMode="decimal"
-                min={500}
-                max={1000000}
-                required
-                value={input.retailPricePhp || ''}
-                onChange={(e) =>
-                  update('retailPricePhp', Number(e.target.value))
-                }
-              />
-            </label>
-            <label className="space-y-1 text-sm">
-              Condition
-              <select
-                className={field}
-                value={input.condition}
-                onChange={(e) => {
-                  update(
-                    'condition',
-                    e.target.value as EstimatorInput['condition'],
-                  );
-                  if (e.target.value === 'new') {
-                    update('mileage', 'unused');
-                    update('mileageKm', 0);
-                  }
-                }}
-              >
-                <option value="new">New · unused</option>
-                <option value="like_new">Like new · minimal wear</option>
-                <option value="good">
-                  Good · normal wear, useful life remaining
-                </option>
-                <option value="fair">Fair · visible wear</option>
-              </select>
-            </label>
-            <label className="space-y-1 text-sm">
-              Running mileage (km, if known)
-              <input
-                className={field}
-                type="number"
-                inputMode="decimal"
-                min={0}
-                max={10000}
-                value={input.mileageKm ?? ''}
-                placeholder="Leave blank if unknown"
-                onChange={(e) => {
-                  update(
-                    'mileageKm',
-                    e.target.value === '' ? null : Number(e.target.value),
-                  );
-                  update(
-                    'mileage',
-                    e.target.value === ''
-                      ? 'unknown'
-                      : Number(e.target.value) === 0
-                        ? 'unused'
-                        : Number(e.target.value) < 20
-                          ? 'under_20'
-                          : Number(e.target.value) <= 80
-                            ? 'twenty_to_80'
-                            : Number(e.target.value) <= 200
-                              ? 'eighty_to_200'
-                              : 'over_200',
-                  );
-                }}
-              />
-            </label>
-            <label className="space-y-1 text-sm">
-              Age since purchase
-              <select
-                className={field}
-                value={input.age}
-                onChange={(e) =>
-                  update('age', e.target.value as EstimatorInput['age'])
-                }
-              >
-                <option value="under_3_months">Under 3 months</option>
-                <option value="three_to_12_months">3–12 months</option>
-                <option value="one_to_two_years">1–2 years</option>
-                <option value="over_two_years">Over 2 years</option>
-                <option value="unknown">Unknown</option>
-              </select>
-            </label>
-            <label className="space-y-1 text-sm sm:col-span-2">
-              Your planned asking price (₱, optional)
-              <input
-                className={field}
-                type="number"
-                inputMode="decimal"
-                min={1}
-                max={1000000}
-                value={input.askingPricePhp ?? ''}
-                placeholder="Check whether your price fits the guidance"
-                onChange={(e) =>
-                  update(
-                    'askingPricePhp',
-                    e.target.value === '' ? null : Number(e.target.value),
-                  )
-                }
-              />
-            </label>
-          </div>
-          <div className="my-4 flex flex-wrap gap-x-5 gap-y-2 text-sm">
-            {(
-              [
-                ['hasBox', 'Box included'],
-                ['hasReceipt', 'Receipt available'],
-                ['hasVisibleFlaws', 'Visible flaws'],
-              ] as const
-            ).map(([key, label]) => (
-              <label key={key} className="flex min-h-11 items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={input[key]}
-                  onChange={(e) => update(key, e.target.checked)}
-                  className="h-5 w-5 accent-teal-400"
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-          {overview?.signedIn ? (
-            <button className={`${button} w-full sm:w-auto`} disabled={busy}>
-              {busy
-                ? 'Checking your estimate…'
-                : estimate
-                  ? 'Update estimate'
-                  : 'Get my estimate'}
-            </button>
-          ) : (
-            <Link
-              href="/auth/sign-in?next=%2Fprice-guide"
-              className={`${button} w-full sm:w-auto`}
-            >
-              Sign in to get your estimate
-            </Link>
-          )}
-          <p className="mt-2 text-xs leading-5 text-gray-500">
-            Your input stays on this device during sign-in.{' '}
-            {overview?.access.premiumEnabled
-              ? 'A free estimate can be corrected for the same model within 24 hours.'
-              : 'Signed-in estimates are saved to your account.'}
-          </p>
-        </form>
+        <PriceGuideWizard
+          input={input}
+          setInput={setInput}
+          step={step}
+          setStep={setStep}
+          brandChoice={brandChoice}
+          setBrandChoice={setBrandChoice}
+          models={overview?.models ?? []}
+          signedIn={overview?.signedIn ?? false}
+          ready={ready}
+          busy={busy}
+          updating={!!estimate}
+          premiumEnabled={overview?.access.premiumEnabled ?? false}
+          onEstimate={submit}
+          onSignIn={persistDraft}
+        />
       ) : (
         <div className="rounded-xl border border-white/10 p-4 text-sm leading-6">
           <p>
@@ -517,7 +346,7 @@ export function PriceGuideForm() {
                   );
                 if (trial) {
                   setEstimate(trial);
-                  setInput(trial.input);
+                  reopenInput(trial.input);
                 }
               }}
             >
@@ -667,7 +496,7 @@ export function PriceGuideForm() {
                 className="flex min-h-16 w-full flex-col gap-1 py-3 text-left text-sm sm:flex-row sm:justify-between"
                 onClick={() => {
                   setEstimate(row);
-                  setInput(row.input);
+                  reopenInput(row.input);
                   setChoice('suggested_range');
                 }}
               >
@@ -701,9 +530,10 @@ export function PriceGuideForm() {
           <h2 className="text-lg font-bold">Unlimited estimates</h2>
           <p className="mt-2 text-sm leading-6 text-gray-400">
             ₱50 for one calendar month with manual renewal, or ₱600 once for
-            permanent access on this account for the operating life of this estimator
-            service. No automatic charges or upgrade credit for earlier monthly
-            payments. Reference coverage varies; prices remain guidance.
+            permanent access on this account for the operating life of this
+            estimator service. No automatic charges or upgrade credit for
+            earlier monthly payments. Reference coverage varies; prices remain
+            guidance.
           </p>
           <p className="mt-2 text-xs leading-5 text-gray-500">
             Catalogue:{' '}
