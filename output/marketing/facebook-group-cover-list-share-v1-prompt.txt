@@ -1,0 +1,14 @@
+Generated with the built-in image_gen tool.
+
+Use case: ads-marketing
+Asset type: finished Facebook GROUP cover banner for Go Pair PH, a Philippine running shoe marketplace. Create a wide landscape banner, target 1640 x 856 pixels (approximately 1.91:1).
+Primary request: encourage Facebook group members to create running shoe listings on Go Pair PH, then share them in this group, with selected listings featured weekly.
+Style: polished premium sports marketplace advertising, extremely clear and friendly, familiar and trustworthy, mobile-readable. Restrained near-black navy background, clean white bold sans-serif typography, bright teal accents consistent with Go Pair PH. Spacious layout with clear hierarchy, not a busy tech dashboard. No charts, neon grids, money stacks, fake testimonials, sales guarantees or authenticity badges.
+Composition: large text in the left 60%, realistic tasteful product photography of one pair of unbranded contemporary running shoes in the right 40%, dark navy uppers with teal and white sole details, studio lighting, natural textures. Behind shoes, one understated elegant rounded listing-card shape suggesting a shareable shoe listing, mostly image, with three small abstract detail lines, NO tiny fake interface words. Subtle teal light accents, restrained premium depth. Keep all essential text inside the central 80% width and central 70% height, with generous outer margins so cropping is forgiving. Clear separation between text and shoe visual. All text should be large enough to read in a group cover displayed on a phone. Nothing at very bottom edge.
+Text (verbatim, only these words):
+Small brand wordmark at upper left: "GoPairPH" (GoPair white, PH teal)
+Dominant headline on two or three lines: "Selling your" / "running shoes?"
+Supporting line below: "List on Go Pair PH. Share here."
+One modest teal-accent rounded benefit label below: "Selected listings featured weekly"
+Clear URL below, still safely inset: "GoPairPH.com"
+Render all text exactly, correctly spelled, flat and crisp, no perspective distortion. The headline should be the main visual focus. No additional words, no Facebook chrome, no screenshot frame, no fake clickable Facebook buttons. Generate the finished upload-ready cover only, opaque background.

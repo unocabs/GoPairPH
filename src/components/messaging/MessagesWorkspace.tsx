@@ -84,9 +84,21 @@ export function MessagesWorkspace({ profileId, initialConversation, initialListi
         {loading && <p className="p-4 text-sm text-gray-400" role="status">Loading your conversations…</p>}
         {error && <div className="p-4"><p role="alert" className="text-sm text-red-300">{error}</p><button className="mt-2 min-h-11 text-sm underline" onClick={() => void refresh()}>Try again</button></div>}
         {!loading && !error && !conversations.length && <div className="p-5 text-sm leading-6 text-gray-400">{archived ? 'No archived conversations.' : 'Ask about shoes from a listing. Your messages and offers will appear here.'}<Link href="/browse" className="mt-3 block font-semibold text-teal-300">Browse shoes</Link></div>}
-        {conversations.map(c => <button type="button" key={c.id} onClick={() => open(c.id)} aria-current={selected === c.id ? 'true' : undefined} className={`flex min-h-[88px] w-full items-start gap-3 border-b border-gray-800/60 p-4 text-left transition-colors ${selected === c.id ? 'bg-teal-950/45' : 'hover:bg-gray-900'}`}>
-          <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-semibold text-gray-100">{c.partner_name}</p>{c.unread > 0 && !c.muted && <span className="shrink-0 rounded-full bg-teal-400 px-1.5 text-xs font-bold text-gray-950">{c.unread}</span>}</div><p className="mt-1 truncate text-xs text-teal-200/80">{c.listing_snapshot.name}</p><p className="mt-1 line-clamp-2 break-words text-xs leading-5 text-gray-400">{c.last_message || 'View your request'}{c.muted ? ' · Muted' : ''}</p></div>
-        </button>)}
+        {conversations.map(c => {
+          const thumbnail = c.listing_snapshot.thumbnail
+            ? getPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, c.listing_snapshot.thumbnail, 'shoe-images', IMAGE_TRANSFORM_PRESETS.purchaseThumb)
+            : null;
+          return <button type="button" key={c.id} onClick={() => open(c.id)} aria-current={selected === c.id ? 'true' : undefined} className={`relative flex min-h-[88px] w-full items-start gap-3 border-b border-gray-800/60 p-4 text-left transition-colors ${selected === c.id ? 'bg-teal-950/45' : 'hover:bg-gray-900'}`}>
+            <div className="min-w-0 flex-1">
+              <div className={thumbnail ? 'pr-12' : undefined}>
+                <div className="flex items-center gap-2"><p className="truncate text-sm font-semibold text-gray-100">{c.partner_name}</p>{c.unread > 0 && !c.muted && <span className="shrink-0 rounded-full bg-teal-400 px-1.5 text-xs font-bold text-gray-950">{c.unread}</span>}</div>
+                <p className="mt-1 truncate text-xs text-teal-200/80">{c.listing_snapshot.name}</p>
+              </div>
+              <p className="mt-1 line-clamp-2 break-words text-xs leading-5 text-gray-400">{c.last_message || 'View your request'}{c.muted ? ' · Muted' : ''}</p>
+            </div>
+            {thumbnail && <Image src={thumbnail} alt="" width={40} height={40} sizes="40px" loading="lazy" className="absolute right-4 top-4 h-10 w-10 rounded-lg bg-gray-900 object-cover" onError={e => { e.currentTarget.style.visibility = 'hidden'; }} />}
+          </button>;
+        })}
         {hasMore && <button type="button" onClick={olderInbox} className="min-h-11 w-full p-3 text-sm text-teal-300">Load older conversations</button>}
       </div>
     </aside>
