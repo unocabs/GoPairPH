@@ -136,6 +136,7 @@ export const profileSchema = z.object({
 });
 
 export const feedbackSchema = z.object({
+  submission_id: z.string().uuid().optional(),
   category: z.enum(['confusing', 'missing_feature', 'bug', 'suggestion']).optional().default('suggestion'),
   message: z.string().trim().min(1, 'Feedback is required').max(800, 'Feedback must be 800 characters or less'),
   contact_email: z.preprocess(

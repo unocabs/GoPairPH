@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -42,6 +42,7 @@ export function PostListingFeedbackPrompt({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const submissionId = useRef<string | null>(null);
 
   async function submitFeedback(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,10 +59,12 @@ export function PostListingFeedbackPrompt({
     setSubmitting(true);
     setError(null);
     try {
+      submissionId.current ??= crypto.randomUUID();
       const response = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          submission_id: submissionId.current,
           category,
           message: trimmed,
           contact_email: contactEmail.trim() || null,

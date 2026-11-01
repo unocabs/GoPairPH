@@ -2,6 +2,7 @@
 
 import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { PromotionPaymentsAdmin } from '@/components/payments/PromotionPaymentsAdmin';
 import { labelPromotionPaymentMethod, type PromotionPayment } from '@/lib/payments/types';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -39,8 +40,9 @@ interface AdminDashboardProps {
   viewWindow: { startDate: string; endDate: string };
 }
 
-type Tab = 'buyback' | 'promotions' | 'pending' | 'verified' | 'shops' | 'soldListings' | 'views' | 'leadReports' | 'listingReports' | 'emailBlast' | 'settings';
-const ADMIN_TABS: Tab[] = ['buyback', 'promotions', 'pending', 'verified', 'shops', 'soldListings', 'views', 'leadReports', 'listingReports', 'emailBlast', 'settings'];
+const AdminFeedbackPanel = dynamic(() => import('@/components/feedback/AdminFeedbackPanel').then(module => module.AdminFeedbackPanel));
+type Tab = 'buyback' | 'promotions' | 'pending' | 'verified' | 'shops' | 'soldListings' | 'views' | 'leadReports' | 'listingReports' | 'feedback' | 'emailBlast' | 'settings';
+const ADMIN_TABS: Tab[] = ['buyback', 'promotions', 'pending', 'verified', 'shops', 'soldListings', 'views', 'leadReports', 'listingReports', 'feedback', 'emailBlast', 'settings'];
 const ACCEPTED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 function formatTabLabel(label: string, count: number): string {
@@ -172,6 +174,7 @@ export function AdminDashboard({
           { key: 'soldListings', label: 'Closed listings' },
           { key: 'listingReports', label: formatTabLabel('Listing reports', listingReports.length) },
           { key: 'leadReports', label: formatTabLabel('Lead reports', leadReports.length) },
+          { key: 'feedback', label: 'Feedback' },
           { key: 'emailBlast', label: 'Email blast' },
           { key: 'settings', label: 'Settings' },
         ] as const).map(({ key, label }) => (
@@ -196,6 +199,7 @@ export function AdminDashboard({
       {tab === 'views' && <ListingViewsPanel listings={listingViews} viewWindow={viewWindow} />}
       {tab === 'listingReports' && <ListingReportsPanel reports={listingReports} />}
       {tab === 'leadReports' && <LeadReportsPanel reports={leadReports} />}
+      {tab === 'feedback' && <AdminFeedbackPanel />}
       {tab === 'emailBlast' && <EmailBlastPanel />}
       {tab === 'settings' && (
         <AdminSettingsPanel

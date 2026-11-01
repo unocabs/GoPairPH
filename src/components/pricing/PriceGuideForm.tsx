@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { BRANDS, CONDITIONS } from '@/lib/constants';
 import {
   estimateRunningShoePrice,
+  PRICE_GUIDE_ENGINE_VERSION,
   type PriceGuideAge,
   type PriceGuideCondition,
   type PriceGuideDemand,
@@ -16,6 +18,8 @@ import { formatPrice } from '@/lib/utils';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { trackMarketplaceAction } from '@/lib/analytics';
+
+const PriceEstimateFeedback = dynamic(() => import('./PriceEstimateFeedback').then(module => module.PriceEstimateFeedback));
 
 const brandOptions = BRANDS.map((brand) => ({ value: brand, label: brand }));
 const estimatorFieldClass = 'border-[#3B4A60] bg-[#243247] text-gray-100 placeholder:text-slate-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20';
@@ -579,6 +583,14 @@ export function PriceGuideForm() {
                   </div>
                 </div>
 
+                <PriceEstimateFeedback
+                  key={JSON.stringify([brand, model, retailNumber, condition, mileage, age, demand, urgency, hasBox, hasReceipt, hasVisibleFlaws, listingPriceChoice, rangePrice])}
+                  snapshot={{ engine_version: PRICE_GUIDE_ENGINE_VERSION,
+                    input: { brand, model, retailPricePhp: retailNumber, condition, mileage, age, demand, urgency, hasBox, hasReceipt, hasVisibleFlaws },
+                    estimate, price_choice: listingPriceChoice,
+                    reference_price_php: listingPriceChoice === 'fast_sale' ? estimate.fastSalePrice : rangePrice, evidence_type: 'formula' }}
+                />
+
                 <div className="mt-4 rounded-xl border border-teal-400/20 bg-teal-400/[0.06] p-3 sm:p-4">
                   <h3 className="truncate text-lg font-extrabold text-gray-100">{brand} {model}</h3>
                   <p className="mt-1 text-sm text-gray-500">{selectedConditionLabel} · {selectedMileageLabel}</p>
@@ -651,7 +663,7 @@ export function PriceGuideForm() {
                 onClick={confirmListingPrice}
                 className="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-teal-500/25 transition-colors hover:bg-teal-400"
               >
-                Confirm
+                Use this price to list
               </button>
             </div>
           </div>

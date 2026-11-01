@@ -1,21 +1,20 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { feedbackSchema } from '@/lib/validations';
-import { sendTransactionalEmail } from '@/lib/email/resend';
-import { renderFeedbackEmail } from '@/lib/email/feedback';
-import { formatListingName, getAbsoluteListingUrl } from '@/lib/utils';
-import { PUBLIC_SUPPORT_EMAIL } from '@/lib/constants';
+import { randomUUID } from 'node:crypto';
+import { processFeedbackEmails, saveProductFeedback } from '@/lib/feedbackServer';
+import { sameOrigin, smallJson } from '@/lib/messaging/server';
 
-const FEEDBACK_TO_EMAIL = process.env.FEEDBACK_TO_EMAIL ?? PUBLIC_SUPPORT_EMAIL;
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gopairph.com').replace(/\/$/, '');
+export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
+  if (!sameOrigin(request) || request.headers.get('sec-fetch-site') === 'cross-site') return NextResponse.json({ error: 'Invalid request origin.' }, { status: 403 });
   const supabase = createClient();
   const service = createServiceClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   const currentUser = authError ? null : user;
 
-  const parsed = feedbackSchema.safeParse(await request.json().catch(() => null));
+  const parsed = feedbackSchema.safeParse(await smallJson(request).catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid feedback' }, { status: 400 });
   }
@@ -52,6 +51,7 @@ export async function POST(request: Request) {
   }
 
   const row = {
+    submission_id: parsed.data.submission_id ?? randomUUID(),
     user_id: currentUser?.id ?? null,
     profile_id: profile?.id ?? null,
     listing_id: listing?.id ?? null,
@@ -61,26 +61,14 @@ export async function POST(request: Request) {
     page_path: parsed.data.page_path,
   };
 
-  const { error: insertError } = await service.from('feedback_messages').insert(row);
+  const { data: feedbackId, error: insertError } = await saveProductFeedback(request, row, currentUser?.id ?? null, service);
   if (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 400 });
+    const limited = insertError.message === 'Please try again later';
+    return NextResponse.json({ error: limited ? 'Please wait a little before sending more feedback.' : 'Could not save feedback. Please try again later.' }, { status: limited ? 429 : 503 });
   }
 
   try {
-    await sendTransactionalEmail({
-      category: 'feedback',
-      to: FEEDBACK_TO_EMAIL,
-      subject: `Go Pair PH feedback: ${row.category.replaceAll('_', ' ')}`,
-      html: renderFeedbackEmail({
-        category: row.category,
-        message: row.message,
-        contactEmail: row.contact_email,
-        profileName: profile?.display_name ?? null,
-        listingTitle: listing ? formatListingName(listing.brand, listing.model) : null,
-        listingUrl: listing ? getAbsoluteListingUrl(SITE_URL, listing) : null,
-        pagePath: row.page_path,
-      }),
-    });
+    await processFeedbackEmails(feedbackId as string, service);
   } catch (error) {
     console.error('[feedback] email send failed', error);
   }

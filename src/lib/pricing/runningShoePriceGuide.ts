@@ -1,3 +1,4 @@
+export const PRICE_GUIDE_ENGINE_VERSION = 'retail_formula_v1';
 export type PriceGuideCondition = 'new' | 'like_new' | 'good' | 'fair';
 export type PriceGuideMileage = 'unused' | 'under_20' | 'twenty_to_80' | 'eighty_to_200' | 'over_200' | 'unknown';
 export type PriceGuideAge = 'under_3_months' | 'three_to_12_months' | 'one_to_two_years' | 'over_two_years';

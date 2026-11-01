@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 export function installMessagingMocks() {
   const virtual = {
+    '@/lib/feedbackServer': 'export const processFeedbackEmails=async()=>({sent:0,suppressed:0,retrying:0});',
     '@/lib/supabase/server': 'export const createClient=()=>globalThis.chatMocks.client; export const createServiceClient=()=>globalThis.chatMocks.service;',
     '@/lib/email/resend': 'export const sendTransactionalEmail=(args)=>globalThis.chatMocks.email(args);',
     'next/server': 'export const NextResponse={json:(body,init)=>Response.json(body,init)};',

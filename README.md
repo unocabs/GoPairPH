@@ -40,3 +40,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## Promotion payments
 
 Featured and Top Pick use QR Ph through PayMongo hosted checkout with automatic verification. Follow [the PayMongo rollout guide](docs/paymongo-promotion-rollout.md) before enabling payments. **Apply migration 053 manually in the Supabase SQL Editor; migrations do not auto-apply.** The guide covers test/live credentials, webhooks, the required reconciliation schedule, legacy orders, and refunds.
+
+## Estimator feedback
+
+Price results support required Too low / Too high feedback and a suggested price, with admin review and email alerts. Follow [the feedback rollout guide](docs/price-feedback-rollout.md). **Apply migration 058 manually in the Supabase SQL Editor before deployment; migrations do not auto-apply.** The new pricing engine, monthly public-price refresh, and premium access remain in the review plan.
