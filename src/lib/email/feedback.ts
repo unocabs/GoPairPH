@@ -57,7 +57,7 @@ export function renderFeedbackEmail(data: FeedbackEmailData): string {
         ...review.prices,
         ...review.details,
         { label: 'Engine', value: data.snapshot.engine_version },
-        { label: 'Price evidence', value: 'Formula only; SRP supplied by user, not verified retail data' },
+        { label: 'Price evidence', value: data.snapshot.evidence_type === 'formula' ? 'Formula only; SRP supplied by user, not verified retail data' : data.snapshot.evidence_type },
       ]) : ''}
       ${renderCallout(data.snapshot ? 'User comment' : 'Message', message)}
       ${data.adminUrl ? `<div style="margin-top:22px;">${renderButton(data.adminUrl, 'Review feedback in admin')}</div>` : ''}

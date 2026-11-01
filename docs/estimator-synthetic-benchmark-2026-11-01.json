@@ -1,0 +1,696 @@
+{
+  "type": "synthetic_correctness_only",
+  "frozen_at": "2026-11-01T06:00:00.000Z",
+  "scenarios": 48,
+  "real_validation_outcomes": 0,
+  "market_accuracy_proven": false,
+  "premium_launch": "blocked_pending_independent_outcomes_and_pilot",
+  "accepted_provisional_examples": [
+    {
+      "model": "Adizero Evo SL",
+      "price_php": 4500
+    },
+    {
+      "model": "Novablast 5",
+      "price_php": 4300
+    },
+    {
+      "model": "Pegasus 41",
+      "price_php": 2900
+    }
+  ],
+  "rows": [
+    {
+      "model": "Adizero Evo SL",
+      "condition": "new",
+      "age": "under_3_months",
+      "v1_range": [
+        7800,
+        8300
+      ],
+      "v2_range": [
+        5800,
+        6500
+      ],
+      "v2_asking_price": 6200
+    },
+    {
+      "model": "Adizero Evo SL",
+      "condition": "new",
+      "age": "three_to_12_months",
+      "v1_range": [
+        7600,
+        8300
+      ],
+      "v2_range": [
+        5800,
+        6500
+      ],
+      "v2_asking_price": 6200
+    },
+    {
+      "model": "Adizero Evo SL",
+      "condition": "new",
+      "age": "one_to_two_years",
+      "v1_range": [
+        7000,
+        8000
+      ],
+      "v2_range": [
+        5500,
+        6200
+      ],
+      "v2_asking_price": 5900
+    },
+    {
+      "model": "Adizero Evo SL",
+      "condition": "new",
+      "age": "over_two_years",
+      "v1_range": [
+        6500,
+        7500
+      ],
+      "v2_range": [
+        5200,
+        5800
+      ],
+      "v2_asking_price": 5600
+    },
+    {
+      "model": "Adizero Evo SL",
+      "condition": "like_new",
+      "age": "under_3_months",
+      "v1_range": [
+        6000,
+        7300
+      ],
+      "v2_range": [
+        4900,
+        5600
+      ],
+      "v2_asking_price": 5300
+    },
+    {
+      "model": "Adizero Evo SL",
+      "condition": "like_new",
+      "age": "three_to_12_months",
+      "v1_range": [
+        5700,
+        7100
+      ],
+      "v2_range": [
+        4900,
+        5600
+      ],
+      "v2_asking_price": 5300
+    },
+    {
+      "model": "Adizero Evo SL",
+      "condition": "like_new",
+      "age": "one_to_two_years",
+      "v1_range": [
+        5100,
+        6500
+      ],
+      "v2_range": [
+        4600,
+        5300
+      ],
+      "v2_asking_price": 5000
+    },
+    {
+      "model": "Adizero Evo SL",
+      "condition": "like_new",
+      "age": "over_two_years",
+      "v1_range": [
+        4600,
+        6000
+      ],
+      "v2_range": [
+        4300,
+        5000
+      ],
+      "v2_asking_price": 4700
+    },
+    {
+      "model": "Adizero Evo SL",
+      "condition": "good",
+      "age": "under_3_months",
+      "v1_range": [
+        4300,
+        6000
+      ],
+      "v2_range": [
+        4100,
+        4800
+      ],
+      "v2_asking_price": 4500
+    },
+    {
+      "model": "Adizero Evo SL",
+      "condition": "good",
+      "age": "three_to_12_months",
+      "v1_range": [
+        4000,
+        5700
+      ],
+      "v2_range": [
+        4100,
+        4800
+      ],
+      "v2_asking_price": 4500
+    },
+    {
+      "model": "Adizero Evo SL",
+      "condition": "good",
+      "age": "one_to_two_years",
+      "v1_range": [
+        3400,
+        5100
+      ],
+      "v2_range": [
+        3800,
+        4500
+      ],
+      "v2_asking_price": 4200
+    },
+    {
+      "model": "Adizero Evo SL",
+      "condition": "good",
+      "age": "over_two_years",
+      "v1_range": [
+        2900,
+        4600
+      ],
+      "v2_range": [
+        3500,
+        4100
+      ],
+      "v2_asking_price": 3900
+    },
+    {
+      "model": "Adizero Evo SL",
+      "condition": "fair",
+      "age": "under_3_months",
+      "v1_range": [
+        2800,
+        4300
+      ],
+      "v2_range": [
+        2400,
+        3400
+      ],
+      "v2_asking_price": 3000
+    },
+    {
+      "model": "Adizero Evo SL",
+      "condition": "fair",
+      "age": "three_to_12_months",
+      "v1_range": [
+        2600,
+        4000
+      ],
+      "v2_range": [
+        2400,
+        3400
+      ],
+      "v2_asking_price": 3000
+    },
+    {
+      "model": "Adizero Evo SL",
+      "condition": "fair",
+      "age": "one_to_two_years",
+      "v1_range": [
+        2000,
+        3400
+      ],
+      "v2_range": [
+        2100,
+        3100
+      ],
+      "v2_asking_price": 2700
+    },
+    {
+      "model": "Adizero Evo SL",
+      "condition": "fair",
+      "age": "over_two_years",
+      "v1_range": [
+        1400,
+        2900
+      ],
+      "v2_range": [
+        1800,
+        2800
+      ],
+      "v2_asking_price": 2400
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "new",
+      "age": "under_3_months",
+      "v1_range": [
+        8500,
+        9100
+      ],
+      "v2_range": [
+        5500,
+        6200
+      ],
+      "v2_asking_price": 5900
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "new",
+      "age": "three_to_12_months",
+      "v1_range": [
+        8300,
+        9100
+      ],
+      "v2_range": [
+        5500,
+        6200
+      ],
+      "v2_asking_price": 5900
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "new",
+      "age": "one_to_two_years",
+      "v1_range": [
+        7600,
+        8700
+      ],
+      "v2_range": [
+        5300,
+        5900
+      ],
+      "v2_asking_price": 5700
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "new",
+      "age": "over_two_years",
+      "v1_range": [
+        7100,
+        8200
+      ],
+      "v2_range": [
+        4900,
+        5600
+      ],
+      "v2_asking_price": 5300
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "like_new",
+      "age": "under_3_months",
+      "v1_range": [
+        6500,
+        8000
+      ],
+      "v2_range": [
+        4700,
+        5300
+      ],
+      "v2_asking_price": 5100
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "like_new",
+      "age": "three_to_12_months",
+      "v1_range": [
+        6200,
+        7700
+      ],
+      "v2_range": [
+        4700,
+        5300
+      ],
+      "v2_asking_price": 5100
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "like_new",
+      "age": "one_to_two_years",
+      "v1_range": [
+        5600,
+        7100
+      ],
+      "v2_range": [
+        4400,
+        5100
+      ],
+      "v2_asking_price": 4800
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "like_new",
+      "age": "over_two_years",
+      "v1_range": [
+        5000,
+        6500
+      ],
+      "v2_range": [
+        4100,
+        4700
+      ],
+      "v2_asking_price": 4500
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "good",
+      "age": "under_3_months",
+      "v1_range": [
+        4600,
+        6500
+      ],
+      "v2_range": [
+        3900,
+        4600
+      ],
+      "v2_asking_price": 4300
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "good",
+      "age": "three_to_12_months",
+      "v1_range": [
+        4400,
+        6200
+      ],
+      "v2_range": [
+        3900,
+        4600
+      ],
+      "v2_asking_price": 4300
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "good",
+      "age": "one_to_two_years",
+      "v1_range": [
+        3700,
+        5600
+      ],
+      "v2_range": [
+        3600,
+        4300
+      ],
+      "v2_asking_price": 4000
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "good",
+      "age": "over_two_years",
+      "v1_range": [
+        3200,
+        5000
+      ],
+      "v2_range": [
+        3300,
+        4000
+      ],
+      "v2_asking_price": 3700
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "fair",
+      "age": "under_3_months",
+      "v1_range": [
+        3100,
+        4600
+      ],
+      "v2_range": [
+        2300,
+        3300
+      ],
+      "v2_asking_price": 2900
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "fair",
+      "age": "three_to_12_months",
+      "v1_range": [
+        2800,
+        4400
+      ],
+      "v2_range": [
+        2300,
+        3300
+      ],
+      "v2_asking_price": 2900
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "fair",
+      "age": "one_to_two_years",
+      "v1_range": [
+        2100,
+        3700
+      ],
+      "v2_range": [
+        2000,
+        3000
+      ],
+      "v2_asking_price": 2600
+    },
+    {
+      "model": "Novablast 5",
+      "condition": "fair",
+      "age": "over_two_years",
+      "v1_range": [
+        1600,
+        3200
+      ],
+      "v2_range": [
+        1700,
+        2700
+      ],
+      "v2_asking_price": 2300
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "new",
+      "age": "under_3_months",
+      "v1_range": [
+        6800,
+        7200
+      ],
+      "v2_range": [
+        3800,
+        4200
+      ],
+      "v2_asking_price": 4000
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "new",
+      "age": "three_to_12_months",
+      "v1_range": [
+        6600,
+        7200
+      ],
+      "v2_range": [
+        3800,
+        4200
+      ],
+      "v2_asking_price": 4000
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "new",
+      "age": "one_to_two_years",
+      "v1_range": [
+        6100,
+        7000
+      ],
+      "v2_range": [
+        3600,
+        4000
+      ],
+      "v2_asking_price": 3900
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "new",
+      "age": "over_two_years",
+      "v1_range": [
+        5600,
+        6500
+      ],
+      "v2_range": [
+        3400,
+        3800
+      ],
+      "v2_asking_price": 3600
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "like_new",
+      "age": "under_3_months",
+      "v1_range": [
+        5200,
+        6400
+      ],
+      "v2_range": [
+        3200,
+        3600
+      ],
+      "v2_asking_price": 3500
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "like_new",
+      "age": "three_to_12_months",
+      "v1_range": [
+        5000,
+        6100
+      ],
+      "v2_range": [
+        3200,
+        3600
+      ],
+      "v2_asking_price": 3500
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "like_new",
+      "age": "one_to_two_years",
+      "v1_range": [
+        4400,
+        5600
+      ],
+      "v2_range": [
+        3000,
+        3500
+      ],
+      "v2_asking_price": 3300
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "like_new",
+      "age": "over_two_years",
+      "v1_range": [
+        4000,
+        5200
+      ],
+      "v2_range": [
+        2800,
+        3200
+      ],
+      "v2_asking_price": 3100
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "good",
+      "age": "under_3_months",
+      "v1_range": [
+        3700,
+        5200
+      ],
+      "v2_range": [
+        2700,
+        3100
+      ],
+      "v2_asking_price": 2900
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "good",
+      "age": "three_to_12_months",
+      "v1_range": [
+        3500,
+        5000
+      ],
+      "v2_range": [
+        2700,
+        3100
+      ],
+      "v2_asking_price": 2900
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "good",
+      "age": "one_to_two_years",
+      "v1_range": [
+        3000,
+        4400
+      ],
+      "v2_range": [
+        2500,
+        2900
+      ],
+      "v2_asking_price": 2800
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "good",
+      "age": "over_two_years",
+      "v1_range": [
+        2500,
+        4000
+      ],
+      "v2_range": [
+        2300,
+        2700
+      ],
+      "v2_asking_price": 2500
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "fair",
+      "age": "under_3_months",
+      "v1_range": [
+        2400,
+        3700
+      ],
+      "v2_range": [
+        1600,
+        2200
+      ],
+      "v2_asking_price": 2000
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "fair",
+      "age": "three_to_12_months",
+      "v1_range": [
+        2200,
+        3500
+      ],
+      "v2_range": [
+        1600,
+        2200
+      ],
+      "v2_asking_price": 2000
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "fair",
+      "age": "one_to_two_years",
+      "v1_range": [
+        1700,
+        3000
+      ],
+      "v2_range": [
+        1400,
+        2000
+      ],
+      "v2_asking_price": 1800
+    },
+    {
+      "model": "Pegasus 41",
+      "condition": "fair",
+      "age": "over_two_years",
+      "v1_range": [
+        1300,
+        2500
+      ],
+      "v2_range": [
+        1200,
+        1800
+      ],
+      "v2_asking_price": 1600
+    }
+  ]
+}

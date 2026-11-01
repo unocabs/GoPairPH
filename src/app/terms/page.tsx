@@ -129,6 +129,13 @@ export default function TermsPage() {
         </p>
       </section>
 
+      <section id="estimator" className="scroll-mt-24">
+        <h2 className="text-xl font-semibold text-gray-100">Shoe price estimator access</h2>
+        <p>While the estimator is in free beta, no paid plan is required. When paid access is enabled, the first full estimate is free once per account, with same-model corrections for 24 hours. Unlimited access costs ₱50 for one calendar month with manual renewal, or ₱600 once for permanent access on the purchasing account for the operating life of this estimator service. Permanent access has no scheduled expiry; it does not promise that the service will operate forever. Payments do not renew automatically.</p>
+        <p>Access includes the available estimator, saved estimate history, asking-price guidance, and export. Retail coverage is limited to the models shown before checkout and can require manual maintenance. Estimates are guidance, not guaranteed sale prices, authenticity checks, or promises of a sale. We do not guarantee automated collection from every retailer.</p>
+        <p>If a payment is duplicated or paid access cannot be delivered, contact support with the payment reference for refund review before paying again. If the estimator service is discontinued, we will communicate the closure and how affected purchasers can request review. Refunds are processed through the payment provider; an estimate you disagree with can also be submitted as price feedback. These descriptions do not limit applicable consumer rights.</p>
+      </section>
+
       <section>
         <h2 className="text-xl font-semibold text-gray-100">10. Shops</h2>
         <p>

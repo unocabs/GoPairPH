@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 export function installFeedbackMocks() {
   const virtual = {
     'server-only': '',
+    'next/cache': 'export const unstable_cache=(fn)=>fn;export const revalidateTag=()=>{};',
     'next/server': 'export const NextResponse={json:(body,init)=>Response.json(body,init)};',
     '@/lib/supabase/server': 'export const createClient=()=>globalThis.feedbackMocks.client; export const createServiceClient=()=>globalThis.feedbackMocks.service;',
     '@/lib/email/resend': 'export const sendTransactionalEmail=(args)=>globalThis.feedbackMocks.email(args);',

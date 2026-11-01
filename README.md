@@ -44,3 +44,7 @@ Featured and Top Pick use QR Ph through PayMongo hosted checkout with automatic 
 ## Estimator feedback
 
 Price results support required Too low / Too high feedback and a suggested price, with admin review and email alerts. Follow [the feedback rollout guide](docs/price-feedback-rollout.md). **Apply migration 058 manually in the Supabase SQL Editor before deployment; migrations do not auto-apply.** The new pricing engine, monthly public-price refresh, and premium access remain in the review plan.
+
+## Estimator beta and future paid access
+
+See [estimator implementation and rollout](docs/price-estimator-implementation.md). Apply `supabase/migrations/059_estimator_platform.sql` manually in Supabase SQL Editor after migration 058; this project does not auto-apply migrations. The new estimator remains free beta and paid checkout defaults off. Optional scheduled workers require the separate manual `supabase/setup/estimator-jobs.sql` setup after deployment.

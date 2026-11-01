@@ -4,19 +4,19 @@ import { PriceGuideForm } from '@/components/pricing/PriceGuideForm';
 
 const title = 'Running Shoe Resale Price Calculator Philippines';
 const description =
-  'Estimate a fair resale price for new or used running shoes in the Philippines based on retail price, condition, mileage, age, and buyer demand.';
+  'Estimate a fair resale price for new or used running shoes in the Philippines based on retail price, condition, mileage, age, and dated retail references where available.';
 const image = '/guides/running-shoe-price-estimator-hero.jpg';
 
 const priceGuideFaqs = [
   {
     question: 'How much should I sell my running shoes for in the Philippines?',
     answer:
-      'Start from the original Philippine retail price, then adjust for condition, mileage, age, demand, included proof or packaging, visible flaws, and how quickly you want to sell. The calculator gives a suggested range rather than a guaranteed selling price.',
+      'Start from a dated local retail offer when an exact model is matched, otherwise the entered SRP. Then adjust for condition, mileage, age, and visible flaws. The calculator gives a suggested range rather than a guaranteed selling price.',
   },
   {
     question: 'Should pre-loved running shoes be priced below retail?',
     answer:
-      'Usually, yes. Brand-new and genuinely low-mileage pairs may stay closer to retail, while older pairs, higher-mileage shoes, and shoes with visible flaws generally need a lower and more buyer-friendly price.',
+      'Usually, yes. New and low-mileage shoes may stay closer to retail, while older shoes, higher-mileage shoes, and shoes with visible flaws generally need a lower and more buyer-friendly price.',
   },
   {
     question: 'Does running shoe mileage affect resale value?',
@@ -91,26 +91,26 @@ export default function PriceGuidePage() {
         <div className="relative mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-10 lg:px-8">
           <div className="max-w-[22.5rem] sm:max-w-3xl">
             <p className="price-guide-step-mobile-hidden text-[10px] font-bold uppercase tracking-[0.2em] text-teal-300 sm:text-xs">
-              Running Shoe Sellability Guide
+              Running Shoe Price Guide
             </p>
             <h1 className="mt-1.5 text-xl font-extrabold leading-tight tracking-tight text-gray-100 sm:mt-2 sm:text-4xl">
               Running Shoe Resale Price Calculator
             </h1>
             <p className="price-guide-step-mobile-hidden mt-2 max-w-xl text-xs leading-5 text-gray-400 sm:mt-3 sm:text-base sm:leading-7">
-              Can&apos;t decide on the pricing? Get a live resale price range before listing.
+              Can&apos;t decide on the pricing? Check a dated retail reference and a condition-adjusted resale range before listing.
             </p>
           </div>
         </div>
       </section>
 
-      <section className="mx-4 w-[22.5rem] max-w-[calc(100vw-2rem)] py-4 sm:mx-auto sm:w-auto sm:max-w-6xl sm:px-6 sm:py-6 lg:px-8">
+      <section className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
         <PriceGuideForm />
       </section>
 
-      <section className="mx-4 grid w-[22.5rem] max-w-[calc(100vw-2rem)] gap-4 pb-10 sm:mx-auto sm:w-auto sm:max-w-6xl sm:px-6 lg:grid-cols-3 lg:px-8">
+      <section className="mx-auto grid w-full max-w-6xl gap-4 px-4 pb-10 sm:grid-cols-2 sm:px-6 lg:px-8">
         <InfoCard
           title="Built for sellers"
-          body="Use the range as a starting point before listing. Your estimator details can carry into the listing so your notes do not go wasted."
+          body="Use the range as a starting point before listing. Save estimates to your account and use your chosen price when listing."
         />
         <InfoCard
           title="Not a certified value"
@@ -128,7 +128,7 @@ export default function PriceGuidePage() {
               How to price used running shoes fairly
             </h2>
             <p className="mt-3 text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
-              A fair asking price starts with what the pair actually cost in the Philippines, then accounts for wear and buyer confidence. Current retail discounts matter: if stores are selling the same model below SRP, buyers will compare your listing with that lower price.
+              A fair asking price starts with what the shoes actually cost in the Philippines, then accounts for wear and buyer confidence. Current retail discounts matter: if stores are selling the same model below SRP, buyers will compare your listing with that lower price.
             </p>
           </div>
 
@@ -141,7 +141,7 @@ export default function PriceGuidePage() {
             <GuideStep
               number="2"
               title="Deduct for use and age"
-              body="Condition, mileage, release age, and visible flaws have the largest effect on the estimate."
+              body="Condition, mileage, age since purchase, and visible flaws have the largest effect on the estimate."
             />
             <GuideStep
               number="3"
@@ -154,7 +154,7 @@ export default function PriceGuidePage() {
             <div className="border-b border-white/[0.08] bg-slate-900/70 px-4 py-3">
               <h3 className="text-sm font-bold text-gray-100">Estimator starting ranges by condition</h3>
               <p className="mt-1 text-xs leading-5 text-gray-500">
-                These percentages are the calculator&apos;s baseline before mileage, age, demand, selling speed, packaging, proof, and flaws are applied.
+                These percentages are the calculator&apos;s baseline before mileage, age, and visible flaws. These beta heuristics are not measured resale statistics.
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -167,10 +167,10 @@ export default function PriceGuidePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.06] bg-slate-950/60 text-gray-300">
-                  <PriceRangeRow condition="New" range="82% - 94%" description="Unused pair with no running mileage" />
-                  <PriceRangeRow condition="Like New" range="62% - 78%" description="Very light wear and minimal signs of use" />
-                  <PriceRangeRow condition="Good" range="42% - 62%" description="Normal runner use with useful life remaining" />
-                  <PriceRangeRow condition="Fair" range="25% - 42%" description="Visible wear that is clearly shown and priced" />
+                  <PriceRangeRow condition="New" range="85%–95%" description="Unused shoes with no running mileage" />
+                  <PriceRangeRow condition="Like New" range="72%–82%" description="Very light wear and minimal signs of use" />
+                  <PriceRangeRow condition="Good" range="60%–70%" description="Normal runner use with useful life remaining" />
+                  <PriceRangeRow condition="Fair" range="35%–50%" description="Visible wear that is clearly shown and priced" />
                 </tbody>
               </table>
             </div>
@@ -224,7 +224,7 @@ export default function PriceGuidePage() {
           </div>
 
           <p className="mt-8 text-xs leading-5 text-gray-600">
-            Prepared by the Go Pair PH marketplace team. Methodology reviewed June 18, 2026.
+            Prepared by the Go Pair PH marketplace team. Methodology reviewed November 1, 2026.
           </p>
         </div>
       </section>

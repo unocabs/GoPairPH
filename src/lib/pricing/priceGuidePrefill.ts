@@ -14,7 +14,7 @@ export interface PriceGuideListingPrefill {
   retailPricePhp: number;
   condition: PriceGuideCondition;
   mileage: PriceGuideMileage;
-  age: PriceGuideAge;
+  age: PriceGuideAge | 'unknown';
   demand: PriceGuideDemand;
   urgency: PriceGuideUrgency;
   hasBox: boolean;
@@ -43,11 +43,12 @@ const conditionLabels: Record<PriceGuideCondition, string> = {
   fair: 'Fair',
 };
 
-const ageLabels: Record<PriceGuideAge, string> = {
+const ageLabels: Record<PriceGuideAge | 'unknown', string> = {
   under_3_months: 'Under 3 months',
   three_to_12_months: '3-12 months',
   one_to_two_years: '1-2 years',
   over_two_years: 'Over 2 years',
+  unknown: 'Unknown',
 };
 
 function formatPeso(value: number): string {

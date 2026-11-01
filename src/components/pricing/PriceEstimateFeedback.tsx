@@ -26,7 +26,7 @@ export function PriceEstimateFeedback({ snapshot }: { snapshot: PriceFeedbackSna
     if (reason === 'too_low' ? value <= snapshot.reference_price_php : value >= snapshot.reference_price_php) {
       setError(`Your suggested price should be ${reason === 'too_low' ? 'higher' : 'lower'} than ${formatPrice(snapshot.reference_price_php)}.`); return;
     }
-    const payload = { engine_version: snapshot.engine_version, input: snapshot.input, price_choice: snapshot.price_choice,
+    const payload = { estimate_id: snapshot.estimate_id, engine_version: snapshot.engine_version, input: snapshot.input, price_choice: snapshot.price_choice,
       reference_price_php: snapshot.reference_price_php, reason, suggested_price_php: value, message: message.trim() };
     const content = JSON.stringify(payload);
     if (attempt.current?.content !== content) attempt.current = { content, id: crypto.randomUUID() };

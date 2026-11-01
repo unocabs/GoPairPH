@@ -1,6 +1,6 @@
 # Price estimator review and premium launch plan
 
-Prepared November 1, 2026. Status: pricing and premium access remain planned. The first supporting feature, estimator feedback and admin review, is implemented locally; see [feedback rollout](price-feedback-rollout.md) for the required manual migration and activation. The new pricing engine, crawler, and paid plans are not enabled.
+Prepared November 1, 2026. Implementation update: the v2 free beta, feedback/admin review, source maintenance workflow and gated manual-payment plans are implemented locally. Paid launch, automatic collection and production deployment remain disabled pending genuine validation and configuration. See [implementation and manual setup](price-estimator-implementation.md). The phases below remain the launch evidence requirements; code completion does not mean those gates passed.
 
 ## Product decision
 

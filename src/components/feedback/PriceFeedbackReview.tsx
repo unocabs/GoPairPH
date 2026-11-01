@@ -22,7 +22,7 @@ export function PriceFeedbackReview({ snapshot, suggestedPrice }: { snapshot: Pr
     <details className="border-t border-gray-800 pt-2 text-xs text-gray-400">
       <summary className="min-h-9 cursor-pointer py-2">App reasoning and calculation version</summary>
       <p className="mt-2 break-words">Engine: {snapshot.engine_version} · {snapshot.evidence_type === 'formula' ? 'Formula only; no crawled market price attached' : snapshot.evidence_type}</p>
-      <p className="mt-2">Confidence shown by the app: {snapshot.estimate.confidence}. This is the saved formula output, not verified market accuracy.</p>
+      <p className="mt-2">Confidence shown by the app: {snapshot.estimate.confidence}. This is the saved output, not a guarantee of market accuracy.</p>
       <ul className="mt-2 list-disc space-y-1 pl-4">{snapshot.estimate.reasons.map((reason, index) => <li key={index}>{reason}</li>)}</ul>
       <p className="mt-3 leading-5">Shoe details and SRP were supplied by the user. Receipt availability does not establish authenticity. This snapshot is preserved from submission time.</p>
     </details>

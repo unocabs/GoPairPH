@@ -1,975 +1,824 @@
 'use client';
-
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import { BRANDS, CONDITIONS } from '@/lib/constants';
+import Link from 'next/link';
 import {
-  estimateRunningShoePrice,
-  PRICE_GUIDE_ENGINE_VERSION,
-  type PriceGuideAge,
-  type PriceGuideCondition,
-  type PriceGuideDemand,
-  type PriceGuideMileage,
-  type PriceGuideUrgency,
-} from '@/lib/pricing/runningShoePriceGuide';
-import { PRICE_GUIDE_PREFILL_KEY, type PriceGuideListingPrefill } from '@/lib/pricing/priceGuidePrefill';
-import { formatPrice } from '@/lib/utils';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  type FormEvent,
+} from 'react';
+import { EstimateComparison } from './EstimateComparison';
+import { PriceEstimateFeedback } from './PriceEstimateFeedback';
+import { PRICE_GUIDE_PREFILL_KEY } from '@/lib/pricing/priceGuidePrefill';
 import { trackMarketplaceAction } from '@/lib/analytics';
+import { formatPrice } from '@/lib/utils';
+import type { EstimatorInput, EstimatorModel } from '@/lib/pricing/estimator';
+import type {
+  EstimatorAccess,
+  SavedEstimate,
+} from '@/lib/pricing/estimatorServer';
+import type { EstimatorPayment } from '@/lib/pricing/estimatorPayments';
 
-const PriceEstimateFeedback = dynamic(() => import('./PriceEstimateFeedback').then(module => module.PriceEstimateFeedback));
-
-const brandOptions = BRANDS.map((brand) => ({ value: brand, label: brand }));
-const estimatorFieldClass = 'border-[#3B4A60] bg-[#243247] text-gray-100 placeholder:text-slate-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20';
-
-const conditionOptions: { value: PriceGuideCondition; label: string; helper: string; boost: string }[] = [
-  { value: 'new', label: CONDITIONS.new, helper: 'Unused shoes', boost: 'High trust' },
-  { value: 'like_new', label: CONDITIONS.like_new, helper: 'Very light wear', boost: 'Strong value' },
-  { value: 'good', label: CONDITIONS.good, helper: 'Normal runner use', boost: 'Fair market' },
-  { value: 'fair', label: CONDITIONS.fair, helper: 'Visible wear', boost: 'Price clearly' },
-];
-
-const mileageOptions: { value: PriceGuideMileage; label: string; helper: string }[] = [
-  { value: 'unused', label: 'Unused', helper: 'No mileage' },
-  { value: 'under_20', label: 'Under 20 km', helper: 'Almost new' },
-  { value: 'twenty_to_80', label: '20-80 km', helper: 'Light use' },
-  { value: 'eighty_to_200', label: '80-200 km', helper: 'Trained in' },
-  { value: 'over_200', label: 'Over 200 km', helper: 'Price lower' },
-  { value: 'unknown', label: 'Not sure', helper: 'Be honest' },
-];
-
-const ageOptions: { value: PriceGuideAge; label: string; helper: string }[] = [
-  { value: 'under_3_months', label: 'Under 3 months', helper: 'Fresh release' },
-  { value: 'three_to_12_months', label: '3-12 months', helper: 'Still current' },
-  { value: 'one_to_two_years', label: '1-2 years', helper: 'Older model' },
-  { value: 'over_two_years', label: 'Over 2 years', helper: 'Price sharper' },
-];
-
-const demandOptions: { value: PriceGuideDemand; label: string; helper: string }[] = [
-  { value: 'popular', label: 'Popular', helper: 'Easy to scan and search' },
-  { value: 'normal', label: 'Normal', helper: 'Expected buyer interest' },
-  { value: 'niche', label: 'Niche', helper: 'May need the right buyer' },
-];
-
-const urgencyOptions: { value: PriceGuideUrgency; label: string; helper: string }[] = [
-  { value: 'sell_fast', label: 'Sell Fast', helper: 'More attractive price' },
-  { value: 'balanced', label: 'Balanced', helper: 'Good starting point' },
-  { value: 'best_price', label: 'Best Price', helper: 'Start slightly higher' },
-];
-
-const conditionScore: Record<PriceGuideCondition, number> = {
-  new: 24,
-  like_new: 20,
-  good: 13,
-  fair: 5,
+const initial: EstimatorInput = {
+  brand: '',
+  model: '',
+  retailPricePhp: 0,
+  condition: 'good',
+  mileage: 'unknown',
+  mileageKm: null,
+  age: 'unknown',
+  demand: 'normal',
+  urgency: 'balanced',
+  hasBox: false,
+  hasReceipt: false,
+  hasVisibleFlaws: false,
+  askingPricePhp: null,
 };
-
-const mileageScore: Record<PriceGuideMileage, number> = {
-  unused: 18,
-  under_20: 17,
-  twenty_to_80: 13,
-  eighty_to_200: 7,
-  over_200: 1,
-  unknown: 5,
-};
-
-const ageScore: Record<PriceGuideAge, number> = {
-  under_3_months: 12,
-  three_to_12_months: 10,
-  one_to_two_years: 5,
-  over_two_years: 1,
-};
-
-const demandScore: Record<PriceGuideDemand, number> = {
-  popular: 16,
-  normal: 11,
-  niche: 5,
-};
-
-const urgencyScore: Record<PriceGuideUrgency, number> = {
-  sell_fast: 9,
-  balanced: 6,
-  best_price: 3,
-};
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
+const field =
+  'min-h-11 w-full rounded-lg border border-gray-700 bg-slate-900 px-3 py-2 text-base text-gray-100 focus:border-teal-400 focus:outline-none';
+const button =
+  'inline-flex min-h-11 items-center justify-center rounded-lg bg-teal-400 px-4 py-2 text-sm font-bold text-slate-950 disabled:opacity-50';
+interface Overview {
+  models: EstimatorModel[];
+  access: EstimatorAccess;
+  history: SavedEstimate[];
+  nextHistoryCursor: string | null;
+  trialEstimate: SavedEstimate | null;
+  payments: EstimatorPayment[];
+  signedIn: boolean;
+  checkoutEnabled: boolean;
+  monthlyExpiresIfPaidNow: string;
 }
-
 export function PriceGuideForm() {
-  const router = useRouter();
-  const [hasStarted, setHasStarted] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [brand, setBrand] = useState('');
-  const [model, setModel] = useState('');
-  const [retailPrice, setRetailPrice] = useState('');
-  const [condition, setCondition] = useState<PriceGuideCondition>('like_new');
-  const [mileage, setMileage] = useState<PriceGuideMileage>('twenty_to_80');
-  const [age, setAge] = useState<PriceGuideAge>('three_to_12_months');
-  const [demand, setDemand] = useState<PriceGuideDemand>('normal');
-  const [urgency, setUrgency] = useState<PriceGuideUrgency>('balanced');
-  const [hasBox, setHasBox] = useState(false);
-  const [hasReceipt, setHasReceipt] = useState(false);
-  const [hasVisibleFlaws, setHasVisibleFlaws] = useState(false);
-  const estimateGeneratedTrackedRef = useRef(false);
-  const [listingModalOpen, setListingModalOpen] = useState(false);
-  const [listingPriceChoice, setListingPriceChoice] = useState<'suggested_range' | 'fast_sale'>('suggested_range');
-  const [rangePrice, setRangePrice] = useState(0);
-  const estimatorRef = useRef<HTMLDivElement | null>(null);
-  const modalCloseRef = useRef<HTMLButtonElement | null>(null);
-  const modalTriggerRef = useRef<HTMLElement | null>(null);
-
-  const retailNumber = Number(retailPrice);
-  const hasValidRetailPrice = Number.isFinite(retailNumber) && retailNumber >= 500;
-  const hasBrand = brand.trim().length > 0;
-  const hasModel = model.trim().length > 0;
-  const canEstimate = hasValidRetailPrice && hasBrand && hasModel;
-
-  const estimate = useMemo(() => {
-    if (!canEstimate) return null;
-    return estimateRunningShoePrice({
-      retailPricePhp: retailNumber,
-      condition,
-      mileage,
-      age,
-      demand,
-      urgency,
-      hasBox,
-      hasReceipt,
-      hasVisibleFlaws,
-    });
-  }, [age, canEstimate, condition, demand, hasBox, hasReceipt, hasVisibleFlaws, mileage, retailNumber, urgency]);
-
-  const selectedMileageLabel = mileageOptions.find((option) => option.value === mileage)?.label ?? 'Not sure';
-  const selectedAgeLabel = ageOptions.find((option) => option.value === age)?.label ?? 'Not sure';
-  const selectedDemandLabel = demandOptions.find((option) => option.value === demand)?.label ?? 'Normal';
-  const selectedUrgencyLabel = urgencyOptions.find((option) => option.value === urgency)?.label ?? 'Balanced';
-  const selectedConditionLabel = conditionOptions.find((option) => option.value === condition)?.label ?? CONDITIONS[condition];
-
-  const sellabilityScore = useMemo(() => {
-    if (!canEstimate) return 0;
-    return clamp(
-      16
-      + conditionScore[condition]
-      + mileageScore[mileage]
-      + ageScore[age]
-      + demandScore[demand]
-      + urgencyScore[urgency]
-      + (hasBox ? 4 : 0)
-      + (hasReceipt ? 5 : 0)
-      - (hasVisibleFlaws ? 12 : 0),
-      12,
-      96,
+  const [input, setInput] = useState(initial),
+    [overview, setOverview] = useState<Overview | null>(null),
+    [estimate, setEstimate] = useState<SavedEstimate | null>(null);
+  const [error, setError] = useState(''),
+    [busy, setBusy] = useState(false),
+    [ready, setReady] = useState(false),
+    [choice, setChoice] = useState<'suggested_range' | 'fast_sale'>(
+      'suggested_range',
     );
-  }, [age, canEstimate, condition, demand, hasBox, hasReceipt, hasVisibleFlaws, mileage, urgency]);
-
-  const scoreLabel = sellabilityScore >= 82
-    ? 'Strong chance to sell'
-    : sellabilityScore >= 68
-      ? 'Good seller setup'
-      : sellabilityScore >= 50
-        ? 'Needs clearer positioning'
-        : 'Price and trust need work';
-
-  const bestMove = estimate
-    ? urgency === 'sell_fast'
-      ? `List near ${formatPrice(estimate.fastSalePrice)} and lead with clear top + sole photos.`
-      : urgency === 'best_price'
-        ? `Start near ${formatPrice(estimate.suggestedHigh)} and expect a slower buyer decision.`
-        : `List around ${formatPrice(estimate.suggestedHigh)} and stay open to serious offers.`
-    : 'Add the original retail price to unlock the live range.';
-
+  const [terms, setTerms] = useState(false),
+    [checking, setChecking] = useState(false),
+    [notice, setNotice] = useState('');
+  const attempt = useRef<{ body: string; id: string } | null>(null),
+    resultRef = useRef<HTMLElement>(null);
+  const load = useCallback(async () => {
+    const response = await fetch('/api/price-estimator', { cache: 'no-store' });
+    const data = await response.json();
+    if (!response.ok) throw Error(data.error);
+    setOverview(data);
+    return data as Overview;
+  }, []);
   useEffect(() => {
-    if (!listingModalOpen) return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const focusFrame = window.requestAnimationFrame(() => modalCloseRef.current?.focus());
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setListingModalOpen(false);
-    }
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.cancelAnimationFrame(focusFrame);
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      modalTriggerRef.current?.focus();
-    };
-  }, [listingModalOpen]);
-
-  useEffect(() => {
-    if (!hasStarted) return;
-
-    const frame = window.requestAnimationFrame(() => {
-      estimatorRef.current?.scrollIntoView({ block: 'start' });
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [currentStep, hasStarted]);
-
-  function startEstimation() {
-    if (!canEstimate || !estimate) return;
-
-    setHasStarted(true);
-    setCurrentStep(0);
-    if (!estimateGeneratedTrackedRef.current) {
-      estimateGeneratedTrackedRef.current = true;
-      trackMarketplaceAction('price_estimate_generated', {
-        source: 'price_guide',
-        brand,
-        condition,
-        mileage,
-        age,
-        demand,
-        urgency,
-        has_box: hasBox,
-        has_receipt: hasReceipt,
-        has_visible_flaws: hasVisibleFlaws,
-        sellability_score: sellabilityScore,
-      });
-    }
-  }
-
-  function openListingModal() {
-    if (!estimate) return;
-
-    modalTriggerRef.current = document.activeElement as HTMLElement | null;
-    setListingPriceChoice('suggested_range');
-    setRangePrice(estimate.suggestedHigh);
-    setListingModalOpen(true);
-    trackMarketplaceAction('price_estimator_listing_modal_open', {
-      surface: 'wizard_step',
-      estimator_step: currentStep + 1,
-      brand,
-      sellability_score: sellabilityScore,
-    });
-  }
-
-  function chooseListingPrice(choice: 'suggested_range' | 'fast_sale') {
-    setListingPriceChoice(choice);
-    trackMarketplaceAction('price_estimator_price_option_select', {
-      surface: 'wizard_step',
-      estimator_step: currentStep + 1,
-      option: choice,
-    });
-  }
-
-  function saveListingPrefill(selectedPricePhp: number) {
-    if (!estimate || !canEstimate) return;
-
-    const prefill: PriceGuideListingPrefill = {
-      brand,
-      model,
-      retailPricePhp: retailNumber,
-      condition,
-      mileage,
-      age,
-      demand,
-      urgency,
-      hasBox,
-      hasReceipt,
-      hasVisibleFlaws,
-      suggestedLow: estimate.suggestedLow,
-      suggestedHigh: estimate.suggestedHigh,
-      fastSalePrice: estimate.fastSalePrice,
-      selectedPricePhp,
-      createdAt: Date.now(),
-    };
-
     try {
-      window.localStorage.setItem(PRICE_GUIDE_PREFILL_KEY, JSON.stringify(prefill));
-    } catch {
-      // If storage is unavailable, the listing page still receives the price in the URL.
+      const draft = JSON.parse(
+        sessionStorage.getItem('estimator-draft-v2') ?? 'null',
+      );
+      if (draft?.brand && draft?.model) setInput({ ...initial, ...draft });
+    } catch {}
+    load()
+      .catch((cause) => setError(cause.message))
+      .finally(() => setReady(true));
+  }, [load]);
+  useEffect(() => {
+    if (ready)
+      try {
+        sessionStorage.setItem('estimator-draft-v2', JSON.stringify(input));
+      } catch {}
+  }, [input, ready]);
+  const checkPayment = useCallback(
+    async (id: string, cancel = false) => {
+      setChecking(true);
+      setError('');
+      try {
+        const response = await fetch(`/api/price-estimator/payments/${id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: cancel ? 'cancel' : 'check' }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw Error(data.error);
+        await load();
+        setNotice(
+          data.payment?.status === 'paid'
+            ? 'Payment verified. Your estimator access is active.'
+            : 'Payment status refreshed. Access starts only after payment is verified.',
+        );
+      } catch (cause) {
+        setError(
+          cause instanceof Error ? cause.message : 'Could not check payment.',
+        );
+      } finally {
+        setChecking(false);
+      }
+    },
+    [load],
+  );
+  useEffect(() => {
+    if (!overview?.signedIn) return;
+    const id = new URLSearchParams(location.search).get('payment');
+    if (id && /^[a-f0-9-]{36}$/i.test(id)) {
+      void checkPayment(id);
     }
-    trackMarketplaceAction('price_estimator_to_listing', {
-      surface: 'wizard_step',
-      estimator_step: currentStep + 1,
-      brand,
-      condition,
-      urgency,
-      has_box: hasBox,
-      has_receipt: hasReceipt,
-      has_visible_flaws: hasVisibleFlaws,
-      sellability_score: sellabilityScore,
-      selected_price_php: selectedPricePhp,
-      price_option: listingPriceChoice,
-    });
+  }, [overview?.signedIn, checkPayment]); // One return check; manual refresh avoids background polling.
+  function update<K extends keyof EstimatorInput>(
+    key: K,
+    value: EstimatorInput[K],
+  ) {
+    setInput((previous) => ({ ...previous, [key]: value }));
   }
-
-  function confirmListingPrice() {
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    const parent = estimate?.id ?? null;
+    const body = JSON.stringify({ input, parent_id: parent });
+    if (attempt.current?.body !== body)
+      attempt.current = { body, id: crypto.randomUUID() };
+    try {
+      const response = await fetch('/api/price-estimator', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          input,
+          parent_id: parent,
+          request_id: attempt.current.id,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw Error(data.error);
+      setEstimate(data.estimate);
+      trackMarketplaceAction('price_estimate_completed', {
+        engine_version: data.estimate.result.version,
+        model_id: data.estimate.result.modelId ?? 'unmatched',
+        evidence_type: data.estimate.result.evidenceType,
+      });
+      setChoice('suggested_range');
+      await load();
+      requestAnimationFrame(() =>
+        resultRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        }),
+      );
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : 'Could not estimate this shoe.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function checkout(plan: 'monthly' | 'permanent') {
+    setBusy(true);
+    setError('');
+    try {
+      const response = await fetch('/api/price-estimator/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan, accept_terms: terms }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw Error(data.error);
+      if (data.checkoutUrl) location.assign(data.checkoutUrl);
+      else {
+        await load();
+        setNotice(
+          'Your payment is being checked. Use the payment status below before starting another checkout.',
+        );
+      }
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : 'Could not start checkout.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  function listingPrefill() {
     if (!estimate) return;
-
-    const selectedPrice = listingPriceChoice === 'fast_sale' ? estimate.fastSalePrice : rangePrice;
-    trackMarketplaceAction('price_estimator_price_confirm', {
-      surface: 'wizard_step',
-      estimator_step: currentStep + 1,
-      option: listingPriceChoice,
-      selected_price_php: selectedPrice,
-      range_slider_value: rangePrice,
+    try {
+      localStorage.setItem(
+        PRICE_GUIDE_PREFILL_KEY,
+        JSON.stringify({
+          ...estimate.input,
+          ...estimate.result,
+          selectedPricePhp: selected,
+          createdAt: Date.now(),
+        }),
+      );
+    } catch {}
+    trackMarketplaceAction('price_estimator_to_listing', {
+      engine_version: estimate.result.version,
     });
-    saveListingPrefill(selectedPrice);
-    setListingModalOpen(false);
-    router.push(`/listings/new?from=price-guide&price=${selectedPrice}`);
   }
-
+  async function olderHistory() {
+    if (!overview?.nextHistoryCursor) return;
+    setBusy(true);
+    setError('');
+    try {
+      const response = await fetch(
+        `/api/price-estimator/history?before=${encodeURIComponent(overview.nextHistoryCursor)}`,
+        { cache: 'no-store' },
+      );
+      const result = await response.json();
+      if (!response.ok) throw Error(result.error);
+      setOverview((current) =>
+        current
+          ? {
+              ...current,
+              history: [...current.history, ...result.history],
+              nextHistoryCursor: result.nextHistoryCursor,
+            }
+          : current,
+      );
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : 'Could not load history.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  function exportEstimate() {
+    if (!estimate) return;
+    const blob = new Blob([JSON.stringify(estimate, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob),
+      a = document.createElement('a');
+    a.href = url;
+    a.download = `shoe-estimate-${estimate.id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  const result = estimate?.result,
+    selected = result
+      ? choice === 'fast_sale'
+        ? result.fastSalePrice
+        : result.suggestedPrice
+      : 0;
+  const correctionMode =
+    estimate &&
+    overview?.access.trialEstimateId &&
+    (estimate.id === overview.access.trialEstimateId ||
+      estimate.parent_id === overview.access.trialEstimateId) &&
+    Date.parse(overview.access.correctionUntil ?? '') > Date.now();
+  const showForm =
+    !overview?.access.premiumEnabled ||
+    overview.access.active ||
+    overview.access.freeAvailable ||
+    correctionMode;
   return (
-    <div
-      ref={estimatorRef}
-      data-price-estimator-started={hasStarted ? 'true' : 'false'}
-      className="mx-auto max-w-4xl scroll-mt-24 overflow-hidden"
-    >
-      {!hasStarted ? (
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            startEstimation();
-          }}
-          className="sellability-card-in rounded-2xl border border-teal-400/20 bg-[#0B1424] p-4 shadow-[0_22px_70px_rgba(0,0,0,0.28)] sm:p-6"
+    <div className="space-y-5 text-gray-200">
+      <div className="rounded-xl border border-teal-400/20 bg-teal-400/5 p-4 text-sm leading-6">
+        <strong>
+          {overview?.access.premiumEnabled
+            ? 'Your shoe pricing guide'
+            : 'Free beta · Help us improve shoe pricing'}
+        </strong>
+        <p className="text-gray-400">
+          {overview?.access.premiumEnabled
+            ? overview.access.active
+              ? `Unlimited access${overview.access.permanent ? ' · permanent' : ` until ${new Date(overview.access.expiresAt!).toLocaleDateString('en-PH')}`}.`
+              : overview.access.freeAvailable
+                ? 'Your first full estimate is free.'
+                : 'Your free estimate has been used. Unlock unlimited estimates below.'
+            : 'Estimates are free while we validate the guide against real resale outcomes. Retail offers are dated references; they are not completed resale prices.'}
+        </p>
+      </div>
+      {error && (
+        <p
+          role="alert"
+          className="rounded-lg border border-red-400/30 p-3 text-sm text-red-200"
         >
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-teal-300">Listing lab</p>
-          <h2 className="mt-1 text-lg font-extrabold tracking-tight text-gray-100 sm:text-2xl">Start with the shoe details.</h2>
-          <p className="mt-2 text-sm leading-6 text-gray-500">We&apos;ll guide you through five quick steps to estimate a practical resale price.</p>
-
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            <Input
-              label="Retail price"
-              type="number"
-              min={500}
-              inputMode="numeric"
-              value={retailPrice}
-              onChange={(event) => setRetailPrice(event.target.value)}
-              placeholder="e.g. 8500"
-              required
-              hint="Original PH retail price."
-              className={`${estimatorFieldClass} ${!hasValidRetailPrice ? 'price-estimator-start-glow' : ''}`}
-            />
-            <Select
-              label="Brand"
-              options={brandOptions}
-              placeholder="Choose Brand"
-              value={brand}
-              onChange={(event) => setBrand(event.target.value)}
-              required
-              className={`${estimatorFieldClass} ${!hasBrand ? 'price-estimator-start-glow' : ''}`}
-            />
-            <Input
-              label="Model"
-              value={model}
-              onChange={(event) => setModel(event.target.value)}
-              placeholder="e.g. Pegasus 41"
-              required
-              className={`${estimatorFieldClass} ${!hasModel ? 'price-estimator-start-glow' : ''}`}
-            />
+          {error}
+        </p>
+      )}
+      {notice && (
+        <p role="status" className="text-sm text-teal-200">
+          {notice}
+        </p>
+      )}
+      {showForm ? (
+        <form
+          onSubmit={submit}
+          className="rounded-xl border border-white/10 bg-slate-950 p-4 sm:p-6"
+        >
+          <h2 className="text-lg font-bold">Tell us about your shoes</h2>
+          <p className="mt-1 text-sm text-gray-400">
+            Exact model and honest wear details make the estimate more useful.
+          </p>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <label className="space-y-1 text-sm">
+              Brand
+              <input
+                className={field}
+                required
+                maxLength={80}
+                value={input.brand}
+                onChange={(e) => update('brand', e.target.value)}
+              />
+            </label>
+            <label className="space-y-1 text-sm">
+              Exact model
+              <input
+                className={field}
+                required
+                list="estimator-models"
+                maxLength={160}
+                value={input.model}
+                onChange={(e) => update('model', e.target.value)}
+              />
+              <datalist id="estimator-models">
+                {overview?.models
+                  .filter(
+                    (model) =>
+                      model.brand.toLowerCase() === input.brand.toLowerCase(),
+                  )
+                  .map((model) => (
+                    <option key={model.id} value={model.name} />
+                  ))}
+              </datalist>
+            </label>
+            <label className="space-y-1 text-sm">
+              Original SRP (₱)
+              <input
+                className={field}
+                type="number"
+                inputMode="decimal"
+                min={500}
+                max={1000000}
+                required
+                value={input.retailPricePhp || ''}
+                onChange={(e) =>
+                  update('retailPricePhp', Number(e.target.value))
+                }
+              />
+            </label>
+            <label className="space-y-1 text-sm">
+              Condition
+              <select
+                className={field}
+                value={input.condition}
+                onChange={(e) => {
+                  update(
+                    'condition',
+                    e.target.value as EstimatorInput['condition'],
+                  );
+                  if (e.target.value === 'new') {
+                    update('mileage', 'unused');
+                    update('mileageKm', 0);
+                  }
+                }}
+              >
+                <option value="new">New · unused</option>
+                <option value="like_new">Like new · minimal wear</option>
+                <option value="good">
+                  Good · normal wear, useful life remaining
+                </option>
+                <option value="fair">Fair · visible wear</option>
+              </select>
+            </label>
+            <label className="space-y-1 text-sm">
+              Running mileage (km, if known)
+              <input
+                className={field}
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={10000}
+                value={input.mileageKm ?? ''}
+                placeholder="Leave blank if unknown"
+                onChange={(e) => {
+                  update(
+                    'mileageKm',
+                    e.target.value === '' ? null : Number(e.target.value),
+                  );
+                  update(
+                    'mileage',
+                    e.target.value === ''
+                      ? 'unknown'
+                      : Number(e.target.value) === 0
+                        ? 'unused'
+                        : Number(e.target.value) < 20
+                          ? 'under_20'
+                          : Number(e.target.value) <= 80
+                            ? 'twenty_to_80'
+                            : Number(e.target.value) <= 200
+                              ? 'eighty_to_200'
+                              : 'over_200',
+                  );
+                }}
+              />
+            </label>
+            <label className="space-y-1 text-sm">
+              Age since purchase
+              <select
+                className={field}
+                value={input.age}
+                onChange={(e) =>
+                  update('age', e.target.value as EstimatorInput['age'])
+                }
+              >
+                <option value="under_3_months">Under 3 months</option>
+                <option value="three_to_12_months">3–12 months</option>
+                <option value="one_to_two_years">1–2 years</option>
+                <option value="over_two_years">Over 2 years</option>
+                <option value="unknown">Unknown</option>
+              </select>
+            </label>
+            <label className="space-y-1 text-sm sm:col-span-2">
+              Your planned asking price (₱, optional)
+              <input
+                className={field}
+                type="number"
+                inputMode="decimal"
+                min={1}
+                max={1000000}
+                value={input.askingPricePhp ?? ''}
+                placeholder="Check whether your price fits the guidance"
+                onChange={(e) =>
+                  update(
+                    'askingPricePhp',
+                    e.target.value === '' ? null : Number(e.target.value),
+                  )
+                }
+              />
+            </label>
           </div>
-
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-gray-500" aria-live="polite">
-              {canEstimate ? 'Ready to estimate.' : 'Complete all three required fields to continue.'}
-            </p>
-            <button
-              type="submit"
-              disabled={!canEstimate}
-              className="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-teal-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-gray-500 disabled:shadow-none sm:w-auto"
-            >
-              Start Estimation
+          <div className="my-4 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+            {(
+              [
+                ['hasBox', 'Box included'],
+                ['hasReceipt', 'Receipt available'],
+                ['hasVisibleFlaws', 'Visible flaws'],
+              ] as const
+            ).map(([key, label]) => (
+              <label key={key} className="flex min-h-11 items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={input[key]}
+                  onChange={(e) => update(key, e.target.checked)}
+                  className="h-5 w-5 accent-teal-400"
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+          {overview?.signedIn ? (
+            <button className={`${button} w-full sm:w-auto`} disabled={busy}>
+              {busy
+                ? 'Checking your estimate…'
+                : estimate
+                  ? 'Update estimate'
+                  : 'Get my estimate'}
             </button>
-          </div>
+          ) : (
+            <Link
+              href="/auth/sign-in?next=%2Fprice-guide"
+              className={`${button} w-full sm:w-auto`}
+            >
+              Sign in to get your estimate
+            </Link>
+          )}
+          <p className="mt-2 text-xs leading-5 text-gray-500">
+            Your input stays on this device during sign-in.{' '}
+            {overview?.access.premiumEnabled
+              ? 'A free estimate can be corrected for the same model within 24 hours.'
+              : 'Signed-in estimates are saved to your account.'}
+          </p>
         </form>
       ) : (
-        <div className="space-y-4">
-          <div className="sellability-card-in rounded-2xl border border-white/[0.08] bg-[#0B1424] p-4 sm:p-5">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-teal-300">Listing lab</p>
-                <p className="mt-1 text-sm font-semibold text-gray-200">Step {currentStep + 1} of 5</p>
-              </div>
-              <p className="max-w-[55%] truncate text-right text-xs text-gray-500">{brand} {model}</p>
-            </div>
-            <div className="mt-3 grid grid-cols-5 gap-1.5" aria-label={`Step ${currentStep + 1} of 5`}>
-              {[0, 1, 2, 3, 4].map((step) => (
-                <span
-                  key={step}
-                  className={`h-1.5 rounded-full transition-colors ${step <= currentStep ? 'bg-teal-400' : 'bg-slate-800'}`}
-                />
-              ))}
-            </div>
-          </div>
-
-          <CompactScoreDock
-            score={sellabilityScore}
-            estimate={estimate}
-            active
-            onUseDetails={openListingModal}
-          />
-
-          <section className="sellability-card-in rounded-2xl border border-[#25344A] bg-[#0B1424] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-6">
-            {currentStep === 0 && (
-              <>
-                <SectionHeader step="01" title="Condition" body="Pick the closest truth. The score rewards clarity, not hype." />
-                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {conditionOptions.map((option) => (
-                    <ChoiceCard
-                      key={option.value}
-                      active={condition === option.value}
-                      label={option.label}
-                      helper={option.helper}
-                      badge={option.boost}
-                      onClick={() => setCondition(option.value)}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-
-            {currentStep === 1 && (
-              <>
-                <SectionHeader step="02" title="Usage" body="Mileage helps buyers judge outsole and foam life." />
-                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {mileageOptions.map((option) => (
-                    <MiniChoice
-                      key={option.value}
-                      active={mileage === option.value}
-                      label={option.label}
-                      helper={option.helper}
-                      onClick={() => setMileage(option.value)}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-
-            {currentStep === 2 && (
-              <>
-                <SectionHeader step="03" title="Age" body="Newer releases usually feel easier to move." />
-                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {ageOptions.map((option) => (
-                    <MiniChoice
-                      key={option.value}
-                      active={age === option.value}
-                      label={option.label}
-                      helper={option.helper}
-                      onClick={() => setAge(option.value)}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-
-            {currentStep === 3 && (
-              <>
-                <SectionHeader step="04" title="Selling Strategy" body="Tell the tool if you want speed, balance, or maximum value." />
-                <div className="mt-4 grid gap-5 md:grid-cols-2">
-                  <div>
-                    <p className="text-sm font-medium text-gray-300">Buyer demand</p>
-                    <div className="mt-2 grid grid-cols-3 gap-2">
-                      {demandOptions.map((option) => (
-                        <MiniChoice
-                          key={option.value}
-                          active={demand === option.value}
-                          label={option.label}
-                          helper={option.helper}
-                          onClick={() => setDemand(option.value)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-300">Selling goal</p>
-                    <div className="mt-2 grid grid-cols-3 gap-2">
-                      {urgencyOptions.map((option) => (
-                        <MiniChoice
-                          key={option.value}
-                          active={urgency === option.value}
-                          label={option.label}
-                          helper={option.helper}
-                          onClick={() => setUrgency(option.value)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {currentStep === 4 && (
-              <>
-                <SectionHeader step="05" title="Trust Extras" body="These do not become new listing fields. They travel into the description when you list." />
-                <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                  <TrustToggle checked={hasBox} onChange={setHasBox} title="Has box" body="Useful for complete shoes" />
-                  <TrustToggle checked={hasReceipt} onChange={setHasReceipt} title="Has receipt" body="Adds proof and confidence" />
-                  <TrustToggle checked={hasVisibleFlaws} onChange={setHasVisibleFlaws} title="Visible flaws" body="Honesty protects trust" warning />
-                </div>
-              </>
-            )}
-
-            <div className="mt-6 flex items-center justify-between gap-3 border-t border-white/[0.08] pt-4">
-              <button
-                type="button"
-                onClick={() => {
-                  if (currentStep === 0) setHasStarted(false);
-                  else setCurrentStep((step) => step - 1);
-                }}
-                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-700 bg-slate-950/60 px-4 py-2 text-sm font-semibold text-gray-300 transition-colors hover:border-gray-600 hover:text-gray-100"
-              >
-                Back
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (currentStep === 4) openListingModal();
-                  else setCurrentStep((step) => step + 1);
-                }}
-                className="inline-flex min-h-11 items-center justify-center rounded-lg bg-teal-500 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-teal-500/20 transition-colors hover:bg-teal-400"
-              >
-                {currentStep === 4 ? 'View Full Result' : 'Next'}
-              </button>
-            </div>
-          </section>
+        <div className="rounded-xl border border-white/10 p-4 text-sm leading-6">
+          <p>
+            Unlock unlimited estimates below to price another shoe. You can
+            always reopen and export saved results.
+          </p>
+          <Link
+            className="inline-block min-h-11 py-3 text-teal-300"
+            href="/listings/new"
+          >
+            List shoes without an estimate
+          </Link>
+          {overview?.access.trialEstimateId && (
+            <button
+              className="ml-3 min-h-11 text-teal-300"
+              onClick={() => {
+                const trial =
+                  overview.trialEstimate ??
+                  overview.history.find(
+                    (row) => row.id === overview.access.trialEstimateId,
+                  );
+                if (trial) {
+                  setEstimate(trial);
+                  setInput(trial.input);
+                }
+              }}
+            >
+              Reopen free estimate
+            </button>
+          )}
         </div>
       )}
-
-      {listingModalOpen && estimate && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="price-guide-confirm-title"
-          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-4"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setListingModalOpen(false);
-          }}
+      {estimate && result && (
+        <section
+          ref={resultRef}
+          tabIndex={-1}
+          className="scroll-mt-20 rounded-xl border border-teal-400/30 bg-slate-900/50 p-4 sm:p-6"
         >
-          <div className="flex max-h-[92dvh] w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-teal-400/20 bg-[#06111d] shadow-2xl shadow-black/70 sm:rounded-2xl">
-            <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(45,212,191,0.18),transparent_34%),radial-gradient(circle_at_90%_20%,rgba(59,130,246,0.10),transparent_30%)]" />
-              <div className="relative">
-                <div className="flex items-start justify-between gap-4">
-                  <p id="price-guide-confirm-title" className="pt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-teal-300">
-                    Live sellability
-                  </p>
-                  <button
-                    ref={modalCloseRef}
-                    type="button"
-                    onClick={() => setListingModalOpen(false)}
-                    aria-label="Close"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-slate-950/70 text-gray-400 transition-colors hover:border-teal-300/30 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400/40"
+          <p className="text-sm text-gray-400">
+            {estimate.input.brand} {estimate.input.model} ·{' '}
+            {estimate.input.condition.replace('_', ' ')}
+          </p>
+          <h2 className="mt-2 text-3xl font-extrabold text-teal-200">
+            {formatPrice(result.suggestedLow)}–
+            {formatPrice(result.suggestedHigh)}
+          </h2>
+          <p className="mt-2 text-sm text-gray-400">
+            Suggested asking range · {result.confidence} confidence ·{' '}
+            {new Date(estimate.created_at).toLocaleDateString('en-PH')}
+          </p>
+          <p className="mt-2 text-xs text-gray-500">
+            Original SRP you entered:{' '}
+            {formatPrice(estimate.input.retailPricePhp)}
+          </p>
+          <div className="my-4 grid gap-3 sm:grid-cols-2">
+            {(['suggested_range', 'fast_sale'] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                aria-pressed={choice === option}
+                onClick={() => setChoice(option)}
+                className={`min-h-16 rounded-lg border p-3 text-left ${choice === option ? 'border-teal-400 bg-teal-400/10' : 'border-gray-700'}`}
+              >
+                <span className="block text-xs text-gray-400">
+                  {option === 'fast_sale'
+                    ? 'Lower asking strategy'
+                    : 'Starting asking price'}
+                </span>
+                <strong>
+                  {formatPrice(
+                    option === 'fast_sale'
+                      ? result.fastSalePrice
+                      : result.suggestedPrice,
+                  )}
+                </strong>
+              </button>
+            ))}
+          </div>
+          {result.assessment && (
+            <p className="mb-4 text-sm leading-6">
+              <strong>{result.assessment.label}.</strong>{' '}
+              {result.assessment.explanation.replace(
+                `${result.assessment.label}. `,
+                '',
+              )}
+            </p>
+          )}
+          {result.reference ? (
+            <div className="rounded-lg border border-white/10 p-3 text-sm leading-6">
+              <p>
+                Retail context:{' '}
+                <strong>{formatPrice(result.reference.price_php)}</strong> ·
+                regular {formatPrice(result.reference.regular_price_php)}
+              </p>
+              <a
+                className="break-words text-teal-300 underline"
+                href={result.reference.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {result.reference.source_name} · {result.reference.variant}
+              </a>
+              <p className="text-xs text-gray-400">
+                Observed{' '}
+                {new Date(result.reference.observed_at).toLocaleDateString(
+                  'en-PH',
+                )}{' '}
+                · stock: {result.reference.availability.replaceAll('_', ' ')}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-amber-200">
+              Uses your entered SRP; no fresh matched retail offer.
+            </p>
+          )}
+          <details className="mt-4 text-sm leading-6">
+            <summary className="min-h-11 cursor-pointer py-2 font-semibold">
+              Why this range?
+            </summary>
+            <ul className="list-disc space-y-2 pl-5 text-gray-400">
+              {result.reasons.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          </details>
+          <ul className="mt-3 space-y-1 text-xs leading-5 text-gray-400">
+            {result.warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link
+              className={button}
+              onClick={listingPrefill}
+              href={`/listings/new?from=price-guide&price=${selected}`}
+            >
+              List at {formatPrice(selected)}
+            </Link>
+            <button
+              type="button"
+              className="min-h-11 px-2 text-sm text-teal-300"
+              onClick={exportEstimate}
+            >
+              Export estimate
+            </button>
+          </div>
+          <PriceEstimateFeedback
+            key={`${estimate.id}:${choice}`}
+            snapshot={{
+              estimate_id: estimate.id,
+              engine_version: result.version,
+              input: estimate.input,
+              estimate: result,
+              price_choice: choice,
+              reference_price_php: selected,
+              evidence_type: result.evidenceType,
+            }}
+          />
+        </section>
+      )}
+      {!!overview?.history.length && (
+        <details className="rounded-xl border border-white/10 p-4">
+          <summary className="min-h-11 cursor-pointer py-2 font-semibold">
+            Saved estimates ({overview.history.length} loaded)
+          </summary>
+          <div className="divide-y divide-gray-800">
+            {overview.history.map((row) => (
+              <button
+                key={row.id}
+                type="button"
+                className="flex min-h-16 w-full flex-col gap-1 py-3 text-left text-sm sm:flex-row sm:justify-between"
+                onClick={() => {
+                  setEstimate(row);
+                  setInput(row.input);
+                  setChoice('suggested_range');
+                }}
+              >
+                <span>
+                  {row.input.brand} {row.input.model}
+                  <small className="ml-2 text-gray-500">
+                    {new Date(row.created_at).toLocaleDateString('en-PH')}
+                  </small>
+                </span>
+                <span className="text-teal-200">
+                  {formatPrice(row.result.suggestedLow)}–
+                  {formatPrice(row.result.suggestedHigh)}
+                </span>
+              </button>
+            ))}
+          </div>
+          {overview.nextHistoryCursor && (
+            <button
+              className="min-h-11 text-sm text-teal-300 disabled:opacity-50"
+              disabled={busy}
+              onClick={olderHistory}
+            >
+              Load older estimates
+            </button>
+          )}
+        </details>
+      )}
+      {overview && <EstimateComparison history={overview.history} />}
+      {overview?.access.premiumEnabled && (
+        <section className="rounded-xl border border-white/10 p-4 sm:p-6">
+          <h2 className="text-lg font-bold">Unlimited estimates</h2>
+          <p className="mt-2 text-sm leading-6 text-gray-400">
+            ₱50 for one calendar month with manual renewal, or ₱600 once for
+            permanent access on this account for the operating life of this estimator
+            service. No automatic charges or upgrade credit for earlier monthly
+            payments. Reference coverage varies; prices remain guidance.
+          </p>
+          <p className="mt-2 text-xs leading-5 text-gray-500">
+            Catalogue:{' '}
+            {overview.models
+              .map((model) => `${model.brand} ${model.name}`)
+              .join(', ')}
+            . Other models use your entered SRP.{' '}
+            <Link href="/terms#estimator" className="text-teal-300 underline">
+              Access and refund information
+            </Link>
+            .
+          </p>
+          <p className="mt-2 text-xs text-gray-400">
+            If verified now, monthly access ends{' '}
+            {new Date(overview.monthlyExpiresIfPaidNow).toLocaleString(
+              'en-PH',
+              { timeZone: 'Asia/Manila' },
+            )}{' '}
+            (Manila time). Actual expiry is set when payment is verified.
+          </p>
+          <label className="my-4 flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              checked={terms}
+              onChange={(e) => setTerms(e.target.checked)}
+              className="mt-1 h-5 w-5 shrink-0 accent-teal-400"
+            />
+            <span>
+              I understand the access period, manual renewal, and the
+              estimator’s limitations.
+            </span>
+          </label>
+          <div className="flex flex-wrap gap-3">
+            <button
+              className={button}
+              disabled={
+                !terms ||
+                busy ||
+                !overview.checkoutEnabled ||
+                overview.access.permanent
+              }
+              onClick={() => checkout('monthly')}
+            >
+              ₱50 · one month
+            </button>
+            <button
+              className={button}
+              disabled={
+                !terms ||
+                busy ||
+                !overview.checkoutEnabled ||
+                overview.access.permanent
+              }
+              onClick={() => checkout('permanent')}
+            >
+              ₱600 · permanent
+            </button>
+          </div>
+          {!overview.checkoutEnabled && (
+            <p className="mt-3 text-sm text-amber-200">
+              Checkout is not available yet.
+            </p>
+          )}
+        </section>
+      )}
+      {!!overview?.payments.length && (
+        <section className="rounded-xl border border-white/10 p-4">
+          <h2 className="font-bold">Payment status</h2>
+          {overview.payments.map((payment) => (
+            <div
+              key={payment.id}
+              className="mt-3 border-t border-gray-800 pt-3 text-sm"
+            >
+              <p>
+                {payment.plan === 'monthly'
+                  ? 'One month · ₱50'
+                  : 'Permanent · ₱600'}{' '}
+                · {payment.status}
+              </p>
+              {payment.status === 'review' && (
+                <p className="mt-1 text-xs text-amber-200">
+                  Admin review needed. Avoid paying again until this is
+                  resolved.
+                </p>
+              )}
+              <div className="flex flex-wrap gap-3">
+                {payment.checkout_url && payment.status === 'pending' && (
+                  <a
+                    className="min-h-11 py-3 text-teal-300"
+                    href={payment.checkout_url}
                   >
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-                      <path d="M6 6l12 12M18 6L6 18" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                </div>
-
-                <div className="mt-2 grid grid-cols-[104px_1fr] items-center gap-3 sm:mt-4 sm:grid-cols-[132px_1fr] sm:gap-4">
-                  <ScoreRing score={sellabilityScore} active />
-                  <div>
-                    <h2 className="text-lg font-extrabold tracking-tight text-gray-100 sm:text-xl">{scoreLabel}</h2>
-                    <p className="mt-1.5 text-xs leading-5 text-gray-400 sm:mt-2 sm:text-sm sm:leading-6">{bestMove}</p>
-                  </div>
-                </div>
-
-                <div className="mt-4 grid gap-2.5 sm:grid-cols-[1fr_0.65fr] sm:gap-3">
-                  <div className="rounded-xl border border-white/[0.08] bg-slate-950/60 p-3 sm:p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500 sm:text-xs">Suggested range</p>
-                    <p className="mt-1.5 text-xl font-extrabold text-gray-100 sm:mt-2 sm:text-2xl">
-                      {formatPrice(estimate.suggestedLow)} - {formatPrice(estimate.suggestedHigh)}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-1">
-                    <MetricCard label="Fast sale" value={formatPrice(estimate.fastSalePrice)} lightning />
-                    <MetricCard label="Confidence" value={estimate.confidence} />
-                  </div>
-                </div>
-
-                <PriceEstimateFeedback
-                  key={JSON.stringify([brand, model, retailNumber, condition, mileage, age, demand, urgency, hasBox, hasReceipt, hasVisibleFlaws, listingPriceChoice, rangePrice])}
-                  snapshot={{ engine_version: PRICE_GUIDE_ENGINE_VERSION,
-                    input: { brand, model, retailPricePhp: retailNumber, condition, mileage, age, demand, urgency, hasBox, hasReceipt, hasVisibleFlaws },
-                    estimate, price_choice: listingPriceChoice,
-                    reference_price_php: listingPriceChoice === 'fast_sale' ? estimate.fastSalePrice : rangePrice, evidence_type: 'formula' }}
-                />
-
-                <div className="mt-4 rounded-xl border border-teal-400/20 bg-teal-400/[0.06] p-3 sm:p-4">
-                  <h3 className="truncate text-lg font-extrabold text-gray-100">{brand} {model}</h3>
-                  <p className="mt-1 text-sm text-gray-500">{selectedConditionLabel} · {selectedMileageLabel}</p>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                    <DetailChip label="Age" value={selectedAgeLabel} />
-                    <DetailChip label="Demand" value={selectedDemandLabel} />
-                    <DetailChip label="Goal" value={selectedUrgencyLabel} />
-                  </div>
-                </div>
-
-                <div className="mt-4 rounded-xl border border-white/[0.08] bg-slate-950/60 p-3 sm:p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Added to description</p>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                    <DetailChip label="Box" value={hasBox ? 'Yes' : 'No'} />
-                    <DetailChip label="Receipt" value={hasReceipt ? 'Yes' : 'No'} />
-                    <DetailChip label="Flaws" value={hasVisibleFlaws ? 'Yes' : 'No'} />
-                    <DetailChip label="Usage" value={selectedMileageLabel} />
-                    <DetailChip label="Age" value={selectedAgeLabel} />
-                  </div>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-2">
+                    Resume checkout
+                  </a>
+                )}
+                <button
+                  className="min-h-11 py-3 text-teal-300 disabled:opacity-50"
+                  disabled={checking}
+                  onClick={() => checkPayment(payment.id)}
+                >
+                  Refresh status
+                </button>
+                {payment.status === 'pending' && (
                   <button
-                    type="button"
-                    aria-pressed={listingPriceChoice === 'suggested_range'}
-                    onClick={() => chooseListingPrice('suggested_range')}
-                    className={`rounded-xl border p-3 text-left transition-colors ${listingPriceChoice === 'suggested_range' ? 'border-teal-300/60 bg-teal-400/12 text-teal-50 shadow-[0_0_28px_rgba(45,212,191,0.12)]' : 'border-[#314158] bg-[#18263A] text-gray-300 hover:border-teal-400/40'}`}
+                    className="min-h-11 py-3 text-gray-400"
+                    disabled={checking}
+                    onClick={() => checkPayment(payment.id, true)}
                   >
-                    <span className="block text-xs font-bold uppercase tracking-[0.12em]">Suggested Range</span>
-                    <span className="mt-1.5 block text-base font-extrabold">{formatPrice(rangePrice)}</span>
+                    Close unpaid checkout
                   </button>
-                  <button
-                    type="button"
-                    aria-pressed={listingPriceChoice === 'fast_sale'}
-                    onClick={() => chooseListingPrice('fast_sale')}
-                    className={`rounded-xl border p-3 text-left transition-colors ${listingPriceChoice === 'fast_sale' ? 'border-teal-300/60 bg-teal-400/12 text-teal-50 shadow-[0_0_28px_rgba(45,212,191,0.12)]' : 'border-[#314158] bg-[#18263A] text-gray-300 hover:border-teal-400/40'}`}
-                  >
-                    <span className="flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-[0.12em]">
-                      Fast Sale
-                      <LightningIcon />
-                    </span>
-                    <span className="mt-1.5 block text-base font-extrabold">{formatPrice(estimate.fastSalePrice)}</span>
-                  </button>
-                </div>
-
-                {listingPriceChoice === 'suggested_range' && (
-                  <div className="mt-3 rounded-xl border border-white/[0.08] bg-slate-950/60 px-3 py-4">
-                    <input
-                      type="range"
-                      min={estimate.suggestedLow}
-                      max={estimate.suggestedHigh}
-                      step={100}
-                      value={rangePrice}
-                      onChange={(event) => setRangePrice(Number(event.target.value))}
-                      aria-label="Suggested Range"
-                      className="h-2 w-full cursor-pointer accent-teal-400"
-                    />
-                    <div className="mt-2 flex justify-between text-xs font-semibold text-gray-500">
-                      <span>{formatPrice(estimate.suggestedLow)}</span>
-                      <span>{formatPrice(estimate.suggestedHigh)}</span>
-                    </div>
-                  </div>
                 )}
               </div>
             </div>
-
-            <div className="shrink-0 border-t border-white/[0.08] bg-slate-950/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:p-4">
-              <button
-                type="button"
-                onClick={confirmListingPrice}
-                className="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-teal-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-teal-500/25 transition-colors hover:bg-teal-400"
-              >
-                Use this price to list
-              </button>
-            </div>
-          </div>
-        </div>
+          ))}
+        </section>
       )}
     </div>
-  );
-}
-
-function SectionHeader({ step, title, body }: { step: string; title: string; body: string }) {
-  return (
-    <div className="flex gap-3">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-teal-400/30 bg-teal-400/10 text-xs font-black text-teal-200">
-        {step}
-      </span>
-      <div>
-        <h3 className="text-base font-bold text-gray-100">{title}</h3>
-        <p className="mt-1 text-sm leading-6 text-gray-500">{body}</p>
-      </div>
-    </div>
-  );
-}
-
-function CompactScoreDock({
-  score,
-  estimate,
-  active,
-  onUseDetails,
-}: {
-  score: number;
-  estimate: ReturnType<typeof estimateRunningShoePrice> | null;
-  active: boolean;
-  onUseDetails: () => void;
-}) {
-  const range = estimate
-    ? `${formatPrice(estimate.suggestedLow)}-${formatPrice(estimate.suggestedHigh)}`
-    : 'Add retail price';
-  const fastSale = estimate ? formatPrice(estimate.fastSalePrice) : '--';
-  const confidence = estimate ? estimate.confidence : '--';
-
-  return (
-    <div className="sellability-card-in max-w-full overflow-hidden rounded-2xl border border-teal-400/25 bg-[#06111d] shadow-[0_18px_56px_rgba(0,0,0,0.36)]">
-      <div className="relative p-3">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(45,212,191,0.16),transparent_42%),radial-gradient(circle_at_90%_20%,rgba(59,130,246,0.10),transparent_36%)]" />
-        <div className="relative mb-2 flex items-center justify-between gap-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-teal-300">Estimate snapshot</p>
-          <button
-            type="button"
-            onClick={onUseDetails}
-            className="min-h-9 rounded-lg border border-teal-300/25 bg-teal-400/10 px-3 py-1.5 text-xs font-bold text-teal-100 transition-colors hover:border-teal-300/45 hover:bg-teal-400/15 focus:outline-none focus:ring-2 focus:ring-teal-400/40"
-          >
-            Use Details
-          </button>
-        </div>
-        <div className="relative grid grid-cols-[58px_minmax(0,1fr)] gap-3">
-          <MiniScoreRing score={score} active={active} />
-          <div className="min-w-0 rounded-xl border border-white/[0.08] bg-slate-950/60 p-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-500">Suggested range</p>
-            <p className={`mt-1 truncate text-base font-black leading-none ${estimate ? 'text-gray-100' : 'text-gray-500'}`}>
-              {range}
-            </p>
-          </div>
-        </div>
-
-        <div className="relative mt-2 grid grid-cols-2 gap-2">
-          <CompactMetric label="Fast" value={fastSale} active={!!estimate} />
-          <CompactMetric label="Confidence" value={confidence} active={!!estimate} capitalize />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MiniScoreRing({ score, active }: { score: number; active: boolean }) {
-  const animatedScore = useCountUp(active ? score : 0);
-  const circumference = 2 * Math.PI * 20;
-  const offset = circumference - (circumference * (active ? score : 0)) / 100;
-
-  return (
-    <div className="relative h-[58px] w-[58px] shrink-0">
-      <svg className="-rotate-90" width="58" height="58" viewBox="0 0 58 58" aria-hidden>
-        <circle cx="29" cy="29" r="20" stroke="#122333" strokeWidth="8" fill="none" />
-        <circle
-          cx="29"
-          cy="29"
-          r="20"
-          stroke="#2dd4bf"
-          strokeWidth="8"
-          strokeLinecap="round"
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className="transition-all duration-700 ease-out"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`text-base font-black leading-none ${active ? 'text-gray-100' : 'text-gray-500'}`}>
-          {active ? animatedScore : '--'}
-        </span>
-        <span className="mt-0.5 text-[7px] font-bold uppercase tracking-[0.12em] text-teal-300">Score</span>
-      </div>
-    </div>
-  );
-}
-
-function CompactMetric({
-  label,
-  value,
-  active,
-  capitalize = false,
-}: {
-  label: string;
-  value: string;
-  active: boolean;
-  capitalize?: boolean;
-}) {
-  return (
-    <div className="min-w-0 rounded-xl border border-white/[0.08] bg-slate-950/60 px-3 py-2">
-      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-500">{label}</p>
-      <p className={`mt-1 truncate text-sm font-extrabold leading-none ${active ? 'text-teal-100' : 'text-gray-500'} ${capitalize ? 'capitalize' : ''}`}>
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function ChoiceCard({
-  active,
-  label,
-  helper,
-  badge,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  helper: string;
-  badge: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`min-h-[76px] rounded-xl border px-2.5 py-2 text-left transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[118px] sm:p-3 ${
-        active
-          ? 'border-teal-300/60 bg-teal-400/12 text-teal-50 shadow-[0_0_28px_rgba(45,212,191,0.12)]'
-          : 'border-[#314158] bg-[#18263A] text-gray-300 hover:border-teal-400/40 hover:text-gray-100'
-      }`}
-    >
-      <span className="block text-xs font-extrabold sm:text-sm">{label}</span>
-      <span className="mt-1 block text-[11px] leading-4 text-gray-500 sm:text-xs sm:leading-5">{helper}</span>
-      <span className={`mt-1.5 inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] sm:mt-3 sm:px-2 sm:text-[10px] sm:tracking-[0.12em] ${active ? 'bg-teal-300 text-slate-950' : 'bg-slate-900 text-gray-500'}`}>
-        {badge}
-      </span>
-    </button>
-  );
-}
-
-function MiniChoice({
-  active,
-  label,
-  helper,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  helper: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`min-h-[52px] rounded-lg border px-2.5 py-1.5 text-left transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[76px] sm:px-3 sm:py-2 ${
-        active
-          ? 'border-teal-400/55 bg-teal-400/10 text-teal-100'
-          : 'border-[#314158] bg-[#18263A] text-gray-300 hover:border-teal-400/40 hover:text-gray-100'
-      }`}
-    >
-      <span className="block text-[11px] font-bold leading-tight sm:text-xs">{label}</span>
-      <span className="mt-1 block text-[10px] leading-3 text-gray-500 sm:text-[11px] sm:leading-4">{helper}</span>
-    </button>
-  );
-}
-
-function TrustToggle({
-  checked,
-  onChange,
-  title,
-  body,
-  warning = false,
-}: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  title: string;
-  body: string;
-  warning?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      aria-pressed={checked}
-      className={`min-h-[74px] rounded-xl border p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[96px] sm:p-3 ${
-        checked
-          ? warning
-            ? 'border-amber-300/50 bg-amber-300/10 text-amber-100'
-            : 'border-teal-400/50 bg-teal-400/10 text-teal-100'
-          : 'border-[#314158] bg-[#18263A] text-gray-300 hover:border-teal-400/40 hover:text-gray-100'
-      }`}
-    >
-      <span className="flex items-center justify-between gap-1.5">
-        <span className="text-[11px] font-bold leading-tight sm:text-sm">{title}</span>
-        <span className={`flex h-4 w-7 shrink-0 items-center rounded-full p-0.5 transition-colors sm:h-5 sm:w-9 ${checked ? (warning ? 'bg-amber-300' : 'bg-teal-300') : 'bg-gray-700'}`}>
-          <span className={`h-3 w-3 rounded-full bg-slate-950 transition-transform sm:h-4 sm:w-4 ${checked ? 'translate-x-3 sm:translate-x-4' : 'translate-x-0'}`} />
-        </span>
-      </span>
-      <span className="mt-1 block text-[10px] leading-3 text-gray-500 sm:mt-2 sm:text-xs sm:leading-5">{body}</span>
-    </button>
-  );
-}
-
-function ScoreRing({ score, active }: { score: number; active: boolean }) {
-  const animatedScore = useCountUp(active ? score : 0);
-  const circumference = 2 * Math.PI * 48;
-  const offset = circumference - (circumference * (active ? score : 0)) / 100;
-
-  return (
-    <div className="relative h-[104px] w-[104px] sm:h-[132px] sm:w-[132px]">
-      <svg className="h-full w-full -rotate-90" viewBox="0 0 132 132" aria-hidden>
-        <circle cx="66" cy="66" r="48" stroke="#122333" strokeWidth="14" fill="none" />
-        <circle
-          cx="66"
-          cy="66"
-          r="48"
-          stroke="#2dd4bf"
-          strokeWidth="14"
-          strokeLinecap="round"
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className="transition-all duration-700 ease-out"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-black text-gray-100 sm:text-4xl">{animatedScore}</span>
-        <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-teal-300 sm:text-[10px]">Score</span>
-      </div>
-    </div>
-  );
-}
-
-function useCountUp(value: number) {
-  const [display, setDisplay] = useState(value);
-  const previous = useRef(value);
-
-  useEffect(() => {
-    const start = previous.current;
-    const difference = value - start;
-    previous.current = value;
-    if (difference === 0) {
-      setDisplay(value);
-      return;
-    }
-
-    let frame = 0;
-    const totalFrames = 18;
-    const id = window.setInterval(() => {
-      frame += 1;
-      const progress = frame / totalFrames;
-      setDisplay(Math.round(start + difference * (1 - Math.pow(1 - progress, 3))));
-      if (frame >= totalFrames) window.clearInterval(id);
-    }, 18);
-
-    return () => window.clearInterval(id);
-  }, [value]);
-
-  return display;
-}
-
-function LightningIcon() {
-  return (
-    <svg className="h-4 w-4 shrink-0 text-teal-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M13.2 2 5 13.1h6.1L10.8 22 19 10.9h-6.1L13.2 2Z" />
-    </svg>
-  );
-}
-
-function MetricCard({ label, value, lightning = false }: { label: string; value: string; lightning?: boolean }) {
-  return (
-    <div className="rounded-xl border border-white/[0.08] bg-slate-950/60 p-3">
-      <p className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-500">
-        {label}
-        {lightning && <LightningIcon />}
-      </p>
-      <p className="mt-1 text-lg font-extrabold capitalize text-teal-100">{value}</p>
-    </div>
-  );
-}
-
-function DetailChip({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="rounded-full border border-white/[0.08] bg-slate-900/80 px-2.5 py-1 text-gray-300">
-      <span className="text-gray-500">{label}:</span> {value}
-    </span>
   );
 }

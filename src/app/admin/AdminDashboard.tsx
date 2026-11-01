@@ -41,8 +41,9 @@ interface AdminDashboardProps {
 }
 
 const AdminFeedbackPanel = dynamic(() => import('@/components/feedback/AdminFeedbackPanel').then(module => module.AdminFeedbackPanel));
-type Tab = 'buyback' | 'promotions' | 'pending' | 'verified' | 'shops' | 'soldListings' | 'views' | 'leadReports' | 'listingReports' | 'feedback' | 'emailBlast' | 'settings';
-const ADMIN_TABS: Tab[] = ['buyback', 'promotions', 'pending', 'verified', 'shops', 'soldListings', 'views', 'leadReports', 'listingReports', 'feedback', 'emailBlast', 'settings'];
+const AdminEstimatorPanel = dynamic(() => import('@/components/pricing/AdminEstimatorPanel').then(module => module.AdminEstimatorPanel));
+type Tab = 'buyback' | 'promotions' | 'pending' | 'verified' | 'shops' | 'soldListings' | 'views' | 'leadReports' | 'listingReports' | 'feedback' | 'estimator' | 'emailBlast' | 'settings';
+const ADMIN_TABS: Tab[] = ['buyback', 'promotions', 'pending', 'verified', 'shops', 'soldListings', 'views', 'leadReports', 'listingReports', 'feedback', 'estimator', 'emailBlast', 'settings'];
 const ACCEPTED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 function formatTabLabel(label: string, count: number): string {
@@ -175,6 +176,7 @@ export function AdminDashboard({
           { key: 'listingReports', label: formatTabLabel('Listing reports', listingReports.length) },
           { key: 'leadReports', label: formatTabLabel('Lead reports', leadReports.length) },
           { key: 'feedback', label: 'Feedback' },
+          { key: 'estimator', label: 'Estimator' },
           { key: 'emailBlast', label: 'Email blast' },
           { key: 'settings', label: 'Settings' },
         ] as const).map(({ key, label }) => (
@@ -200,6 +202,7 @@ export function AdminDashboard({
       {tab === 'listingReports' && <ListingReportsPanel reports={listingReports} />}
       {tab === 'leadReports' && <LeadReportsPanel reports={leadReports} />}
       {tab === 'feedback' && <AdminFeedbackPanel />}
+      {tab === 'estimator' && <AdminEstimatorPanel />}
       {tab === 'emailBlast' && <EmailBlastPanel />}
       {tab === 'settings' && (
         <AdminSettingsPanel
