@@ -51,6 +51,7 @@ export async function POST(request: Request) {
   }
 
   const service = createServiceClient();
+  let viewerProfileId: string | null = null;
 
   const { data: listing } = await service
     .from('shoes')
@@ -74,6 +75,11 @@ export async function POST(request: Request) {
 
       if (profile?.is_admin || profile?.id === listing.seller_id) {
         return NextResponse.json({ counted: false }, { status: 200 });
+      }
+      if (profile?.id) {
+        viewerProfileId = profile.id;
+        const { data: excluded } = await service.from('marketplace_analytics_exclusions').select('profile_id').eq('profile_id', profile.id).maybeSingle();
+        if (excluded) return NextResponse.json({ counted: false }, { status: 200 });
       }
     }
   }
@@ -104,6 +110,12 @@ export async function POST(request: Request) {
   }
 
   const result = record as RecordViewResult;
+  if (result.counted && viewerProfileId) {
+    const { error: attributionError } = await service.from('listing_daily_views')
+      .update({ viewer_profile_id: viewerProfileId })
+      .eq('listing_id', parsed.listing_id).eq('view_date', viewDate).eq('visitor_hash', visitorHash);
+    if (attributionError) console.error('[listing-views] account attribution failed:', attributionError.code);
+  }
   if (result.counted && shareCampaign?.id) {
     const { error: attributionError } = await service
       .from('listing_share_campaign_views')

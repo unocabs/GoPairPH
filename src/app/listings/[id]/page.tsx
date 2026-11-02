@@ -21,6 +21,8 @@ import { CompleteSaleButtons } from './CompleteSaleButtons';
 import { FeatureToggleButton } from './FeatureToggleButton';
 import { SponsoredAdminToggle } from './SponsoredAdminToggle';
 import { QualityFlagAdminPanel } from './QualityFlagAdminPanel';
+import { RunningShoeReviewPanel } from '@/components/listings/RunningShoeReviewPanel';
+import type { RunningShoeReview } from '@/lib/runningShoeReviews';
 import { AdminCheckedListingButton } from './AdminCheckedListingButton';
 import { OwnerMoreActions } from './OwnerMoreActions';
 import { BuyButton } from '@/components/purchases/BuyButton';
@@ -304,6 +306,7 @@ async function getListingDiscovery(shoe: Shoe, viewerProfile?: PersonalizationPr
       .eq('listed_in_main_feed', true)
       .eq('brand', shoe.brand)
       .neq('id', shoe.id)
+      .order('running_relevance_flagged', { ascending: true })
       .order('freshness_at', { ascending: false })
       .order('id')
       .limit(18),
@@ -314,6 +317,7 @@ async function getListingDiscovery(shoe: Shoe, viewerProfile?: PersonalizationPr
       .eq('has_stock', true)
       .eq('listed_in_main_feed', true)
       .neq('id', shoe.id)
+      .order('running_relevance_flagged', { ascending: true })
       .order('freshness_at', { ascending: false })
       .order('id')
       .limit(36),
@@ -324,6 +328,7 @@ async function getListingDiscovery(shoe: Shoe, viewerProfile?: PersonalizationPr
       .eq('has_stock', true)
       .eq('seller_id', shoe.seller_id)
       .neq('id', shoe.id)
+      .order('running_relevance_flagged', { ascending: true })
       .order('freshness_at', { ascending: false })
       .order('id')
       .limit(4),
@@ -337,6 +342,8 @@ async function getListingDiscovery(shoe: Shoe, viewerProfile?: PersonalizationPr
   ], shoe.id)
     .filter((listing) => !sellerListingIds.has(listing.id))
     .sort((a, b) => {
+      const priorityDiff = Number(!!a.running_relevance_flagged) - Number(!!b.running_relevance_flagged);
+      if (priorityDiff !== 0) return priorityDiff;
       const scoreDiff = scoreSimilarListing(shoe, b, viewerProfile) - scoreSimilarListing(shoe, a, viewerProfile);
       if (scoreDiff !== 0) return scoreDiff;
       return compareListingFreshness(a, b);
@@ -404,6 +411,9 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const isAdmin = currentProfile?.is_admin ?? false;
   const isVerified = currentProfile?.is_verified ?? false;
   const isOwner = currentProfileId === shoe.seller_id;
+  const runningReview = isOwner || isAdmin
+    ? (await createClient().from('listing_running_reviews').select('listing_id,status,reason,appeal_note,appealed_at,review_note,reviewed_at').eq('listing_id', shoe.id).maybeSingle()).data as RunningShoeReview | null
+    : null;
   const canSeeQualityFlag = !!shoe.quality_flagged_at && !!currentProfileId && (isOwner || isAdmin === true);
   const seller = shoe.profiles;
   const sellerLocation = formatProfileLocation(seller);
@@ -690,7 +700,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
 
   const renderOwnerCtas = (className = '', autoOpenPromotion = true) => (
     <div className={cn('space-y-2', className)}>
-      {shoe.status === 'active' && slotInfo && (
+      {shoe.status === 'active' && !shoe.running_relevance_flagged && slotInfo && (
         <PromoteListingButton
           listingId={shoe.id}
           listingName={listingName}
@@ -949,6 +959,8 @@ export default async function ListingDetailPage({ params, searchParams }: { para
               />
             </div>
           )}
+
+          {(isAdmin || (isOwner && runningReview && runningReview.status !== 'approved')) && <div className="mt-4"><RunningShoeReviewPanel listingId={shoe.id} review={runningReview} isAdmin={isAdmin} /></div>}
 
           {(isOwner || isAdmin) && (
             <div className="mt-4">

@@ -128,6 +128,7 @@ export interface Shoe {
   quality_flagged_by: string | null;
   quality_flag_reasons: string[];
   quality_flag_note: string | null;
+  running_relevance_flagged?: boolean;
   shop_id: string | null;
   quantity: number;
   listed_in_main_feed: boolean;

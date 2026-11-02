@@ -49,8 +49,8 @@ export default function PromoteListingPage() {
       <section>
         <h2 className="text-xl font-semibold text-gray-100">How Featured works</h2>
         <p>
-          Featured is the home-page highlight for one listing at a time. It is designed for sellers
-          who want their running shoes to be the first thing visitors see when they land on Go Pair PH.
+          Featured highlights one listing at a time in the homepage Seller spotlight section,
+          below available shoes.
         </p>
         <ol className="list-decimal list-inside space-y-1.5">
           <li>Open your listing, click <strong>Promote Listing</strong>, then choose <strong>Featured on Home</strong>.</li>

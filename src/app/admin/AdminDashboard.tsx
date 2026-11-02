@@ -42,8 +42,10 @@ interface AdminDashboardProps {
 
 const AdminFeedbackPanel = dynamic(() => import('@/components/feedback/AdminFeedbackPanel').then(module => module.AdminFeedbackPanel));
 const AdminEstimatorPanel = dynamic(() => import('@/components/pricing/AdminEstimatorPanel').then(module => module.AdminEstimatorPanel));
-type Tab = 'buyback' | 'promotions' | 'pending' | 'verified' | 'shops' | 'soldListings' | 'views' | 'leadReports' | 'listingReports' | 'feedback' | 'estimator' | 'emailBlast' | 'settings';
-const ADMIN_TABS: Tab[] = ['buyback', 'promotions', 'pending', 'verified', 'shops', 'soldListings', 'views', 'leadReports', 'listingReports', 'feedback', 'estimator', 'emailBlast', 'settings'];
+const AdminRunningReviews = dynamic(() => import('@/components/listings/AdminRunningReviews').then(module => module.AdminRunningReviews));
+const AdminFunnelPanel = dynamic(() => import('@/components/analytics/AdminFunnelPanel').then(module => module.AdminFunnelPanel));
+type Tab = 'buyback' | 'promotions' | 'pending' | 'verified' | 'shops' | 'soldListings' | 'views' | 'leadReports' | 'listingReports' | 'feedback' | 'estimator' | 'emailBlast' | 'settings' | 'runningReviews' | 'funnel';
+const ADMIN_TABS: Tab[] = ['buyback', 'promotions', 'pending', 'verified', 'shops', 'soldListings', 'views', 'leadReports', 'listingReports', 'feedback', 'estimator', 'emailBlast', 'settings', 'runningReviews', 'funnel'];
 const ACCEPTED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 function formatTabLabel(label: string, count: number): string {
@@ -166,6 +168,8 @@ export function AdminDashboard({
       {/* Tabs */}
       <div className="mb-6 flex gap-1 overflow-x-auto border-b border-gray-800">
         {([
+          { key: 'funnel', label: 'Marketplace funnel' },
+          { key: 'runningReviews', label: 'Running shoe reviews' },
           { key: 'views', label: formatTabLabel('Listing views', todayViewedListingCount) },
           { key: 'buyback', label: formatTabLabel('Buyback', buybackOffers.filter(offer => offer.status === 'pending').length + buybackInventory.filter(item => ['ready_to_assign', 'preparing'].includes(item.status)).length) },
           { key: 'promotions', label: formatTabLabel('Promotions', pendingPromotionReviewCount) },
@@ -193,6 +197,8 @@ export function AdminDashboard({
       </div>
 
       {tab === 'pending' && <PendingList requests={pending} />}
+      {tab === 'runningReviews' && <AdminRunningReviews />}
+      {tab === 'funnel' && <AdminFunnelPanel profiles={profiles.map(profile => ({ id: profile.id, display_name: profile.display_name, is_admin: profile.is_admin }))} />}
       {tab === 'buyback' && <BuybackPanel initialOffers={buybackOffers} initialInventory={buybackInventory} shops={shops.filter(shop => shop.buyback_receiving_enabled)} />}
       {tab === 'promotions' && <><PromotionPaymentsAdmin payments={promotionPayments} /><FeaturedPromotionsPanel initialPromotions={promotions} initialSponsoredPromotions={sponsoredPromotions} profiles={profiles} payments={promotionPayments} /></>}
       {tab === 'verified' && <VerifiedList users={verified} verificationProofs={verifiedProofs} />}

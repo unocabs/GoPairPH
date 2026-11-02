@@ -13,6 +13,7 @@
     "test:messaging:db": "node scripts/test-messaging-database.mjs",
     "test:feedback:db": "node scripts/test-feedback-database.mjs",
     "test:estimator:db": "node scripts/test-estimator-database.mjs",
+    "test:growth:db": "node scripts/test-marketplace-growth-database.mjs",
     "benchmark:estimator": "node --experimental-strip-types scripts/benchmark-estimator.mjs",
     "check:price-guide:seo": "node scripts/check-price-guide-seo.mjs"
   },

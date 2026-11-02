@@ -312,6 +312,11 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
         </div>
       </Link>
 
+      {isOwner && shoe.running_relevance_flagged && (
+        <Link href={getListingPath(shoe)} className="mx-3 mb-3 block rounded-lg border border-amber-300/20 bg-amber-500/[0.04] p-3 text-xs leading-5 text-amber-100">
+          These may not be running shoes, so this listing appears lower in discovery. Open your listing to request an admin review.
+        </Link>
+      )}
       {isOwner && shoe.shop_id && shoe.inventory_mode === 'multi' && shoe.status === 'active' && !shoe.has_stock && (
         <Link
           href={`/listings/${shoe.id}/edit#variants`}

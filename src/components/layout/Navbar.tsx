@@ -35,6 +35,7 @@ async function safeAdminActionCount(label: string, query: PromiseLike<CountRespo
 async function loadAdminPendingActionCount(supabase: SupabaseClient): Promise<number> {
   const now = new Date().toISOString();
   const counts = await Promise.all([
+    safeAdminActionCount('running shoe appeal', supabase.from('listing_running_reviews').select('listing_id', { count: 'exact', head: true }).eq('status', 'appealed')),
     safeAdminActionCount(
       'verification',
       supabase
@@ -190,11 +191,11 @@ export function Navbar() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="hover:opacity-80 transition-opacity">
+          <Link href="/" className="shrink-0 hover:opacity-80 transition-opacity">
             <Logo size="md" />
           </Link>
 
-          <div className="md:hidden">
+          <div className="hidden min-[375px]:block md:hidden">
             <GpCoinPill
               coins={gpCoinBalance}
               signedIn={!!user}

@@ -23,6 +23,7 @@ import {
   type PersonalizationBadges,
 } from '@/lib/personalization';
 import type { Profile, Shoe } from '@/types';
+import { runningShoesFirst } from '@/lib/runningShoeReviews';
 
 export const metadata: Metadata = {
   title: 'Browse Running Shoes',
@@ -146,6 +147,7 @@ async function getListings(searchParams: BrowsePageProps['searchParams'], profil
   });
 
   const { data, error } = await query
+    .order('running_relevance_flagged', { ascending: true })
     .order('freshness_at', { ascending: false })
     .order('id')
     .limit(BROWSE_MAX_VISIBLE);
@@ -182,12 +184,12 @@ async function getListings(searchParams: BrowsePageProps['searchParams'], profil
     }
   });
 
-  return [
+  return runningShoesFirst([
     ...sortListings(sponsoredWithPhoto, sortKey, profile),
     ...sortListings(freshWithPhoto, sortKey, profile, true),
     ...sortListings(regularWithPhoto, sortKey, profile),
     ...sortListings(lowPriority, sortKey, profile),
-  ];
+  ]);
 }
 
 async function getCurrentProfile(): Promise<Profile | null> {
@@ -234,7 +236,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const recommendedShoes = canShowRecommendations
     ? visibleShoes.filter((shoe) => {
         const badges = personalizationBadges[shoe.id];
-        return badges?.matchesSize || badges?.nearYou;
+        return !shoe.running_relevance_flagged && (badges?.matchesSize || badges?.nearYou);
       })
     : [];
   const recommendedIds = new Set(recommendedShoes.map((shoe) => shoe.id));

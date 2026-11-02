@@ -5,13 +5,14 @@ const ROTATION_INTERVAL_MS = 60 * 60 * 1000;
 
 export type HomepageTopPickCandidate = Pick<Shoe,
   'id' | 'status' | 'has_stock' | 'listed_in_main_feed' | 'quality_flagged_at' | 'sponsored_until'
-> & { shoe_images?: Array<{ id: string }> };
+> & { shoe_images?: Array<{ id: string }>; running_relevance_flagged?: boolean };
 
 export function isHomepageTopPick(shoe: HomepageTopPickCandidate, now = Date.now()): boolean {
   return shoe.status === 'active'
     && shoe.has_stock
     && shoe.listed_in_main_feed
     && !shoe.quality_flagged_at
+    && !shoe.running_relevance_flagged
     && (shoe.shoe_images?.length ?? 0) > 0
     && shoe.sponsored_until != null
     && Date.parse(shoe.sponsored_until) > now;
