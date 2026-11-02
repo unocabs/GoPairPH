@@ -4,7 +4,7 @@ import { createPublicClient } from '@/lib/supabase/server';
 // Homepage profiles use a narrow cached select. Fetch just the displayed sellers
 // together so activity stays fresh without invalidating listing/image caches.
 export async function getSellerActivityById(sellerIds: string[]): Promise<Record<string, string | null>> {
-  const ids = [...new Set(sellerIds)];
+  const ids = Array.from(new Set(sellerIds));
   if (ids.length === 0) return {};
   try {
     const { data, error } = await createPublicClient()

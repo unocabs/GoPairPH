@@ -44,12 +44,12 @@ export function SellerActivity({ lastActiveAt, fallback, mutedColor }: {
       className="mt-1.5 flex h-4 min-w-0 items-center gap-1 text-xs leading-4 text-gray-400"
       style={mutedColor ? { color: mutedColor } : undefined}
       title={activity ? `${activity.label} on Go Pair PH. ${fallback}` : fallback}
-      aria-label={activity?.label}
     >
       {activity ? <>
+        <span className="sr-only">{activity.label}</span>
         <span aria-hidden="true" className={`h-1 w-1 shrink-0 rounded-full ${activity.activeNow ? 'bg-emerald-400' : 'bg-gray-500'}`} />
         <span className="truncate" aria-hidden="true">
-          <span className="sm:hidden">Seller · {activity.relative}</span>
+          <span className="sm:hidden">{activity.activeNow ? 'Seller active' : `Seller · ${activity.relative}`}</span>
           <span className="hidden sm:inline">{activity.label}</span>
         </span>
       </> : <span className="truncate">{fallback}</span>}
