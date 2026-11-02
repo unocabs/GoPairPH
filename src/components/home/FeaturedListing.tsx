@@ -98,7 +98,7 @@ export function FeaturedListing({ shoe, rearShoes = [] }: FeaturedListingProps) 
       </div>
 
       {/* MIDDLE: huge brand + model */}
-      <div className="pointer-events-none absolute bottom-[126px] left-4 right-4 sm:bottom-[150px] sm:left-6 sm:right-6 lg:bottom-[174px]">
+      <div className="pointer-events-none absolute bottom-[146px] left-4 right-4 sm:bottom-[150px] sm:left-6 sm:right-6 lg:bottom-[174px]">
         <div className="mb-1 font-mono text-[8px] uppercase tracking-[0.24em] text-teal-300 sm:mb-2 sm:text-[10px] sm:tracking-[0.3em]">
           Featured Listing
         </div>

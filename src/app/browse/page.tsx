@@ -24,6 +24,9 @@ import {
 } from '@/lib/personalization';
 import type { Profile, Shoe } from '@/types';
 import { runningShoesFirst } from '@/lib/runningShoeReviews';
+import { buildBrowseSections } from '@/lib/browseSections';
+import { getBrowseRotation, orderBrowseRotation } from '@/lib/browseRotation';
+import { BrowseLoadMore } from '@/components/listings/BrowseLoadMore';
 
 export const metadata: Metadata = {
   title: 'Browse Running Shoes',
@@ -44,6 +47,7 @@ interface BrowsePageProps {
     q?: string;
     sort?: string;
     limit?: string;
+    rotation?: string;
   };
 }
 
@@ -76,26 +80,23 @@ function parseVisibleLimit(raw: string | undefined): number {
   return Math.min(BROWSE_MAX_VISIBLE, Math.max(BROWSE_BATCH_SIZE, roundedToBatch));
 }
 
-function getLoadMoreHref(searchParams: BrowsePageProps['searchParams'], nextLimit: number): string {
+function getLoadMoreHref(searchParams: BrowsePageProps['searchParams'], nextLimit: number, rotation: string): string {
   const params = new URLSearchParams();
   Object.entries(searchParams).forEach(([key, value]) => {
     if (value && key !== 'limit') params.set(key, value);
   });
   params.set('limit', String(nextLimit));
+  params.set('rotation', rotation);
   return `/browse?${params.toString()}`;
 }
 
-function sortListings(listings: Shoe[], key: SortKey, profile?: Profile | null, fresh = false): Shoe[] {
+function sortListings(listings: Shoe[], key: SortKey, profile: Profile | null | undefined, rotation: string, fresh = false): Shoe[] {
   let arr = [...listings];
   if (key === 'mixed') {
     // New and renewed listings lead for 24 hours, newest freshness action first.
     if (fresh) return sortByPersonalization(arr.sort(compareListingFreshness), profile);
-    // Rotate the other buckets so older listings still surface.
-    for (let i = arr.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return sortByPersonalization(arr, profile);
+    // Keep the rotation stable throughout Load more, including across midnight.
+    return sortByPersonalization(orderBrowseRotation(arr, rotation), profile);
   }
   if (key === 'price_asc') {
     arr = arr.sort((a, b) => (a.price_php ?? Number.POSITIVE_INFINITY) - (b.price_php ?? Number.POSITIVE_INFINITY));
@@ -125,7 +126,7 @@ function getSizeFilter(searchParams: BrowsePageProps['searchParams']): { column:
   };
 }
 
-async function getListings(searchParams: BrowsePageProps['searchParams'], profile?: Profile | null): Promise<Shoe[]> {
+async function getListings(searchParams: BrowsePageProps['searchParams'], profile: Profile | null, rotation: string): Promise<Shoe[]> {
   const supabase = createClient();
   let query = supabase
     .from('shoes')
@@ -185,10 +186,10 @@ async function getListings(searchParams: BrowsePageProps['searchParams'], profil
   });
 
   return runningShoesFirst([
-    ...sortListings(sponsoredWithPhoto, sortKey, profile),
-    ...sortListings(freshWithPhoto, sortKey, profile, true),
-    ...sortListings(regularWithPhoto, sortKey, profile),
-    ...sortListings(lowPriority, sortKey, profile),
+    ...sortListings(sponsoredWithPhoto, sortKey, profile, rotation),
+    ...sortListings(freshWithPhoto, sortKey, profile, rotation, true),
+    ...sortListings(regularWithPhoto, sortKey, profile, rotation),
+    ...sortListings(lowPriority, sortKey, profile, rotation),
   ]);
 }
 
@@ -217,7 +218,8 @@ async function getCurrentProfileRequests(profile: Profile | null, listingIds: st
 
 export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const profile = await getCurrentProfile();
-  const shoes = await getListings(searchParams, profile);
+  const rotation = getBrowseRotation(searchParams.rotation);
+  const shoes = await getListings(searchParams, profile, rotation);
   const visibleLimit = parseVisibleLimit(searchParams.limit);
   const visibleShoes = shoes.slice(0, visibleLimit);
   const userContext = await getCurrentProfileRequests(profile, visibleShoes.map(s => s.id));
@@ -233,16 +235,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
     });
   }
   const canShowRecommendations = personalizationEnabled && hasSizePreference && hasLocationPreference;
-  const recommendedShoes = canShowRecommendations
-    ? visibleShoes.filter((shoe) => {
-        const badges = personalizationBadges[shoe.id];
-        return !shoe.running_relevance_flagged && (badges?.matchesSize || badges?.nearYou);
-      })
-    : [];
-  const recommendedIds = new Set(recommendedShoes.map((shoe) => shoe.id));
-  const discoverShoes = recommendedShoes.length > 0
-    ? visibleShoes.filter((shoe) => !recommendedIds.has(shoe.id))
-    : visibleShoes;
+  const sections = buildBrowseSections(visibleShoes, canShowRecommendations, personalizationBadges);
   const hasMoreListings = visibleShoes.length < shoes.length;
   const nextVisibleLimit = Math.min(visibleLimit + BROWSE_BATCH_SIZE, BROWSE_MAX_VISIBLE, shoes.length);
 
@@ -257,7 +250,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
         </Suspense>
       </PageHeader>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6" data-browse-results style={{ overflowAnchor: 'none' }}>
         {profile && personalizationEnabled && (!hasSizePreference || !hasLocationPreference) && (
           <SurfaceCard className="border-teal-500/20 bg-teal-500/[0.04] p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -304,86 +297,46 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
           </SurfaceCard>
         )}
 
-        {recommendedShoes.length > 0 ? (
-          <>
-            <section>
+        {sections.map(({ kind, shoes: sectionShoes }) => (
+          <section key={kind}>
+            {kind === 'recommended' && (
               <div className="mb-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
                   Matched to your profile
                 </p>
-                <h2 className="mt-1 text-2xl font-bold text-gray-100">
-                  Recommended For You
-                </h2>
+                <h2 className="mt-1 text-2xl font-bold text-gray-100">Recommended For You</h2>
                 <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-400">
-                  Pairs that match your saved size or location.
+                  Shoes that match your saved size or location.
                 </p>
               </div>
-              <ListingGrid
-                shoes={recommendedShoes}
-                currentProfileId={profile?.id}
-                currentProfileIsAdmin={profile?.is_admin}
-                currentProfileFbUsername={profile?.fb_username}
-                myRequestListingIds={userContext.requestListingIds}
-                savedListingIds={userContext.savedListingIds}
-                savedListingCounts={savedListingCounts}
-                offerCounts={offerCounts}
-                personalizationBadges={personalizationBadges}
-                emptyMessage="No recommended pairs match your filters."
-              />
-            </section>
-
-            <section>
+            )}
+            {kind === 'discover' && (
               <div className="mb-4">
-                <h2 className="text-2xl font-bold text-gray-100">
-                  Discover More Running Shoes
-                </h2>
+                <h2 className="text-2xl font-bold text-gray-100">Discover More Running Shoes</h2>
                 <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-400">
-                  More active pairs from the Go Pair PH marketplace.
+                  More active shoes from the Go Pair PH marketplace.
                 </p>
               </div>
-              <ListingGrid
-                shoes={discoverShoes}
-                currentProfileId={profile?.id}
-                currentProfileIsAdmin={profile?.is_admin}
-                currentProfileFbUsername={profile?.fb_username}
-                myRequestListingIds={userContext.requestListingIds}
-                savedListingIds={userContext.savedListingIds}
-                savedListingCounts={savedListingCounts}
-                offerCounts={offerCounts}
-                personalizationBadges={personalizationBadges}
-                emptyMessage="No other pairs match your filters."
-              />
-            </section>
-          </>
-        ) : visibleShoes.length > 0 ? (
-          <ListingGrid
-            shoes={visibleShoes}
-            currentProfileId={profile?.id}
-            currentProfileIsAdmin={profile?.is_admin}
-            currentProfileFbUsername={profile?.fb_username}
-            myRequestListingIds={userContext.requestListingIds}
-            savedListingIds={userContext.savedListingIds}
-            savedListingCounts={savedListingCounts}
-            offerCounts={offerCounts}
-            personalizationBadges={personalizationBadges}
-            emptyMessage="No listings match your filters. Try adjusting them."
-          />
-        ) : null}
+            )}
+            <ListingGrid
+              shoes={sectionShoes}
+              currentProfileId={profile?.id}
+              currentProfileIsAdmin={profile?.is_admin}
+              currentProfileFbUsername={profile?.fb_username}
+              myRequestListingIds={userContext.requestListingIds}
+              savedListingIds={userContext.savedListingIds}
+              savedListingCounts={savedListingCounts}
+              offerCounts={offerCounts}
+              personalizationBadges={personalizationBadges}
+            />
+          </section>
+        ))}
 
-        {hasMoreListings && (
-          <div className="flex flex-col items-center gap-2">
-            <Link
-              href={getLoadMoreHref(searchParams, nextVisibleLimit)}
-              scroll={false}
-              className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-teal-400/30 bg-teal-500/10 px-5 py-2.5 text-sm font-semibold text-teal-100 transition-colors hover:border-teal-300/60 hover:bg-teal-500/15 sm:w-auto"
-            >
-              Load more
-            </Link>
-            <p className="text-xs text-gray-500">
-              Showing {visibleShoes.length} of {shoes.length} pairs
-            </p>
-          </div>
-        )}
+        <BrowseLoadMore
+          href={hasMoreListings ? getLoadMoreHref(searchParams, nextVisibleLimit, rotation) : null}
+          visibleCount={visibleShoes.length}
+          total={shoes.length}
+        />
 
         {/* Looking For CTA — full width below on desktop, last on mobile */}
         {shoes.length > 0 && <section className="w-full">

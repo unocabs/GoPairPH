@@ -16,6 +16,7 @@ function shouldTrackLink(link: HTMLAnchorElement): boolean {
   if (!href || href.startsWith('#')) return false;
   if (link.target && link.target !== '_self') return false;
   if (link.hasAttribute('download')) return false;
+  if (link.hasAttribute('data-inline-navigation')) return false;
 
   const nextUrl = new URL(href, window.location.href);
   if (nextUrl.origin !== window.location.origin) return false;

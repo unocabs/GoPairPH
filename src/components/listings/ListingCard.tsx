@@ -145,7 +145,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
       canSeeQualityFlag
         ? 'border-amber-300/45 hover:border-amber-300/70'
         : isOwner ? 'border-teal-500/60 hover:border-teal-400' : 'border-white/[0.08] hover:border-teal-400/30'
-    )} style={themedCardStyle}>
+    )} style={themedCardStyle} data-browse-listing-id={shoe.id}>
       {/* Clickable area navigates to listing */}
       <Link href={listingPath} className="group flex flex-1 flex-col">
         {/* Image */}
