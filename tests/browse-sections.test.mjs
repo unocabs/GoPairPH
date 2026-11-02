@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildBrowseSections } from '../src/lib/browseSections.ts';
+import { buildBrowseSections, getBrowseRecommendations } from '../src/lib/browseSections.ts';
 
 const shoes = count => Array.from({ length: count }, (_, index) => ({ id: String(index) }));
 const nearYou = rows => Object.fromEntries(rows.map(shoe => [shoe.id, { matchesSize: false, nearYou: true }]));
@@ -51,4 +51,41 @@ test('matching flagged shoes stay in discovery without duplicates or changed ord
   assert.deepEqual(sections.map(section => section.shoes.map(shoe => shoe.id)), [['0', '1'], ['flagged']]);
   assert.deepEqual(visible, before);
   assert.ok(sections.every(section => section.shoes.length > 0));
+});
+
+test('Show more recommendations adds four matches while replenishing Discover More', () => {
+  const inventory = shoes(115);
+  const badges = nearYou(inventory);
+  const initial = buildBrowseSections(inventory, true, badges, { visibleLimit: 24 });
+  const expanded = buildBrowseSections(inventory, true, badges, { recommendationLimit: 8, visibleLimit: 28 });
+  assert.deepEqual(expanded[0].shoes, inventory.slice(0, 8));
+  assert.deepEqual(expanded[0].shoes.slice(0, 4), initial[0].shoes);
+  assert.equal(initial[1].shoes.length, 20);
+  assert.deepEqual(expanded[1].shoes, inventory.slice(8, 28));
+  assert.equal(new Set(expanded.flatMap(section => section.shoes.map(shoe => shoe.id))).size, 28);
+
+  const moreDiscovery = buildBrowseSections(inventory, true, badges, { recommendationLimit: 8, visibleLimit: 52 });
+  assert.deepEqual(moreDiscovery[0], expanded[0], 'discovery pagination keeps the expanded recommendation limit');
+  assert.deepEqual(moreDiscovery[1].shoes.slice(0, 20), expanded[1].shoes);
+});
+
+test('recommendations can load matches beyond the initial discovery batch and exclude flagged shoes', () => {
+  const inventory = [...shoes(40), { id: 'flagged', running_relevance_flagged: true }];
+  const badges = nearYou([...inventory.slice(30), inventory[0]]);
+  assert.equal(getBrowseRecommendations(inventory, badges).length, 11);
+  const sections = buildBrowseSections(inventory, true, badges, { recommendationLimit: 8, visibleLimit: 28 });
+  assert.deepEqual(sections[0].shoes.map(shoe => shoe.id), ['0', '30', '31', '32', '33', '34', '35', '36']);
+  assert.equal(sections[1].shoes.length, 20);
+  assert.equal(new Set(sections.flatMap(section => section.shoes.map(shoe => shoe.id))).size, 28);
+});
+
+test('a final partial recommendation batch preserves all remaining discovery shoes', () => {
+  const inventory = shoes(30);
+  const badges = nearYou(inventory.slice(0, 6));
+  const sections = buildBrowseSections(inventory, true, badges, { recommendationLimit: 6, visibleLimit: 26 });
+  assert.equal(sections[0].shoes.length, 6);
+  assert.deepEqual(sections[1].shoes, inventory.slice(6, 26));
+  assert.deepEqual(buildBrowseSections(inventory, false, badges, { visibleLimit: 24 }), [
+    { kind: 'all', shoes: inventory.slice(0, 24) },
+  ]);
 });

@@ -5,7 +5,13 @@ import { useEffect, useLayoutEffect, useRef, useTransition } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { captureBrowsePosition, restoreBrowsePosition, type BrowsePosition } from '@/lib/browseScroll';
 
-export function BrowseLoadMore({ href, visibleCount, total }: { href: string | null; visibleCount: number; total: number }) {
+export function BrowseLoadMore({ href, visibleCount, total, label = 'Load more', countLabel = 'shoes' }: {
+  href: string | null;
+  visibleCount: number;
+  total: number;
+  label?: string;
+  countLabel?: string;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const search = useSearchParams().toString();
@@ -57,10 +63,10 @@ export function BrowseLoadMore({ href, visibleCount, total }: { href: string | n
         }}
         className={`inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-teal-400/30 bg-teal-500/10 px-5 py-2.5 text-sm font-semibold text-teal-100 transition-colors hover:border-teal-300/60 hover:bg-teal-500/15 sm:w-auto ${pending ? 'cursor-wait opacity-70' : ''}`}
       >
-        {pending ? 'Loading…' : 'Load more'}
+        {pending ? 'Loading…' : label}
       </Link>}
       <p className="text-xs text-gray-500" role="status" aria-live="polite">
-        Showing {visibleCount} of {total} shoes
+        Showing {visibleCount} of {total} {countLabel}
       </p>
     </div>
   );

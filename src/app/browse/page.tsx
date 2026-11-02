@@ -24,7 +24,7 @@ import {
 } from '@/lib/personalization';
 import type { Profile, Shoe } from '@/types';
 import { runningShoesFirst } from '@/lib/runningShoeReviews';
-import { buildBrowseSections } from '@/lib/browseSections';
+import { buildBrowseSections, getBrowseRecommendations, RECOMMENDATION_BATCH_SIZE } from '@/lib/browseSections';
 import { getBrowseRotation, orderBrowseRotation } from '@/lib/browseRotation';
 import { BrowseLoadMore } from '@/components/listings/BrowseLoadMore';
 
@@ -48,6 +48,7 @@ interface BrowsePageProps {
     sort?: string;
     limit?: string;
     rotation?: string;
+    recommended_limit?: string;
   };
 }
 
@@ -80,13 +81,21 @@ function parseVisibleLimit(raw: string | undefined): number {
   return Math.min(BROWSE_MAX_VISIBLE, Math.max(BROWSE_BATCH_SIZE, roundedToBatch));
 }
 
-function getLoadMoreHref(searchParams: BrowsePageProps['searchParams'], nextLimit: number, rotation: string): string {
+function parseRecommendedLimit(raw: string | undefined): number {
+  const value = Number.parseInt(raw ?? '', 10);
+  if (!Number.isFinite(value)) return RECOMMENDATION_BATCH_SIZE;
+  return Math.min(BROWSE_MAX_VISIBLE, Math.max(RECOMMENDATION_BATCH_SIZE,
+    Math.ceil(value / RECOMMENDATION_BATCH_SIZE) * RECOMMENDATION_BATCH_SIZE));
+}
+
+function getLoadMoreHref(searchParams: BrowsePageProps['searchParams'], nextLimit: number, rotation: string, recommendedLimit?: number): string {
   const params = new URLSearchParams();
   Object.entries(searchParams).forEach(([key, value]) => {
     if (value && key !== 'limit') params.set(key, value);
   });
   params.set('limit', String(nextLimit));
   params.set('rotation', rotation);
+  if (recommendedLimit !== undefined) params.set('recommended_limit', String(recommendedLimit));
   return `/browse?${params.toString()}`;
 }
 
@@ -221,21 +230,29 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const rotation = getBrowseRotation(searchParams.rotation);
   const shoes = await getListings(searchParams, profile, rotation);
   const visibleLimit = parseVisibleLimit(searchParams.limit);
-  const visibleShoes = shoes.slice(0, visibleLimit);
-  const userContext = await getCurrentProfileRequests(profile, visibleShoes.map(s => s.id));
-  const offerCounts = await getOfferCounts(visibleShoes.map(s => s.id));
-  const savedListingCounts = await getSavedListingCounts(visibleShoes.map(s => s.id));
   const personalizationEnabled = !!profile?.personalized_browse_enabled;
   const hasSizePreference = hasPreferredSize(profile);
   const hasLocationPreference = hasPreferredLocation(profile);
   const personalizationBadges: Record<string, PersonalizationBadges> = {};
   if (personalizationEnabled && (hasSizePreference || hasLocationPreference)) {
-    visibleShoes.forEach((shoe) => {
+    shoes.forEach((shoe) => {
       personalizationBadges[shoe.id] = getPersonalizationBadges(profile, shoe);
     });
   }
   const canShowRecommendations = personalizationEnabled && hasSizePreference && hasLocationPreference;
-  const sections = buildBrowseSections(visibleShoes, canShowRecommendations, personalizationBadges);
+  const totalRecommendations = canShowRecommendations ? getBrowseRecommendations(shoes, personalizationBadges).length : 0;
+  const recommendedLimit = Math.min(parseRecommendedLimit(searchParams.recommended_limit), Math.max(RECOMMENDATION_BATCH_SIZE, totalRecommendations));
+  // Expanding recommendations adds its own budget so discovery stays populated.
+  const expandedVisibleLimit = Math.min(BROWSE_MAX_VISIBLE,
+    visibleLimit + (canShowRecommendations ? recommendedLimit - RECOMMENDATION_BATCH_SIZE : 0));
+  const sections = buildBrowseSections(shoes, canShowRecommendations, personalizationBadges, {
+    recommendationLimit: recommendedLimit,
+    visibleLimit: expandedVisibleLimit,
+  });
+  const visibleShoes = sections.flatMap(section => section.shoes);
+  const userContext = await getCurrentProfileRequests(profile, visibleShoes.map(s => s.id));
+  const offerCounts = await getOfferCounts(visibleShoes.map(s => s.id));
+  const savedListingCounts = await getSavedListingCounts(visibleShoes.map(s => s.id));
   const hasMoreListings = visibleShoes.length < shoes.length;
   const nextVisibleLimit = Math.min(visibleLimit + BROWSE_BATCH_SIZE, BROWSE_MAX_VISIBLE, shoes.length);
 
@@ -329,6 +346,19 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
               offerCounts={offerCounts}
               personalizationBadges={personalizationBadges}
             />
+            {kind === 'recommended' && (
+              <div className="mt-5">
+                <BrowseLoadMore
+                  href={sectionShoes.length < totalRecommendations
+                    ? getLoadMoreHref(searchParams, visibleLimit, rotation, Math.min(recommendedLimit + RECOMMENDATION_BATCH_SIZE, totalRecommendations))
+                    : null}
+                  visibleCount={sectionShoes.length}
+                  total={totalRecommendations}
+                  label="Show more recommendations"
+                  countLabel="recommended shoes"
+                />
+              </div>
+            )}
           </section>
         ))}
 
