@@ -13,7 +13,7 @@ export function RunningShoeReviewPanel({ listingId, review, isAdmin = false, onR
   const [error, setError] = useState('');
   const [sent, setSent] = useState(false);
   useEffect(() => { setSent(false); }, [review?.status, review?.reviewed_at]);
-  if (!isAdmin && (!review || review.status === 'approved')) return null;
+  if (!review || review.status === 'approved') return null;
 
   async function submit(action: 'appeal' | 'flag' | 'approve' | 'keep_flagged') {
     setBusy(true); setError('');
@@ -28,13 +28,12 @@ export function RunningShoeReviewPanel({ listingId, review, isAdmin = false, onR
     finally { setBusy(false); }
   }
   const pending = review?.status === 'appealed' || sent;
-  const flagged = review && review.status !== 'approved';
   return (
     <section className="rounded-xl border border-amber-300/20 bg-amber-500/[0.04] p-4 text-sm" aria-label="Private running shoe review">
       <p className="text-xs text-gray-400">{isAdmin ? 'Private admin review' : 'Only you and admins can see this notice'}</p>
-      <h2 className="mt-1 font-semibold text-gray-100">{flagged ? 'These may not be running shoes' : review?.status === 'approved' ? 'Approved as running shoes' : 'Running shoe relevance'}</h2>
-      {flagged && <p className="mt-2 leading-6 text-gray-300">This listing stays available, but appears after other shoes in marketplace discovery. If these are running shoes, request a review to restore normal placement. New promotions are available after approval.</p>}
-      {review?.reason && flagged && <p className="mt-2 text-xs leading-5 text-gray-400">{review.reason}</p>}
+      <h2 className="mt-1 font-semibold text-gray-100">These may not be running shoes</h2>
+      <p className="mt-2 leading-6 text-gray-300">This listing stays available, but appears after other shoes in marketplace discovery. If these are running shoes, request a review to restore normal placement. New promotions are available after approval.</p>
+      {review.reason && <p className="mt-2 text-xs leading-5 text-gray-400">{review.reason}</p>}
       {review?.review_note && <p className="mt-2 whitespace-pre-wrap break-words text-gray-300">Admin note: {review.review_note}</p>}
       {pending && <p role="status" className="mt-3 font-medium text-amber-200">{isAdmin ? 'The owner requested a review. Placement stays lower until you approve.' : 'Appeal submitted. An admin will review your shoes. Placement stays lower until approved.'}</p>}
       {isAdmin && review?.appeal_note && <p className="mt-3 whitespace-pre-wrap break-words text-gray-200">Owner’s appeal: {review.appeal_note}</p>}
@@ -47,8 +46,8 @@ export function RunningShoeReviewPanel({ listingId, review, isAdmin = false, onR
         </label>
         <div className="mt-3 flex flex-wrap gap-2">
           {isAdmin ? <>
-            {review?.status !== 'approved' && <button disabled={busy} onClick={() => submit('approve')} className="min-h-11 rounded-lg bg-teal-500 px-4 font-semibold text-gray-950 disabled:opacity-50">Approve as running shoes</button>}
-            <button disabled={busy || note.trim().length < 5} onClick={() => submit(review?.status === 'appealed' ? 'keep_flagged' : 'flag')} className="min-h-11 rounded-lg border border-gray-600 px-4 text-gray-200 disabled:opacity-50">{flagged ? 'Keep lower priority' : 'Flag for lower priority'}</button>
+            <button disabled={busy} onClick={() => submit('approve')} className="min-h-11 rounded-lg bg-teal-500 px-4 font-semibold text-gray-950 disabled:opacity-50">Approve as running shoes</button>
+            <button disabled={busy || note.trim().length < 5} onClick={() => submit(review.status === 'appealed' ? 'keep_flagged' : 'flag')} className="min-h-11 rounded-lg border border-gray-600 px-4 text-gray-200 disabled:opacity-50">Keep lower priority</button>
           </> : <button disabled={busy || note.trim().length < 20} onClick={() => submit('appeal')} className="min-h-11 rounded-lg border border-teal-500/50 px-4 font-semibold text-teal-200 disabled:opacity-50">{busy ? 'Submitting…' : 'Request admin review'}</button>}
         </div>
       </>}

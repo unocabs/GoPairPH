@@ -21,6 +21,7 @@ import { CompleteSaleButtons } from './CompleteSaleButtons';
 import { FeatureToggleButton } from './FeatureToggleButton';
 import { SponsoredAdminToggle } from './SponsoredAdminToggle';
 import { QualityFlagAdminPanel } from './QualityFlagAdminPanel';
+import { RunningShoeFlagAdminControl } from './RunningShoeFlagAdminControl';
 import { RunningShoeReviewPanel } from '@/components/listings/RunningShoeReviewPanel';
 import type { RunningShoeReview } from '@/lib/runningShoeReviews';
 import { AdminCheckedListingButton } from './AdminCheckedListingButton';
@@ -411,7 +412,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
   const isAdmin = currentProfile?.is_admin ?? false;
   const isVerified = currentProfile?.is_verified ?? false;
   const isOwner = currentProfileId === shoe.seller_id;
-  const runningReview = isOwner || isAdmin
+  const runningReview = shoe.running_relevance_flagged && (isOwner || isAdmin)
     ? (await createClient().from('listing_running_reviews').select('listing_id,status,reason,appeal_note,appealed_at,review_note,reviewed_at').eq('listing_id', shoe.id).maybeSingle()).data as RunningShoeReview | null
     : null;
   const canSeeQualityFlag = !!shoe.quality_flagged_at && !!currentProfileId && (isOwner || isAdmin === true);
@@ -960,7 +961,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             </div>
           )}
 
-          {(isAdmin || (isOwner && runningReview && runningReview.status !== 'approved')) && <div className="mt-4"><RunningShoeReviewPanel listingId={shoe.id} review={runningReview} isAdmin={isAdmin} /></div>}
+          {runningReview && runningReview.status !== 'approved' && <div className="mt-4"><RunningShoeReviewPanel listingId={shoe.id} review={runningReview} isAdmin={isAdmin} /></div>}
 
           {(isOwner || isAdmin) && (
             <div className="mt-4">
@@ -1265,6 +1266,11 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                   note={shoe.quality_flag_note}
                 />
               </div>
+              {!shoe.running_relevance_flagged && (
+                <div className="border-t border-gray-800 pt-4">
+                  <RunningShoeFlagAdminControl listingId={shoe.id} />
+                </div>
+              )}
             </div>
           )}
         </SurfaceCard>
