@@ -29,6 +29,9 @@ import {
 } from '@/lib/personalization';
 import type { Profile, Shoe } from '@/types';
 import { runningShoesFirst } from '@/lib/runningShoeReviews';
+import { getFlashDeals } from '@/lib/flashDealsServer';
+import { FlashDealsSection } from '@/components/home/FlashDealsSection';
+import { getSellerActivityById } from '@/lib/sellerActivityServer';
 
 const HOME_TITLE = 'Go Pair PH — Buy and Sell Running Shoes';
 const HOME_DESCRIPTION = 'Buy and sell running shoes in one focused place. Sellers can create one clean Go Pair PH listing, then share it to Facebook, Messenger, Marketplace, and running groups.';
@@ -450,7 +453,7 @@ const getHomepageSiteSettings = unstable_cache(async function getHomepageSiteSet
 }, ['homepage-site-settings'], { revalidate: 300 });
 
 export default async function HomePage() {
-  const [profile, homepageShoes, recentlySoldShoes, featured, activity, siteSettings, topPickCandidates] = await Promise.all([
+  const [profile, homepageShoes, recentlySoldShoes, featured, activity, siteSettings, topPickCandidates, flashDeals] = await Promise.all([
     getCurrentProfile(),
     getHomepageListings(),
     getRecentlySoldListings(),
@@ -458,16 +461,19 @@ export default async function HomePage() {
     getMarketplaceActivity(),
     getHomepageSiteSettings(),
     getHomepageTopPickCandidates(),
+    getFlashDeals(),
   ]);
   const topPickIds = selectHomepageTopPicks(topPickCandidates, featured?.id ?? null).map(shoe => shoe.id);
   const topPickListings = await getHomepageTopPickListings(topPickIds);
   // Recheck expiry after the cache read so a cached promotion cannot outlive its window.
   const topPickShoes = topPickListings.filter(shoe => isHomepageTopPick(shoe));
   const spotlightIds = new Set(topPickShoes.map(shoe => shoe.id));
+  flashDeals.slice(0,2).forEach(shoe => spotlightIds.add(shoe.id));
   if (featured) spotlightIds.add(featured.id);
   // Keep this guard in addition to the database filters so stale or unexpected
   // cached data can never put a quality-flagged listing into homepage discovery.
-  const homepageVisibleShoes = homepageShoes.filter(shoe => !shoe.quality_flagged_at && !spotlightIds.has(shoe.id));
+  const flashById = new Map(flashDeals.map(shoe => [shoe.id,shoe]));
+  const homepageVisibleShoes = homepageShoes.map(shoe => flashById.get(shoe.id) ?? shoe).filter(shoe => !shoe.quality_flagged_at && !spotlightIds.has(shoe.id));
   const recommendedShoes = getRecommendedListings(profile, homepageVisibleShoes).slice(0, 4);
   const recommendedIds = new Set(recommendedShoes.map((shoe) => shoe.id));
   const recentShoes = homepageVisibleShoes.filter((shoe) => !recommendedIds.has(shoe.id)).slice(0, 4);
@@ -475,9 +481,10 @@ export default async function HomePage() {
   const rearHeroListings = getDailyRearListings(homepageVisibleShoes.filter(shoe => !organicIds.has(shoe.id)), featured?.id ?? null);
   const displayedShoes = [...topPickShoes, ...recommendedShoes, ...recentShoes];
   const displayedListingIds = displayedShoes.map((shoe) => shoe.id);
-  const [savedListingCounts, savedListingIds] = await Promise.all([
+  const [savedListingCounts, savedListingIds, sellerActivityById] = await Promise.all([
     getSavedListingCounts(displayedListingIds),
     profile ? getSavedListingIds(profile.id, displayedListingIds) : Promise.resolve(new Set<string>()),
+    getSellerActivityById(displayedShoes.map(shoe => shoe.seller_id)),
   ]);
   const personalizationBadges: Record<string, PersonalizationBadges> = {};
   displayedShoes.forEach((shoe) => {
@@ -608,6 +615,7 @@ export default async function HomePage() {
           </div>
           <HomeListingGrid
             shoes={topPickShoes}
+            sellerActivityById={sellerActivityById}
             currentProfileId={profile?.id}
             savedListingIds={savedListingIds}
             savedListingCounts={savedListingCounts}
@@ -617,6 +625,8 @@ export default async function HomePage() {
           />
         </section>
       )}
+
+      <FlashDealsSection shoes={flashDeals} currentProfileId={profile?.id} />
 
       {recommendedShoes.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
@@ -633,6 +643,7 @@ export default async function HomePage() {
           </div>
           <HomeListingGrid
             shoes={recommendedShoes}
+            sellerActivityById={sellerActivityById}
             currentProfileId={profile?.id}
             savedListingIds={savedListingIds}
             savedListingCounts={savedListingCounts}
@@ -648,6 +659,7 @@ export default async function HomePage() {
         </div>
         <HomeListingGrid
           shoes={recentShoes}
+          sellerActivityById={sellerActivityById}
           currentProfileId={profile?.id}
           savedListingIds={savedListingIds}
           savedListingCounts={savedListingCounts}

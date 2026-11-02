@@ -10,6 +10,7 @@
     "lint": "next lint",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "test:payments:db": "node scripts/test-payment-database.mjs",
+    "test:flash-deals:db": "node scripts/test-flash-deals-database.mjs",
     "test:messaging:db": "node scripts/test-messaging-database.mjs",
     "test:feedback:db": "node scripts/test-feedback-database.mjs",
     "test:estimator:db": "node scripts/test-estimator-database.mjs",

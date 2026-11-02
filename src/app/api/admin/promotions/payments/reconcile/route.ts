@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { paymentUser, reconcilePayment } from '@/lib/payments/server';
 import { sendPromotionPaymentEmail } from '@/lib/payments/notifications';
 import type { PromotionPayment } from '@/lib/payments/types';
+import { reconcileCoinPurchase, type CoinPurchase } from '@/lib/payments/coinPurchases';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
@@ -40,7 +41,18 @@ async function run(request: Request) {
       await sendPromotionPaymentEmail(row.id).catch(() => console.warn('[payments] email retry pending', row.id));
     }
   }
-  return NextResponse.json({ checked });
+  let coinsChecked = 0;
+  if (Date.now() - started < 40_000) {
+    const { data: coinPurchases, error: coinError } = await service.from('gp_coin_purchases').select('*').eq('livemode',live)
+      .in('status',['creating','pending','review','paid']).order('last_checked_at',{nullsFirst:true}).order('created_at').limit(2);
+    if (coinError) return NextResponse.json({ error: 'Could not load coin purchases for verification.' }, { status: 500 });
+    for (const purchase of (coinPurchases ?? []) as CoinPurchase[]) {
+      if (Date.now() - started > 42_000) break;
+      await reconcileCoinPurchase(purchase).then(() => { coinsChecked++; }).catch(() => console.warn('[coins] reconciliation pending',purchase.id));
+      await service.from('gp_coin_purchases').update({last_checked_at:new Date().toISOString()}).eq('id',purchase.id);
+    }
+  }
+  return NextResponse.json({ checked, coinsChecked });
 }
 export const GET = run;
 export const POST = run;

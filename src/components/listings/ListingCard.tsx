@@ -29,6 +29,9 @@ import { buildMessengerUrl, getFacebookContactUrl } from '@/lib/facebook';
 import type { PersonalizationBadges } from '@/lib/personalization';
 import { trackMarketplaceAction } from '@/lib/analytics';
 import { getGreatDealEstimate } from '@/lib/pricing/greatDeal';
+import { FlashDealBadge, FlashDealPrice, useFlashDealClock } from './FlashDealPrice';
+import { isFlashDealLive, withFlashDealPrice } from '@/lib/flashDeals';
+import { SellerActivity } from './SellerActivity';
 
 const NEW_PILL_WINDOW_MS = 24 * 60 * 60 * 1000;
 const SharePostModal = dynamic(
@@ -53,6 +56,9 @@ interface ListingCardProps {
 }
 
 export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = false, currentProfileFbUsername, hasExistingRequest = false, offerCount = 0, viewSummary, personalizationBadges, isSaved = false, saveCount = 0, onSavedChange, theme }: ListingCardProps) {
+  const flashNow = useFlashDealClock(shoe.flash_deal_ends_at);
+  shoe = withFlashDealPrice(shoe, flashNow);
+  const flashLive = isFlashDealLive(shoe, flashNow);
   const [buyOpen, setBuyOpen] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [sharePostOpen, setSharePostOpen] = useState(false);
@@ -175,6 +181,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
             <ShopLogoOverlay shop={shoe.shops} size="sm" asDiv />
           )}
           <div className={`absolute ${shoe.shops?.logo_storage_path ? 'top-2 left-12' : 'top-2 left-2'} flex flex-col items-start gap-1`}>
+            {flashLive && <FlashDealBadge endsAt={shoe.flash_deal_ends_at!} />}
             {shoe.listing_type === 'donate' && <ListingTypeBadge type={shoe.listing_type} />}
             {canSeeQualityFlag && <FlaggedPill size="sm" />}
             {isSponsored && <SponsoredPill size="sm" />}
@@ -256,8 +263,8 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
           {shoe.listing_type === 'for_sale' && shoe.price_php && (
             <div className="mt-2 flex items-baseline justify-between gap-2">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <p className="font-bold text-teal-400 shrink-0" style={themedAccentStyle}>{formatPrice(shoe.price_php)}</p>
-                {showSrp && (
+                {shoe.flash_deal_id ? <FlashDealPrice shoe={shoe} /> : <p className="font-bold text-teal-400 shrink-0" style={themedAccentStyle}>{formatPrice(shoe.price_php)}</p>}
+                {showSrp && !flashLive && (
                   <div className="flex items-center gap-1.5">
                     <p className="text-[11px] font-medium text-gray-600 line-through" style={themedMutedStyle}>
                       {formatPrice(shoe.srp_php)}
@@ -299,7 +306,11 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
             </div>
           )}
 
-          <p className="mt-1.5 text-xs text-gray-600" style={themedMutedStyle}>{formatListingFreshness(shoe)}</p>
+          <SellerActivity
+            lastActiveAt={!isOwner && shoe.status === 'active' ? shoe.profiles?.last_active_at : null}
+            fallback={formatListingFreshness(shoe)}
+            mutedColor={theme?.mutedText}
+          />
 
           {isOwner && shoe.status === 'active' && viewSummary && viewSummary.total > 0 && (
             <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-slate-800/70 border border-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-gray-300" title="Only you can see this">
@@ -389,6 +400,7 @@ export function ListingCard({ shoe, currentProfileId, currentProfileIsAdmin = fa
 
       {/* Action buttons — outside Link to avoid nested interactive elements */}
       <div className="mt-auto space-y-2 px-3.5 pb-3.5">
+        {isOwner && shoe.status === 'active' && shoe.listing_type === 'for_sale' && <Link href={`/flash-deals/new?listing=${shoe.id}`} className="flex min-h-11 w-full items-center justify-center rounded-lg border border-amber-200/25 bg-amber-200/[0.04] px-2 py-2 text-center text-xs font-bold text-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">{flashLive ? '⚡ Manage flash deal' : '⚡ Start flash deal · 20 GP'}</Link>}
         {isOwner ? (
           shoe.status !== 'active' ? (
             <div className="rounded-lg border border-white/[0.08] bg-slate-950/55 px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">

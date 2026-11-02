@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <InfoPage title="Terms of Service" lastUpdated="October 2026">
+    <InfoPage title="Terms of Service" lastUpdated="November 2026">
       <section>
         <h2 className="text-xl font-semibold text-gray-100">1. Acceptance of terms</h2>
         <p>
@@ -116,7 +116,7 @@ export default function TermsPage() {
           still lower the priority of promoted listings that lack clear photos, appear
           misleading, have no images, violate rules, or create trust concerns.
           GoPair Coins are promotional credits that may be applied to eligible Featured
-          placements; they are not cash, withdrawable, or transferable.
+          placements and Flash Deals; they are not cash, withdrawable, or transferable.
         </p>
         <p>
           Promotion fees are paid through PayMongo checkout using QR Ph or another enabled payment method. Placements activate or enter the Featured queue only after verified payment.
@@ -127,6 +127,13 @@ export default function TermsPage() {
           Payment refunds are recorded after PayMongo confirms them; review status alone does not mean funds were returned.
           See the{' '}<Link href="/help/promote-listing" className="text-teal-400 hover:text-teal-300">promotion policy</Link>{' '}for details.
         </p>
+      </section>
+
+      <section id="gp-coins" className="scroll-mt-24">
+        <h2 className="text-xl font-semibold text-gray-100">GP Coin purchases and Flash Deals</h2>
+        <p>Verified accounts can buy 40 GP Coins for ₱20, 100 GP Coins for ₱50, or 200 GP Coins for ₱100 through PayMongo. Coins are credited only after verified payment. Bought coins have no scheduled expiry; earned rewards expire after 6 months. Coins are promotional credits for this account, cannot buy shoes, and cannot be transferred or withdrawn. There are no subscriptions or automatic top-ups.</p>
+        <p>A Flash Deal costs 20 GP Coins and runs for up to 24 hours. The seller funds a genuine discount of at least 10% from the lowest recorded asking price in the last 7 days. Homepage display rotates; continuous display, buyer inquiries, and sales are not guaranteed. Each account can run one live deal and each listing can join once every 7 days. Changing the price, closing the listing, or making the shoes unavailable ends the deal. Fees are not returned for early cancellation or a quick sale. Failed activation does not spend coins.</p>
+        <p>Contact support with your reference for a duplicate, accidental, or disputed coin payment or an undelivered promotion. Refund requests are reviewed and confirmed through PayMongo. Refunded credits are removed and a wallet may be paused if those credits were used or reserved. These rules do not limit applicable consumer rights. <Link href="/help/flash-deals" className="text-teal-300 underline">Read the complete Flash Deal and coin rules.</Link></p>
       </section>
 
       <section id="estimator" className="scroll-mt-24">

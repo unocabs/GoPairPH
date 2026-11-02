@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { type User, type AuthChangeEvent, type Session } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
+import { SellerActivityHeartbeat } from './SellerActivityHeartbeat';
 
 interface ProfileFlags {
   id: string;
@@ -65,6 +66,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <SessionContext.Provider value={{ user, profile, loading }}>
+      <SellerActivityHeartbeat userId={profile ? user?.id : undefined} />
       {children}
     </SessionContext.Provider>
   );

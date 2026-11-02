@@ -37,6 +37,12 @@ export default function PromoteListingPage() {
       </section>
 
       <section>
+        <h2 className="text-xl font-semibold text-gray-100">Flash Deals: promote a real price drop</h2>
+        <p>Offer at least 10% below your lowest asking price from the last 7 days. For 20 GP Coins (₱10 value), your shoes join the Flash Deals homepage rotation for 24 hours. You fund the discount. Regular price edits are always free.</p>
+        <p><Link href="/flash-deals/new" className="font-semibold text-teal-300 underline">Start a flash deal</Link> · <Link href="/help/flash-deals" className="text-teal-300 underline">How Flash Deals and coin purchases work</Link></p>
+      </section>
+
+      <section>
         <h2 className="text-xl font-semibold text-gray-100">Who can request a promotion?</h2>
         <p>
           Featured and Top Pick are open to <Link href="/help/verification" className="text-teal-400 hover:text-teal-300">verified users</Link>,

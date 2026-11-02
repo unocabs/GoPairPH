@@ -32,6 +32,7 @@ async function getOwnProfileData() {
       .eq('profile_id', profile.id)
       .gt('remaining_amount', 0)
       .gt('expires_at', new Date().toISOString())
+      .neq('expires_at', 'infinity')
       .order('expires_at', { ascending: true })
       .limit(1),
   ]);

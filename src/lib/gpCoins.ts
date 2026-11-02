@@ -17,6 +17,9 @@ export function formatGpCoins(coins: number): string {
 
 export function getGpCoinTransactionLabel(transaction: Pick<GpCoinTransaction, 'transaction_type' | 'metadata'>): string {
   const action = typeof transaction.metadata?.action === 'string' ? transaction.metadata.action : null;
+  if (action === 'coin_purchase') return 'Purchased GP Coins';
+  if (action === 'coin_purchase_refund') return 'Refunded coin purchase';
+  if (action === 'flash_deal') return '24-hour Flash Deal';
   if (action === 'listing_publish') return 'Published a listing';
   if (action === 'listing_renewal') return 'Renewed a listing';
   if (action === 'caption_copy') return 'Copied FB caption';

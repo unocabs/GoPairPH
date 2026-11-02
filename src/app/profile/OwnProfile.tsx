@@ -76,12 +76,18 @@ function GpCoinsPanel({
     : 'None in the next bucket';
 
   return (
-    <SurfaceCard className="mb-4 overflow-hidden p-4 sm:mb-6">
+    <SurfaceCard id="gp-coins" className="mb-4 scroll-mt-24 overflow-hidden p-4 sm:mb-6">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-300">GoPair Coins</p><Link href="/promotions/payments" className="py-2 text-xs font-semibold text-teal-300">Promotion payments →</Link></div>
         <p className={`mt-2 text-3xl font-black tabular-nums ${isNegative ? 'text-red-300' : 'text-amber-100'}`}>
           {formatGpCoins(available)}
         </p>
+      </div>
+
+      <p className="mt-2 text-sm leading-6 text-gray-300">Promote a 24-hour Flash Deal for 20 GP Coins (₱10 value). You choose the shoes and the sale price.</p>
+      <div className="mt-3 grid gap-2 min-[380px]:grid-cols-2">
+        <Link href="/flash-deals/new" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-teal-400 px-3 text-sm font-bold text-gray-950 hover:bg-teal-300">⚡ Start a flash deal</Link>
+        <Link href="/coins" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-amber-200/35 bg-amber-200/[0.06] px-3 text-sm font-bold text-amber-100 hover:bg-amber-200/10">Buy GP Coins / View wallet</Link>
       </div>
 
       {isNegative && (
@@ -96,7 +102,7 @@ function GpCoinsPanel({
           <div className="rounded-lg border border-amber-300/20 bg-amber-300/[0.06] p-3">
             <p className="text-sm font-semibold text-amber-100">Use GP Coins to promote your running shoes on the homepage.</p>
             <p className="mt-1 text-xs leading-5 text-amber-100/75">
-              Open your active listings, choose the pair you want to boost, tap Promote Listing, then choose Featured on Home and apply your GP Coins at checkout.
+              Start a Flash Deal to promote a real price drop for 24 hours. Or open your listing, tap Promote Listing, choose Featured on Home, and apply coins at checkout. Editing your asking price is always free.
             </p>
             <Link href="/profile#active-listings" className="mt-3 inline-flex min-h-9 items-center justify-center rounded-lg border border-amber-300/30 bg-slate-950/45 px-3 text-xs font-semibold text-amber-100 hover:bg-amber-300/10">
               Choose an active pair
@@ -107,7 +113,7 @@ function GpCoinsPanel({
             <p>Publish a valid listing: 10 GP after 1 hour, max once per Manila day.</p>
             <p>Renew a listing: 6 GP per eligible renewal.</p>
             <p>Share Post Kit: copy/download/open FB group rewards, capped at 5 GP daily.</p>
-            <p>Coins expire after 6 months and are only usable inside Go Pair PH promotions.</p>
+            <p>Earned coins expire after 6 months. Bought coins do not expire. Coins can only be used for Go Pair PH promotions.</p>
           </div>
 
           <div className="mt-3 grid gap-2 sm:grid-cols-2">

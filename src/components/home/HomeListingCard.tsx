@@ -7,7 +7,10 @@ import type { PersonalizationBadges } from '@/lib/personalization';
 import { SaveListingButton } from '@/components/listings/SaveListingButton';
 import { GreatDealPill } from '@/components/listings/GreatDealPill';
 import { NewPill } from '@/components/listings/NewPill';
+import { FlashDealBadge, FlashDealPrice, useFlashDealClock } from '@/components/listings/FlashDealPrice';
+import { isFlashDealLive, withFlashDealPrice } from '@/lib/flashDeals';
 import { Badge } from '@/components/ui/Badge';
+import { SellerActivity } from '@/components/listings/SellerActivity';
 import { CONDITION_COLORS, CONDITIONS } from '@/lib/constants';
 import { getGreatDealEstimate } from '@/lib/pricing/greatDeal';
 import {
@@ -33,6 +36,7 @@ interface HomeListingCardProps {
   personalizationBadges?: PersonalizationBadges;
   showSaveAction?: boolean;
   showFreshnessDate?: boolean;
+  sellerLastActiveAt?: string | null;
 }
 
 export function HomeListingCard({
@@ -43,7 +47,11 @@ export function HomeListingCard({
   personalizationBadges,
   showSaveAction = true,
   showFreshnessDate = true,
+  sellerLastActiveAt,
 }: HomeListingCardProps) {
+  const flashNow = useFlashDealClock(shoe.flash_deal_ends_at);
+  shoe = withFlashDealPrice(shoe, flashNow);
+  const flashLive = isFlashDealLive(shoe, flashNow);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const topImage = shoe.shoe_images?.find(img => img.view_type === 'top') ?? shoe.shoe_images?.[0];
   const imageUrl = topImage
@@ -88,14 +96,15 @@ export function HomeListingCard({
               No photo
             </div>
           )}
-          {isSponsored && (
+          {flashLive && <div className="absolute left-2 top-2"><FlashDealBadge endsAt={shoe.flash_deal_ends_at!} /></div>}
+          {isSponsored && !flashLive && (
             <div className="absolute left-2 top-2">
               <span title="Top Pick is paid placement." className="inline-flex rounded-full border border-black/10 bg-white/95 px-2 py-1 text-[10px] font-semibold text-slate-950 shadow-sm">
                 Top Pick<span className="sr-only"> · Sponsored listing</span>
               </span>
             </div>
           )}
-          {isFresh && isActive && !isSponsored && (
+          {isFresh && isActive && !isSponsored && !flashLive && (
             <div className="absolute left-2 top-2">
               <NewPill size="sm" />
             </div>
@@ -156,8 +165,8 @@ export function HomeListingCard({
 
           {shoe.listing_type === 'for_sale' && shoe.price_php ? (
             <div className="mt-2 flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <p className="shrink-0 font-bold text-teal-400">{formatPrice(shoe.price_php)}</p>
-              {showSrp && (
+              {shoe.flash_deal_id ? <FlashDealPrice shoe={shoe} /> : <p className="shrink-0 font-bold text-teal-400">{formatPrice(shoe.price_php)}</p>}
+              {showSrp && !flashLive && (
                 <div className="flex items-center gap-1.5">
                   <p className="text-[11px] font-medium text-gray-600 line-through">
                     {formatPrice(shoe.srp_php)}
@@ -190,7 +199,10 @@ export function HomeListingCard({
           )}
 
           {showFreshnessDate && (
-            <p className="mt-1.5 text-xs text-gray-600">{freshnessLabel}</p>
+            <SellerActivity
+              lastActiveAt={!isOwner && isActive ? sellerLastActiveAt ?? shoe.profiles?.last_active_at : null}
+              fallback={freshnessLabel}
+            />
           )}
         </div>
       </Link>

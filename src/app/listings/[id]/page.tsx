@@ -37,6 +37,8 @@ import { StickyListingActions } from '@/components/messaging/StickyListingAction
 import { SaveListingButton } from '@/components/listings/SaveListingButton';
 import { ListingViewTracker } from '@/components/listings/ListingViewTracker';
 import { PromoteListingButton } from '@/components/listings/PromoteListingButton';
+import { isFlashDealLive, withFlashDealPrice } from '@/lib/flashDeals';
+import { FlashDealNotice, FlashDealPrice } from '@/components/listings/FlashDealPrice';
 import { SponsoredPill } from '@/components/listings/SponsoredPill';
 import { FeaturedPill } from '@/components/listings/FeaturedPill';
 import { FlaggedPill } from '@/components/listings/FlaggedPill';
@@ -201,7 +203,7 @@ async function getShoe(id: string): Promise<Shoe | null> {
     ? await query.eq('id', id).single()
     : await query.eq('slug', id).single();
 
-  return data as Shoe | null;
+  return data ? withFlashDealPrice(data as Shoe) : null;
 }
 
 async function getShoeByRouteParam(id: string): Promise<Shoe | null> {
@@ -701,6 +703,11 @@ export default async function ListingDetailPage({ params, searchParams }: { para
 
   const renderOwnerCtas = (className = '', autoOpenPromotion = true) => (
     <div className={cn('space-y-2', className)}>
+      {shoe.status === 'active' && shoe.listing_type === 'for_sale' && <Link
+        href={`/flash-deals/new?listing=${shoe.id}`}
+        className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-amber-200/35 bg-amber-200/[0.07] px-4 py-3 text-sm font-bold text-amber-100 hover:bg-amber-200/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
+        {isFlashDealLive(shoe) ? '⚡ Manage your flash deal' : '⚡ Start a flash deal · 20 GP'}
+      </Link>}
       {shoe.status === 'active' && !shoe.running_relevance_flagged && slotInfo && (
         <PromoteListingButton
           listingId={shoe.id}
@@ -877,12 +884,13 @@ export default async function ListingDetailPage({ params, searchParams }: { para
         </div>
         <h1 className="break-words text-2xl font-bold leading-tight text-gray-100 lg:hidden">{listingName}</h1>
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <p className="break-words text-2xl font-bold text-teal-300">
+          {shoe.flash_deal_id ? <FlashDealPrice shoe={shoe} className="text-2xl" /> : <p className="break-words text-2xl font-bold text-teal-300">
             {shoe.listing_type === 'donate' ? 'Free shoes' : shoe.price_php != null ? formatPrice(shoe.price_php) : 'Ask for price'}
-          </p>
+          </p>}
           {shoe.listing_type === 'for_sale' && shoe.is_negotiable && <span className="text-xs text-amber-300">Negotiable</span>}
         </div>
         <p className="break-words text-sm font-medium text-gray-300">{summarySize || 'Ask seller about sizing'}</p>
+        {shoe.flash_deal_id && <FlashDealNotice shoe={shoe} />}
       </header>
 
       {showUnavailablePanel && (
@@ -974,7 +982,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
             {shoe.listing_type === 'for_sale' && shoe.price_php && (
               <div className="space-y-1.5">
                 <div className="flex items-baseline gap-2 flex-wrap">
-                  <p className="text-3xl font-bold text-teal-400">{formatPrice(shoe.price_php)}</p>
+                  {shoe.flash_deal_id ? <FlashDealPrice shoe={shoe} className="text-3xl" /> : <p className="text-3xl font-bold text-teal-400">{formatPrice(shoe.price_php)}</p>}
                   {shoe.is_negotiable && (
                     <span className="text-xs font-semibold uppercase tracking-wide text-amber-400 bg-amber-950 border border-amber-800 px-2 py-0.5 rounded-full">
                       Negotiable

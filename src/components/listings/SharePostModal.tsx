@@ -1,5 +1,7 @@
 'use client';
 
+import { withFlashDealPrice } from '@/lib/flashDeals';
+
 import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import * as htmlToImage from 'html-to-image';
 import { LogoMark } from '@/components/brand/Logo';
@@ -246,6 +248,7 @@ async function loadRequiredHeroDataUrl(transformedUrl: string, originalUrl: stri
 }
 
 export function SharePostModal({ shoe, seller, open = true, onClose, onDownloadRecorded, facebookCompleted = false, onFacebookGroupClick, onDownloaded }: SharePostModalProps) {
+  shoe = withFlashDealPrice(shoe);
   const cardRef = useRef<HTMLDivElement>(null);
   const [heroSrc, setHeroSrc] = useState<string | null>(null);
   const [identitySrc, setIdentitySrc] = useState<string | null>(null);

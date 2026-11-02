@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { formatPrice, formatShortDate } from '@/lib/utils';
 import { labelPromotionPaymentMethod, type PromotionPayment } from '@/lib/payments/types';
 
@@ -25,6 +26,7 @@ export function PromotionPaymentsAdmin({ payments: initial }: { payments: Promot
   }
   return <section className="mb-5 rounded-xl border border-gray-800 bg-gray-900 p-4">
     <h2 className="text-lg font-semibold text-gray-100">Promotion payments</h2>
+    <Link href="/admin/coins" className="inline-flex min-h-11 items-center text-sm font-semibold text-teal-300 underline">GP Coin purchases and payment recovery →</Link>
     <p className="mt-1 text-sm leading-6 text-gray-400">QR Ph and other PayMongo payments are verified automatically. Issue PayMongo refunds in the <a href="https://dashboard.paymongo.com" target="_blank" rel="noopener noreferrer" className="text-teal-300 underline">PayMongo dashboard</a>; a review note does not send money. Confirmed refunds appear here after webhook delivery or reconciliation.</p>
     {message && <p role="status" className="mt-3 text-sm text-amber-100">{message}</p>}
     <div className="mt-4 space-y-3">{payments.length === 0 ? <p className="text-sm text-gray-500">No new payment records yet.</p> : payments.map(payment => <article key={payment.id} className="rounded-lg border border-gray-800 bg-gray-950/50 p-3">

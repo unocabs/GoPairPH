@@ -27,6 +27,7 @@ import { runningShoesFirst } from '@/lib/runningShoeReviews';
 import { buildBrowseSections, getBrowseRecommendations, RECOMMENDATION_BATCH_SIZE } from '@/lib/browseSections';
 import { getBrowseRotation, orderBrowseRotation } from '@/lib/browseRotation';
 import { BrowseLoadMore } from '@/components/listings/BrowseLoadMore';
+import { withFlashDealPrice } from '@/lib/flashDeals';
 
 export const metadata: Metadata = {
   title: 'Browse Running Shoes',
@@ -165,7 +166,7 @@ async function getListings(searchParams: BrowsePageProps['searchParams'], profil
     console.error('[browse] Failed to load listings', error);
     throw new Error('Unable to load marketplace listings right now.');
   }
-  const all = (data as Shoe[]) ?? [];
+  const all = ((data as Shoe[]) ?? []).map(shoe => withFlashDealPrice(shoe));
 
   // Sort within quality buckets. Image-backed sponsored listings lead, fresh
   // image-backed listings come next, regular image-backed listings rotate in

@@ -13,6 +13,7 @@ interface HomeListingGridProps {
   personalizationBadges?: Record<string, PersonalizationBadges>;
   showSaveActions?: boolean;
   showFreshnessDates?: boolean;
+  sellerActivityById?: Record<string, string | null>;
   className?: string;
 }
 
@@ -25,6 +26,7 @@ export function HomeListingGrid({
   personalizationBadges,
   showSaveActions = true,
   showFreshnessDates = true,
+  sellerActivityById,
   className,
 }: HomeListingGridProps) {
   if (shoes.length === 0) {
@@ -48,6 +50,7 @@ export function HomeListingGrid({
           personalizationBadges={personalizationBadges?.[shoe.id]}
           showSaveAction={showSaveActions}
           showFreshnessDate={showFreshnessDates}
+          sellerLastActiveAt={sellerActivityById?.[shoe.seller_id]}
         />
       ))}
     </div>

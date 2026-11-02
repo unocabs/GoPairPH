@@ -8,6 +8,7 @@ export type InventoryMode = 'single' | 'multi';
 
 export interface Profile {
   id: string;
+  last_active_at?: string | null;
   user_id: string;
   display_name: string;
   location: string | null;
@@ -108,6 +109,11 @@ export interface Shoe {
   listing_type: ListingType;
   price_php: number | null;
   srp_php: number | null;
+  flash_deal_id?: string | null;
+  flash_deal_price_php?: number | null;
+  flash_deal_original_price_php?: number | null;
+  flash_deal_starts_at?: string | null;
+  flash_deal_ends_at?: string | null;
   is_negotiable: boolean;
   description: string | null;
   status: ListingStatus;

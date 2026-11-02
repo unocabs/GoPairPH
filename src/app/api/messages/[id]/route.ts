@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { messagingUser, messagingUnavailable, messagingError, sameOrigin, smallJson } from '@/lib/messaging/server';
+import { withFlashDealPrice } from '@/lib/flashDeals';
 export const dynamic = 'force-dynamic';
 type Context = { params: { id: string } };
 const uuid = z.string().uuid();
@@ -29,14 +30,14 @@ export async function GET(request: Request, { params }: Context) {
   const [messages, partner, listing, requests, blocks] = await Promise.all([
     messagesQuery.order('sequence', { ascending: Boolean(after) }).limit(31),
     auth.supabase.from('profiles').select('id,display_name,is_verified,fb_username').eq('id', other).single(),
-    conversation.listing_id ? auth.supabase.from('shoes').select('id,slug,seller_id,brand,model,price_php,is_negotiable,listing_type,status,has_stock,inventory_mode,shop_id,size_eu,size_us,size_cm,us_size_type,shops(*),shoe_variants(*)').eq('id', conversation.listing_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    conversation.listing_id ? auth.supabase.from('shoes').select('id,slug,seller_id,brand,model,price_php,flash_deal_id,flash_deal_original_price_php,flash_deal_price_php,flash_deal_starts_at,flash_deal_ends_at,is_negotiable,listing_type,status,has_stock,inventory_mode,shop_id,size_eu,size_us,size_cm,us_size_type,shops(*),shoe_variants(*)').eq('id', conversation.listing_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
     auth.supabase.from('purchase_requests').select('*,shoe_variants(*)').eq('conversation_id', params.id).order('created_at', { ascending: false }).limit(20),
     auth.supabase.from('chat_blocks').select('blocker_id,blocked_id').in('blocker_id', [auth.profile.id, other]).in('blocked_id', [auth.profile.id, other]),
   ]);
   const readError = messages.error ?? partner.error ?? listing.error ?? requests.error ?? blocks.error;
   if (readError) return messagingError(readError);
   const rows = (messages.data ?? []).slice(0, 30);
-  return NextResponse.json({ conversation, partner: partner.data, listing: listing.data, requests: requests.data ?? [],
+  return NextResponse.json({ conversation, partner: partner.data, listing: listing.data ? withFlashDealPrice(listing.data) : null, requests: requests.data ?? [],
     messages: after ? rows : rows.reverse(), has_more: (messages.data?.length ?? 0) > 30,
     blocked: Boolean(blocks.data?.length), blocked_by_me: blocks.data?.some(b => b.blocker_id === auth.profile.id) ?? false,
   }, { headers: { 'Cache-Control': 'private, no-store' } });

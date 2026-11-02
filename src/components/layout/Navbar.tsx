@@ -397,6 +397,7 @@ export function Navbar() {
         {mobileOpen && (
           <div className="md:hidden border-t border-gray-800 py-3 flex flex-col gap-1">
             <Link href="/browse" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">GP Marketplace</Link>
+            <Link href="/flash-deals" onClick={() => setMobileOpen(false)} className="min-h-11 rounded-lg px-3 py-3 text-sm font-semibold text-amber-200 hover:bg-gray-800">⚡ Flash Deals</Link>
             <Link href="/price-guide" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Check my Resale Price</Link>
             <Link href="/looking-for" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800">Looking For</Link>
             <Link href="/listings/new" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-semibold text-teal-400 hover:bg-gray-800">+ List a Shoe</Link>
@@ -447,7 +448,7 @@ function GpCoinPill({
 
   return (
     <Link
-      href="/profile"
+      href="/coins"
       className={className}
       aria-label={`${coins.toLocaleString('en-PH')} GP Coins`}
     >
@@ -468,7 +469,7 @@ function GpCoinIntroModal({ onClose }: { onClose: () => void }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-300">GoPair Coins</p>
-            <h2 className="mt-2 text-lg font-bold text-gray-100">Earn coins when you sell</h2>
+            <h2 className="mt-2 text-lg font-bold text-gray-100">Earn or buy GP Coins</h2>
           </div>
           <button
             type="button"
@@ -488,12 +489,13 @@ function GpCoinIntroModal({ onClose }: { onClose: () => void }) {
           </Link>
           .
         </p>
+        <p className="mt-2 text-sm leading-6 text-gray-300">Use 20 GP Coins (₱10 value) to promote a 24-hour Flash Deal. Earn coins by listing and sharing, or buy coins through secure PayMongo checkout.</p>
         <Link
-          href="/listings/new"
+          href="/coins"
           onClick={onClose}
           className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-teal-600 px-4 text-sm font-bold text-white transition-colors hover:bg-teal-500"
         >
-          Add a new listing
+          Explore GP Coins
         </Link>
       </div>
     </div>

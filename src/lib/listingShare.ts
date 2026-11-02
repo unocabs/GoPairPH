@@ -1,15 +1,18 @@
 import { CONDITIONS } from './constants';
 import { formatListingName, formatMileage, formatPrice, formatProfileLocation, formatSize } from './utils';
 import type { Shoe } from '@/types';
+import { isFlashDealLive, withFlashDealPrice } from './flashDeals';
 
 export const FB_GROUP_URL = 'https://www.facebook.com/groups/gopairph';
 
 export function buildListingCaption(shoe: Shoe, listingUrl: string): string {
+  shoe = withFlashDealPrice(shoe);
   const listingName = formatListingName(shoe.brand, shoe.model);
   const size = formatSize(shoe.size_eu, shoe.size_us, shoe.size_cm, shoe.us_size_type);
   const location = shoe.shops?.location ?? formatProfileLocation(shoe.profiles);
   const showSrp = shoe.listing_type === 'for_sale' && shoe.price_php != null && shoe.srp_php != null && shoe.srp_php >= shoe.price_php;
   const details = [
+    isFlashDealLive(shoe) ? `Flash Deal ends ${new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Manila' }).format(new Date(shoe.flash_deal_ends_at!))} (PH time), or when reserved or sold.` : null,
     shoe.listing_type === 'for_sale' && shoe.price_php ? `Price: ${formatPrice(shoe.price_php)}` : null,
     showSrp ? `SRP: ${formatPrice(shoe.srp_php)}` : null,
     size ? `Size: ${size}` : null,

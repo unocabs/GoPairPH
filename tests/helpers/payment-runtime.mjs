@@ -10,6 +10,7 @@ export function installPaymentMocks() {
     '@/lib/supabase/server': 'export const createServiceClient=()=>globalThis.paymentMocks.service; export const createClient=()=>globalThis.paymentMocks.authClient;',
     './notifications': 'export const sendPromotionPaymentEmail=async()=>{};',
     'next/server': 'export const NextResponse={json:(body,init)=>Response.json(body,init)};',
+    'next/cache': 'export const revalidateTag=()=>{};',
   };
   const root = new URL('../../src/', import.meta.url);
   registerHooks({
