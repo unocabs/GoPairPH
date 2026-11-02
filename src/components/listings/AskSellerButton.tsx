@@ -8,7 +8,7 @@ import { messagingEnabled } from '@/lib/messaging/config';
 import { MessageSellerButton } from '@/components/messaging/MessageSellerButton';
 
 interface AskSellerButtonProps {
-  listingId?: string;
+  listingId: string;
   contactUrl?: string | null;
   listingName: string;
   listingHref?: string;
@@ -64,7 +64,7 @@ function getFacebookProfileFallback(url?: string | null) {
 }
 
 export function AskSellerButton(props: AskSellerButtonProps) {
-  if (messagingEnabled && props.listingId) return <MessageSellerButton href={`/messages?listing=${props.listingId}`} messengerUrl={props.contactUrl} className={props.className} />;
+  if (messagingEnabled) return <MessageSellerButton href={`/messages?listing=${props.listingId}`} messengerUrl={props.contactUrl} className={props.className} style={props.style} ariaLabel={props.ariaLabel ?? 'Message seller'}>{props.children}</MessageSellerButton>;
   return <ExternalAskSellerButton {...props} />;
 }
 

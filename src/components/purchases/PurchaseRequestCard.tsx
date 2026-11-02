@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { formatRelativeDate, formatPrice, formatSize, getPublicUrl, getListingPath, IMAGE_TRANSFORM_PRESETS } from '@/lib/utils';
 import { messagingEnabled } from '@/lib/messaging/config';
+import { MessageSellerButton } from '@/components/messaging/MessageSellerButton';
 import { buildMessengerUrl } from '@/lib/facebook';
 import { trackMarketplaceAction } from '@/lib/analytics';
 import type { PurchaseRequest, PurchaseRequestStatus, Shoe } from '@/types';
@@ -172,7 +173,6 @@ export function PurchaseRequestCard({
   const buyerName = request.profiles?.display_name ?? 'the buyer';
 
   function handleMessageBuyer() {
-    if (messagingEnabled) { window.location.href = `/messages?request=${request.id}`; return; }
     if (buyerMessengerUrl) {
       trackMarketplaceAction('outbound_click', {
         destination: 'buyer_messenger',
@@ -256,12 +256,18 @@ export function PurchaseRequestCard({
 
       {status === 'pending' && (
         <div className="grid grid-cols-2 gap-2 pt-1 sm:grid-cols-4">
-          <button
+          {messagingEnabled ? <MessageSellerButton
+            href={`/messages?request=${request.id}`}
+            messengerUrl={buyerMessengerUrl}
+            label="Message Buyer"
+            disabled={loading}
+            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-blue-400/25 bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
+          /> : <button
             type="button"
             onClick={handleMessageBuyer}
             disabled={loading}
             className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
-              (messagingEnabled || buyerMessengerUrl)
+              buyerMessengerUrl
                 ? 'border-blue-400/25 bg-blue-600 text-white hover:bg-blue-500'
                 : 'border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50'
             }`}
@@ -270,7 +276,7 @@ export function PurchaseRequestCard({
               <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
             </svg>
             Message Buyer
-          </button>
+          </button>}
           <button
             type="button"
             onClick={() => setNoteOpen(current => !current)}
@@ -318,12 +324,18 @@ export function PurchaseRequestCard({
             steps={['Message buyer', 'Complete meetup, payment, or shipping', 'Mark as sold']}
           />
           <div className="grid gap-2 sm:grid-cols-3">
-            <button
+            {messagingEnabled ? <MessageSellerButton
+              href={`/messages?request=${request.id}`}
+              messengerUrl={buyerMessengerUrl}
+              label="Message Buyer"
+              disabled={loading}
+              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-blue-400/25 bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
+            /> : <button
               type="button"
               onClick={handleMessageBuyer}
               disabled={loading}
               className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
-                (messagingEnabled || buyerMessengerUrl)
+                buyerMessengerUrl
                   ? 'border-blue-400/25 bg-blue-600 text-white hover:bg-blue-500'
                   : 'border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50'
               }`}
@@ -332,7 +344,7 @@ export function PurchaseRequestCard({
                 <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
               </svg>
               Message Buyer
-            </button>
+            </button>}
             <button
               onClick={() => setConfirmAction('cancel')}
               disabled={loading}

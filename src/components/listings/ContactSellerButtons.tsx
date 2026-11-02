@@ -2,8 +2,10 @@
 
 import { buildMessengerUrl } from '@/lib/facebook';
 import { AskSellerButton } from './AskSellerButton';
+import { messagingEnabled } from '@/lib/messaging/config';
 
 interface ContactSellerButtonsProps {
+  listingId: string;
   fbUsername?: string | null;
   listingName: string;
   listingHref: string;
@@ -12,6 +14,7 @@ interface ContactSellerButtonsProps {
 }
 
 export function ContactSellerButtons({
+  listingId,
   fbUsername,
   listingName,
   listingHref,
@@ -22,16 +25,17 @@ export function ContactSellerButtons({
 
   return (
     <AskSellerButton
+      listingId={listingId}
       contactUrl={messengerUrl}
       listingName={listingName}
       listingHref={listingHref}
       sellerName={sellerName}
       buyerNeedsMessenger={buyerNeedsMessenger}
       className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-500"
-      ariaLabel={messengerUrl ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
+      ariaLabel={messagingEnabled ? 'Message seller' : messengerUrl ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
     >
-      <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
+      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
       </svg>
       Message Seller
     </AskSellerButton>

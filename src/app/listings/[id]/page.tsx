@@ -541,16 +541,16 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 sellerName={shop?.name ?? seller?.display_name}
                 isShop={!!shop}
                 buyerNeedsMessenger={!currentProfileFbUsername}
-                ariaLabel={askSellerHref ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
+                ariaLabel={messagingEnabled ? 'Message seller' : askSellerHref ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
                 className={cn(
                   'flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
-                  askSellerHref
+                  messagingEnabled || askSellerHref
                     ? 'bg-blue-600 text-white hover:bg-blue-500'
                     : 'border border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50',
                 )}
               >
-                <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
+                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
                 </svg>
                 Message Seller
               </AskSellerButton>
@@ -591,16 +591,16 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 sellerName={shop?.name ?? seller?.display_name}
                 isShop={!!shop}
                 buyerNeedsMessenger={!currentProfileFbUsername}
-                ariaLabel={askSellerHref ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
+                ariaLabel={messagingEnabled ? 'Message seller' : askSellerHref ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
                 className={cn(
                   'flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
-                  askSellerHref
+                  messagingEnabled || askSellerHref
                     ? 'bg-blue-600 text-white hover:bg-blue-500'
                     : 'border border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50',
                 )}
               >
-                <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
+                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
                 </svg>
                 Message Seller
               </AskSellerButton>
@@ -641,16 +641,16 @@ export default async function ListingDetailPage({ params, searchParams }: { para
                 isShop={!!shop}
                 sendOfferLabel={signedOutForSaleCtaLabel}
                 sendOfferHref={signInHref}
-                ariaLabel={askSellerHref ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
+                ariaLabel={messagingEnabled ? 'Message seller' : askSellerHref ? 'Message seller on Messenger' : 'Seller has not added Messenger'}
                 className={cn(
                   'flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
-                  askSellerHref
+                  messagingEnabled || askSellerHref
                     ? 'bg-blue-600 text-white hover:bg-blue-500'
                     : 'border border-blue-400/15 bg-blue-600/35 text-blue-100/60 hover:border-blue-300/25 hover:bg-blue-600/45 hover:text-blue-50',
                 )}
               >
-                <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.91 1.451 5.503 3.717 7.197V22l3.398-1.866c.907.251 1.872.385 2.885.385 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2zm.994 12.46l-2.546-2.717-4.969 2.717 5.466-5.81 2.61 2.717 4.905-2.717-5.466 5.81z" />
+                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
                 </svg>
                 Message Seller
               </AskSellerButton>
